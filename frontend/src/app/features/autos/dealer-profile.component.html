@@ -1,0 +1,273 @@
+<app-nav />
+
+@if (loading()) {
+  <div class="dp-loading">
+    <div class="dp-skeleton-hero"></div>
+    <div class="dp-skeleton-body">
+      <div class="dp-skeleton-line w60"></div>
+      <div class="dp-skeleton-line w40"></div>
+    </div>
+  </div>
+} @else if (error()) {
+  <div class="dp-error-state">
+    <div class="error-icon">🏢</div>
+    <h2>Concesionaria no encontrada</h2>
+    <p>{{ error() }}</p>
+    <a routerLink="/autos" class="dp-btn-back">← Volver al catálogo</a>
+  </div>
+} @else {
+  @if (dealer(); as d) {
+
+    <!-- ── HERO ── -->
+    <header class="dp-hero">
+      <div class="dp-hero-bg"></div>
+      <div class="dp-hero-content">
+        <div class="dp-logo-wrap">
+          @if (d.logoUrl) {
+            <img [src]="d.logoUrl" [alt]="d.name" class="dp-logo" />
+          } @else {
+            <div class="dp-logo-initials">{{ initials(d.name) }}</div>
+          }
+        </div>
+        <div class="dp-hero-info">
+          <span class="dp-eyebrow">CONCESIONARIA AFILIADA</span>
+          <h1 class="dp-title">{{ d.name }}</h1>
+          @if (d.address) {
+            <p class="dp-address">📍 {{ d.address }}</p>
+          }
+          <div class="dp-hero-stats">
+            <div class="dp-stat">
+              <span class="dp-stat-val">{{ d.autosCount }}</span>
+              <span class="dp-stat-lbl">VEHÍCULOS</span>
+            </div>
+            @if (d.rating && d.rating > 0) {
+              <div class="dp-stat-sep"></div>
+              <div class="dp-stat">
+                <span class="dp-stat-val">{{ d.rating }}/5</span>
+                <span class="dp-stat-lbl">CALIFICACIÓN</span>
+              </div>
+              <div class="dp-stat-sep"></div>
+              <div class="dp-stat">
+                <span class="dp-stat-val">{{ d.reviewCount }}</span>
+                <span class="dp-stat-lbl">RESEÑAS</span>
+              </div>
+            }
+          </div>
+        </div>
+        <div class="dp-hero-actions">
+          @if (d.phone) {
+            <a [href]="whatsappLink()" target="_blank" class="dp-btn dp-btn-wa">💬 WhatsApp</a>
+          }
+          <button class="dp-btn dp-btn-share" (click)="shareDealer()">🔗 Compartir</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── SEARCH BAR ── -->
+    <div class="dp-search-wrap">
+      <div class="dp-search-inner">
+        <div class="dp-search-input-wrap">
+          <span class="dp-search-icon">🔍</span>
+          <input
+            id="dealer-search"
+            type="text"
+            class="dp-search-input"
+            placeholder="Buscar vehículo por marca, modelo o ciudad..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearch($event)"
+          />
+          @if (searchQuery()) {
+            <button class="dp-search-clear" (click)="onSearch('')">✕</button>
+          }
+        </div>
+        <div class="dp-results-count">
+          <span class="dp-count-num">{{ filteredAutos().length }}</span>
+          <span class="dp-count-lbl">vehículos</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MAIN LAYOUT ── -->
+    <div class="dp-layout">
+
+      <!-- Sidebar -->
+      <aside class="dp-sidebar">
+
+        <!-- Info -->
+        <div class="dp-info-card">
+          <h3 class="dp-card-title">INFORMACIÓN</h3>
+          @if (d.description) {
+            <p class="dp-description">{{ d.description }}</p>
+          }
+          @if (d.phone) {
+            <div class="dp-info-row">
+              <span class="dp-info-icon">📞</span>
+              <a [href]="'tel:' + d.phone" class="dp-info-val">{{ d.phone }}</a>
+            </div>
+          }
+          @if (d.address) {
+            <div class="dp-info-row">
+              <span class="dp-info-icon">📍</span>
+              <span class="dp-info-val">{{ d.address }}</span>
+            </div>
+          }
+          @if (d.phone) {
+            <a [href]="whatsappLink()" target="_blank" class="dp-btn-wa-full">💬 Contactar por WhatsApp</a>
+          }
+        </div>
+
+        <!-- Price Filter -->
+        <div class="dp-filter-card">
+          <h3 class="dp-card-title">PRECIO</h3>
+          <div class="dp-filter-opts">
+            <label class="dp-filter-lbl" [class.active]="priceRange() === ''">
+              <input type="radio" name="price" (change)="onPriceChange('')" [checked]="priceRange() === ''" class="dp-radio" />
+              Todos los precios
+            </label>
+            <label class="dp-filter-lbl" [class.active]="priceRange() === 'low'">
+              <input type="radio" name="price" (change)="onPriceChange('low')" [checked]="priceRange() === 'low'" class="dp-radio" />
+              Menos de $500k
+            </label>
+            <label class="dp-filter-lbl" [class.active]="priceRange() === 'mid'">
+              <input type="radio" name="price" (change)="onPriceChange('mid')" [checked]="priceRange() === 'mid'" class="dp-radio" />
+              $500k — $1M
+            </label>
+            <label class="dp-filter-lbl" [class.active]="priceRange() === 'high'">
+              <input type="radio" name="price" (change)="onPriceChange('high')" [checked]="priceRange() === 'high'" class="dp-radio" />
+              Más de $1M
+            </label>
+          </div>
+        </div>
+
+        <!-- Google Maps -->
+        @if (safeMapUrl()) {
+          <div class="dp-map-card">
+            <h3 class="dp-card-title">📍 UBICACIÓN</h3>
+            <div class="dp-map-wrap">
+              <iframe
+                [src]="safeMapUrl()!"
+                class="dp-map-iframe"
+                allowfullscreen
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+              ></iframe>
+            </div>
+          </div>
+        }
+
+        <a routerLink="/autos" class="dp-btn-back">← Volver al catálogo</a>
+      </aside>
+
+      <!-- Main Grid -->
+      <main class="dp-main">
+
+        @if (autosLoading()) {
+          <div class="dp-loading-grid">
+            @for (i of [1,2,3,4,5,6]; track i) {
+              <div class="dp-skeleton-car">
+                <div class="dp-sk-img"></div>
+                <div class="dp-sk-body">
+                  <div class="dp-sk-line short"></div>
+                  <div class="dp-sk-line"></div>
+                  <div class="dp-sk-line medium"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (filteredAutos().length === 0) {
+          <div class="dp-empty">
+            <div class="dp-empty-icon">🚗</div>
+            <h3 class="dp-empty-title">Sin vehículos</h3>
+            <p class="dp-empty-desc">No hay vehículos con esos criterios.<br>Intenta cambiar los filtros.</p>
+            @if (hasActiveFilters) {
+              <button class="dp-empty-btn" (click)="clearFilters()">Limpiar filtros</button>
+            }
+          </div>
+        } @else {
+          <div class="dp-car-grid">
+            @for (car of paginatedAutos(); track car.id) {
+              <a [routerLink]="['/autos', car.id]" class="dp-car-card">
+                <div class="dp-car-img-wrap">
+                  <img
+                    [src]="car.imageUrl || 'https://images.unsplash.com/photo-1503376713356-200d72f10255?q=80&w=600&auto=format&fit=crop'"
+                    [alt]="car.model"
+                    class="dp-car-img"
+                  />
+                  <div class="dp-car-overlay"></div>
+                  <div class="dp-car-year">{{ car.year }}</div>
+                </div>
+                <div class="dp-car-details">
+                  <div class="dp-car-make">{{ car.make }}</div>
+                  <h3 class="dp-car-model">{{ car.model }}</h3>
+                  <div class="dp-car-specs">
+                    <span>🛣️ {{ car.mileage | number }} km</span>
+                    @if (car.transmission) { <span>⚙️ {{ car.transmission }}</span> }
+                    @if (car.location) { <span>📍 {{ car.location }}</span> }
+                  </div>
+                  <div class="dp-car-price">{{ formatPrice(car.price) }}</div>
+                </div>
+              </a>
+            }
+          </div>
+
+          <!-- Pagination -->
+          @if (totalPages() > 1) {
+            <nav class="dp-pagination">
+              <button class="dp-page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">‹</button>
+              @for (page of pages(); track page) {
+                <button class="dp-page-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page }}</button>
+              }
+              <button class="dp-page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">›</button>
+              <span class="dp-page-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+            </nav>
+          }
+        }
+      </main>
+    </div>
+
+    <!-- ── AI CHATBOT (solo si hasAi) ── -->
+    @if (d.hasAi) {
+      <div class="dp-chatbot" [class.open]="chatOpen">
+        <button
+          class="dp-chat-toggle"
+          (click)="toggleChat()"
+          [style.background]="d.chatbot_btn_color || '#C8A94A'"
+          [style.color]="d.chatbot_text_color || '#1a1d24'"
+        >
+          @if (chatOpen) { ✕ } @else { 💬 Asesor Virtual }
+        </button>
+
+        @if (chatOpen) {
+          <div class="dp-chat-panel" [style.backgroundColor]="d.chatbot_bg_color || '#0d1117'">
+            <div class="dp-chat-header"
+              [style.backgroundColor]="d.chatbot_btn_color || '#C8A94A'"
+              [style.color]="d.chatbot_text_color || '#1a1d24'">
+              <h4>🤖 Asesor de {{ d.name }}</h4>
+              <p>Consulta disponibilidad, precios y más.</p>
+            </div>
+            <div class="dp-chat-messages" id="dealer-chat-messages">
+              @for (msg of chatHistory; track $index) {
+                <div class="dp-chat-msg" [class.user]="msg.role === 'user'">{{ msg.content }}</div>
+              }
+              @if (isChatLoading) {
+                <div class="dp-chat-msg dp-chat-typing">
+                  <span></span><span></span><span></span>
+                </div>
+              }
+            </div>
+            <div class="dp-chat-input">
+              <input
+                type="text"
+                [(ngModel)]="chatMessage"
+                placeholder="Escribe tu pregunta..."
+                (keyup.enter)="sendChatMessage()"
+              />
+              <button (click)="sendChatMessage()" [style.color]="d.chatbot_btn_color || '#C8A94A'">➤</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  }
+}

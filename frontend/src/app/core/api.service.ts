@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
-  AdminStats, Auto, AutoInquiry, AutoStatus, ConcesionariaDashboard,
+  AdminStats, Auto, AutoInquiry, AutoStatus, ConcesionariaDashboard, DealerProfile,
   CrmContact, CrmContact360, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter, FinTransaction, FinDashboard
 } from '../models';
@@ -127,13 +127,13 @@ export class AutosService {
   list(filters?: { make?: string; minPrice?: number; maxPrice?: number }) {
     let params = new HttpParams();
     if (filters?.make) params = params.set('make', filters.make);
-    if (filters?.minPrice) params = params.set('minPrice', filters.minPrice);
     if (filters?.maxPrice) params = params.set('maxPrice', filters.maxPrice);
+    params = params.set('_t', Date.now().toString());
     return this.http.get<Auto[]>(this.base, { params });
   }
 
   getMakes() { return this.http.get<MakeFilter[]>(`${this.base}/filters/makes`); }
-  getById(id: string) { return this.http.get<Auto>(`${this.base}/${id}`); }
+  getById(id: string) { return this.http.get<Auto>(`${this.base}/${id}?_t=${Date.now()}`); }
   getMyInventory(status?: AutoStatus) {
     let params = new HttpParams();
     if (status) params = params.set('status', status);
@@ -159,6 +159,19 @@ export class ConcesionariaService {
   }
   sendReview(data: { userId: string; author: string; rating: number; comment: string }) {
     return this.http.post(`${this.base}/reviews`, data);
+  }
+  // Public dealer profile
+  getDealerBySlug(slug: string) { return this.http.get<DealerProfile>(`${this.base}/public/${slug}`); }
+  getDealerAutos(slug: string, filters?: { q?: string; make?: string; minPrice?: number; maxPrice?: number }) {
+    let params = new HttpParams();
+    if (filters?.q) params = params.set('q', filters.q);
+    if (filters?.make) params = params.set('make', filters.make);
+    if (filters?.minPrice) params = params.set('minPrice', filters.minPrice);
+    if (filters?.maxPrice) params = params.set('maxPrice', filters.maxPrice);
+    return this.http.get<Auto[]>(`${this.base}/public/${slug}/autos`, { params });
+  }
+  chatWithDealer(slug: string, message: string, history: { role: string; content: string }[]) {
+    return this.http.post<{ reply: string }>(`${this.base}/public/${slug}/chat`, { message, history });
   }
 }
 

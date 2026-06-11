@@ -34,7 +34,7 @@ setInterval(() => {
 }, 3600000);
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: ['http://localhost:4200', 'http://127.0.0.1:4200'] }));
+app.use(cors({ origin: '*' }));
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhooksRoutes);
 
 app.use(express.json());
@@ -63,7 +63,7 @@ app.use((err, _req, res, _next) => {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: ['http://localhost:4200', 'http://127.0.0.1:4200'] }
+  cors: { origin: '*' }
 });
 
 // Socket.io connection handling

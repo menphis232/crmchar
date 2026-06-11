@@ -5,6 +5,7 @@ export const routes: Routes = [
   { path: '', redirectTo: 'autos', pathMatch: 'full' },
   { path: 'autos', loadComponent: () => import('./features/autos/autos-list.component').then(m => m.AutosListComponent) },
   { path: 'autos/:id', loadComponent: () => import('./features/autos/auto-detail.component').then(m => m.AutoDetailComponent) },
+  { path: 'concesionarias/:slug', loadComponent: () => import('./features/autos/dealer-profile.component').then(m => m.DealerProfileComponent) },
   { path: 'gestores', loadComponent: () => import('./features/gestores/gestores-list.component').then(m => m.GestoresListComponent) },
   { path: 'gestores/:slug', loadComponent: () => import('./features/gestores/gestor-detail.component').then(m => m.GestorDetailComponent) },
   { path: 'review/:dealId', loadComponent: () => import('./features/site/pages/review.component').then(m => m.ReviewComponent) },

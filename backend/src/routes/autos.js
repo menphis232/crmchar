@@ -29,6 +29,7 @@ function autoRow(row) {
     imageUrl: row.image_url,
     images: parseImages(row.images),
     dealerName: row.dealer_name,
+    dealerSlug: row.dealer_slug || null,
     status: row.status || 'published',
     active: row.status === 'published',
     googleAnalyticsId: row.google_analytics_id || null,
@@ -43,15 +44,18 @@ function autoRow(row) {
   };
 }
 
+
 router.get('/', async (req, res) => {
   try {
     const { make, minPrice, maxPrice } = req.query;
-    let sql = "SELECT * FROM autos WHERE status = 'published'";
+    let sql = `SELECT a.*, u.slug AS dealer_slug, u.google_analytics_id, u.page_builder_config
+               FROM autos a JOIN users u ON a.user_id = u.id
+               WHERE a.status = 'published'`;
     const params = [];
-    if (make) { sql += ' AND make LIKE ?'; params.push(`%${make}%`); }
-    if (minPrice) { sql += ' AND price >= ?'; params.push(Number(minPrice)); }
-    if (maxPrice) { sql += ' AND price <= ?'; params.push(Number(maxPrice)); }
-    sql += ' ORDER BY created_at DESC';
+    if (make) { sql += ' AND a.make LIKE ?'; params.push(`%${make}%`); }
+    if (minPrice) { sql += ' AND a.price >= ?'; params.push(Number(minPrice)); }
+    if (maxPrice) { sql += ' AND a.price <= ?'; params.push(Number(maxPrice)); }
+    sql += ' ORDER BY a.created_at DESC';
     const rows = await query(sql, params);
     res.json(rows.map(autoRow));
   } catch (err) {
@@ -86,7 +90,7 @@ router.get('/me/inventory', authRequired, requireRole('concesionaria'), async (r
 router.get('/:id', async (req, res) => {
   try {
     const row = await get(`
-      SELECT a.*, u.google_analytics_id, u.page_builder_config
+      SELECT a.*, u.google_analytics_id, u.page_builder_config, u.slug AS dealer_slug
       FROM autos a 
       JOIN users u ON a.user_id = u.id 
       WHERE a.id = ? AND a.status = 'published'`, [req.params.id]);
@@ -96,6 +100,7 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({ error: 'Error al cargar vehículo' });
   }
 });
+
 
 router.post('/', authRequired, requireRole('concesionaria'), async (req, res) => {
   try {

@@ -1,22 +1,48 @@
 <nav class="dash-nav">
   <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
-  <div class="dash-user" style="display: flex; align-items: center;">
+  <div class="dash-user">
     <app-notification-bell />
-    <span>Super Admin</span>
-    <div class="avatar">{{ initials() }}</div>
-    <button class="logout" (click)="auth.logout()">Salir</button>
+
+    <!-- Hamburger Toggle (Mobile) -->
+    <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
+      @if (!isMobileMenuOpen()) {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      } @else {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      }
+    </button>
+
+    <!-- Desktop Avatar & Logout -->
+    <div class="desktop-only">
+      <span>Super Admin</span>
+      <div class="avatar">{{ initials() }}</div>
+      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      </button>
+    </div>
   </div>
 </nav>
 
 <div class="dash-container">
-  <aside class="dash-sidebar">
-    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats')">📊 Estadísticas</button>
-    <button class="dash-link" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers()">👥 Usuarios</button>
-    <button class="dash-link" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme')">🎨 Página Autos</button>
-    <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme')">🎨 Página Gestores</button>
-    <button class="dash-link" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor')">🛠 Panel Gestor</button>
-    <button class="dash-link" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria')">🛠 Panel Concesionaria</button>
-    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe')">💳 Suscripción / Stripe</button>
+  <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+    <!-- Mobile User Section -->
+    <div class="mobile-only sidebar-user-section">
+      <div class="avatar">{{ initials() }}</div>
+      <div style="flex:1;">
+        <strong>Super Admin</strong>
+      </div>
+      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      </button>
+    </div>
+
+    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats'); isMobileMenuOpen.set(false)">📊 Estadísticas</button>
+    <button class="dash-link" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers(); isMobileMenuOpen.set(false)">👥 Usuarios</button>
+    <button class="dash-link" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">🎨 Página Autos</button>
+    <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme'); isMobileMenuOpen.set(false)">🎨 Página Gestores</button>
+    <button class="dash-link" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor'); isMobileMenuOpen.set(false)">🛠 Panel Gestor</button>
+    <button class="dash-link" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria'); isMobileMenuOpen.set(false)">🛠 Panel Concesionaria</button>
+    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">💳 Suscripción / Stripe</button>
   </aside>
 
   <main class="dash-main">

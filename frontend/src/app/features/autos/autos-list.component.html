@@ -1,55 +1,238 @@
 <app-nav />
 
 <header class="catalog-header autos-header">
-  <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'VEHÍCULOS PREMIUM EN VENTA' }}</h1>
-  <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Directorio nacional de autos verificados.' }}</p>
+  <div class="header-content">
+    <span class="header-eyebrow">CONCESIONARIAS AFILIADAS</span>
+    <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'VEHÍCULOS PREMIUM EN VENTA' }}</h1>
+    <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Directorio nacional de autos verificados por concesionarias afiliadas.' }}</p>
+  </div>
 </header>
 
-<div class="catalog-container">
-  <aside class="filters">
-    <div class="filter-group">
-      <h4 class="gold">MARCA</h4>
-      @for (m of makes(); track m.make) {
-        <label>
-          <input type="checkbox" [checked]="selectedMake() === m.make"
-                 (change)="onMakeChange(m.make, $any($event.target).checked)">
-          {{ m.make }} ({{ m.count }})
-        </label>
+<!-- Search Bar -->
+<div class="search-bar-wrap">
+  <div class="search-bar-inner">
+    <div class="search-input-wrap">
+      <span class="search-icon">🔍</span>
+      <input
+        id="autos-search"
+        type="text"
+        class="search-input"
+        placeholder="Buscar por marca, modelo, concesionaria o ciudad..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearch($event)"
+      />
+      @if (searchQuery()) {
+        <button class="search-clear" (click)="onSearch('')" title="Limpiar búsqueda">✕</button>
       }
     </div>
-    <div class="filter-group">
-      <h4 class="gold">PRECIO</h4>
-      <label><input type="radio" name="price" (change)="onPriceChange('low')"> Menos de $500k</label>
-      <label><input type="radio" name="price" (change)="onPriceChange('mid')"> $500k - $1M</label>
-      <label><input type="radio" name="price" (change)="onPriceChange('high')"> Más de $1M</label>
-      <label><input type="radio" name="price" (change)="onPriceChange('')" checked> Todos</label>
+    <div class="results-count">
+      <span class="count-num">{{ filteredAutos().length }}</span>
+      <span class="count-label">vehículos encontrados</span>
     </div>
+  </div>
+</div>
+
+<div class="catalog-container">
+  <!-- Sidebar Filters -->
+  <aside class="filters">
+    <div class="filters-header">
+      <span class="filters-title">FILTROS</span>
+      @if (hasActiveFilters) {
+        <button class="clear-filters-btn" (click)="clearFilters()">Limpiar</button>
+      }
+    </div>
+
+    <!-- Marca -->
+    <div class="filter-group">
+      <h4 class="filter-group-title gold">
+        <span class="filter-icon">🚗</span> MARCA
+      </h4>
+      <div class="filter-options">
+        @for (m of makes(); track m.make) {
+          <label class="filter-label" [class.active]="isMakeSelected(m.make)">
+            <input
+              type="checkbox"
+              class="filter-checkbox"
+              [checked]="isMakeSelected(m.make)"
+              (change)="onMakeToggle(m.make, $any($event.target).checked)"
+            />
+            <span class="filter-label-text">{{ m.make }}</span>
+            <span class="filter-count">{{ m.count }}</span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <!-- Ciudad -->
+    @if (availableCities().length > 0) {
+      <div class="filter-group">
+        <h4 class="filter-group-title gold">
+          <span class="filter-icon">📍</span> CIUDAD
+        </h4>
+        <div class="filter-options">
+          @for (city of availableCities(); track city) {
+            <label class="filter-label" [class.active]="isCitySelected(city)">
+              <input
+                type="checkbox"
+                class="filter-checkbox"
+                [checked]="isCitySelected(city)"
+                (change)="onCityToggle(city, $any($event.target).checked)"
+              />
+              <span class="filter-label-text">{{ city }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Precio -->
+    <div class="filter-group">
+      <h4 class="filter-group-title gold">
+        <span class="filter-icon">💰</span> PRECIO
+      </h4>
+      <div class="filter-options">
+        <label class="filter-label" [class.active]="priceRange() === ''">
+          <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('')" [checked]="priceRange() === ''" />
+          <span class="filter-label-text">Todos los precios</span>
+        </label>
+        <label class="filter-label" [class.active]="priceRange() === 'low'">
+          <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('low')" [checked]="priceRange() === 'low'" />
+          <span class="filter-label-text">Menos de $500k</span>
+        </label>
+        <label class="filter-label" [class.active]="priceRange() === 'mid'">
+          <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('mid')" [checked]="priceRange() === 'mid'" />
+          <span class="filter-label-text">$500k — $1M</span>
+        </label>
+        <label class="filter-label" [class.active]="priceRange() === 'high'">
+          <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('high')" [checked]="priceRange() === 'high'" />
+          <span class="filter-label-text">Más de $1M</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Active chips -->
+    @if (hasActiveFilters) {
+      <div class="active-filters">
+        @if (searchQuery()) {
+          <span class="filter-chip">
+            🔍 "{{ searchQuery() }}"
+            <button (click)="onSearch('')">✕</button>
+          </span>
+        }
+        @for (make of selectedMakes(); track make) {
+          <span class="filter-chip">
+            🚗 {{ make }}
+            <button (click)="onMakeToggle(make, false)">✕</button>
+          </span>
+        }
+        @for (city of selectedCities(); track city) {
+          <span class="filter-chip">
+            📍 {{ city }}
+            <button (click)="onCityToggle(city, false)">✕</button>
+          </span>
+        }
+        @if (priceRange()) {
+          <span class="filter-chip">
+            💰 {{ priceRange() === 'low' ? '< $500k' : priceRange() === 'mid' ? '$500k–$1M' : '> $1M' }}
+            <button (click)="onPriceChange('')">✕</button>
+          </span>
+        }
+      </div>
+    }
   </aside>
 
-  <main class="car-grid">
+  <!-- Main Grid -->
+  <main class="car-grid-wrap">
     @if (loading()) {
-      <p class="loading">Cargando vehículos...</p>
-    } @else if (error()) {
-      <p class="error-msg">{{ error() }}</p>
-    } @else if (autos().length === 0) {
-      <p class="empty-msg">No hay vehículos con esos filtros.</p>
-    } @else {
-      @for (car of autos(); track car.id) {
-        <a [routerLink]="['/autos', car.id]" class="car-card">
-          <img [src]="car.imageUrl" [alt]="car.model" class="car-img">
-          <div class="car-details">
-            <div class="car-make">{{ car.make }}</div>
-            <h3 class="car-model">{{ car.model }}</h3>
-            <div class="car-specs">
-              <span>📅 {{ car.year }}</span>
-              <span>🛣️ {{ car.mileage | number }} km</span>
-            </div>
-            <div class="car-price">{{ formatPrice(car.price) }}</div>
-            <div class="dealer-badge">
-              <span class="dealer-icon"></span> {{ car.dealerName }}
+      <div class="loading-grid">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line medium"></div>
             </div>
           </div>
-        </a>
+        }
+      </div>
+    } @else if (error()) {
+      <div class="empty-state">
+        <div class="empty-icon">⚠️</div>
+        <h3 class="empty-title">Error al cargar</h3>
+        <p class="empty-desc">{{ error() }}</p>
+        <button class="empty-clear-btn" (click)="loadAutos()">Reintentar</button>
+      </div>
+    } @else if (filteredAutos().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">🚗</div>
+        <h3 class="empty-title">Sin vehículos</h3>
+        <p class="empty-desc">No encontramos vehículos con esos criterios.<br>Intenta cambiar los filtros.</p>
+        <button class="empty-clear-btn" (click)="clearFilters()">Limpiar filtros</button>
+      </div>
+    } @else {
+      <div class="car-grid">
+        @for (car of paginatedAutos(); track car.id) {
+          <a [routerLink]="['/autos', car.id]" class="car-card">
+            <div class="car-img-wrap">
+              <img
+                [src]="car.imageUrl || 'https://images.unsplash.com/photo-1503376713356-200d72f10255?q=80&w=600&auto=format&fit=crop'"
+                [alt]="car.model"
+                class="car-img"
+              />
+              <div class="car-img-overlay"></div>
+              <div class="car-year-badge">{{ car.year }}</div>
+            </div>
+            <div class="car-details">
+              <div class="car-make">{{ car.make }}</div>
+              <h3 class="car-model">{{ car.model }}</h3>
+              <div class="car-specs">
+                <span>🛣️ {{ car.mileage | number }} km</span>
+                @if (car.transmission) { <span>⚙️ {{ car.transmission }}</span> }
+                @if (car.location) { <span>📍 {{ car.location }}</span> }
+              </div>
+              <div class="car-price">{{ formatPrice(car.price) }}</div>
+              @if (car.dealerName) {
+                <div class="dealer-badge">
+                  <span class="dealer-icon">🏢</span>
+                  {{ car.dealerName }}
+                </div>
+              }
+            </div>
+          </a>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <nav class="pagination" aria-label="Paginación de vehículos">
+          <button
+            class="page-btn page-arrow"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+            aria-label="Página anterior"
+          >‹</button>
+
+          @for (page of pages(); track page) {
+            <button
+              class="page-btn"
+              [class.active]="page === currentPage()"
+              (click)="goToPage(page)"
+              [attr.aria-current]="page === currentPage() ? 'page' : null"
+            >{{ page }}</button>
+          }
+
+          <button
+            class="page-btn page-arrow"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+            aria-label="Página siguiente"
+          >›</button>
+
+          <span class="page-info">
+            Página {{ currentPage() }} de {{ totalPages() }}
+          </span>
+        </nav>
       }
     }
   </main>

@@ -51,11 +51,15 @@ export class PanelGestorComponent implements OnInit {
   chatbotBgColor = '#000000';
   chatbotBtnColor = '#4F46E5';
   chatbotTextColor = '#FFFFFF';
+  gestorPhone = '';
+  gestorAddress = '';
+  gestorMapEmbedUrl = '';
   aiInsights = signal<string[]>([]);
   isAiLoading = signal(false);
   message = signal('');
   newService = { name: '', timeEstimate: '', price: 0 };
   newTemplate = { name: '', content: '' };
+  isMobileMenuOpen = signal(false);
 
   constructor(
     public auth: AuthService,
@@ -104,6 +108,9 @@ export class PanelGestorComponent implements OnInit {
     this.gestoresService.getMyProfile().subscribe(p => {
       this.profile.set(p);
       this.bio = p.bio || '';
+      this.gestorPhone = p.phone || '';
+      this.gestorAddress = p.address || '';
+      this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
     });
     this.auth.getMe().subscribe(res => {
       this.profileLogoUrl = res.user.logo_url || '';
@@ -206,10 +213,15 @@ export class PanelGestorComponent implements OnInit {
   }
 
   saveBio() {
-    this.gestoresService.updateProfile({ bio: this.bio }).subscribe({
-      next: p => { 
-        this.profile.set({ ...this.profile()!, ...p }); 
-        
+    this.gestoresService.updateProfile({
+      bio: this.bio,
+      phone: this.gestorPhone || undefined,
+      address: this.gestorAddress || undefined,
+      mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
+    }).subscribe({
+      next: p => {
+        this.profile.set({ ...this.profile()!, ...p });
+
         this.auth.updateMe({
           name: this.profile()?.name,
           logo_url: this.profileLogoUrl,
@@ -221,7 +233,7 @@ export class PanelGestorComponent implements OnInit {
           chatbot_bg_color: this.chatbotBgColor,
           chatbot_btn_color: this.chatbotBtnColor,
           chatbot_text_color: this.chatbotTextColor,
-        }).subscribe(res => {
+        }).subscribe(() => {
           this.editBio.set(false);
           this.message.set('Perfil actualizado exitosamente');
         });

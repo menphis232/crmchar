@@ -19,6 +19,7 @@ type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-ge
   styleUrl: './panel-dashboard.css',
 })
 export class PanelAdminComponent implements OnInit {
+  isMobileMenuOpen = signal(false);
   tab = signal<AdminTab>('stats');
   stats = signal<AdminStats | null>(null);
   managedUsers = signal<ManagedUser[]>([]);

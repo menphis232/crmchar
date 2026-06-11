@@ -484,6 +484,36 @@ async function migrate() {
       await conn17.end();
       console.log('Migración v20 (Stripe Subscriptions) aplicada.');
     }
+    // v21: Dealer Profile & Google Maps
+    const v21Path = path.join(__dirname, '..', 'sql', 'migration-v21-dealer-profile.sql');
+    if (fs.existsSync(v21Path)) {
+      const v21 = fs.readFileSync(v21Path, 'utf8');
+      const conn18 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn18.query('USE tramites_vehiculares');
+      for (const stmt of v21.split(';').map(s => s.trim()).filter(Boolean)) {
+        if (stmt.includes('ADD COLUMN')) {
+          try { await conn18.query(stmt); } catch (e) {
+            if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+          }
+        } else {
+          try { await conn18.query(stmt); } catch (e) {
+            if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+          }
+        }
+      }
+      // Generate slugs for existing concesionarias that don't have one
+      await conn18.query(`
+        UPDATE users SET slug = CONCAT(LOWER(REGEXP_REPLACE(TRIM(name), '[^a-zA-Z0-9]+', '-')), '-', SUBSTR(id, 1, 6))
+        WHERE role = 'concesionaria' AND (slug IS NULL OR slug = '')
+      `);
+      await conn18.end();
+      console.log('Migración v21 (Dealer Profile & Google Maps) aplicada.');
+    }
 }
 
 migrate().catch(err => {

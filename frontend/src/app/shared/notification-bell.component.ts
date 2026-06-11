@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, HostListener, ElementRef } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { CrmService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
@@ -9,8 +9,8 @@ import { AuthService } from '../core/auth.service';
   imports: [DatePipe],
   template: `
     <div class="notification-wrapper">
-      <button class="notification-btn" (click)="toggleNotifications()">
-        🔔
+      <button class="notification-btn" (click)="toggleNotifications()" aria-label="Notificaciones">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
         @if (unreadCount() > 0) {
           <span class="badge">{{ unreadCount() }}</span>
         }
@@ -45,8 +45,8 @@ import { AuthService } from '../core/auth.service';
       font-size: 10px; font-weight: bold; border-radius: 50%; padding: 2px 6px; pointer-events: none;
     }
     .notification-dropdown {
-      position: absolute; top: 100%; right: -50px; width: 320px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      position: absolute; top: 100%; right: -50px; width: 320px; background: #0b111e;
+      border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
       z-index: 9999; margin-top: 10px; display: flex; flex-direction: column; max-height: 400px;
     }
     .nd-header {
@@ -71,12 +71,20 @@ export class NotificationBellComponent implements OnInit {
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
 
-  constructor(private auth: AuthService, private crmService: CrmService) {
+  constructor(private auth: AuthService, private crmService: CrmService, private eRef: ElementRef) {
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.loadNotifications();
       }
     });
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event) {
+    const target = event.target as HTMLElement;
+    if (this.showDropdown() && !target.closest('.notification-wrapper')) {
+      this.showDropdown.set(false);
+    }
   }
 
   ngOnInit() {

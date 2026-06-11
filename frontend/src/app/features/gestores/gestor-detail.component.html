@@ -6,7 +6,7 @@
   @if (gestor(); as g) {
     @if (g.page_builder_config; as config) {
       @if (config.blocks?.length) {
-        <div class="dynamic-page" [style.font-family]="config.theme?.fontFamily || 'Inter'" [style.--p-theme]="config.theme?.primaryColor || '#00d084'" [style.--p-text-color]="config.theme?.buttonTextColor || '#1a1d24'">
+        <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'Inter'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
           
           <!-- MAIN REGION (Contains everything not sidebar) -->
           @for (b of config.blocks; track b.id) {
@@ -234,6 +234,20 @@
           <div class="contact-card">
             <h3>¿Necesitas ayuda?</h3>
             <p>Cotiza tu trámite sin compromiso.</p>
+
+            @if (g.phone) {
+              <div class="gestor-contact-row">
+                <span>📞</span>
+                <a [href]="'tel:' + g.phone" class="gestor-contact-link">{{ g.phone }}</a>
+              </div>
+            }
+            @if (g.address) {
+              <div class="gestor-contact-row">
+                <span>📍</span>
+                <span class="gestor-contact-text">{{ g.address }}</span>
+              </div>
+            }
+
             @if (!solicitudSent()) {
               <div class="solicitud-form">
                 <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *">
@@ -254,6 +268,22 @@
             <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp">💬 WhatsApp directo</a>
             <div class="schedule">Horario: {{ g.schedule }}</div>
           </div>
+
+          @if (safeMapUrl) {
+            <div class="gestor-map-card">
+              <div class="gestor-map-title">📍 Ubicación</div>
+              <div class="gestor-map-wrap">
+                <iframe
+                  [src]="safeMapUrl"
+                  class="gestor-map-iframe"
+                  allowfullscreen
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
+            </div>
+          }
+
           <a routerLink="/gestores" class="btn-back">← Volver al directorio</a>
         </aside>
       </div>

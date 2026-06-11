@@ -1,30 +1,56 @@
 <nav class="dash-nav">
   <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
-  <div class="dash-user" style="display: flex; align-items: center;">
+  <div class="dash-user">
     <app-notification-bell />
-    <span>{{ auth.user()?.name }}</span>
-    <div class="avatar">{{ initials(auth.user()?.name) }}</div>
-    <button class="logout" (click)="auth.logout()">Salir</button>
+
+    <!-- Hamburger Toggle (Mobile) -->
+    <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
+      @if (!isMobileMenuOpen()) {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      } @else {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      }
+    </button>
+
+    <!-- Desktop Avatar & Logout -->
+    <div class="desktop-only">
+      <span>{{ auth.user()?.name }}</span>
+      <div class="avatar">{{ initials(auth.user()?.name) }}</div>
+      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      </button>
+    </div>
   </div>
 </nav>
 
 <div class="dash-container">
-  <aside class="dash-sidebar">
-    <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard')">📊 Panel CRM</button>
-    <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline')">
+  <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+    <!-- Mobile User Section -->
+    <div class="mobile-only sidebar-user-section">
+      <div class="avatar">{{ initials(auth.user()?.name) }}</div>
+      <div style="flex:1;">
+        <strong>{{ auth.user()?.name || 'Concesionaria' }}</strong>
+      </div>
+      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      </button>
+    </div>
+
+    <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Panel CRM</button>
+    <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
       🎯 Pipeline
       @if (crmDashboard()?.totals?.active) {
         <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
       }
     </button>
-    <button class="dash-link" [class.active]="tab() === 'inventory'" (click)="setTab('inventory')">🚗 Inventario</button>
-    <button class="dash-link" [class.active]="tab() === 'edit'" (click)="startNew()">✏️ Publicar / Editar</button>
-    <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation')">⭐ Reputación</button>
-    <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas')">📝 Plantillas</button>
-    <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil')">⚙️ Perfil</button>
-    <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer')">📄 PDF Cotización</button>
-    <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder')">🌐 Constructor Web</button>
-    <a routerLink="/autos" class="dash-link">🌐 Ver catálogo</a>
+    <button class="dash-link" [class.active]="tab() === 'inventory'" (click)="setTab('inventory'); isMobileMenuOpen.set(false)">🚗 Inventario</button>
+    <button class="dash-link" [class.active]="tab() === 'edit'" (click)="startNew(); isMobileMenuOpen.set(false)">✏️ Publicar / Editar</button>
+    <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation'); isMobileMenuOpen.set(false)">⭐ Reputación</button>
+    <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
+    <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">⚙️ Perfil</button>
+    <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer'); isMobileMenuOpen.set(false)">📄 PDF Cotización</button>
+    <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">🌐 Constructor Web</button>
+    <a routerLink="/autos" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Ver catálogo</a>
   </aside>
 
   <main class="dash-main">
@@ -273,12 +299,43 @@
     <!-- ── PERFIL ── -->
     @if (tab() === 'perfil') {
       <div class="dash-card">
-        <h2 class="card-title">⚙️ Mi Perfil</h2>
-        <p class="card-desc">Personaliza la información de tu concesionaria y el logo para tus cotizaciones PDF.</p>
+        <h2 class="card-title">⚙️ Mi Perfil Pública</h2>
+        <p class="card-desc">Personaliza la información que los clientes verán en tu página pública y en tus cotizaciones PDF.</p>
+
+        @if (publicSlug) {
+          <div class="link-box" style="margin-bottom: 20px;">
+            <input class="link-input" [value]="'/concesionarias/' + publicSlug" readonly>
+            <a [routerLink]="['/concesionarias', publicSlug]" target="_blank" class="btn-copy small">&#x1F517; Ver mi página</a>
+          </div>
+        }
+
         <div class="form-group" style="margin-bottom:16px;">
           <label>Nombre de la Empresa</label>
           <input [(ngModel)]="profileName" placeholder="Ej: Autos Premium S.A.">
         </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Descripción de la Concesionaria</label>
+          <textarea [(ngModel)]="profileDescription" rows="3" placeholder="Descripción breve de tu concesionaria, especialidad, años de experiencia..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input [(ngModel)]="profilePhone" placeholder="Ej: +52 55 1234 5678">
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input [(ngModel)]="profileAddress" placeholder="Calle, Núm, Colonia, Ciudad">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>URL Embed de Google Maps</label>
+          <input [(ngModel)]="profileMapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=...">
+          <p class="card-desc" style="margin-top:4px; font-size:11px;">En Google Maps &rarr; Compartir &rarr; Incorporar un mapa &rarr; copia la URL del atributo src del iframe.</p>
+        </div>
+
         <div class="form-group" style="margin-bottom:16px;">
           <label>Logo de la Empresa (Opcional)</label>
           <div style="display:flex; gap:10px; align-items:center;">
@@ -286,7 +343,7 @@
             <button class="btn-ghost small" (click)="logoInput.click()">Subir Imagen</button>
             @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
           </div>
-          <p class="card-desc" style="margin-top:4px; font-size:11px;">Sube una imagen (png, jpg, webp). Este logo se mostrará en las cotizaciones PDF.</p>
+          <p class="card-desc" style="margin-top:4px; font-size:11px;">Este logo se mostrará en las cotizaciones PDF y en tu página pública.</p>
           @if (profileLogoUrl) {
             <div style="margin-top:12px; padding:12px; background:var(--surface); border-radius:8px; display:inline-block; position:relative;">
               <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo" (error)="profileLogoUrl = ''">
@@ -294,6 +351,7 @@
             </div>
           }
         </div>
+
         <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
       </div>
     }

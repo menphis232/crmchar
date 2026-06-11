@@ -55,6 +55,7 @@ export interface Auto {
   imageUrl?: string;
   images?: string[];
   dealerName?: string;
+  dealerSlug?: string;
   status?: AutoStatus;
   active?: boolean;
   google_analytics_id?: string;
@@ -162,6 +163,9 @@ export interface Gestor {
   bio?: string;
   whatsapp?: string;
   schedule?: string;
+  phone?: string;
+  address?: string;
+  mapEmbedUrl?: string;
   google_analytics_id?: string;
   page_builder_config?: PageBuilderConfig;
   chatbot_bg_color?: string;
@@ -369,4 +373,22 @@ export interface FinDashboard {
   monthExpense: number;
   monthBalance: number;
   projectedIncome: number;
+}
+
+export interface DealerProfile {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl?: string;
+  description?: string;
+  phone?: string;
+  address?: string;
+  mapEmbedUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  autosCount?: number;
+  hasAi: boolean;
+  chatbot_bg_color?: string;
+  chatbot_btn_color?: string;
+  chatbot_text_color?: string;
 }

@@ -25,6 +25,9 @@ function gestorRow(row) {
     bio: row.bio,
     whatsapp: row.whatsapp,
     schedule: row.schedule,
+    phone: row.phone || null,
+    address: row.address || null,
+    mapEmbedUrl: row.map_embed_url || null,
   };
 }
 
@@ -76,11 +79,10 @@ router.put('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears } = req.body;
+    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl } = req.body;
     
-    // Convert undefined to null for mysql2 compatibility
     const params = [
-      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears
+      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl
     ].map(v => v === undefined ? null : v);
     params.push(req.user.id);
 
@@ -89,7 +91,8 @@ router.put('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
         name = COALESCE(?, name), location = COALESCE(?, location), state = COALESCE(?, state),
         banner_url = COALESCE(?, banner_url), photo_url = COALESCE(?, photo_url),
         bio = COALESCE(?, bio), whatsapp = COALESCE(?, whatsapp),
-        schedule = COALESCE(?, schedule), experience_years = COALESCE(?, experience_years)
+        schedule = COALESCE(?, schedule), experience_years = COALESCE(?, experience_years),
+        phone = COALESCE(?, phone), address = COALESCE(?, address), map_embed_url = COALESCE(?, map_embed_url)
       WHERE user_id = ?
     `, params);
 

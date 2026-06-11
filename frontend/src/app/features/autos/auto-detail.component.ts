@@ -61,6 +61,17 @@ export class AutoDetailComponent implements OnInit {
     document.getElementById('dynamic-form-section')?.scrollIntoView({ behavior: 'smooth' });
   }
 
+  shareAuto() {
+    const a = this.auto();
+    const url = window.location.href;
+    const title = a ? `${a.make} ${a.model} ${a.year}` : 'Vehículo en venta';
+    if (navigator.share) {
+      navigator.share({ title, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => alert('¡Enlace copiado al portapapeles!'));
+    }
+  }
+
   sendInquiry() {
     const a = this.auto();
     if (!a || !this.inquiry.clientName || !this.inquiry.message) {

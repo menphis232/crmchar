@@ -7,6 +7,7 @@ import { GestoresService } from '../../core/api.service';
 import { Gestor } from '../../models';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-gestor-detail',
@@ -34,18 +35,24 @@ export class GestorDetailComponent implements OnInit {
   isChatLoading = false;
   leadCreated = false;
 
-  constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient) {}
+  constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient, private sanitizer: DomSanitizer) {}
 
   ngOnInit() {
     const slug = this.route.snapshot.paramMap.get('slug')!;
     this.gestoresService.getBySlug(slug).subscribe({
       next: data => { 
         this.gestor.set(data); 
-        this.loading.set(false); 
+        this.loading.set(false);
+        // Compute safe map URL after data loads
+        if (data.mapEmbedUrl) {
+          this.safeMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(data.mapEmbedUrl);
+        }
       },
       error: () => this.loading.set(false),
     });
   }
+
+  safeMapUrl: SafeResourceUrl | null = null;
 
   whatsappLink(g: Gestor) {
     const text = encodeURIComponent('Hola, vengo del Directorio y necesito ayuda con un trámite.');

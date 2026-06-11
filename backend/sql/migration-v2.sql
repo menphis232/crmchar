@@ -4,7 +4,7 @@ USE tramites_vehiculares;
 
 ALTER TABLE users MODIFY role ENUM('gestor', 'concesionaria', 'cliente', 'admin') NOT NULL;
 
-ALTER TABLE autos ADD COLUMN IF NOT EXISTS status ENUM('draft', 'published', 'baja') DEFAULT 'published' AFTER dealer_name;
+ALTER TABLE autos ADD COLUMN status ENUM('draft', 'published', 'baja') DEFAULT 'published' AFTER dealer_name;
 
 UPDATE autos SET status = 'published' WHERE status IS NULL AND active = 1;
 UPDATE autos SET status = 'baja' WHERE active = 0;

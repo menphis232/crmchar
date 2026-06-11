@@ -9,7 +9,7 @@ RUN npm run build --configuration=production
 # Etapa 2: Servidor Web Nginx
 FROM nginx:alpine
 # Copiamos la build de Angular a la carpeta que sirve Nginx
-COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
+COPY --from=build /app/dist/tramites-frontend/browser /usr/share/nginx/html
 
 # Copiamos una configuración de Nginx para que el enrutamiento de Angular funcione
 COPY nginx.conf /etc/nginx/conf.d/default.conf

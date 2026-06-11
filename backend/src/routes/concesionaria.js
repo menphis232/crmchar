@@ -158,4 +158,169 @@ router.post('/reviews', async (req, res) => {
   }
 });
 
+// ─── ENDPOINTS PÚBLICOS DE CONCESIONARIA ───────────────────────────────────
+
+// GET /concesionaria/public/:slug  — Perfil público
+router.get('/public/:slug', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const user = await get(`
+      SELECT id, name, slug, logo_url, description, phone, address, map_embed_url,
+             chatbot_bg_color, chatbot_btn_color, chatbot_text_color,
+             CASE WHEN ai_api_key IS NOT NULL AND ai_api_key != '' THEN 1 ELSE 0 END as has_ai
+      FROM users WHERE slug = ? AND role = 'concesionaria'
+    `, [slug]);
+    if (!user) return res.status(404).json({ error: 'Concesionaria no encontrada' });
+
+    const stats = await get(`
+      SELECT COUNT(*) as autosCount, AVG(r.rating) as avgRating, COUNT(r.id) as reviewCount
+      FROM autos a
+      LEFT JOIN concesionaria_reviews r ON r.user_id = a.user_id
+      WHERE a.user_id = ? AND a.status = 'published'
+    `, [user.id]);
+
+    res.json({
+      id: user.id,
+      slug: user.slug,
+      name: user.name,
+      logoUrl: user.logo_url || null,
+      description: user.description || null,
+      phone: user.phone || null,
+      address: user.address || null,
+      mapEmbedUrl: user.map_embed_url || null,
+      chatbot_bg_color: user.chatbot_bg_color || '#000000',
+      chatbot_btn_color: user.chatbot_btn_color || '#4F46E5',
+      chatbot_text_color: user.chatbot_text_color || '#FFFFFF',
+      hasAi: !!user.has_ai,
+      autosCount: stats.autosCount || 0,
+      rating: stats.avgRating ? Number(Number(stats.avgRating).toFixed(1)) : 0,
+      reviewCount: stats.reviewCount || 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar perfil de concesionaria' });
+  }
+});
+
+// GET /concesionaria/public/:slug/autos  — Inventario público con filtros
+router.get('/public/:slug/autos', async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const { q, make, minPrice, maxPrice } = req.query;
+
+    const user = await get("SELECT id FROM users WHERE slug = ? AND role = 'concesionaria'", [slug]);
+    if (!user) return res.status(404).json({ error: 'Concesionaria no encontrada' });
+
+    let sql = "SELECT * FROM autos WHERE user_id = ? AND status = 'published'";
+    const params = [user.id];
+
+    if (q) { sql += ' AND (make LIKE ? OR model LIKE ? OR location LIKE ?)'; params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
+    if (make) { sql += ' AND make LIKE ?'; params.push(`%${make}%`); }
+    if (minPrice) { sql += ' AND price >= ?'; params.push(Number(minPrice)); }
+    if (maxPrice) { sql += ' AND price <= ?'; params.push(Number(maxPrice)); }
+    sql += ' ORDER BY created_at DESC';
+
+    const { autoRow: _autoRow } = await import('./autos.js').catch(() => ({ autoRow: null }));
+
+    const rows = await query(sql, params);
+    const parseImages = (val) => {
+      if (!val) return [];
+      if (typeof val === 'string') { try { return JSON.parse(val); } catch { return []; } }
+      return val;
+    };
+    res.json(rows.map(row => ({
+      id: row.id,
+      make: row.make,
+      model: row.model,
+      year: row.year,
+      price: Number(row.price),
+      mileage: row.mileage,
+      transmission: row.transmission,
+      location: row.location,
+      imageUrl: row.image_url,
+      images: parseImages(row.images),
+      dealerName: row.dealer_name,
+      createdAt: row.created_at,
+    })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar vehículos' });
+  }
+});
+
+// POST /concesionaria/public/:slug/chat  — Asistente IA del dealer
+router.post('/public/:slug/chat', async (req, res) => {
+  try {
+    const { message, history } = req.body;
+    if (!message) return res.status(400).json({ error: 'Mensaje requerido' });
+
+    const user = await get(`
+      SELECT id, name, description, ai_provider, ai_api_key
+      FROM users WHERE slug = ? AND role = 'concesionaria'
+    `, [req.params.slug]);
+    if (!user) return res.status(404).json({ error: 'Concesionaria no encontrada' });
+    if (!user.ai_provider || !user.ai_api_key) {
+      return res.status(400).json({ error: 'El asistente IA no está configurado en este momento.' });
+    }
+
+    // Fetch published inventory for context
+    const autos = await query(
+      "SELECT make, model, year, price, mileage, transmission, location FROM autos WHERE user_id = ? AND status = 'published' LIMIT 20",
+      [user.id]
+    );
+    const inventoryText = autos.map(a =>
+      `- ${a.year} ${a.make} ${a.model}: $${Number(a.price).toLocaleString('es-MX')} MXN, ${a.mileage?.toLocaleString()} km, ${a.transmission || ''}, ${a.location || ''}`
+    ).join('\n');
+
+    const prompt = `Eres el asistente virtual de la concesionaria "${user.name}".
+${user.description ? `Descripción: "${user.description}"` : ''}
+
+Inventario actual disponible:
+${inventoryText || 'No hay vehículos disponibles en este momento.'}
+
+Instrucciones: Eres un asesor de ventas amable y profesional. Responde preguntas sobre el inventario, precios, financiamiento y disponibilidad. Si el cliente quiere agendar una cita o solicitar información, pide su nombre, teléfono y correo. No inventes autos ni precios que no estén en la lista.`;
+
+    let generatedText = '';
+
+    if (user.ai_provider === 'gemini') {
+      const { GoogleGenerativeAI } = await import('@google/generative-ai');
+      const genAI = new GoogleGenerativeAI(user.ai_api_key);
+      const modelsToTry = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+      let lastError;
+      for (const modelName of modelsToTry) {
+        try {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          const chat = model.startChat({
+            history: history ? history.map(h => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })) : []
+          });
+          const result = await chat.sendMessage(prompt + '\n\nPregunta del cliente: ' + message);
+          generatedText = (await result.response).text();
+          break;
+        } catch (err) { lastError = err; continue; }
+      }
+      if (!generatedText && lastError) throw lastError;
+    } else if (user.ai_provider === 'openai') {
+      let msgs = [{ role: 'system', content: prompt }];
+      if (history) msgs = msgs.concat(history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })));
+      msgs.push({ role: 'user', content: message });
+      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.ai_api_key}` },
+        body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: msgs, max_tokens: 300, temperature: 0.7 })
+      });
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error.message);
+      generatedText = data.choices[0].message.content;
+    } else {
+      return res.status(400).json({ error: 'Proveedor de IA no soportado' });
+    }
+
+    res.json({ reply: generatedText });
+  } catch (err) {
+    console.error('Error Chatbot Concesionaria IA:', err.message);
+    res.status(500).json({ error: 'Error del asistente virtual' });
+  }
+});
+
 export default router;
+

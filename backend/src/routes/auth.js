@@ -48,13 +48,14 @@ router.post('/register', async (req, res) => {
       const admin = await get("SELECT stripe_secret_key, stripe_price_id FROM users WHERE role = 'admin' LIMIT 1");
       if (admin && admin.stripe_secret_key && admin.stripe_price_id) {
         initialStatus = 'pending_payment';
+        const origin = req.headers.origin || 'http://localhost:4200';
         const stripe = new Stripe(admin.stripe_secret_key);
         const session = await stripe.checkout.sessions.create({
           mode: 'subscription',
           payment_method_types: ['card'],
           line_items: [{ price: admin.stripe_price_id, quantity: 1 }],
-          success_url: `http://localhost:4200/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `http://localhost:4200/registro-pendiente?email=${encodeURIComponent(email.toLowerCase())}`,
+          success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(email.toLowerCase())}`,
           customer_email: email.toLowerCase(),
           metadata: { user_id: userId, role }
         });
@@ -65,6 +66,13 @@ router.post('/register', async (req, res) => {
     const hash = bcrypt.hashSync(password, 10);
     await run('INSERT INTO users (id, email, password_hash, role, name, status) VALUES (?, ?, ?, ?, ?, ?)',
       [userId, email.toLowerCase(), hash, role, name, initialStatus]);
+
+    if (role === 'concesionaria') {
+      // Generate unique slug from name
+      const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slug = `${baseSlug}-${userId.slice(0, 6)}`;
+      await run('UPDATE users SET slug = ? WHERE id = ?', [slug, userId]);
+    }
 
     if (role === 'gestor') {
       const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -121,7 +129,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     let profile = null;
@@ -150,7 +158,7 @@ router.get('/me', authRequired, async (req, res) => {
 
 router.patch('/me', authRequired, async (req, res) => {
   try {
-    const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color } = req.body;
+    const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, description, phone, address, map_embed_url } = req.body;
     
     const sets = [];
     const params = [];
@@ -168,13 +176,17 @@ router.patch('/me', authRequired, async (req, res) => {
     if (chatbot_bg_color !== undefined) { sets.push('chatbot_bg_color = ?'); params.push(chatbot_bg_color || '#000000'); }
     if (chatbot_btn_color !== undefined) { sets.push('chatbot_btn_color = ?'); params.push(chatbot_btn_color || '#4F46E5'); }
     if (chatbot_text_color !== undefined) { sets.push('chatbot_text_color = ?'); params.push(chatbot_text_color || '#FFFFFF'); }
+    if (description !== undefined) { sets.push('description = ?'); params.push(description || null); }
+    if (phone !== undefined) { sets.push('phone = ?'); params.push(phone || null); }
+    if (address !== undefined) { sets.push('address = ?'); params.push(address || null); }
+    if (map_embed_url !== undefined) { sets.push('map_embed_url = ?'); params.push(map_embed_url || null); }
     
     if (sets.length > 0) {
       params.push(req.user.id);
       await run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     }
     
-    const user = await get('SELECT id, email, role, name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, created_at FROM users WHERE id = ?', [req.user.id]);
     
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {
       try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}

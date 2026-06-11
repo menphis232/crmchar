@@ -24,6 +24,8 @@ type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'pla
   styleUrl: './panel-dashboard.css',
 })
 export class PanelConcesionariaComponent implements OnInit {
+
+  isMobileMenuOpen = signal(false);
   tab = signal<Tab>('dashboard');
   dashboard = signal<ConcesionariaDashboard | null>(null);
   crmDashboard = signal<CrmDashboard | null>(null);
@@ -63,12 +65,18 @@ export class PanelConcesionariaComponent implements OnInit {
     this.loadDashboard();
     this.loadCrm();
     this.loadInventory();
-    
-    const u = this.auth.user();
-    if (u) {
-      this.profileName = u.name;
+
+    // Load profile fields from /auth/me
+    this.auth.getMe().subscribe(res => {
+      const u = res.user;
+      this.profileName = u.name || '';
       this.profileLogoUrl = u.logo_url || '';
-    }
+      this.profileDescription = (u as any).description || '';
+      this.profilePhone = (u as any).phone || '';
+      this.profileAddress = (u as any).address || '';
+      this.profileMapEmbedUrl = (u as any).map_embed_url || '';
+      this.publicSlug = (u as any).slug || '';
+    });
   }
 
   emptyForm() {
@@ -217,9 +225,14 @@ export class PanelConcesionariaComponent implements OnInit {
     return (name || 'AP').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
 
-  // Phase 3.1 Profile/Logo
+  // Phase 3.1 Profile/Logo + New Public Fields
   profileName = '';
   profileLogoUrl = '';
+  profileDescription = '';
+  profilePhone = '';
+  profileAddress = '';
+  profileMapEmbedUrl = '';
+  publicSlug = '';
   isUploadingLogo = false;
 
   onLogoSelected(event: any) {
@@ -248,8 +261,15 @@ export class PanelConcesionariaComponent implements OnInit {
   }
 
   saveProfile() {
-    this.auth.updateMe({ name: this.profileName, logo_url: this.profileLogoUrl }).subscribe({
-      next: () => this.message.set('Perfil actualizado. El logo aparecerá en las nuevas cotizaciones PDF.'),
+    this.auth.updateMe({
+      name: this.profileName,
+      logo_url: this.profileLogoUrl,
+      description: this.profileDescription || null,
+      phone: this.profilePhone || null,
+      address: this.profileAddress || null,
+      map_embed_url: this.profileMapEmbedUrl || null,
+    }).subscribe({
+      next: () => this.message.set('Perfil actualizado correctamente.'),
       error: () => this.message.set('Error al actualizar el perfil')
     });
   }
