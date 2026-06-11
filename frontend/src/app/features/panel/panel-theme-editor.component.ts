@@ -34,7 +34,7 @@ function parseColorValue(value: string | undefined, fallbackHex: string) {
 @Component({
   selector: 'app-panel-theme-editor',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ColorPickerComponent],
   templateUrl: './panel-theme-editor.component.html',
   styleUrl: './panel-dashboard.css',
 })

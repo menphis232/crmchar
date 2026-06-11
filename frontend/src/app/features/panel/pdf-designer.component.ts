@@ -1,7 +1,9 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
+import { ColorPickerComponent } from '../../shared/color-picker.component';
 
 export interface PdfBlockDef {
   id: string;
