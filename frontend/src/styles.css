@@ -1,1 +1,64 @@
 @import url('./style-shared.css');
+@import 'sweetalert2/dist/sweetalert2.min.css';
+
+/* ── SweetAlert2 Dark Theme Overrides ── */
+.swal2-popup {
+  background: #1e1e2a !important;
+  color: #e2e2e2 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 16px !important;
+  font-family: 'Inter', 'Outfit', sans-serif !important;
+}
+
+.swal2-title {
+  color: #ffffff !important;
+  font-size: 1.1rem !important;
+}
+
+.swal2-html-container, .swal2-content {
+  color: #b0b0c0 !important;
+  font-size: 0.9rem !important;
+}
+
+.swal2-confirm {
+  background: #c8a94a !important;
+  color: #000 !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+}
+
+.swal2-cancel {
+  background: #333 !important;
+  color: #e2e2e2 !important;
+  border-radius: 8px !important;
+}
+
+/* Toast styles */
+.swal2-toast.swal-dark-toast {
+  background: rgba(20, 20, 35, 0.97) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+.swal2-toast .swal2-title {
+  font-size: 0.9rem !important;
+  color: #ffffff !important;
+}
+
+.swal2-toast .swal2-html-container {
+  font-size: 0.82rem !important;
+  color: #b0b0c0 !important;
+  margin-top: 2px !important;
+}
+
+.swal2-toast .swal2-timer-progress-bar {
+  background: #c8a94a !important;
+}
+
+.swal2-toast .swal2-icon {
+  width: 1.6em !important;
+  height: 1.6em !important;
+  margin: 0 !important;
+}

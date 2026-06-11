@@ -267,6 +267,8 @@ router.get('/:slugOrId/track/:code', async (req, res) => {
     const gestor = await get('SELECT id, user_id FROM gestores WHERE id = ? OR slug = ?', [slugOrId, slugOrId]);
     if (!gestor) return res.status(404).json({ error: 'Gestor no encontrado' });
 
+    const user = await get('SELECT crm_stages FROM users WHERE id = ?', [gestor.user_id]);
+
     const deal = await get(
       `SELECT stage, title, updated_at FROM crm_deals 
        WHERE user_id = ? AND tracking_code = ? AND deal_type = 'tramite'`,
@@ -278,7 +280,8 @@ router.get('/:slugOrId/track/:code', async (req, res) => {
     res.json({
       title: deal.title,
       stage: deal.stage,
-      updatedAt: deal.updated_at
+      updatedAt: deal.updated_at,
+      stages: user?.crm_stages ? JSON.parse(user.crm_stages) : null
     });
   } catch (err) {
     console.error(err);

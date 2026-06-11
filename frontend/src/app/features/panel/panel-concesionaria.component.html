@@ -38,7 +38,7 @@
 
     <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Panel CRM</button>
     <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
-      🎯 Pipeline
+      🎯 Embudo de Ventas
       @if (crmDashboard()?.totals?.active) {
         <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
       }
@@ -48,6 +48,7 @@
     <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation'); isMobileMenuOpen.set(false)">⭐ Reputación</button>
     <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
     <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">⚙️ Perfil</button>
+    <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
     <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer'); isMobileMenuOpen.set(false)">📄 PDF Cotización</button>
     <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">🌐 Constructor Web</button>
     <a routerLink="/autos" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Ver catálogo</a>
@@ -212,7 +213,31 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Ubicación</label><input [(ngModel)]="form.location" placeholder="Ciudad"></div>
-          <div class="form-group"><label>URL imagen</label><input [(ngModel)]="form.imageUrl" placeholder="https://..."></div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Fotos del vehículo (Galería)</label>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom: 8px;">
+            <input type="file" accept="image/*" multiple (change)="onCarImagesSelected($event)" #carImageInput style="display:none">
+            <button class="btn-ghost small" (click)="carImageInput.click()">+ Subir Fotos</button>
+            <button class="btn-ghost small" (click)="addManualImageUrl()">+ URL Manual</button>
+            @if (isUploadingCarImages) { <span class="card-desc">Subiendo...</span> }
+          </div>
+          
+          @if (form.images?.length) {
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
+              @for (img of form.images; track $index) {
+                <div style="position:relative; border: 1px solid var(--border); border-radius:4px; padding:4px; background:var(--surface);">
+                  <img [src]="img" style="width:80px; height:60px; object-fit:cover; border-radius:4px;">
+                  <button class="btn-delete small" style="position:absolute; top:-8px; right:-8px; width:22px; height:22px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%;" (click)="removeCarImage($index)">✕</button>
+                  @if ($index === 0) {
+                    <div style="position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); background:var(--gold); color:#000; font-size:10px; padding:2px 6px; border-radius:4px; font-weight:bold; white-space:nowrap;">Portada</div>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc" style="font-size:12px;">Sube o añade URLs para mostrar una galería. La primera será la portada.</p>
+          }
         </div>
         <div class="form-group" style="margin-bottom:16px;">
           <label>Descripción</label>
@@ -359,6 +384,34 @@
     <!-- ── PDF DESIGNER ── -->
     @if (tab() === 'pdf_designer') {
       <app-pdf-designer></app-pdf-designer>
+    }
+
+    <!-- ── AJUSTES CRM ── -->
+    @if (tab() === 'ajustes-crm') {
+      <div class="dash-card">
+        <h2 class="card-title">⚙️ Ajustes del CRM</h2>
+        <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
+        
+        <div class="stages-list" style="margin-top: 20px;">
+          @for (stage of crmStages; track stage.id; let i = $index) {
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+              <span style="color: var(--gold); font-weight: bold; width: 24px;">{{ i + 1 }}.</span>
+              <input type="text" [(ngModel)]="stage.label" placeholder="Nombre de la etapa" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+              
+              <button class="btn-ghost small" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">⬆️</button>
+              <button class="btn-ghost small" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">⬇️</button>
+              <button class="btn-delete small" (click)="removeCrmStage(i)" title="Eliminar etapa">❌</button>
+            </div>
+          }
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
+          <button class="btn-copy" (click)="saveCrmStages()" [disabled]="isSavingStages" style="min-width:150px;">
+            {{ isSavingStages ? 'Guardando...' : 'Guardar Ajustes' }}
+          </button>
+        </div>
+      </div>
     }
   </main>
 </div>

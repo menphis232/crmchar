@@ -64,7 +64,7 @@ export class AuthService {
     else this.router.navigate(['/']);
   }
 
-  updateMe(data: { name?: string; logo_url?: string; pdf_settings?: any; google_analytics_id?: string; stripe_secret_key?: string; stripe_public_key?: string; stripe_price_id?: string; ai_provider?: string; ai_api_key?: string; page_builder_config?: any; chatbot_bg_color?: string; chatbot_btn_color?: string; chatbot_text_color?: string; description?: string | null; phone?: string | null; address?: string | null; map_embed_url?: string | null; }) {
+  updateMe(data: { name?: string; logo_url?: string; pdf_settings?: any; google_analytics_id?: string; stripe_secret_key?: string; stripe_public_key?: string; stripe_price_id?: string; ai_provider?: string; ai_api_key?: string; page_builder_config?: any; chatbot_bg_color?: string; chatbot_btn_color?: string; chatbot_text_color?: string; description?: string | null; phone?: string | null; address?: string | null; map_embed_url?: string | null; crm_stages?: any[]; }) {
     return this.http.patch<{ user: User }>(`${environment.apiUrl}/auth/me`, data).pipe(
       tap(res => {
         const token = this.getToken();

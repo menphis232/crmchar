@@ -16,15 +16,17 @@ import { NotificationBellComponent } from '../../shared/notification-bell.compon
 import { CrmTeamComponent } from './crm-team.component';
 import { FinancesComponent } from './finances.component';
 import { PageBuilderComponent } from './page-builder.component';
+import { ToastService } from '../../core/toast.service';
+import { ColorPickerComponent } from '../../shared/color-picker.component';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder';
+type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm';
 
 @Component({
   selector: 'app-panel-gestor',
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent
+    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, ColorPickerComponent
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrl: './panel-dashboard.css',
@@ -61,6 +63,10 @@ export class PanelGestorComponent implements OnInit {
   newTemplate = { name: '', content: '' };
   isMobileMenuOpen = signal(false);
 
+  // CRM Stages Settings
+  crmStages: { id: string, label: string }[] = [];
+  isSavingStages = false;
+
   constructor(
     public auth: AuthService,
     private gestoresService: GestoresService,
@@ -69,6 +75,7 @@ export class PanelGestorComponent implements OnInit {
     private themeService: ThemeService,
     private uploadService: UploadService,
     private http: HttpClient,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -122,6 +129,14 @@ export class PanelGestorComponent implements OnInit {
       this.chatbotBgColor = res.user.chatbot_bg_color || '#000000';
       this.chatbotBtnColor = res.user.chatbot_btn_color || '#4F46E5';
       this.chatbotTextColor = res.user.chatbot_text_color || '#FFFFFF';
+      this.crmStages = res.user.crm_stages ? [...res.user.crm_stages] : [
+        { id: 'nuevo', label: 'Nuevo' },
+        { id: 'contactado', label: 'Contactado' },
+        { id: 'en_tramite', label: 'En trámite' },
+        { id: 'documentacion', label: 'Documentación' },
+        { id: 'completado', label: 'Completado' },
+        { id: 'perdido', label: 'Perdido' }
+      ];
     });
   }
 
@@ -246,6 +261,47 @@ export class PanelGestorComponent implements OnInit {
     this.auth.updateMe({ page_builder_config: config }).subscribe(() => {
       this.message.set('Diseño de página guardado exitosamente');
       setTimeout(() => this.message.set(''), 3000);
+    });
+  }
+
+  // CRM Stages Settings Methods
+  addCrmStage() {
+    this.crmStages.push({ id: `etapa_${Date.now()}`, label: 'Nueva Etapa' });
+  }
+
+  removeCrmStage(index: number) {
+    if (this.crmStages.length <= 2) {
+      alert('Debes tener al menos 2 etapas.');
+      return;
+    }
+    this.crmStages.splice(index, 1);
+  }
+
+  moveCrmStageUp(index: number) {
+    if (index === 0) return;
+    const temp = this.crmStages[index];
+    this.crmStages[index] = this.crmStages[index - 1];
+    this.crmStages[index - 1] = temp;
+  }
+
+  moveCrmStageDown(index: number) {
+    if (index === this.crmStages.length - 1) return;
+    const temp = this.crmStages[index];
+    this.crmStages[index] = this.crmStages[index + 1];
+    this.crmStages[index + 1] = temp;
+  }
+
+  saveCrmStages() {
+    this.isSavingStages = true;
+    this.auth.updateMe({ crm_stages: this.crmStages }).subscribe({
+      next: () => {
+        this.isSavingStages = false;
+        this.toast.success('Las etapas del embudo de ventas han sido actualizadas.', '¡Guardado!');
+        this.loadCrm();
+      },
+      error: () => {
+        this.isSavingStages = false;
+      }
     });
   }
 

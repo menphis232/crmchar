@@ -11,10 +11,11 @@ import { CrmTodayInboxComponent } from './crm-today-inbox.component';
 import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
+import { ToastService } from '../../core/toast.service';
 
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 
-type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder';
+type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm';
 
 @Component({
   selector: 'app-panel-concesionaria',
@@ -45,6 +46,10 @@ export class PanelConcesionariaComponent implements OnInit {
   message = signal('');
   newTemplate = { name: '', content: '' };
 
+  // CRM Stages Settings
+  crmStages: { id: string, label: string }[] = [];
+  isSavingStages = false;
+
   form: Partial<Auto> & { status?: AutoStatus } = this.emptyForm();
 
   constructor(
@@ -55,6 +60,7 @@ export class PanelConcesionariaComponent implements OnInit {
     private siteService: SiteService,
     private themeService: ThemeService,
     private uploadService: UploadService,
+    private toast: ToastService,
   ) {}
 
   ngOnInit() {
@@ -76,13 +82,21 @@ export class PanelConcesionariaComponent implements OnInit {
       this.profileAddress = (u as any).address || '';
       this.profileMapEmbedUrl = (u as any).map_embed_url || '';
       this.publicSlug = (u as any).slug || '';
+      this.crmStages = u.crm_stages ? [...u.crm_stages] : [
+        { id: 'lead_nuevo', label: 'Lead Nuevo' },
+        { id: 'contactado', label: 'Contactado' },
+        { id: 'visita', label: 'Visita Showroom' },
+        { id: 'negociacion', label: 'Negociación / Crédito' },
+        { id: 'vendido', label: 'Vendido' },
+        { id: 'perdido', label: 'Perdido' }
+      ];
     });
   }
 
   emptyForm() {
     return {
       make: '', model: '', year: new Date().getFullYear(), price: 0, mileage: 0,
-      transmission: 'Automático', location: '', description: '', imageUrl: '', status: 'draft' as AutoStatus,
+      transmission: 'Automático', location: '', description: '', imageUrl: '', images: [], status: 'draft' as AutoStatus,
     };
   }
 
@@ -164,9 +178,54 @@ export class PanelConcesionariaComponent implements OnInit {
 
   startEdit(car: Auto) {
     this.editing.set(car);
-    this.form = { ...car, status: car.status || 'draft' };
+    this.form = { ...car, status: car.status || 'draft', images: car.images || [] };
     this.tab.set('edit');
   }
+
+  // --- CAR GALLERY LOGIC ---
+  isUploadingCarImages = false;
+
+  onCarImagesSelected(event: any) {
+    const files = Array.from(event.target.files) as File[];
+    if (!files.length) return;
+    this.isUploadingCarImages = true;
+    
+    const uploads = files.map(file => {
+      return new Promise<string>((resolve, reject) => {
+        this.uploadService.uploadFile(file).subscribe({
+          next: (res: any) => resolve(res.url),
+          error: (err) => reject(err)
+        });
+      });
+    });
+
+    Promise.all(uploads).then(urls => {
+      if (!this.form.images) this.form.images = [];
+      this.form.images.push(...urls);
+      if (this.form.images.length > 0) this.form.imageUrl = this.form.images[0];
+      this.isUploadingCarImages = false;
+      this.toast.success('Fotos subidas correctamente', '¡Éxito!');
+    }).catch(() => {
+      this.isUploadingCarImages = false;
+      this.toast.error('Error al subir algunas fotos', 'Error');
+    });
+  }
+
+  addManualImageUrl() {
+    const url = prompt('Ingresa la URL de la imagen:');
+    if (url && url.startsWith('http')) {
+      if (!this.form.images) this.form.images = [];
+      this.form.images.push(url);
+      if (this.form.images.length === 1) this.form.imageUrl = url;
+    }
+  }
+
+  removeCarImage(index: number) {
+    if (!this.form.images) return;
+    this.form.images.splice(index, 1);
+    this.form.imageUrl = this.form.images.length > 0 ? this.form.images[0] : '';
+  }
+  // -------------------------
 
   saveCar(asDraft = false) {
     const status: AutoStatus = asDraft ? 'draft' : (this.form.status === 'baja' ? 'baja' : 'published');
@@ -178,14 +237,14 @@ export class PanelConcesionariaComponent implements OnInit {
 
     obs.subscribe({
       next: () => {
-        this.message.set(asDraft ? 'Borrador guardado' : 'Vehículo guardado');
+        this.toast.success(asDraft ? 'Borrador guardado' : 'Vehículo guardado', '¡Éxito!');
         this.form = this.emptyForm();
         this.editing.set(null);
         this.loadInventory();
         this.loadDashboard();
         this.tab.set('inventory');
       },
-      error: (e) => this.message.set(e.error?.error || 'Error al guardar'),
+      error: (e) => this.toast.error(e.error?.error || 'Error al guardar', 'Error'),
     });
   }
 
@@ -252,12 +311,52 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
-  savePageBuilder(config: PageBuilderConfig) {
-    this.auth.updateMe({ page_builder_config: config }).subscribe({
-      next: () => this.message.set('Diseño de página guardado.'),
-      error: () => this.message.set('Error al guardar diseño.'),
+  savePageBuilder(config: any) {
+    this.auth.updateMe({ page_builder_config: config }).subscribe(() => {
+      this.message.set('Diseño de página guardado exitosamente');
+      setTimeout(() => this.message.set(''), 3000);
     });
-    setTimeout(() => this.message.set(''), 3000);
+  }
+
+  // CRM Stages Settings Methods
+  addCrmStage() {
+    this.crmStages.push({ id: `etapa_${Date.now()}`, label: 'Nueva Etapa' });
+  }
+
+  removeCrmStage(index: number) {
+    if (this.crmStages.length <= 2) {
+      alert('Debes tener al menos 2 etapas.');
+      return;
+    }
+    this.crmStages.splice(index, 1);
+  }
+
+  moveCrmStageUp(index: number) {
+    if (index === 0) return;
+    const temp = this.crmStages[index];
+    this.crmStages[index] = this.crmStages[index - 1];
+    this.crmStages[index - 1] = temp;
+  }
+
+  moveCrmStageDown(index: number) {
+    if (index === this.crmStages.length - 1) return;
+    const temp = this.crmStages[index];
+    this.crmStages[index] = this.crmStages[index + 1];
+    this.crmStages[index + 1] = temp;
+  }
+
+  saveCrmStages() {
+    this.isSavingStages = true;
+    this.auth.updateMe({ crm_stages: this.crmStages }).subscribe({
+      next: () => {
+        this.isSavingStages = false;
+        this.toast.success('Las etapas del embudo de ventas han sido actualizadas.', '¡Guardado!');
+        this.loadCrm();
+      },
+      error: () => {
+        this.isSavingStages = false;
+      }
+    });
   }
 
   saveProfile() {
@@ -269,8 +368,8 @@ export class PanelConcesionariaComponent implements OnInit {
       address: this.profileAddress || null,
       map_embed_url: this.profileMapEmbedUrl || null,
     }).subscribe({
-      next: () => this.message.set('Perfil actualizado correctamente.'),
-      error: () => this.message.set('Error al actualizar el perfil')
+      next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
+      error: () => {}
     });
   }
 

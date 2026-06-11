@@ -20,8 +20,30 @@ export const VENTA_STAGE_LABELS = {
   perdido: 'Perdido',
 };
 
-export function stagesForRole(role) {
+export function stagesForRole(role, userStagesJson = null) {
+  if (userStagesJson) {
+    try {
+      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
+      if (Array.isArray(stages) && stages.length > 0) {
+        return stages.map(s => s.id);
+      }
+    } catch(e) {}
+  }
   return role === 'gestor' ? TRAMITE_STAGES : VENTA_STAGES;
+}
+
+export function stageLabelsForUser(role, userStagesJson = null) {
+  if (userStagesJson) {
+    try {
+      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
+      if (Array.isArray(stages) && stages.length > 0) {
+        const map = {};
+        stages.forEach(s => map[s.id] = s.label);
+        return map;
+      }
+    } catch(e) {}
+  }
+  return role === 'gestor' ? TRAMITE_STAGE_LABELS : VENTA_STAGE_LABELS;
 }
 
 export function dealTypeForRole(role) {

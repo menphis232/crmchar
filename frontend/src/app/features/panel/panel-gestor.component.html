@@ -41,7 +41,7 @@
     }
     @if (hasPerm('pipeline')) {
       <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
-        📋 Pipeline
+        📋 Embudo de Ventas
         @if (crmDashboard()?.totals?.active) {
           <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
         }
@@ -55,6 +55,7 @@
     }
     @if (hasPerm('perfil')) {
       <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">👤 Mi perfil</button>
+      <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
     }
     @if (hasPerm('plantillas')) {
       <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
@@ -302,26 +303,17 @@
             
             <h4 style="color:var(--gold); font-size:12px; margin-top:16px; margin-bottom:8px;">🎨 Diseño del Chatbot</h4>
             <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
-              <div class="form-group" style="flex:1;">
+              <div class="form-group" style="flex:1; min-width: 250px;">
                 <label>Fondo de la ventana</label>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <input type="color" [(ngModel)]="chatbotBgColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
-                  <input type="text" [(ngModel)]="chatbotBgColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                </div>
+                <app-color-picker [(value)]="chatbotBgColor"></app-color-picker>
               </div>
-              <div class="form-group" style="flex:1;">
+              <div class="form-group" style="flex:1; min-width: 250px;">
                 <label>Color de botones</label>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <input type="color" [(ngModel)]="chatbotBtnColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
-                  <input type="text" [(ngModel)]="chatbotBtnColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                </div>
+                <app-color-picker [(value)]="chatbotBtnColor"></app-color-picker>
               </div>
-              <div class="form-group" style="flex:1;">
+              <div class="form-group" style="flex:1; min-width: 250px;">
                 <label>Color de texto</label>
-                <div style="display:flex; gap:8px; align-items:center;">
-                  <input type="color" [(ngModel)]="chatbotTextColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
-                  <input type="text" [(ngModel)]="chatbotTextColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                </div>
+                <app-color-picker [(value)]="chatbotTextColor"></app-color-picker>
               </div>
             </div>
           </div>
@@ -406,6 +398,32 @@
         [profile]="profile()"
         (configChange)="savePageBuilderConfig($event)">
       </app-page-builder>
+    }
+
+    <!-- ── AJUSTES CRM ── -->
+    @if (tab() === 'ajustes-crm') {
+      <div class="dash-card">
+        <h2 class="card-title">⚙️ Ajustes del CRM</h2>
+        <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
+        
+        <div class="stages-list" style="margin-top: 20px;">
+          @for (stage of crmStages; track stage.id; let i = $index) {
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
+              <span style="color: var(--gold); font-weight: bold; width: 24px;">{{ i + 1 }}.</span>
+              <input type="text" [(ngModel)]="stage.label" placeholder="Nombre de la etapa" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+              
+              <button class="btn-ghost small" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">⬆️</button>
+              <button class="btn-ghost small" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">⬇️</button>
+              <button class="btn-delete small" (click)="removeCrmStage(i)" title="Eliminar etapa">❌</button>
+            </div>
+          }
+        </div>
+        
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
+          <button class="btn-copy" (click)="saveCrmStages()">Guardar Ajustes</button>
+        </div>
+      </div>
     }
   </main>
 </div>

@@ -2,6 +2,7 @@ import { Component, Input, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../core/api.service';
 import { CustomBlock, SiteSettings } from '../../models';
+import { ColorPickerComponent } from '../../shared/color-picker.component';
 
 function hexToRgb(hex: string) {
   const h = hex.replace('#', '');

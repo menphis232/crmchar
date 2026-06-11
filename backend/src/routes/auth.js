@@ -129,7 +129,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     let profile = null;
@@ -148,6 +148,9 @@ router.get('/me', authRequired, async (req, res) => {
     if (user.page_builder_config && typeof user.page_builder_config === 'string') {
       try { user.page_builder_config = JSON.parse(user.page_builder_config); } catch(e){}
     }
+    if (user.crm_stages && typeof user.crm_stages === 'string') {
+      try { user.crm_stages = JSON.parse(user.crm_stages); } catch(e){}
+    }
 
     res.json({ user, profile });
   } catch (err) {
@@ -158,7 +161,7 @@ router.get('/me', authRequired, async (req, res) => {
 
 router.patch('/me', authRequired, async (req, res) => {
   try {
-    const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, description, phone, address, map_embed_url } = req.body;
+    const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, description, phone, address, map_embed_url, crm_stages } = req.body;
     
     const sets = [];
     const params = [];
@@ -180,13 +183,14 @@ router.patch('/me', authRequired, async (req, res) => {
     if (phone !== undefined) { sets.push('phone = ?'); params.push(phone || null); }
     if (address !== undefined) { sets.push('address = ?'); params.push(address || null); }
     if (map_embed_url !== undefined) { sets.push('map_embed_url = ?'); params.push(map_embed_url || null); }
+    if (crm_stages !== undefined) { sets.push('crm_stages = ?'); params.push(JSON.stringify(crm_stages)); }
     
     if (sets.length > 0) {
       params.push(req.user.id);
       await run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     }
     
-    const user = await get('SELECT id, email, role, name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {
       try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}
@@ -194,11 +198,18 @@ router.patch('/me', authRequired, async (req, res) => {
     if (user.page_builder_config && typeof user.page_builder_config === 'string') {
       try { user.page_builder_config = JSON.parse(user.page_builder_config); } catch(e){}
     }
+    if (user.permissions && typeof user.permissions === 'string') {
+      try { user.permissions = JSON.parse(user.permissions); } catch(e){}
+    }
+    if (user.crm_stages && typeof user.crm_stages === 'string') {
+      try { user.crm_stages = JSON.parse(user.crm_stages); } catch(e){}
+    }
     
+    console.log('[DEBUG] PATCH /me success, returning user');
     res.json({ user });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar usuario' });
+    console.error('[DEBUG] PATCH /me ERROR:', err);
+    res.status(500).json({ error: 'Error al actualizar usuario', details: err.message });
   }
 });
 

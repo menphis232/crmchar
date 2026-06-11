@@ -7,7 +7,7 @@ import {
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
-  stagesForRole, TRAMITE_STAGE_LABELS, VENTA_STAGE_LABELS,
+  stagesForRole, stageLabelsForUser,
 } from '../crm/stages.js';
 import { generateQuotePdf } from '../crm/pdf-generator.js';
 import Stripe from 'stripe';
@@ -63,7 +63,9 @@ router.get('/dashboard', async (req, res) => {
     const uid = req.orgId;
     const role = req.user.role;
     const dealType = dealTypeForRole(role);
-    const stages = stagesForRole(role);
+    const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
+    const stages = stagesForRole(role, userRow?.crm_stages);
+    const stageLabels = stageLabelsForUser(role, userRow?.crm_stages);
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     const lostStage = 'perdido';
 
@@ -125,7 +127,7 @@ router.get('/dashboard', async (req, res) => {
       },
       byStage,
       stages,
-      stageLabels: role === 'gestor' ? TRAMITE_STAGE_LABELS : VENTA_STAGE_LABELS,
+      stageLabels,
       lostReasons: LOST_REASONS,
     });
   } catch (err) {
@@ -463,7 +465,8 @@ router.patch('/deals/:id', async (req, res) => {
     const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
-    const allowedStages = stagesForRole(role);
+    const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
+    const allowedStages = stagesForRole(role, userRow?.crm_stages);
     if (stage && !allowedStages.includes(stage)) {
       return res.status(400).json({ error: 'Etapa inválida' });
     }

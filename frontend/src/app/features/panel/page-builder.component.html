@@ -31,12 +31,34 @@
     <div style="margin-top:40px; border-top:1px solid var(--border); padding-top:16px;">
       <h3>Diseño General</h3>
       <label>Color Principal</label>
-      <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()" style="width:100%; height:40px; border:none; cursor:pointer;">
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; margin-bottom:8px;">
+        @for (c of presetColors; track c) {
+          <div [style.background]="c" (click)="theme().primaryColor = c; emitChange()"
+               style="width:24px; height:24px; border-radius:4px; cursor:pointer; border: 2px solid transparent;"
+               [style.borderColor]="theme().primaryColor === c ? '#fff' : 'transparent'"
+               [style.boxShadow]="theme().primaryColor === c ? '0 0 0 2px var(--gold)' : 'none'"></div>
+        }
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()" style="width:40px; height:40px; border:none; cursor:pointer; padding:0; background:none;">
+        <span style="font-size:12px; color:var(--muted);">O elige un color personalizado</span>
+      </div>
       
-      <label style="margin-top:12px; display:block;">Color Texto de Botones</label>
-      <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()" style="width:100%; height:40px; border:none; cursor:pointer;">
+      <label style="margin-top:16px; display:block;">Color Texto de Botones</label>
+      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; margin-bottom:8px;">
+        @for (c of presetColors; track c) {
+          <div [style.background]="c" (click)="theme().buttonTextColor = c; emitChange()"
+               style="width:24px; height:24px; border-radius:4px; cursor:pointer; border: 2px solid transparent;"
+               [style.borderColor]="theme().buttonTextColor === c ? '#fff' : 'transparent'"
+               [style.boxShadow]="theme().buttonTextColor === c ? '0 0 0 2px var(--gold)' : 'none'"></div>
+        }
+      </div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()" style="width:40px; height:40px; border:none; cursor:pointer; padding:0; background:none;">
+        <span style="font-size:12px; color:var(--muted);">Personalizado</span>
+      </div>
 
-      <label style="margin-top:12px; display:block;">Fuente</label>
+      <label style="margin-top:16px; display:block;">Fuente</label>
       <select [(ngModel)]="theme().fontFamily" (change)="emitChange()">
         <option value="Inter">Inter</option>
         <option value="Roboto">Roboto</option>

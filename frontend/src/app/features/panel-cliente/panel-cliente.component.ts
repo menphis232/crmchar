@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-panel-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, CurrencyPipe, TitleCasePipe],
+  imports: [CommonModule, FormsModule, DatePipe, CurrencyPipe],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['./panel-cliente.component.css']
 })

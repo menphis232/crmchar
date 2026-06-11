@@ -22,10 +22,7 @@
     <div class="settings-section">
       <div class="form-group">
         <label>Color Principal</label>
-        <div class="color-picker-wrap">
-          <input type="color" [ngModel]="primaryColor()" (ngModelChange)="primaryColor.set($event)">
-          <span class="color-hex">{{ primaryColor() }}</span>
-        </div>
+        <app-color-picker [value]="primaryColor()" (valueChange)="primaryColor.set($event)"></app-color-picker>
       </div>
       
       <div class="form-group">

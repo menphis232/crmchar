@@ -19,24 +19,30 @@ export interface User {
   email: string;
   role: 'gestor' | 'concesionaria' | 'cliente' | 'admin';
   name: string;
+  parent_id?: string;
+  permissions?: string[];
   logo_url?: string;
   pdf_settings?: {
     layout: string[];
     primaryColor?: string;
     footerText?: string;
   };
-  parent_id?: string;
-  permissions?: string[];
   google_analytics_id?: string;
   stripe_secret_key?: string;
   stripe_public_key?: string;
   stripe_price_id?: string;
-  ai_provider?: string;
+  page_builder_config?: PageBuilderConfig;
+  ai_provider?: 'gemini' | 'openai';
   ai_api_key?: string;
   chatbot_bg_color?: string;
   chatbot_btn_color?: string;
   chatbot_text_color?: string;
-  page_builder_config?: PageBuilderConfig;
+  slug?: string;
+  description?: string;
+  phone?: string;
+  address?: string;
+  map_embed_url?: string;
+  crm_stages?: { id: string; label: string }[];
 }
 
 export type AutoStatus = 'draft' | 'published' | 'baja';

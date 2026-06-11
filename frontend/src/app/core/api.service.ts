@@ -30,7 +30,7 @@ export class GestoresService {
     return this.http.post(`${this.base}/${gestorId}/solicitudes`, data);
   }
   trackSolicitud(slugOrId: string, code: string) {
-    return this.http.get<{ title: string; stage: string; updatedAt: string }>(`${this.base}/${slugOrId}/track/${code}`);
+    return this.http.get<{ title: string; stage: string; updatedAt: string, stages?: { id: string, label: string }[] }>(`${this.base}/${slugOrId}/track/${code}`);
   }
   getReviewContext(dealId: string) {
     return this.http.get<{ title: string; gestorName: string; gestorId: string }>(`${this.base}/review-context/${dealId}`);

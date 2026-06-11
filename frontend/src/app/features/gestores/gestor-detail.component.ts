@@ -92,16 +92,25 @@ export class GestorDetailComponent implements OnInit {
 
     this.gestoresService.trackSolicitud(slug, this.trackCode.trim()).subscribe({
       next: (res) => {
-        const stages: Record<string, string> = {
-          'nuevo': 'Recibido',
-          'contactado': 'En Revisión',
-          'en_tramite': 'En Trámite',
-          'completado': 'Completado',
-          'perdido': 'Cancelado / Perdido'
-        };
+        let stageLabel = res.stage;
+        if (res.stages && Array.isArray(res.stages)) {
+          const match = res.stages.find(s => s.id === res.stage);
+          if (match) stageLabel = match.label;
+        } else {
+          // Fallback static stages
+          const stages: Record<string, string> = {
+            'nuevo': 'Recibido',
+            'contactado': 'En Revisión',
+            'en_tramite': 'En Trámite',
+            'completado': 'Completado',
+            'perdido': 'Cancelado / Perdido'
+          };
+          stageLabel = stages[res.stage] || res.stage;
+        }
+
         this.trackResult.set({
           title: res.title,
-          stageLabel: stages[res.stage] || res.stage,
+          stageLabel,
           updatedAt: res.updatedAt
         });
         this.trackLoading.set(false);

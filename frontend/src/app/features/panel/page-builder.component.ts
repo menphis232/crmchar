@@ -43,6 +43,11 @@ export class PageBuilderComponent implements OnInit {
   mainBlocks = signal<PageBlock[]>([]);
   sidebarBlocks = signal<PageBlock[]>([]);
 
+  presetColors = [
+    '#00d084', '#0693e3', '#eb144c', '#f78da7', '#9900ef', 
+    '#ff6900', '#fcb900', '#7bd148', '#abb8c3', '#1a1d24'
+  ];
+
   ngOnInit() {
     if (this.config && this.config.blocks?.length > 0) {
       this.mainBlocks.set(this.config.blocks.filter(b => b.region !== 'sidebar'));

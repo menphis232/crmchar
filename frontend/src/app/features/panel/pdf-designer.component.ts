@@ -21,7 +21,7 @@ const DEFAULT_BLOCKS: PdfBlockDef[] = [
 @Component({
   selector: 'app-pdf-designer',
   standalone: true,
-  imports: [DragDropModule, FormsModule],
+  imports: [DragDropModule, FormsModule, CommonModule, ColorPickerComponent],
   templateUrl: './pdf-designer.component.html',
   styleUrl: './pdf-designer.component.css'
 })

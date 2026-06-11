@@ -1,45 +1,28 @@
-import mysql from 'mysql2/promise';
+import { query } from '../src/db.js';
 
-const c = await mysql.createConnection({host:'localhost',user:'root',password:'',multipleStatements:true});
-await c.query('USE tramites_vehiculares');
+const migrations = [
+  "ALTER TABLE users ADD COLUMN slug VARCHAR(120) DEFAULT NULL",
+  "ALTER TABLE users ADD COLUMN description TEXT DEFAULT NULL",
+  "ALTER TABLE users ADD COLUMN phone VARCHAR(40) DEFAULT NULL",
+  "ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL",
+  "ALTER TABLE users ADD COLUMN map_embed_url TEXT DEFAULT NULL",
+  "ALTER TABLE gestores ADD COLUMN phone VARCHAR(40) DEFAULT NULL",
+  "ALTER TABLE gestores ADD COLUMN address VARCHAR(255) DEFAULT NULL",
+  "ALTER TABLE gestores ADD COLUMN map_embed_url TEXT DEFAULT NULL",
+];
 
-const userCols = {
-  slug: 'VARCHAR(120)',
-  description: 'TEXT',
-  phone: 'VARCHAR(40)',
-  address: 'VARCHAR(255)',
-  map_embed_url: 'TEXT',
-};
-
-for (const [col, type] of Object.entries(userCols)) {
+for (const sql of migrations) {
   try {
-    await c.query(`ALTER TABLE users ADD COLUMN ${col} ${type} DEFAULT NULL`);
-    console.log(`users.${col} ✓`);
-  } catch(e) {
-    if (e.code === 'ER_DUP_FIELDNAME') console.log(`users.${col} ya existe`);
-    else throw e;
+    await query(sql);
+    console.log('✅ OK:', sql.slice(0, 60));
+  } catch (e) {
+    if (e.code === 'ER_DUP_FIELDNAME') {
+      console.log('⚠️  Ya existe:', sql.slice(0, 60));
+    } else {
+      console.error('❌ ERROR:', e.message);
+    }
   }
 }
 
-const gestorCols = { phone: 'VARCHAR(40)', address: 'VARCHAR(255)', map_embed_url: 'TEXT' };
-for (const [col, type] of Object.entries(gestorCols)) {
-  try {
-    await c.query(`ALTER TABLE gestores ADD COLUMN ${col} ${type} DEFAULT NULL`);
-    console.log(`gestores.${col} ✓`);
-  } catch(e) {
-    if (e.code === 'ER_DUP_FIELDNAME') console.log(`gestores.${col} ya existe`);
-    else throw e;
-  }
-}
-
-// Generate slugs for concesionarias
-const [rows] = await c.query("SELECT id, name FROM users WHERE role='concesionaria' AND (slug IS NULL OR slug='')");
-for (const row of rows) {
-  const base = row.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-  const slug = `${base}-${row.id.slice(0,6)}`;
-  await c.query('UPDATE users SET slug=? WHERE id=?', [slug, row.id]);
-  console.log(`Slug generado: ${slug}`);
-}
-
-await c.end();
-console.log('\n✅ Migración v21 aplicada exitosamente');
+console.log('Migración v21 completada.');
+process.exit(0);
