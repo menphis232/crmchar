@@ -1,0 +1,49 @@
+<app-nav />
+
+<header class="catalog-header gestores-header">
+  <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'DIRECTORIO DE GESTORES' }}</h1>
+  <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Encuentra expertos certificados.' }}</p>
+</header>
+
+<div class="catalog-container">
+  <aside class="filters">
+    <div class="filter-group">
+      <h4 class="green">ESTADO</h4>
+      @for (s of states(); track s.state) {
+        <label>
+          <input type="checkbox" [checked]="selectedState() === s.state"
+                 (change)="onStateChange(s.state, $any($event.target).checked)">
+          {{ s.state }} ({{ s.count }})
+        </label>
+      }
+    </div>
+    <div class="filter-group">
+      <h4 class="green">CALIFICACIÓN</h4>
+      <label><input type="radio" name="rating" (change)="onRatingChange(5)"> ⭐ 5 Estrellas</label>
+      <label><input type="radio" name="rating" (change)="onRatingChange(4)"> ⭐ 4+ Estrellas</label>
+      <label><input type="radio" name="rating" (change)="onRatingChange(0)" checked> Todas</label>
+    </div>
+  </aside>
+
+  <main class="agent-grid">
+    @if (loading()) {
+      <p class="loading">Cargando gestores...</p>
+    } @else if (gestores().length === 0) {
+      <p class="empty-msg">No hay gestores con esos filtros.</p>
+    } @else {
+      @for (g of gestores(); track g.id) {
+        <a [routerLink]="['/gestores', g.slug]" class="agent-card">
+          <img [src]="g.bannerUrl" class="agent-banner" alt="Banner">
+          <img [src]="g.photoUrl" class="agent-img" [alt]="g.name">
+          <h3 class="agent-name">{{ g.name }}</h3>
+          <div class="agent-location">📍 {{ g.location }}</div>
+          <div class="agent-stats">
+            <span>⭐ {{ g.rating }}/5</span>
+            <span>📁 {{ g.tramitesCount | number }} Trámites</span>
+          </div>
+          <div class="btn-view">VER PERFIL</div>
+        </a>
+      }
+    }
+  </main>
+</div>

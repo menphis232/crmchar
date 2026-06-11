@@ -1,0 +1,11 @@
+USE tramites_vehiculares;
+CREATE TABLE IF NOT EXISTS crm_documents (
+  id VARCHAR(36) PRIMARY KEY,
+  deal_id VARCHAR(36) NOT NULL,
+  user_id VARCHAR(36) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_url TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (deal_id) REFERENCES crm_deals(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);

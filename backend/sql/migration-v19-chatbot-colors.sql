@@ -1,0 +1,5 @@
+ALTER TABLE users ADD COLUMN chatbot_bg_color VARCHAR(20) DEFAULT '#000000';
+ALTER TABLE users ADD COLUMN chatbot_btn_color VARCHAR(20) DEFAULT '#4F46E5';
+ALTER TABLE users ADD COLUMN chatbot_text_color VARCHAR(20) DEFAULT '#FFFFFF';
+ALTER TABLE solicitudes ADD COLUMN custom_data JSON NULL;
+ALTER TABLE crm_deals ADD COLUMN client_message TEXT NULL;

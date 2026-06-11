@@ -1,0 +1,44 @@
+.login-page {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+.bg-particles {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(200,169,74,0.1), transparent 60%);
+}
+.btn-back-top {
+  position: absolute; top: 30px; left: 30px; font-family: var(--f-ui);
+  color: var(--muted); font-size: 12px; z-index: 2;
+}
+.login-container { position: relative; z-index: 1; max-width: 900px; width: 100%; padding: 40px; text-align: center; }
+.login-logo { font-family: var(--f-display); font-size: 42px; color: var(--mx-white); margin-bottom: 10px; }
+.login-logo span { color: var(--gold); }
+.login-title { font-family: var(--f-ui); font-size: 16px; color: var(--muted); margin-bottom: 40px; letter-spacing: 0.1em; }
+
+.roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+.role-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 40px 24px; cursor: pointer; transition: all 0.3s; color: inherit; text-align: center;
+}
+.role-card:hover { transform: translateY(-5px); border-color: rgba(200,169,74,0.5); }
+.role-icon { font-size: 48px; margin-bottom: 20px; }
+.role-name { font-family: var(--f-display); font-size: 28px; color: var(--mx-white); margin-bottom: 10px; }
+.role-desc { font-family: var(--f-ui); font-size: 14px; color: var(--muted); line-height: 1.5; }
+.demo-hint { margin-top: 30px; font-family: var(--f-ui); font-size: 12px; color: var(--muted); }
+
+.auth-form { max-width: 400px; margin: 0 auto; text-align: left; }
+.auth-form h2 { font-family: var(--f-display); font-size: 22px; color: var(--mx-white); margin-bottom: 24px; text-align: center; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-family: var(--f-ui); font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.form-group input {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  padding: 12px; color: var(--mx-white); border-radius: 4px; font-family: var(--f-ui);
+}
+.btn-submit {
+  width: 100%; background: var(--gold); color: var(--bg); border: none; padding: 14px;
+  font-family: var(--f-ui); font-weight: bold; cursor: pointer; border-radius: 4px; margin-top: 10px;
+}
+.btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.auth-links { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.link-btn { background: none; border: none; color: var(--muted); font-family: var(--f-ui); font-size: 13px; cursor: pointer; text-align: center; }
+.link-btn:hover { color: var(--gold); }

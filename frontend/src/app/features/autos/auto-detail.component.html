@@ -1,0 +1,174 @@
+<app-nav />
+
+@if (loading()) {
+  <p class="loading">Cargando...</p>
+} @else {
+  @if (auto(); as a) {
+    @if (a.page_builder_config; as config) {
+      @if (config.blocks?.length) {
+        <div class="dynamic-page" [style.font-family]="config.theme?.fontFamily || 'Inter'" [style.--p-theme]="config.theme?.primaryColor || '#00d084'" [style.--p-text-color]="config.theme?.buttonTextColor || '#1a1d24'">
+          
+          <!-- MAIN REGION (Contains everything not sidebar) -->
+          @for (b of config.blocks; track b.id) {
+          @if (b.region !== 'sidebar') {
+            <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+              @if (b.type === 'hero') {
+                <header class="profile-header" 
+                        [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : (a.images?.[0] ? 'url(' + a.images![0] + ')' : 'none')" 
+                        [style.background-color]="(b.data.bgUrl || a.images?.[0]) ? 'transparent' : 'var(--p-theme)'"
+                        [style.background-size]="b.data.bgSize || 'cover'"
+                        [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
+                  <div class="hero-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6);"></div>
+                  <div class="profile-info" style="position: relative; z-index: 1;">
+                    <h1 class="profile-name" style="color: #fff;">{{ b.data.title !== 'Marca Modelo 2024' && b.data.title ? b.data.title : a.make + ' ' + a.model + ' ' + a.year }}</h1>
+                    <div class="profile-location" style="color: #ddd;">📍 {{ a.location }}</div>
+                    @if (b.data.buttonText) {
+                      <button class="preview-btn" style="margin-top:20px; background:var(--p-theme); border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;" [style.color]="b.data.buttonTextColor || '#1a1d24'" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
+                    }
+                  </div>
+                </header>
+              }
+            </div>
+          }
+        }
+
+        <div class="profile-content classic-layout" style="display:flex; gap:30px; max-width:1200px; margin:0 auto; padding:20px;">
+          <div class="main-column" style="flex:1; display:flex; flex-direction:column;">
+            @for (b of config.blocks; track b.id) {
+              @if (b.region !== 'sidebar' && b.type !== 'hero') {
+                <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                  @if (b.type === 'gallery') {
+                    <div class="gallery">
+                      <img [src]="mainImage() || a.images?.[0]" class="gallery-main" style="width:100%; max-height:400px; object-fit:cover; border-radius:8px;" alt="Vehículo">
+                      @if (a.images?.length) {
+                        <div class="gallery-thumbs" style="display:flex; gap:10px; margin-top:10px; overflow-x:auto;">
+                          @for (img of a.images; track img) {
+                            <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" style="height:80px; width:120px; object-fit:cover; border-radius:4px; cursor:pointer;" alt="Miniatura">
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (b.type === 'text') {
+                    <div class="description" style="background:var(--surface); padding:20px; border-radius:8px;">
+                      <h3>{{ b.data.content === 'Bienvenido...' ? 'Descripción del Vehículo' : 'Descripción' }}</h3>
+                      <p>{{ a.description }}</p>
+                      <p style="color:var(--muted); font-size:14px; margin-top:10px;">{{ b.data.content !== 'Bienvenido...' ? b.data.content : '' }}</p>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- SIDEBAR REGION -->
+          <aside class="detail-sidebar" style="width:320px; flex-shrink:0;">
+            
+            <div class="dealer-card" style="margin-bottom: 20px;">
+              <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+              <div>
+                <div class="dealer-label">Vendido por:</div>
+                <div class="dealer-name">{{ a.dealerName }}</div>
+              </div>
+            </div>
+
+            <div class="ds-price" style="font-size:28px; font-weight:800; color:var(--gold); margin-bottom:20px;">{{ formatPrice(a.price) }}</div>
+
+            <div class="ds-specs" style="margin-bottom: 20px;">
+              <div class="ds-spec-item"><div class="ds-spec-label">AÑO</div><div class="ds-spec-value">{{ a.year }}</div></div>
+              <div class="ds-spec-item"><div class="ds-spec-label">KILOMETRAJE</div><div class="ds-spec-value">{{ a.mileage | number }} km</div></div>
+              <div class="ds-spec-item"><div class="ds-spec-label">TRANSMISIÓN</div><div class="ds-spec-value">{{ a.transmission }}</div></div>
+              <div class="ds-spec-item"><div class="ds-spec-label">UBICACIÓN</div><div class="ds-spec-value">{{ a.location }}</div></div>
+            </div>
+
+            @for (b of config.blocks; track b.id) {
+              @if (b.region === 'sidebar') {
+                <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                  @if (b.type === 'form') {
+                    <div class="inquiry-box" id="dynamic-form-section">
+                      <h3>{{ b.data.title }}</h3>
+                      <p style="font-size:13px; color:var(--muted); margin-bottom:15px;">{{ b.data.subtitle }}</p>
+                      @if (inquirySent()) {
+                        <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
+                      } @else {
+                        <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre *" class="inq-input">
+                        <input [(ngModel)]="inquiry.clientEmail" placeholder="Email *" class="inq-input">
+                        <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
+                        <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
+                        @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
+                        <button class="btn-submit btn-inquiry" (click)="sendInquiry()">ENVIAR SOLICITUD</button>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+            <a [href]="whatsappLink()" target="_blank" class="btn-whatsapp" style="display:block; text-align:center; margin-bottom:15px;">💬 Contactar por WhatsApp</a>
+            <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
+          </aside>
+        </div>
+      </div>
+      }
+    } @else {
+      <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
+      <div class="detail-container">
+        <div class="gallery">
+          <img [src]="mainImage()" class="gallery-main" alt="Vehículo">
+          @if (a.images?.length) {
+            <div class="gallery-thumbs">
+              @for (img of a.images; track img) {
+                <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" alt="Miniatura">
+              }
+            </div>
+          }
+          @if (a.description) {
+            <div class="description">
+              <h3>Descripción del Vehículo</h3>
+              <p>{{ a.description }}</p>
+            </div>
+          }
+        </div>
+
+        <aside class="detail-sidebar">
+          <div class="ds-make">{{ a.make }}</div>
+          <h1 class="ds-model">{{ a.model }}</h1>
+          <div class="ds-price">{{ formatPrice(a.price) }}</div>
+
+          <div class="ds-specs">
+            <div class="ds-spec-item"><div class="ds-spec-label">AÑO</div><div class="ds-spec-value">{{ a.year }}</div></div>
+            <div class="ds-spec-item"><div class="ds-spec-label">KILOMETRAJE</div><div class="ds-spec-value">{{ a.mileage | number }} km</div></div>
+            <div class="ds-spec-item"><div class="ds-spec-label">TRANSMISIÓN</div><div class="ds-spec-value">{{ a.transmission }}</div></div>
+            <div class="ds-spec-item"><div class="ds-spec-label">UBICACIÓN</div><div class="ds-spec-value">{{ a.location }}</div></div>
+          </div>
+
+          <a [href]="whatsappLink()" target="_blank" class="btn-whatsapp">💬 Contactar por WhatsApp</a>
+
+          <div class="dealer-card">
+            <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+            <div>
+              <div class="dealer-label">Vendido por:</div>
+              <div class="dealer-name">{{ a.dealerName }}</div>
+            </div>
+          </div>
+
+          <div class="inquiry-box">
+            <h3>¿Tienes preguntas?</h3>
+            @if (inquirySent()) {
+              <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
+            } @else {
+              <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre" class="inq-input">
+              <input [(ngModel)]="inquiry.clientEmail" placeholder="Email" class="inq-input">
+              <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
+              <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
+              @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
+              <button class="btn-inquiry" (click)="sendInquiry()">Enviar pregunta</button>
+            }
+          </div>
+
+          <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
+        </aside>
+      </div>
+    }
+  }
+}

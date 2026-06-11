@@ -1,0 +1,118 @@
+<div class="pdf-designer-container">
+  <div class="designer-sidebar">
+    <div class="sidebar-header">
+      <h2>Plantilla PDF</h2>
+      <p>Arrastra los bloques para cambiar el orden de tu cotización.</p>
+    </div>
+
+    <!-- Drag & Drop List -->
+    <div cdkDropList class="block-list" (cdkDropListDropped)="drop($event)">
+      @for (block of blocks(); track block.id) {
+        <div class="block-box" cdkDrag>
+          <div class="drag-handle" cdkDragHandle>
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </div>
+          {{ block.name }}
+        </div>
+      }
+    </div>
+
+    <div class="settings-section">
+      <div class="form-group">
+        <label>Color Principal</label>
+        <div class="color-picker-wrap">
+          <input type="color" [ngModel]="primaryColor()" (ngModelChange)="primaryColor.set($event)">
+          <span class="color-hex">{{ primaryColor() }}</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label>Texto del Pie de Página</label>
+        <textarea rows="4" [ngModel]="footerText()" (ngModelChange)="footerText.set($event)" class="form-control"></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" (click)="save()" [disabled]="isSaving()">
+        {{ isSaving() ? 'Guardando...' : 'Guardar Plantilla' }}
+      </button>
+      @if (message()) {
+        <span class="save-message">{{ message() }}</span>
+      }
+    </div>
+  </div>
+
+  <div class="designer-preview">
+    <div class="preview-paper">
+      
+      @for (block of blocks(); track block.id) {
+        
+        @if (block.id === 'header') {
+          <div class="preview-block block-header">
+            <div class="mock-logo">TRÁMITES <span [style.color]="primaryColor()">VEHICULARES</span> .mx</div>
+            <div class="mock-contact">
+              Concesionaria Autorizada<br>contacto&#64;tramitesvehiculares.mx
+            </div>
+          </div>
+        }
+
+        @if (block.id === 'title') {
+          <div class="preview-block block-title">
+            <h3>COTIZACIÓN FORMAL</h3>
+            <div class="mock-meta">
+              Folio: C-1234<br>Fecha: 10/06/2026<br>Válida hasta: 25/06/2026
+            </div>
+          </div>
+        }
+
+        @if (block.id === 'client') {
+          <div class="preview-block block-client">
+            <h4 [style.color]="primaryColor()">DATOS DEL CLIENTE</h4>
+            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+            <div class="mock-text">
+              Nombre: Juan Pérez<br>Teléfono: 555-123-4567<br>Email: juan&#64;ejemplo.com
+            </div>
+          </div>
+        }
+
+        @if (block.id === 'auto') {
+          <div class="preview-block block-auto">
+            <h4 [style.color]="primaryColor()">VEHÍCULO COTIZADO</h4>
+            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+            <div class="mock-text"><strong>Volkswagen Jetta 2024 - Comfortline</strong></div>
+          </div>
+        }
+
+        @if (block.id === 'financial') {
+          <div class="preview-block block-financial">
+            <h4 [style.color]="primaryColor()">DESGLOSE FINANCIERO</h4>
+            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+            <div class="mock-row"><span>Precio del Vehículo:</span> <span>$350,000.00 MXN</span></div>
+            <div class="mock-row"><span>Enganche:</span> <span>-$100,000.00 MXN</span></div>
+            <hr class="mock-divider">
+            <div class="mock-row total-row"><strong>Monto a Financiar:</strong> <strong>$250,000.00 MXN</strong></div>
+            <div class="mock-plazo" style="color: #006847">Plazo Estimado: 48 meses</div>
+          </div>
+        }
+
+        @if (block.id === 'items') {
+          <div class="preview-block block-items">
+            <h4 [style.color]="primaryColor()">EXTRAS / ACCESORIOS</h4>
+            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+            <div class="mock-row"><span>Seguro de Vida (Financiado)</span> <span>$15,000.00 MXN</span></div>
+            <div class="mock-row"><span>Garantía Extendida</span> <span>$8,000.00 MXN</span></div>
+          </div>
+        }
+
+        @if (block.id === 'footer') {
+          <div class="preview-block block-footer">
+            {{ footerText() }}
+          </div>
+        }
+
+      }
+    </div>
+  </div>
+</div>

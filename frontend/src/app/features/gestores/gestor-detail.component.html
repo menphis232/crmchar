@@ -1,0 +1,320 @@
+<app-nav [showLinks]="false" />
+
+@if (loading()) {
+  <p class="loading">Cargando perfil...</p>
+} @else {
+  @if (gestor(); as g) {
+    @if (g.page_builder_config; as config) {
+      @if (config.blocks?.length) {
+        <div class="dynamic-page" [style.font-family]="config.theme?.fontFamily || 'Inter'" [style.--p-theme]="config.theme?.primaryColor || '#00d084'" [style.--p-text-color]="config.theme?.buttonTextColor || '#1a1d24'">
+          
+          <!-- MAIN REGION (Contains everything not sidebar) -->
+          @for (b of config.blocks; track b.id) {
+          @if (b.region !== 'sidebar') {
+            <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+              @if (b.type === 'hero') {
+                <header class="profile-header" 
+                        [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
+                        [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
+                        [style.background-size]="b.data.bgSize || 'cover'"
+                        [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
+                  <div class="profile-info">
+                    <img [src]="g.photoUrl" class="profile-img" [alt]="g.name">
+                    <h1 class="profile-name">{{ b.data.title }}</h1>
+                    <div class="profile-location">📍 {{ b.data.subtitle }}</div>
+                    @if (b.data.buttonText) {
+                      <button class="preview-btn" style="margin-top:20px; background:var(--p-theme); border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;" [style.color]="b.data.buttonTextColor || '#1a1d24'" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
+                    }
+                  </div>
+                </header>
+              }
+            </div>
+          }
+        }
+
+        <div class="profile-content">
+          <div class="main-column">
+            @for (b of config.blocks; track b.id) {
+              @if (b.region !== 'sidebar' && b.type !== 'hero') {
+                <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                  @if (b.type === 'stats') {
+                    <div class="profile-stats">
+                      @if (b.data.showRating) { <div class="ps-item"><div class="ps-val">{{ g.rating }}/5</div><div class="ps-lbl">ESTRELLAS ({{ g.reviewCount }})</div></div> }
+                      @if (b.data.showCount) { <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div> }
+                      @if (b.data.showExperience) { <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div> }
+                    </div>
+                  }
+
+                  @if (b.type === 'text') {
+                    <p class="bio" style="margin: 20px 0;">{{ b.data.content }}</p>
+                  }
+
+                  @if (b.type === 'services') {
+                    <h3 class="section-title">{{ b.data.title }}</h3>
+                    <div class="services-list" style="margin-bottom: 40px;">
+                      @for (s of g.services; track s.id) {
+                        <div class="service-item">
+                          <div>
+                            <div class="service-name">{{ s.name }}</div>
+                            <div class="service-time">⏱️ {{ s.timeEstimate }}</div>
+                          </div>
+                          @if (b.data.showPrices) {
+                            <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (b.type === 'reviews' && g.reviews?.length) {
+                    <h3 class="section-title reviews-title">{{ b.data.title }}</h3>
+                    <div class="reviews-slider" style="margin-bottom: 40px;">
+                      @for (r of g.reviews; track r.id) {
+                        <div class="review-card slide">
+                          <div class="review-stars">{{ stars(r.rating) }}</div>
+                          <p class="review-text">"{{ r.comment }}"</p>
+                          <div class="review-author">- {{ r.author }}</div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (b.type === 'gallery') {
+                    <div class="gallery-grid" style="margin: 20px 0;">
+                      @for (img of b.data.images; track img) {
+                        <img [src]="img" style="width:100%; height:150px; object-fit:cover; border-radius:8px;">
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- SIDEBAR REGION -->
+          <aside>
+            @for (b of config.blocks; track b.id) {
+              @if (b.region === 'sidebar') {
+                <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                  @if (b.type === 'tracker') {
+                    <div class="contact-card track-card" style="margin-bottom: 20px;">
+                      <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
+                      <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">
+                        {{ b.data.subtitle }}
+                      </p>
+                      <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+                        <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" style="text-transform: uppercase;">
+                        <button type="button" class="btn-submit" [disabled]="trackLoading()" (click)="trackDeal()">
+                          {{ trackLoading() ? 'Buscando...' : 'Buscar' }}
+                        </button>
+                      </div>
+                      
+                      @if (trackResult()) {
+                        <div style="margin-top: 15px; padding: 15px; background: rgba(200, 169, 74, 0.1); border: 1px solid var(--gold); border-radius: 6px; text-align: left;">
+                          <strong style="color: var(--mx-white); font-size: 14px;">{{ trackResult()?.title }}</strong>
+                          <p style="color: var(--gold); font-weight: bold; margin: 8px 0;">{{ trackResult()?.stageLabel }}</p>
+                          <p style="font-size: 11px; color: var(--muted);">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
+                        </div>
+                      }
+                      @if (trackError()) {
+                        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 77, 79, 0.1); border: 1px solid #ff4d4f; border-radius: 6px; color: #ff4d4f; font-size: 13px;">
+                          {{ trackError() }}
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (b.type === 'form') {
+                    <div class="contact-card" id="dynamic-form-section" style="margin-bottom: 20px;">
+                      <h3>{{ b.data.title }}</h3>
+                      <p>{{ b.data.subtitle }}</p>
+                      @if (!solicitudSent()) {
+                        <div class="solicitud-form">
+                          <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *">
+                          <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email">
+                          <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp">
+                          <select [(ngModel)]="solicitudForm.serviceName">
+                            <option value="">Trámite que necesitas *</option>
+                            @for (s of g.services; track s.id) {
+                              <option [value]="s.name">{{ s.name }}</option>
+                            }
+                          </select>
+                          <input [(ngModel)]="solicitudForm.location" placeholder="Ubicación">
+                          <button type="button" class="btn-submit" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
+                        </div>
+                      } @else {
+                        <p class="success-text">¡Solicitud enviada! Te contactaremos pronto.</p>
+                      }
+                      <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp" style="margin-top:15px; display:block;">💬 WhatsApp directo</a>
+                      <div class="schedule" style="margin-top:15px;">Horario: {{ g.schedule }}</div>
+                    </div>
+                  }
+                </div>
+              }
+            }
+            <a routerLink="/gestores" class="btn-back">← Volver al directorio</a>
+          </aside>
+        </div>
+      </div>
+      }
+    } @else {
+      <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
+      <header class="profile-header">
+        <img [src]="g.bannerUrl" class="profile-banner" alt="Banner">
+        <div class="profile-info">
+          <img [src]="g.photoUrl" class="profile-img" [alt]="g.name">
+          <h1 class="profile-name">{{ g.name }}</h1>
+          <div class="profile-location">📍 {{ g.location }}</div>
+
+          <div class="profile-stats">
+            <div class="ps-item"><div class="ps-val">{{ g.rating }}/5</div><div class="ps-lbl">ESTRELLAS ({{ g.reviewCount }})</div></div>
+            <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div>
+            <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div>
+          </div>
+          <p class="bio">{{ g.bio }}</p>
+        </div>
+      </header>
+
+      <div class="profile-content">
+        <div>
+          <h3 class="section-title">Servicios y Tarifas</h3>
+          <div class="services-list">
+            @for (s of g.services; track s.id) {
+              <div class="service-item">
+                <div>
+                  <div class="service-name">{{ s.name }}</div>
+                  <div class="service-time">⏱️ {{ s.timeEstimate }}</div>
+                </div>
+                <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
+              </div>
+            }
+          </div>
+
+          @if (g.reviews?.length) {
+            <h3 class="section-title reviews-title">Reseñas Destacadas</h3>
+            <div class="reviews-slider">
+              @for (r of g.reviews; track r.id) {
+                <div class="review-card slide">
+                  <div class="review-stars">{{ stars(r.rating) }}</div>
+                  <p class="review-text">"{{ r.comment }}"</p>
+                  <div class="review-author">- {{ r.author }}</div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <aside>
+          <div class="contact-card track-card" style="margin-bottom: 20px;">
+            <h3 style="color: var(--gold);">Rastrea tu Trámite</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">
+              Ingresa tu código de seguimiento para conocer el estatus actual.
+            </p>
+            <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+              <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" style="text-transform: uppercase;">
+              <button type="button" class="btn-submit" [disabled]="trackLoading()" (click)="trackDeal()">
+                {{ trackLoading() ? 'Buscando...' : 'Buscar' }}
+              </button>
+            </div>
+            
+            @if (trackResult()) {
+              <div style="margin-top: 15px; padding: 15px; background: rgba(200, 169, 74, 0.1); border: 1px solid var(--gold); border-radius: 6px; text-align: left;">
+                <strong style="color: var(--mx-white); font-size: 14px;">{{ trackResult()?.title }}</strong>
+                <p style="color: var(--gold); font-weight: bold; margin: 8px 0;">{{ trackResult()?.stageLabel }}</p>
+                <p style="font-size: 11px; color: var(--muted);">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
+              </div>
+            }
+            @if (trackError()) {
+              <div style="margin-top: 15px; padding: 10px; background: rgba(255, 77, 79, 0.1); border: 1px solid #ff4d4f; border-radius: 6px; color: #ff4d4f; font-size: 13px;">
+                {{ trackError() }}
+              </div>
+            }
+          </div>
+
+          <div class="contact-card">
+            <h3>¿Necesitas ayuda?</h3>
+            <p>Cotiza tu trámite sin compromiso.</p>
+            @if (!solicitudSent()) {
+              <div class="solicitud-form">
+                <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *">
+                <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email">
+                <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp">
+                <select [(ngModel)]="solicitudForm.serviceName">
+                  <option value="">Trámite que necesitas *</option>
+                  @for (s of g.services; track s.id) {
+                    <option [value]="s.name">{{ s.name }}</option>
+                  }
+                </select>
+                <input [(ngModel)]="solicitudForm.location" placeholder="Ubicación">
+                <button type="button" class="btn-submit" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
+              </div>
+            } @else {
+              <p class="success-text">¡Solicitud enviada! Te contactaremos pronto.</p>
+            }
+            <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp">💬 WhatsApp directo</a>
+            <div class="schedule">Horario: {{ g.schedule }}</div>
+          </div>
+          <a routerLink="/gestores" class="btn-back">← Volver al directorio</a>
+        </aside>
+      </div>
+    }
+  }
+
+  <!-- Floating AI Chatbot -->
+  @if (gestor()) {
+    <div class="chatbot-widget" [class.open]="chatOpen">
+      <button class="chatbot-toggle" 
+              (click)="toggleChat()" 
+              [style.background]="gestor()?.chatbot_btn_color || '#4F46E5'" 
+              [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
+        @if (chatOpen) {
+          ✕
+        } @else {
+          💬 Asistente Virtual
+        }
+      </button>
+      
+      @if (chatOpen) {
+        <div class="chatbot-panel" [style.backgroundColor]="gestor()?.chatbot_bg_color || '#000000'">
+          <div class="chatbot-header" 
+               [style.backgroundColor]="gestor()?.chatbot_btn_color || '#4F46E5'"
+               [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
+            <h4>🤖 Asistente de {{ gestor()?.name }}</h4>
+            <p>Te ayudo a iniciar tu trámite en minutos.</p>
+          </div>
+          <div class="chatbot-messages" id="chatbot-messages">
+            @for (msg of chatHistory; track $index) {
+              <div class="chat-msg" [class.user]="msg.role === 'user'">
+                {{ msg.content }}
+              </div>
+            }
+            @if (isChatLoading) {
+              <div class="chat-msg ai loading">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </div>
+            }
+            @if (leadCreated) {
+              <div class="chat-success-banner">
+                ✅ ¡Tu solicitud fue registrada exitosamente!<br>
+                <small>Revisa tu correo — te enviamos tus credenciales de acceso para dar seguimiento.</small>
+              </div>
+            }
+          </div>
+          <div class="chatbot-input" [class.disabled]="leadCreated">
+            @if (!leadCreated) {
+              <input type="text" [(ngModel)]="chatMessage" 
+                     placeholder="Escribe tu nombre, correo, teléfono..." 
+                     (keyup.enter)="sendChatMessage()">
+              <button (click)="sendChatMessage()" 
+                      [style.color]="gestor()?.chatbot_btn_color || '#4F46E5'">➤</button>
+            } @else {
+              <p class="chat-done-msg">Conversación finalizada. ¡Hasta pronto! 👋</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

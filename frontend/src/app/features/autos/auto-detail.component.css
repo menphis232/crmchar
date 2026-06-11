@@ -1,0 +1,50 @@
+.detail-container {
+  max-width: 1200px; margin: 120px auto 40px; padding: 0 20px;
+  display: grid; grid-template-columns: 1fr 400px; gap: 40px;
+}
+.gallery-main { width: 100%; height: 500px; object-fit: cover; border-radius: 12px; margin-bottom: 20px; }
+.gallery-thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; }
+.gallery-thumbs img { width: 100%; height: 100px; object-fit: cover; border-radius: 8px; cursor: pointer; opacity: 0.6; }
+.gallery-thumbs img.active, .gallery-thumbs img:hover { opacity: 1; border: 2px solid var(--gold); }
+.description { margin-top: 40px; }
+.description h3 { font-family: var(--f-display); font-size: 24px; margin-bottom: 15px; }
+.description p { color: var(--muted); line-height: 1.8; }
+
+.detail-sidebar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 30px; height: fit-content; position: sticky; top: 100px;
+}
+.ds-make { font-family: var(--f-ui); color: var(--muted); letter-spacing: 0.1em; }
+.ds-model { font-family: var(--f-display); font-size: 36px; color: var(--mx-white); margin-bottom: 20px; }
+.ds-price { font-family: var(--f-display); font-size: 42px; color: var(--gold); margin-bottom: 30px; }
+.ds-specs { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
+.ds-spec-label { font-family: var(--f-ui); font-size: 12px; color: var(--muted); }
+.ds-spec-value { font-weight: bold; color: var(--mx-white); }
+.btn-whatsapp {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%;
+  background: #25D366; color: white; padding: 18px; font-family: var(--f-ui); font-weight: bold;
+  border-radius: 8px; margin-bottom: 20px;
+}
+.dealer-card { border-top: 1px solid var(--border); padding-top: 20px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+.dealer-avatar { width: 50px; height: 50px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--bg); font-weight: bold; }
+.dealer-label { font-family: var(--f-ui); font-size: 12px; color: var(--muted); }
+.dealer-name { font-weight: bold; }
+.btn-back { font-family: var(--f-ui); font-size: 12px; color: var(--muted); display: block; margin-top: 15px; }
+.inquiry-box { margin-top: 25px; border-top: 1px solid var(--border); padding-top: 20px; }
+.inquiry-box h3 { font-family: var(--f-display); font-size: 18px; margin-bottom: 12px; }
+.inq-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 10px;
+  color: var(--mx-white); border-radius: 4px; margin-bottom: 8px; font-family: var(--f-ui);
+}
+.btn-inquiry {
+  width: 100%; background: var(--p-theme); color: var(--p-text-color, #1a1d24); border: none; padding: 12px;
+  font-weight: bold; border-radius: 6px; cursor: pointer; font-family: var(--f-ui);
+}
+.success-inquiry { color: var(--mx-green); font-size: 14px; }
+.error-inquiry { color: var(--mx-red); font-size: 13px; margin-bottom: 8px; }
+
+@media (max-width: 900px) {
+  .detail-container { grid-template-columns: 1fr; }
+  .detail-sidebar { position: static; }
+  .gallery-main { height: 300px; }
+}

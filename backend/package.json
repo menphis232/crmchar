@@ -1,0 +1,30 @@
+{
+  "name": "tramites-backend",
+  "version": "1.0.0",
+  "description": "API multi-usuario para gestores y autos",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "seed": "node src/seed.js",
+    "db:setup": "node src/setup-db.js",
+    "db:migrate": "node src/migrate.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.1.1",
+    "mysql2": "^3.12.0",
+    "nodemailer": "^8.0.11",
+    "pdfkit": "^0.19.0",
+    "sharp": "^0.34.5",
+    "socket.io": "^4.8.3",
+    "stripe": "^22.2.0",
+    "uuid": "^11.0.3"
+  }
+}

@@ -1,0 +1,307 @@
+<!-- PANEL LAYOUT -->
+<div class="client-panel">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">🚗</div>
+      <span>Mi Portal</span>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">{{ auth.user()?.name?.charAt(0) | uppercase }}</div>
+      <div class="user-meta">
+        <div class="user-name">{{ auth.user()?.name }}</div>
+        <div class="user-role">Cliente</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item" [class.active]="activeTab() === 'dashboard'" (click)="activeTab.set('dashboard')">
+        <span class="nav-icon">📊</span>
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" [class.active]="activeTab() === 'tramites'" (click)="activeTab.set('tramites'); closeDeal()">
+        <span class="nav-icon">📋</span>
+        <span>Mis Trámites</span>
+        @if (activeDeals() > 0) {
+          <span class="nav-badge">{{ activeDeals() }}</span>
+        }
+      </button>
+      <button class="nav-item" [class.active]="activeTab() === 'ajustes'" (click)="activeTab.set('ajustes')">
+        <span class="nav-icon">⚙️</span>
+        <span>Ajustes</span>
+      </button>
+    </nav>
+
+    <button class="logout-btn" (click)="logout()">
+      <span>🚪</span> Cerrar Sesión
+    </button>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <!-- ===== DASHBOARD ===== -->
+    @if (activeTab() === 'dashboard') {
+      <div class="page-header">
+        <div>
+          <h1>¡Hola, {{ auth.user()?.name }}! 👋</h1>
+          <p class="page-subtitle">Aquí está el resumen de tus trámites vehiculares.</p>
+        </div>
+      </div>
+
+      <!-- STAT CARDS -->
+      <div class="stats-row">
+        <div class="stat-card" (click)="activeTab.set('tramites'); closeDeal()">
+          <div class="stat-icon" style="background: rgba(79,70,229,0.15); color: #6366f1;">📋</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ totalDeals() }}</div>
+            <div class="stat-label">Total de Trámites</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(245,158,11,0.15); color: #f59e0b;">⏳</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ activeDeals() }}</div>
+            <div class="stat-label">En Proceso</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background: rgba(16,185,129,0.15); color: #10b981;">✅</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ completedDeals() }}</div>
+            <div class="stat-label">Completados</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT DEALS -->
+      <div class="section-title">Trámites Recientes</div>
+      @if (loading()) {
+        <div class="loading-state">Cargando tus trámites...</div>
+      } @else if (deals().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <h3>No tienes trámites aún</h3>
+          <p>Cuando solicites un servicio con una gestoría, aparecerá aquí.</p>
+        </div>
+      } @else {
+        <div class="deals-grid">
+          @for (deal of deals().slice(0, 4); track deal.id) {
+            <div class="deal-card" (click)="openDeal(deal)">
+              <div class="deal-card-top">
+                <div class="deal-type-icon">🚗</div>
+                <span class="badge" [ngClass]="stageClass(deal.stage)">{{ stageLabel(deal.stage) }}</span>
+              </div>
+              <h3 class="deal-title">{{ deal.title }}</h3>
+              <p class="deal-gestor">📍 {{ deal.gestor_name || 'Agencia' }}</p>
+              <div class="deal-progress-bar">
+                <div class="deal-progress-fill" [style.width.%]="stageProgress(deal.stage)"></div>
+              </div>
+              <div class="deal-footer">
+                <span>{{ deal.created_at | date:'dd MMM yyyy' }}</span>
+                <span class="deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- ===== MIS TRÁMITES ===== -->
+    @if (activeTab() === 'tramites') {
+      @if (!selectedDeal()) {
+        <div class="page-header">
+          <div>
+            <h1>Mis Trámites</h1>
+            <p class="page-subtitle">Haz clic en un trámite para ver los detalles y chatear con tu gestor.</p>
+          </div>
+        </div>
+
+        @if (loading()) {
+          <div class="loading-state">Cargando...</div>
+        } @else if (deals().length === 0) {
+          <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <h3>No tienes trámites aún</h3>
+            <p>Tus solicitudes de servicio aparecerán aquí.</p>
+          </div>
+        } @else {
+          <div class="deals-grid">
+            @for (deal of deals(); track deal.id) {
+              <div class="deal-card" (click)="openDeal(deal)">
+                <div class="deal-card-top">
+                  <div class="deal-type-icon">🚗</div>
+                  <span class="badge" [ngClass]="stageClass(deal.stage)">{{ stageLabel(deal.stage) }}</span>
+                </div>
+                <h3 class="deal-title">{{ deal.title }}</h3>
+                <p class="deal-gestor">📍 {{ deal.gestor_name || 'Agencia' }}</p>
+                <div class="deal-progress-bar">
+                  <div class="deal-progress-fill" [style.width.%]="stageProgress(deal.stage)"></div>
+                </div>
+                <div class="deal-footer">
+                  <span>{{ deal.created_at | date:'dd MMM yyyy' }}</span>
+                  <span class="deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      } @else {
+        <!-- DEAL DETAIL + CHAT -->
+        <div class="deal-detail-view">
+          <button class="btn-back" (click)="closeDeal()">← Volver a Mis Trámites</button>
+
+          <!-- Info del trámite -->
+          <div class="detail-header-card">
+            <div class="detail-header-left">
+              <div class="deal-type-icon large">🚗</div>
+              <div>
+                <h2>{{ selectedDeal().title }}</h2>
+                <p class="deal-gestor">Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></p>
+                <p class="deal-code">Código de seguimiento: <code>{{ selectedDeal().tracking_code }}</code></p>
+              </div>
+            </div>
+            <span class="badge large" [ngClass]="stageClass(selectedDeal().stage)">{{ stageLabel(selectedDeal().stage) }}</span>
+          </div>
+
+          <!-- Barra de progreso visual -->
+          <div class="progress-steps">
+            <div class="step" [class.done]="stageProgress(selectedDeal().stage) >= 15">
+              <div class="step-dot">1</div>
+              <span>Recibido</span>
+            </div>
+            <div class="step-line" [class.done]="stageProgress(selectedDeal().stage) >= 35"></div>
+            <div class="step" [class.done]="stageProgress(selectedDeal().stage) >= 35">
+              <div class="step-dot">2</div>
+              <span>En Revisión</span>
+            </div>
+            <div class="step-line" [class.done]="stageProgress(selectedDeal().stage) >= 65"></div>
+            <div class="step" [class.done]="stageProgress(selectedDeal().stage) >= 65">
+              <div class="step-dot">3</div>
+              <span>En Trámite</span>
+            </div>
+            <div class="step-line" [class.done]="stageProgress(selectedDeal().stage) >= 100"></div>
+            <div class="step" [class.done]="stageProgress(selectedDeal().stage) >= 100">
+              <div class="step-dot">✓</div>
+              <span>Completado</span>
+            </div>
+          </div>
+
+          <!-- CHAT EN TIEMPO REAL -->
+          <div class="chat-section">
+            <div class="chat-section-header">
+              <h3>💬 Chat con tu Gestor</h3>
+              <span class="online-badge">🟢 En línea</span>
+            </div>
+
+            <div class="chat-messages" id="chat-box">
+              @if (chatLoading()) {
+                <div class="chat-loading">Cargando mensajes...</div>
+              } @else if (messages().length === 0) {
+                <div class="chat-empty">
+                  <p>Inicia la conversación con tu gestor. Puedes hacer preguntas, compartir documentos o dar seguimiento a tu trámite.</p>
+                </div>
+              } @else {
+                @for (msg of messages(); track msg.id) {
+                  <div class="message" [class.mine]="msg.sender_id === auth.user()?.id">
+                    <div class="msg-avatar" [class.mine]="msg.sender_id === auth.user()?.id">
+                      {{ (msg.sender_id === auth.user()?.id ? auth.user()?.name : msg.sender_name)?.charAt(0) | uppercase }}
+                    </div>
+                    <div class="msg-content">
+                      <div class="msg-meta">
+                        <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
+                        <small>{{ msg.created_at | date:'dd/MM HH:mm' }}</small>
+                      </div>
+                      <div class="msg-bubble" [class.mine]="msg.sender_id === auth.user()?.id">
+                        {{ msg.message }}
+                        @if (msg.file_url) {
+                          <a [href]="msg.file_url" target="_blank" class="file-link">📎 Ver Documento</a>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+
+            <div class="chat-input-bar">
+              <label class="attach-btn" [class.loading]="uploadingFile()">
+                <input type="file" style="display:none" (change)="onFileSelected($event)">
+                {{ uploadingFile() ? '⏳' : '📎' }}
+              </label>
+              <input
+                type="text"
+                [(ngModel)]="newMessage"
+                placeholder="Escribe un mensaje a tu gestor..."
+                (keyup.enter)="sendMessage()"
+                class="chat-input"
+              >
+              <button class="send-btn" (click)="sendMessage()">
+                ➤
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ===== AJUSTES ===== -->
+    @if (activeTab() === 'ajustes') {
+      <div class="page-header">
+        <div>
+          <h1>Ajustes de Cuenta</h1>
+          <p class="page-subtitle">Gestiona tu perfil y seguridad.</p>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-section">
+          <div class="settings-icon">🔑</div>
+          <div class="settings-body">
+            <h3>Cambiar Contraseña</h3>
+            <p>Si recibiste una contraseña provisional por correo, cámbiala aquí para proteger tu cuenta.</p>
+
+            <div class="form-group">
+              <label>Contraseña Actual (si aplica)</label>
+              <input type="password" [(ngModel)]="currentPassword" class="form-control" placeholder="Ingresa tu contraseña actual">
+            </div>
+            <div class="form-group">
+              <label>Nueva Contraseña</label>
+              <input type="password" [(ngModel)]="newPassword" class="form-control" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="form-group">
+              <label>Confirmar Nueva Contraseña</label>
+              <input type="password" [(ngModel)]="confirmPassword" class="form-control" placeholder="Repite la nueva contraseña">
+            </div>
+
+            @if (pwdError()) {
+              <div class="alert-error">⚠️ {{ pwdError() }}</div>
+            }
+            @if (pwdSuccess()) {
+              <div class="alert-success">✅ {{ pwdSuccess() }}</div>
+            }
+
+            <button class="btn-primary" (click)="updatePassword()" [disabled]="pwdLoading()">
+              {{ pwdLoading() ? 'Actualizando...' : '🔒 Actualizar Contraseña' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-section">
+          <div class="settings-icon">👤</div>
+          <div class="settings-body">
+            <h3>Información de Cuenta</h3>
+            <div class="info-row"><span>Nombre:</span><strong>{{ auth.user()?.name }}</strong></div>
+            <div class="info-row"><span>Email:</span><strong>{{ auth.user()?.email }}</strong></div>
+            <div class="info-row"><span>Rol:</span><strong>Cliente</strong></div>
+          </div>
+        </div>
+      </div>
+    }
+
+  </main>
+</div>

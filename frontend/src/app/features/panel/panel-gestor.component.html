@@ -1,0 +1,363 @@
+<nav class="dash-nav">
+  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <div class="dash-user" style="display: flex; align-items: center;">
+    <app-notification-bell />
+    <span>{{ profile()?.name }}</span>
+    <div class="avatar">{{ initials(profile()?.name) }}</div>
+    <button class="logout" (click)="auth.logout()">Salir</button>
+  </div>
+</nav>
+
+<div class="dash-container">
+  <aside class="dash-sidebar">
+    @if (hasPerm('dashboard')) {
+      <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard')">📊 Panel CRM</button>
+    }
+    @if (hasPerm('pipeline')) {
+      <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline')">
+        📋 Pipeline
+        @if (crmDashboard()?.totals?.active) {
+          <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
+        }
+      </button>
+    }
+    @if (hasPerm('servicios')) {
+      <button class="dash-link" [class.active]="tab() === 'servicios'" (click)="setTab('servicios')">🛠 Servicios</button>
+    }
+    @if (hasPerm('finanzas')) {
+      <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas')">💰 Finanzas</button>
+    }
+    @if (hasPerm('perfil')) {
+      <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil')">👤 Mi perfil</button>
+    }
+    @if (hasPerm('plantillas')) {
+      <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas')">📝 Plantillas</button>
+    }
+    @if (hasPerm('pdf_designer')) {
+      <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer')">📄 PDF Cotización</button>
+    }
+    @if (hasPerm('perfil')) {
+      <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder')">🎨 Constructor Web</button>
+    }
+    @if (!auth.user()?.parent_id) {
+      <button class="dash-link" [class.active]="tab() === 'team'" (click)="setTab('team')">👥 Mi Equipo</button>
+    }
+    <a routerLink="/gestores" class="dash-link">🌐 Directorio público</a>
+  </aside>
+
+  <main class="dash-main">
+    @if (panelTheme().welcomeMessage) {
+      <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
+    }
+    @for (block of panelTheme().customBlocks ?? []; track $index) {
+      @if (block.visible) {
+        <div class="custom-block" [class]="block.type">{{ block.text }}</div>
+      }
+    }
+    @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
+
+    <!-- ── DASHBOARD ── -->
+    @if (tab() === 'dashboard' && crmDashboard(); as crm) {
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-num">{{ crm.totals.active }}</div>
+          <div class="stat-label">Activos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crm.totals.uncontacted }}</div>
+          <div class="stat-label">Sin respuesta</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crm.totals.tasksDueToday }}</div>
+          <div class="stat-label">Tareas hoy</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crm.totals.stalled }}</div>
+          <div class="stat-label">Estancados</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="display:flex;align-items:center;gap:6px;">
+            {{ crm.totals.avgFirstResponseHours || '—' }}@if (crm.totals.avgFirstResponseHours) {h}
+          </div>
+          <div class="stat-label">1ª Respuesta</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crm.totals.conversionRate }}%</div>
+          <div class="stat-label">Conversión</div>
+        </div>
+      </div>
+
+      <!-- AI Insights -->
+      @if (isAiLoading()) {
+        <div class="dash-card" style="border: 1px solid var(--gold); background: rgba(200, 169, 74, 0.05);">
+          <h2 class="card-title" style="color: var(--gold);">🤖 Análisis IA Comercial</h2>
+          <p class="card-desc">Generando recomendaciones en base a tu rendimiento...</p>
+        </div>
+      } @else if (aiInsights().length > 0) {
+        <div class="dash-card" style="border: 1px solid var(--gold); background: rgba(200, 169, 74, 0.05);">
+          <h2 class="card-title" style="color: var(--gold);">🤖 Análisis IA Comercial</h2>
+          <p class="card-desc">Basado en tus métricas recientes, te sugerimos:</p>
+          <ul style="margin-top: 15px; padding-left: 20px; color: var(--mx-white); font-size: 14px; line-height: 1.6;">
+            @for (insight of aiInsights(); track $index) {
+              <li style="margin-bottom: 10px;">{{ insight }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (todayInbox(); as inbox) {
+        <app-crm-today-inbox
+          [inbox]="inbox"
+          [stageLabels]="crm.stageLabels"
+          (openDeal)="openDeal($event.id)"
+          (openTaskDeal)="openDeal($event)"
+        />
+      }
+
+      <div class="dash-card">
+        <h2 class="card-title">📎 Tu Ficha Pública</h2>
+        <p class="card-desc">Comparte este enlace con tus clientes para que puedan encontrarte.</p>
+        @if (profile(); as p) {
+          <div class="link-box">
+            <input class="link-input" [value]="'/gestores/' + p.slug" readonly>
+            <button class="btn-copy" (click)="copyLink()">📋 Copiar link</button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── PIPELINE ── -->
+    @if (tab() === 'pipeline' && crmDashboard(); as crm) {
+      <div class="dash-card kanban-wrap">
+        <h2 class="card-title">📋 Pipeline de trámites</h2>
+        <p class="card-desc">Sigue cada trámite desde la solicitud hasta completado.</p>
+        <div class="pipeline-filters">
+          <input [(ngModel)]="searchQuery" placeholder="🔍 Buscar contacto o trámite..." (keyup.enter)="loadDeals()">
+          <select [(ngModel)]="filterStage" (change)="loadDeals()">
+            <option value="">Todas las etapas</option>
+            @for (s of crm.stages; track s) {
+              <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+            }
+          </select>
+          <button type="button" class="btn-copy small" (click)="loadDeals()">Buscar</button>
+        </div>
+        <app-crm-kanban
+          [stages]="crm.stages"
+          [stageLabels]="crm.stageLabels"
+          [deals]="deals()"
+          (dealSelect)="selectedDealId.set($event.id)"
+          (stageChange)="onStageChange($event)"
+        />
+      </div>
+
+      @if (selectedDealId()) {
+        <app-crm-deal-panel
+          [dealId]="selectedDealId()"
+          [stages]="crm.stages"
+          [stageLabels]="crm.stageLabels"
+          [templates]="templates()"
+          [whatsappNumber]="profile()?.whatsapp || ''"
+          (closed)="selectedDealId.set(null)"
+          (updated)="onDealUpdated()"
+          (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+        />
+      }
+      @if (!selectedDealId() && selectedContactId()) {
+        <app-crm-contact-panel
+          [contactId]="selectedContactId()"
+          [stageLabels]="crm.stageLabels"
+          (closed)="selectedContactId.set(null)"
+          (openDeal)="openDeal($event)"
+        />
+      }
+    }
+
+    <!-- ── SERVICIOS ── -->
+    @if (tab() === 'servicios' && profile(); as p) {
+      <div class="dash-card">
+        <h2 class="card-title">🛠 Catálogo de servicios</h2>
+        <p class="card-desc">Define tus trámites con precio y tiempo estimado.</p>
+        @for (s of p.services; track s.id) {
+          <div class="inbox-item">
+            <div class="inbox-info">
+              <h4>{{ s.name }}</h4>
+              <p>⏱️ {{ s.timeEstimate }} — ${{ s.price | number }} MXN</p>
+            </div>
+            <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
+          </div>
+        } @empty {
+          <p class="empty">Aún no tienes servicios. Agrega el primero abajo.</p>
+        }
+        <hr class="divider">
+        <h4 class="section-sub">Nuevo servicio</h4>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre del trámite</label>
+            <input [(ngModel)]="newService.name" placeholder="Ej: Cambio de placas">
+          </div>
+          <div class="form-group">
+            <label>Tiempo estimado</label>
+            <input [(ngModel)]="newService.timeEstimate" placeholder="Ej: 2-3 días">
+          </div>
+          <div class="form-group">
+            <label>Precio (MXN)</label>
+            <input type="number" [(ngModel)]="newService.price" placeholder="0">
+          </div>
+        </div>
+        <button class="btn-copy" (click)="addService()">+ Agregar servicio</button>
+      </div>
+    }
+
+    <!-- ── PERFIL ── -->
+    @if (tab() === 'perfil' && profile(); as p) {
+      <div class="dash-card">
+        <h2 class="card-title">👤 Mi Perfil Público</h2>
+        @if (!editBio()) {
+          <p style="color:var(--text);font-size:14px;line-height:1.6;margin-bottom:16px;">{{ p.bio || 'Sin descripción aún.' }}</p>
+          <button class="btn-ghost" (click)="editBio.set(true)">✏️ Editar descripción</button>
+        } @else {
+          <div class="form-group">
+            <label>Descripción pública</label>
+            <textarea [(ngModel)]="bio" rows="5" placeholder="Cuéntale a tus clientes sobre ti y tus servicios..."></textarea>
+          </div>
+          
+          <div class="form-group" style="margin-top:16px;">
+            <label>Logo de la Empresa (Opcional)</label>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <input type="file" accept="image/*" (change)="onLogoSelected($event)" #logoInput style="display:none">
+              <button class="btn-ghost small" (click)="logoInput.click()">Subir Imagen</button>
+              @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
+            </div>
+            <p class="card-desc" style="margin-top:4px; font-size:11px;">Sube una imagen (png, jpg, webp). Este logo se mostrará en las cotizaciones y documentos PDF.</p>
+            @if (profileLogoUrl) {
+              <div style="margin-top:12px; padding:12px; background:var(--surface); border-radius:8px; display:inline-block; position:relative;">
+                <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo" (error)="profileLogoUrl = ''">
+                <button class="btn-delete small" style="position:absolute; top:-10px; right:-10px;" (click)="profileLogoUrl = ''">X</button>
+              </div>
+            }
+          </div>
+
+          <div class="form-group" style="margin-top:16px;">
+            <label>ID de Google Analytics (Opcional)</label>
+            <input type="text" [(ngModel)]="googleAnalyticsId" placeholder="Ej. G-XXXXXXX" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+            <p class="card-desc" style="margin-top:4px; font-size:11px;">Añade tu ID de seguimiento de GA4 para medir visitas en tu página pública.</p>
+          </div>
+
+          <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+            <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">💳 Pagos en Línea (Stripe)</h3>
+            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tus llaves de Stripe para poder generar links de cobro a tus clientes.</p>
+            
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>Stripe Public Key</label>
+              <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+            </div>
+            <div class="form-group">
+              <label>Stripe Secret Key</label>
+              <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+            </div>
+          </div>
+
+          <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+            <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">🤖 Inteligencia Artificial</h3>
+            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tu asistente de IA para autocompletar respuestas a clientes en base a tus trámites.</p>
+            
+            <div class="form-group" style="margin-bottom:12px;">
+              <label>Proveedor de IA</label>
+              <select [(ngModel)]="aiProvider" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                <option value="">Ninguno</option>
+                <option value="gemini">Google Gemini</option>
+                <option value="openai">OpenAI (ChatGPT)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>API Key</label>
+              <input type="password" [(ngModel)]="aiApiKey" placeholder="AI API Key..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+            </div>
+            
+            <h4 style="color:var(--gold); font-size:12px; margin-top:16px; margin-bottom:8px;">🎨 Diseño del Chatbot</h4>
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+              <div class="form-group" style="flex:1;">
+                <label>Fondo de la ventana</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <input type="color" [(ngModel)]="chatbotBgColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
+                  <input type="text" [(ngModel)]="chatbotBgColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                </div>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Color de botones</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <input type="color" [(ngModel)]="chatbotBtnColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
+                  <input type="text" [(ngModel)]="chatbotBtnColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                </div>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Color de texto</label>
+                <div style="display:flex; gap:8px; align-items:center;">
+                  <input type="color" [(ngModel)]="chatbotTextColor" style="width:40px;height:40px;border:none;border-radius:8px;background:transparent;cursor:pointer;">
+                  <input type="text" [(ngModel)]="chatbotTextColor" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:10px;">
+            <button class="btn-copy" (click)="saveBio()">Guardar</button>
+            <button class="btn-ghost" (click)="editBio.set(false)">Cancelar</button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── PLANTILLAS ── -->
+    @if (tab() === 'plantillas') {
+      <div class="dash-card">
+        <h2 class="card-title">📝 Plantillas de mensaje</h2>
+        <p class="card-desc">Crea respuestas rápidas para usar en el pipeline.</p>
+        @for (t of templates(); track t.id) {
+          <div class="block-editor">
+            <strong style="color:var(--gold);">{{ t.name }}</strong>
+            <span class="card-desc" style="flex:1;">{{ t.content }}</span>
+            <button class="btn-delete small" (click)="deleteTemplate(t.id)">Eliminar</button>
+          </div>
+        } @empty {
+          <p class="empty">Sin plantillas. Crea la primera abajo.</p>
+        }
+        <hr class="divider">
+        <h4 class="section-sub">Nueva plantilla</h4>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Nombre</label>
+          <input [(ngModel)]="newTemplate.name" placeholder="Ej: Bienvenida">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Contenido (usa {{ '{{nombre}}' }} y {{ '{{titulo}}' }})</label>
+          <textarea [(ngModel)]="newTemplate.content" rows="3" placeholder="Hola [nombre], respecto a tu trámite..."></textarea>
+        </div>
+        <button class="btn-copy" (click)="saveTemplate()">Crear plantilla</button>
+      </div>
+    }
+
+    <!-- ── PDF DESIGNER ── -->
+    @if (tab() === 'pdf_designer') {
+      <app-pdf-designer />
+    }
+
+    <!-- ── FINANZAS ── -->
+    @if (tab() === 'finanzas') {
+      <app-finances />
+    }
+
+    <!-- ── EQUIPO ── -->
+    @if (tab() === 'team') {
+      <app-crm-team></app-crm-team>
+    }
+
+    <!-- ── PAGE BUILDER ── -->
+    @if (tab() === 'page_builder') {
+      <app-page-builder 
+        [config]="auth.user()?.page_builder_config || null"
+        [profile]="profile()"
+        (configChange)="savePageBuilderConfig($event)">
+      </app-page-builder>
+    }
+  </main>
+</div>

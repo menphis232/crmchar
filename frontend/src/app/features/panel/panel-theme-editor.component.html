@@ -1,0 +1,67 @@
+<div class="dash-card theme-editor">
+  <h2 class="card-title">{{ title }}</h2>
+  <p class="card-desc">Personalización estilo WordPress: colores, fuentes, textos y bloques.</p>
+  @if (saved()) { <p class="success-msg">{{ saved() }}</p> }
+
+  @if (theme(); as t) {
+    @if (isPanel) {
+      <div class="form-group"><label>Título del panel</label><input [ngModel]="t.panelTitle" (ngModelChange)="update('panelTitle', $event)"></div>
+      <div class="form-group"><label>Mensaje de bienvenida</label><input [ngModel]="t.welcomeMessage" (ngModelChange)="update('welcomeMessage', $event)"></div>
+    } @else {
+      <div class="form-group"><label>Título</label><input [ngModel]="t.pageTitle" (ngModelChange)="update('pageTitle', $event)"></div>
+      <div class="form-group"><label>Subtítulo</label><input [ngModel]="t.pageSubtitle" (ngModelChange)="update('pageSubtitle', $event)"></div>
+    }
+    <div class="form-row">
+      <div class="form-group"><label>Color principal</label><input type="color" [ngModel]="t.primaryColor" (ngModelChange)="update('primaryColor', $event)"></div>
+      <div class="form-group"><label>Color acento</label><input type="color" [ngModel]="t.accentColor" (ngModelChange)="update('accentColor', $event)"></div>
+      <div class="form-group"><label>Fondo</label><input type="color" [ngModel]="t.backgroundColor" (ngModelChange)="update('backgroundColor', $event)"></div>
+    </div>
+    @if (isPanel) {
+      <div class="form-row">
+        <div class="form-group color-field">
+          <label>Fondo sidebar</label>
+          <input type="color" [ngModel]="sidebarHex()" (ngModelChange)="setSidebarColor($event)">
+          <label class="opacity-label">Transparencia: {{ sidebarOpacity() }}%</label>
+          <input type="range" min="0" max="100" [ngModel]="sidebarOpacity()" (ngModelChange)="setSidebarOpacity(+$event)">
+        </div>
+        <div class="form-group color-field">
+          <label>Fondo tarjetas</label>
+          <input type="color" [ngModel]="cardHex()" (ngModelChange)="setCardColor($event)">
+          <label class="opacity-label">Transparencia: {{ cardOpacity() }}%</label>
+          <input type="range" min="0" max="100" [ngModel]="cardOpacity()" (ngModelChange)="setCardOpacity(+$event)">
+        </div>
+      </div>
+    }
+    <div class="form-row">
+      <div class="form-group"><label>Fuente cuerpo</label>
+        <select [ngModel]="t.fontFamily" (ngModelChange)="update('fontFamily', $event)">
+          <option value="Inter, sans-serif">Inter</option>
+          <option value="Roboto, sans-serif">Roboto</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Fuente títulos</label>
+        <select [ngModel]="t.displayFont" (ngModelChange)="update('displayFont', $event)">
+          <option value="Montserrat, sans-serif">Montserrat</option>
+          <option value="Oswald, sans-serif">Oswald</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Tamaño título (px)</label><input type="number" [ngModel]="t.titleSize" (ngModelChange)="update('titleSize', $event)"></div>
+    </div>
+
+    <h3 class="section-sub">Bloques personalizados</h3>
+    @for (block of t.customBlocks; track $index; let i = $index) {
+      <div class="block-editor">
+        <select [ngModel]="block.type" (ngModelChange)="updateBlock(i, 'type', $event)">
+          <option value="banner">Banner</option>
+          <option value="notice">Aviso</option>
+          <option value="html">Texto libre</option>
+        </select>
+        <input [ngModel]="block.text" (ngModelChange)="updateBlock(i, 'text', $event)">
+        <label class="inline-check"><input type="checkbox" [ngModel]="block.visible" (ngModelChange)="updateBlock(i, 'visible', $event)"> Visible</label>
+        <button type="button" class="btn-delete small" (click)="removeBlock(i)">✕</button>
+      </div>
+    }
+    <button type="button" class="btn-ghost" (click)="addBlock()">+ Agregar bloque</button>
+    <button type="button" class="btn-copy full" (click)="save()">GUARDAR CAMBIOS</button>
+  }
+</div>

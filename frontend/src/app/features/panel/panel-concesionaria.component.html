@@ -1,0 +1,306 @@
+<nav class="dash-nav">
+  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <div class="dash-user" style="display: flex; align-items: center;">
+    <app-notification-bell />
+    <span>{{ auth.user()?.name }}</span>
+    <div class="avatar">{{ initials(auth.user()?.name) }}</div>
+    <button class="logout" (click)="auth.logout()">Salir</button>
+  </div>
+</nav>
+
+<div class="dash-container">
+  <aside class="dash-sidebar">
+    <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard')">📊 Panel CRM</button>
+    <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline')">
+      🎯 Pipeline
+      @if (crmDashboard()?.totals?.active) {
+        <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
+      }
+    </button>
+    <button class="dash-link" [class.active]="tab() === 'inventory'" (click)="setTab('inventory')">🚗 Inventario</button>
+    <button class="dash-link" [class.active]="tab() === 'edit'" (click)="startNew()">✏️ Publicar / Editar</button>
+    <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation')">⭐ Reputación</button>
+    <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas')">📝 Plantillas</button>
+    <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil')">⚙️ Perfil</button>
+    <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer')">📄 PDF Cotización</button>
+    <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder')">🌐 Constructor Web</button>
+    <a routerLink="/autos" class="dash-link">🌐 Ver catálogo</a>
+  </aside>
+
+  <main class="dash-main">
+    @if (panelTheme().welcomeMessage) {
+      <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
+    }
+    @for (block of panelTheme().customBlocks ?? []; track $index) {
+      @if (block.visible) {
+        <div class="custom-block" [class]="block.type">{{ block.text }}</div>
+      }
+    }
+    @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
+
+    <!-- ── DASHBOARD ── -->
+    @if (tab() === 'dashboard' && dashboard(); as d) {
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="stat-num">{{ crmDashboard()?.totals?.active ?? 0 }}</div>
+          <div class="stat-label">Leads activos</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crmDashboard()?.totals?.uncontacted ?? 0 }}</div>
+          <div class="stat-label">Sin respuesta</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ crmDashboard()?.totals?.tasksDueToday ?? 0 }}</div>
+          <div class="stat-label">Tareas hoy</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">
+            {{ crmDashboard()?.totals?.avgFirstResponseHours ?? '—' }}@if (crmDashboard()?.totals?.avgFirstResponseHours) {h}
+          </div>
+          <div class="stat-label">1ª Respuesta</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ (crmDashboard()?.totals?.pipelineValue ?? 0) | number:'1.0-0' }}</div>
+          <div class="stat-label">Pipeline MXN</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">{{ d.published }}</div>
+          <div class="stat-label">Publicados</div>
+        </div>
+      </div>
+
+      @if (todayInbox(); as inbox) {
+        <app-crm-today-inbox
+          [inbox]="inbox"
+          [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+          (openDeal)="openDeal($event.id)"
+          (openTaskDeal)="openDeal($event)"
+        />
+      }
+    }
+
+    <!-- ── PIPELINE ── -->
+    @if (tab() === 'pipeline' && crmDashboard(); as crm) {
+      <div class="dash-card kanban-wrap">
+        <h2 class="card-title">🎯 Pipeline de ventas</h2>
+        <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
+        <div class="pipeline-filters">
+          <input [(ngModel)]="searchQuery" placeholder="🔍 Buscar contacto o vehículo..." (keyup.enter)="loadDeals()">
+          <select [(ngModel)]="filterStage" (change)="loadDeals()">
+            <option value="">Todas las etapas</option>
+            @for (s of crm.stages; track s) {
+              <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+            }
+          </select>
+          <button type="button" class="btn-copy small" (click)="loadDeals()">Buscar</button>
+        </div>
+        <app-crm-kanban
+          [stages]="crm.stages"
+          [stageLabels]="crm.stageLabels"
+          [deals]="deals()"
+          [showValue]="true"
+          (dealSelect)="selectedDealId.set($event.id)"
+          (stageChange)="onStageChange($event)"
+        />
+      </div>
+
+      @if (selectedDealId()) {
+        <app-crm-deal-panel
+          [dealId]="selectedDealId()"
+          [stages]="crm.stages"
+          [stageLabels]="crm.stageLabels"
+          [templates]="templates()"
+          [showReply]="true"
+          (closed)="selectedDealId.set(null)"
+          (updated)="onDealUpdated()"
+          (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+        />
+      }
+      @if (!selectedDealId() && selectedContactId()) {
+        <app-crm-contact-panel
+          [contactId]="selectedContactId()"
+          [stageLabels]="crm.stageLabels"
+          (closed)="selectedContactId.set(null)"
+          (openDeal)="openDeal($event)"
+        />
+      }
+    }
+
+    <!-- ── INVENTARIO ── -->
+    @if (tab() === 'inventory') {
+      <div class="dash-card">
+        <h2 class="card-title">
+          🚗 Mi Inventario
+          <button class="btn-copy small" (click)="startNew()">+ Nuevo</button>
+        </h2>
+        <div class="filter-tabs">
+          <button [class.active]="!filterStatus()" (click)="filterStatus.set(''); loadInventory()">Todos</button>
+          <button [class.active]="filterStatus() === 'published'" (click)="filterStatus.set('published'); loadInventory()">Publicados</button>
+          <button [class.active]="filterStatus() === 'draft'" (click)="filterStatus.set('draft'); loadInventory()">Borradores</button>
+          <button [class.active]="filterStatus() === 'baja'" (click)="filterStatus.set('baja'); loadInventory()">De baja</button>
+        </div>
+        <div class="car-list">
+          @for (car of inventory(); track car.id) {
+            <div class="car-item">
+              <img [src]="car.imageUrl" class="car-img" [alt]="car.model">
+              <div class="car-info">
+                <span class="status-tag" [class]="car.status">{{ statusLabel(car.status || 'draft') }}</span>
+                <h4>{{ car.make }} {{ car.model }}</h4>
+                <p>{{ car.year }} • {{ car.mileage | number }} km</p>
+                <div class="car-price">{{ formatPrice(car.price) }}</div>
+                <div class="action-row">
+                  <button class="btn-ghost small" (click)="startEdit(car)">✏️ Editar</button>
+                  @if (car.status !== 'published') {
+                    <button class="btn-ghost small" (click)="changeStatus(car, 'published')">🌐 Publicar</button>
+                  }
+                  @if (car.status !== 'draft') {
+                    <button class="btn-ghost small" (click)="changeStatus(car, 'draft')">📄 Borrador</button>
+                  }
+                  @if (car.status !== 'baja') {
+                    <button class="btn-ghost small warn" (click)="changeStatus(car, 'baja')">Dar de baja</button>
+                  }
+                  <button class="btn-delete" (click)="deleteCar(car.id)">🗑</button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <p class="empty">No hay vehículos en esta categoría.</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── EDITAR / NUEVO ── -->
+    @if (tab() === 'edit') {
+      <div class="dash-card">
+        <h2 class="card-title">{{ editing() ? '✏️ Editar vehículo' : '🚗 Nuevo vehículo' }}</h2>
+        <div class="form-row">
+          <div class="form-group"><label>Marca</label><input [(ngModel)]="form.make" placeholder="Ej: Toyota"></div>
+          <div class="form-group"><label>Modelo</label><input [(ngModel)]="form.model" placeholder="Ej: Corolla"></div>
+          <div class="form-group"><label>Año</label><input type="number" [(ngModel)]="form.year" placeholder="2023"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Precio (MXN)</label><input type="number" [(ngModel)]="form.price" placeholder="0"></div>
+          <div class="form-group"><label>Kilometraje</label><input type="number" [(ngModel)]="form.mileage" placeholder="0"></div>
+          <div class="form-group"><label>Transmisión</label><input [(ngModel)]="form.transmission" placeholder="Automático"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Ubicación</label><input [(ngModel)]="form.location" placeholder="Ciudad"></div>
+          <div class="form-group"><label>URL imagen</label><input [(ngModel)]="form.imageUrl" placeholder="https://..."></div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Descripción</label>
+          <textarea [(ngModel)]="form.description" rows="4" placeholder="Describe el vehículo..."></textarea>
+        </div>
+        <div class="action-row">
+          <button class="btn-copy" (click)="saveCar(false)">🌐 Publicar</button>
+          <button class="btn-ghost" (click)="saveCar(true)">💾 Guardar borrador</button>
+          @if (editing()) {
+            <button class="btn-ghost warn" (click)="changeStatus(editing()!, 'baja')">Dar de baja</button>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── REPUTACIÓN ── -->
+    @if (tab() === 'reputation') {
+      <div class="dash-card">
+        <h2 class="card-title">⭐ Reputación — {{ reputation().rating }}/5 ({{ reputation().reviewCount }} reseñas)</h2>
+        @for (r of reviews(); track r.id) {
+          <div class="review-card">
+            <div class="review-stars">{{ '⭐'.repeat(r.rating) }}</div>
+            <p style="color:var(--text);font-size:14px;line-height:1.5;margin:8px 0;">"{{ r.comment }}"</p>
+            <span class="review-author">— {{ r.author }}</span>
+          </div>
+        } @empty {
+          <p class="empty">Aún no tienes reseñas.</p>
+        }
+      </div>
+    }
+
+    <!-- ── PLANTILLAS ── -->
+    @if (tab() === 'plantillas') {
+      <div class="dash-card">
+        <h2 class="card-title">📝 Plantillas de respuesta</h2>
+        <p class="card-desc">Respuestas rápidas para tus leads.</p>
+        @for (t of templates(); track t.id) {
+          <div class="block-editor">
+            <strong style="color:var(--gold);">{{ t.name }}</strong>
+            <span class="card-desc" style="flex:1;">{{ t.content }}</span>
+            <button class="btn-delete small" (click)="deleteTemplate(t.id)">Eliminar</button>
+          </div>
+        } @empty {
+          <p class="empty">Sin plantillas aún.</p>
+        }
+        <hr class="divider">
+        <h4 class="section-sub">Nueva plantilla</h4>
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Nombre</label>
+          <input [(ngModel)]="newTemplate.name" placeholder="Ej: Saludo inicial">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Contenido</label>
+          <textarea [(ngModel)]="newTemplate.content" rows="3" placeholder="Hola..."></textarea>
+        </div>
+        <button class="btn-copy" (click)="saveTemplate()">Crear plantilla</button>
+      </div>
+    }
+
+    <!-- ── PDF DESIGNER ── -->
+    @if (tab() === 'pdf_designer') {
+      <div class="dash-card">
+        <h2 class="card-title">Diseñador de PDF (Cotizaciones)</h2>
+        <p class="card-desc">Personaliza el diseño de los PDFs que envías a tus clientes desde el CRM.</p>
+        <app-pdf-designer />
+      </div>
+    }
+
+    <!-- ── CONSTRUCTOR WEB ── -->
+    @if (tab() === 'page_builder') {
+      <div class="dash-card" style="padding: 0;">
+        <div style="padding: 24px; padding-bottom: 0;">
+          <h2 class="card-title">Constructor Web</h2>
+          <p class="card-desc">Personaliza cómo se ven tus autos en la página pública.</p>
+        </div>
+        <app-page-builder
+          [config]="auth.user()?.page_builder_config || null"
+          [profile]="{ brand: 'Marca', model: 'Modelo', year: 2024, price: 350000 }"
+          (configChange)="savePageBuilder($event)"
+        />
+      </div>
+    }
+
+    <!-- ── PERFIL ── -->
+    @if (tab() === 'perfil') {
+      <div class="dash-card">
+        <h2 class="card-title">⚙️ Mi Perfil</h2>
+        <p class="card-desc">Personaliza la información de tu concesionaria y el logo para tus cotizaciones PDF.</p>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Nombre de la Empresa</label>
+          <input [(ngModel)]="profileName" placeholder="Ej: Autos Premium S.A.">
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Logo de la Empresa (Opcional)</label>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <input type="file" accept="image/*" (change)="onLogoSelected($event)" #logoInput style="display:none">
+            <button class="btn-ghost small" (click)="logoInput.click()">Subir Imagen</button>
+            @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
+          </div>
+          <p class="card-desc" style="margin-top:4px; font-size:11px;">Sube una imagen (png, jpg, webp). Este logo se mostrará en las cotizaciones PDF.</p>
+          @if (profileLogoUrl) {
+            <div style="margin-top:12px; padding:12px; background:var(--surface); border-radius:8px; display:inline-block; position:relative;">
+              <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo" (error)="profileLogoUrl = ''">
+              <button class="btn-delete small" style="position:absolute; top:-10px; right:-10px;" (click)="profileLogoUrl = ''">X</button>
+            </div>
+          }
+        </div>
+        <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
+      </div>
+    }
+
+    <!-- ── PDF DESIGNER ── -->
+    @if (tab() === 'pdf_designer') {
+      <app-pdf-designer></app-pdf-designer>
+    }
+  </main>
+</div>

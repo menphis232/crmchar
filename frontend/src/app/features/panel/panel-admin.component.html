@@ -1,0 +1,217 @@
+<nav class="dash-nav">
+  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <div class="dash-user" style="display: flex; align-items: center;">
+    <app-notification-bell />
+    <span>Super Admin</span>
+    <div class="avatar">{{ initials() }}</div>
+    <button class="logout" (click)="auth.logout()">Salir</button>
+  </div>
+</nav>
+
+<div class="dash-container">
+  <aside class="dash-sidebar">
+    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats')">📊 Estadísticas</button>
+    <button class="dash-link" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers()">👥 Usuarios</button>
+    <button class="dash-link" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme')">🎨 Página Autos</button>
+    <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme')">🎨 Página Gestores</button>
+    <button class="dash-link" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor')">🛠 Panel Gestor</button>
+    <button class="dash-link" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria')">🛠 Panel Concesionaria</button>
+    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe')">💳 Suscripción / Stripe</button>
+  </aside>
+
+  <main class="dash-main">
+    @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
+
+    @if (tab() === 'stats' && stats(); as s) {
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-num">{{ s.totals.gestores }}</div><div class="stat-label">GESTORES</div></div>
+        <div class="stat-box"><div class="stat-num">{{ s.totals.concesionarias }}</div><div class="stat-label">CONCESIONARIAS</div></div>
+        <div class="stat-box"><div class="stat-num">{{ s.totals.autosPublished }}</div><div class="stat-label">AUTOS</div></div>
+        <div class="stat-box"><div class="stat-num">{{ s.totals.inquiries }}</div><div class="stat-label">PREGUNTAS</div></div>
+      </div>
+    }
+
+    @if (tab() === 'users') {
+      <div class="dash-card">
+        <h2 class="card-title">Gestión de usuarios</h2>
+        <p class="card-desc">Modifica datos y contraseñas de gestores y concesionarias.</p>
+        <div class="filter-tabs">
+          <button [class.active]="userFilter() === 'all'" (click)="userFilter.set('all'); loadUsers()">Todos</button>
+          <button [class.active]="userFilter() === 'gestor'" (click)="userFilter.set('gestor'); loadUsers()">Gestores</button>
+          <button [class.active]="userFilter() === 'concesionaria'" (click)="userFilter.set('concesionaria'); loadUsers()">Concesionarias</button>
+        </div>
+        <div class="users-layout">
+          <div class="users-list">
+            @if (!managedUsers().length) {
+              <p class="card-desc">No hay usuarios para mostrar.</p>
+            }
+            @for (u of managedUsers(); track u.id) {
+              <button type="button" class="user-row" [class.selected]="selectedUser()?.id === u.id" (click)="selectUser(u)">
+                <strong>{{ u.name }}</strong>
+                <span class="user-meta">{{ u.role }} • {{ u.email }}</span>
+              </button>
+            }
+          </div>
+          @if (selectedUser(); as u) {
+            <div class="user-editor">
+              <h3>Editar: {{ u.name }}</h3>
+              <div class="form-group"><label>Nombre</label><input [(ngModel)]="editName"></div>
+              <div class="form-group"><label>Email</label><input [(ngModel)]="editEmail"></div>
+              @if (u.role === 'gestor') {
+                <div class="form-group"><label>Ubicación</label><input [(ngModel)]="editLocation"></div>
+                <div class="form-group"><label>Estado</label><input [(ngModel)]="editState"></div>
+                <div class="form-group"><label>WhatsApp</label><input [(ngModel)]="editWhatsapp"></div>
+                <div class="form-group"><label>Bio pública</label><textarea [(ngModel)]="editBio" rows="3"></textarea></div>
+              } @else {
+                <p class="card-desc">{{ u.autosCount || 0 }} vehículos en inventario</p>
+              }
+              <button type="button" class="btn-copy" (click)="saveUser()">GUARDAR DATOS</button>
+              <hr class="divider">
+              <h4>Cambiar contraseña</h4>
+              <div class="form-group"><label>Nueva contraseña</label><input type="password" [(ngModel)]="newPassword"></div>
+              <button type="button" class="btn-ghost warn" (click)="resetPassword()">ACTUALIZAR CONTRASEÑA</button>
+              <hr class="divider">
+              <h4>Auditoría de Actividad</h4>
+              <p class="card-desc">Monitorea clientes, trámites y lee los mensajes de esta organización.</p>
+              <button type="button" class="btn-audit" (click)="auditUser(u)">
+                🔍 Auditar Organización
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+
+    @if (tab() === 'autos-theme') {
+      <app-panel-theme-editor pageKey="autos" title="Página pública de Autos" />
+    }
+    @if (tab() === 'gestores-theme') {
+      <app-panel-theme-editor pageKey="gestores" title="Página pública de Gestores" />
+    }
+    @if (tab() === 'panel-gestor') {
+      <app-panel-theme-editor pageKey="panel-gestor" title="Panel del Gestor" [isPanel]="true" />
+    }
+    @if (tab() === 'panel-concesionaria') {
+      <app-panel-theme-editor pageKey="panel-concesionaria" title="Panel de Concesionaria" [isPanel]="true" />
+    }
+
+    @if (tab() === 'stripe') {
+      <div class="dash-card">
+        <h2 class="card-title">💳 Configuración de Pagos y Suscripción</h2>
+        <p class="card-desc">Define las claves de Stripe y el precio de suscripción mensual. Al activar esto, los gestores y concesionarias deberán pagar antes de activar su cuenta.</p>
+
+        <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 20px 0 14px;">Claves de API de Stripe</h4>
+        <div class="stripe-settings">
+          <div class="form-group">
+            <label>Clave Pública (Publishable Key)</label>
+            <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_live_...">
+          </div>
+          <div class="form-group">
+            <label>Clave Secreta (Secret Key)</label>
+            <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_live_...">
+          </div>
+        </div>
+
+        <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 24px 0 14px;">Stripe Price ID</h4>
+        <div class="stripe-settings">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Price ID de la Suscripción (ej. price_1Pxx...)</label>
+            <input type="text" [(ngModel)]="stripePriceId" placeholder="price_1Pxx...">
+            <p style="margin: 6px 0 0; font-size: 11px; color: var(--muted);">Este ID se obtiene desde tu panel de Stripe > Catálogo de Productos.</p>
+          </div>
+        </div>
+
+        <div class="stripe-settings-note">
+          <strong>&#9889; Cómo funciona:</strong> Cuando guardas la configuración, al registrarse un nuevo gestor o concesionaria se les pedirá pagar la suscripción mediante Stripe Checkout. Su cuenta no se activará hasta que el pago sea confirmado por el webhook de Stripe.
+        </div>
+
+        @if (stripeMsg()) {
+          <p class="success-msg banner-msg" style="margin-top: 16px;">{{ stripeMsg() }}</p>
+        }
+
+        <button class="btn-copy full" [disabled]="stripeSaving()" style="margin-top: 20px;" (click)="saveStripeConfig()">
+          {{ stripeSaving() ? 'Guardando...' : '&#128190; GUARDAR CONFIGURACIÓN DE STRIPE' }}
+        </button>
+      </div>
+    }
+
+    @if (auditingOrg(); as org) {
+      <div class="modal-overlay" (click)="closeAudit()">
+        <div class="modal-content large-modal" (click)="$event.stopPropagation()">
+          <button class="modal-close" (click)="closeAudit()">&#x2715;</button>
+
+          <h2 class="card-title" style="padding-right: 44px; margin-bottom: 8px;">🔍 Auditoría: {{ org.name }}</h2>
+          <div class="audit-mode-badge">Modo Lectura Silenciosa Activo</div>
+
+          @if (orgStats(); as st) {
+            <div class="stats-grid" style="margin-bottom: 24px;">
+              <div class="stat-box"><div class="stat-num">{{ st.clientsCount }}</div><div class="stat-label">Clientes</div></div>
+              <div class="stat-box"><div class="stat-num">{{ st.openDealsCount }}</div><div class="stat-label">Activos</div></div>
+              <div class="stat-box"><div class="stat-num" style="color: var(--mx-green); font-size: 22px;">{{ st.totalBilled | currency:'USD':'symbol':'1.0-0' }}</div><div class="stat-label">Facturado</div></div>
+            </div>
+          }
+
+          <div style="display: flex; gap: 20px; height: 460px;">
+            <!-- Deals list -->
+            <div style="flex: 0 0 320px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 4px;">
+              <h4 style="margin: 0 0 12px; font-family: var(--f-ui); font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em;">Trámites</h4>
+              @for (deal of orgDeals(); track deal.id) {
+                <button type="button" class="user-row" [class.selected]="chatDeal()?.id === deal.id" (click)="viewChat(deal)">
+                  <strong style="display: block; font-size: 13px; margin-bottom: 4px;">{{ deal.title }}</strong>
+                  <span class="user-meta" style="font-size: 11px;">{{ deal.clientName || 'Sin cliente' }}</span>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+                    <span class="status-tag draft" style="margin: 0; font-size: 10px;">{{ deal.stage }}</span>
+                    <span style="font-size: 12px; font-weight: 600; color: var(--mx-green);">{{ deal.price | currency:'USD':'symbol':'1.0-0' }}</span>
+                  </div>
+                </button>
+              }
+              @if (!orgDeals().length) {
+                <p class="empty">No hay trámites registrados.</p>
+              }
+            </div>
+
+            <!-- Chat viewer -->
+            <div style="flex: 1; display: flex; flex-direction: column; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; min-width: 0;">
+              @if (chatDeal(); as cDeal) {
+                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); flex-shrink: 0;">
+                  <h4 style="margin: 0; font-family: var(--f-display); font-size: 15px; color: var(--mx-white);">{{ cDeal.title }}</h4>
+                  <p style="margin: 4px 0 0; font-size: 12px; color: var(--muted);">{{ cDeal.clientName }} • {{ cDeal.clientEmail }}</p>
+                </div>
+                <div style="flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px;">
+                  @for (msg of chatMessages(); track msg.id) {
+                    <div style="display: flex; flex-direction: column;" [style.align-items]="msg.sender_role === 'cliente' ? 'flex-start' : 'flex-end'">
+                      <span class="audit-msg-meta">{{ msg.sender_name }} ({{ msg.sender_role }}) • {{ msg.created_at | date:'d MMM, HH:mm' }}</span>
+                      <div class="audit-msg" [class.from-client]="msg.sender_role === 'cliente'" [class.from-gestor]="msg.sender_role !== 'cliente'">
+                        {{ msg.message }}
+                        @if (msg.file_url) {
+                          <div style="margin-top: 6px;"><a [href]="msg.file_url" target="_blank" style="color: var(--gold); font-size: 12px;">📎 Adjunto</a></div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (!chatMessages().length) {
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted);">
+                      <span style="font-size: 40px;">💬</span>
+                      <p style="margin: 0; font-size: 13px;">No hay mensajes en este trámite.</p>
+                    </div>
+                  }
+                </div>
+                <div style="padding: 12px 20px; background: rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                  <span style="font-size: 16px;">🔒</span>
+                  <span style="font-size: 12px; color: var(--muted); font-family: var(--f-ui);">Solo lectura &mdash; las partes no saben que estás aquí</span>
+                </div>
+              } @else {
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted);">
+                  <span style="font-size: 48px; opacity: 0.3;">👁</span>
+                  <p style="margin: 0; font-size: 13px;">Selecciona un trámite para leer sus mensajes</p>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+</div>
+

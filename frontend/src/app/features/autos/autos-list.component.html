@@ -1,0 +1,56 @@
+<app-nav />
+
+<header class="catalog-header autos-header">
+  <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'VEHÍCULOS PREMIUM EN VENTA' }}</h1>
+  <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Directorio nacional de autos verificados.' }}</p>
+</header>
+
+<div class="catalog-container">
+  <aside class="filters">
+    <div class="filter-group">
+      <h4 class="gold">MARCA</h4>
+      @for (m of makes(); track m.make) {
+        <label>
+          <input type="checkbox" [checked]="selectedMake() === m.make"
+                 (change)="onMakeChange(m.make, $any($event.target).checked)">
+          {{ m.make }} ({{ m.count }})
+        </label>
+      }
+    </div>
+    <div class="filter-group">
+      <h4 class="gold">PRECIO</h4>
+      <label><input type="radio" name="price" (change)="onPriceChange('low')"> Menos de $500k</label>
+      <label><input type="radio" name="price" (change)="onPriceChange('mid')"> $500k - $1M</label>
+      <label><input type="radio" name="price" (change)="onPriceChange('high')"> Más de $1M</label>
+      <label><input type="radio" name="price" (change)="onPriceChange('')" checked> Todos</label>
+    </div>
+  </aside>
+
+  <main class="car-grid">
+    @if (loading()) {
+      <p class="loading">Cargando vehículos...</p>
+    } @else if (error()) {
+      <p class="error-msg">{{ error() }}</p>
+    } @else if (autos().length === 0) {
+      <p class="empty-msg">No hay vehículos con esos filtros.</p>
+    } @else {
+      @for (car of autos(); track car.id) {
+        <a [routerLink]="['/autos', car.id]" class="car-card">
+          <img [src]="car.imageUrl" [alt]="car.model" class="car-img">
+          <div class="car-details">
+            <div class="car-make">{{ car.make }}</div>
+            <h3 class="car-model">{{ car.model }}</h3>
+            <div class="car-specs">
+              <span>📅 {{ car.year }}</span>
+              <span>🛣️ {{ car.mileage | number }} km</span>
+            </div>
+            <div class="car-price">{{ formatPrice(car.price) }}</div>
+            <div class="dealer-badge">
+              <span class="dealer-icon"></span> {{ car.dealerName }}
+            </div>
+          </div>
+        </a>
+      }
+    }
+  </main>
+</div>

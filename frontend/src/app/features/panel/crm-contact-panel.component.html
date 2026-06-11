@@ -1,0 +1,77 @@
+@if (data(); as c360) {
+  <div class="deal-panel-overlay" (click)="onOverlayClick($event)">
+    <div class="deal-panel contact-360" (click)="$event.stopPropagation()">
+
+      <!-- HEADER -->
+      <div class="deal-panel-header">
+        <div style="flex:1;min-width:0;">
+          <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Contacto 360°</p>
+          <h3>{{ c360.contact.name }}</h3>
+        </div>
+        <button type="button" class="deal-panel-close" (click)="closed.emit()">✕</button>
+      </div>
+
+      <!-- BODY -->
+      <div class="deal-panel-body">
+
+        <!-- INFO CONTACTO -->
+        <div class="deal-section">
+          <h4>Información</h4>
+          <div class="deal-contact-card">
+            @if (c360.contact.email) {
+              <p>✉️ {{ c360.contact.email }}</p>
+            }
+            @if (c360.contact.phone) {
+              <p>📞 {{ c360.contact.phone }}</p>
+            }
+            @if (c360.contact.notes) {
+              <p class="inquiry-msg">{{ c360.contact.notes }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- TRATOS -->
+        <div class="deal-section">
+          <h4>Tratos ({{ c360.deals.length }})</h4>
+          @for (d of c360.deals; track d.id) {
+            <button type="button" class="inbox-row" (click)="openDeal.emit(d.id)">
+              <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
+              <span class="status-badge">{{ stageLabels()[d.stage] || d.stage }}</span>
+            </button>
+          }
+          @if (!c360.deals.length) {
+            <p class="card-desc">Sin tratos registrados.</p>
+          }
+        </div>
+
+        <!-- TAREAS -->
+        @if (c360.tasks.length) {
+          <div class="deal-section">
+            <h4>Tareas</h4>
+            @for (t of c360.tasks; track t.id) {
+              <div class="activity-item" [class.done]="t.completed">
+                <span>{{ t.completed ? '✅' : '○' }} {{ t.title }}</span>
+                <span class="review-author">{{ t.dueAt | date:'short' }}</span>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- HISTORIAL -->
+        @if (c360.activities.length) {
+          <div class="deal-section">
+            <h4>Historial de actividad</h4>
+            @for (a of c360.activities; track a.id) {
+              <div class="activity-item">
+                <span class="activity-type">{{ a.dealTitle }}</span>
+                <p>{{ a.content }}</p>
+                <span class="review-author">{{ a.createdAt | date:'short' }}</span>
+              </div>
+            }
+          </div>
+        }
+
+      </div>
+    </div>
+  </div>
+}

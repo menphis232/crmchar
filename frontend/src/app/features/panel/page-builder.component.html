@@ -1,0 +1,354 @@
+<div class="builder-container" [style.--p-theme]="theme().primaryColor" [style.--p-text-color]="theme().buttonTextColor || '#1a1d24'">
+  
+  <!-- Sidebar Herramientas -->
+  <div class="sidebar tools-sidebar">
+    <h3>Bloques</h3>
+    <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Arrastra un bloque al área principal o a la barra lateral (derecha).</p>
+    
+    <div cdkDropList
+         id="toolbarList"
+         [cdkDropListData]="availableBlocks"
+         [cdkDropListConnectedTo]="['canvas-list-main', 'canvas-list-sidebar']"
+         class="blocks-list">
+      @for (b of availableBlocks; track b.id) {
+        <div class="block-item" cdkDrag>
+          <div class="block-preview-box">
+            @if (b.type === 'hero') { 🖼️ Banner }
+            @if (b.type === 'stats') { 📊 Estadísticas }
+            @if (b.type === 'text') { 📝 Texto }
+            @if (b.type === 'gallery') { 🎨 Galería }
+            @if (b.type === 'services') { 📋 Mis Servicios }
+            @if (b.type === 'reviews') { ⭐ Reseñas }
+            @if (b.type === 'form') { ✉️ Formulario (Cotización) }
+            @if (b.type === 'tracker') { 🔍 Rastreador }
+          </div>
+          <!-- Preview when dragging -->
+          <div *cdkDragPreview class="drag-preview">Moviendo {{b.type}}</div>
+        </div>
+      }
+    </div>
+
+    <div style="margin-top:40px; border-top:1px solid var(--border); padding-top:16px;">
+      <h3>Diseño General</h3>
+      <label>Color Principal</label>
+      <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()" style="width:100%; height:40px; border:none; cursor:pointer;">
+      
+      <label style="margin-top:12px; display:block;">Color Texto de Botones</label>
+      <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()" style="width:100%; height:40px; border:none; cursor:pointer;">
+
+      <label style="margin-top:12px; display:block;">Fuente</label>
+      <select [(ngModel)]="theme().fontFamily" (change)="emitChange()">
+        <option value="Inter">Inter</option>
+        <option value="Roboto">Roboto</option>
+        <option value="Outfit">Outfit</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Main Canvas -->
+  <div class="canvas-area">
+    <div class="canvas-toolbar">
+      <button class="preview-toggle-btn" (click)="togglePreview()">
+        @if (previewMode() === 'desktop') { 📱 Vista Móvil } @else { 💻 Vista Escritorio }
+      </button>
+    </div>
+    
+    <div class="canvas-preview-wrapper" [class.is-mobile]="previewMode() === 'mobile'">
+      <div class="canvas-preview" [style.font-family]="theme().fontFamily">
+        <div class="classic-layout">
+          
+          <!-- COLUMNA PRINCIPAL -->
+          <div cdkDropList
+               id="canvas-list-main"
+               [cdkDropListData]="mainBlocks()"
+               [cdkDropListConnectedTo]="['toolbarList', 'canvas-list-sidebar']"
+               (cdkDropListDropped)="drop($event, 'main')"
+               class="canvas-drop-zone main-zone">
+            
+            @if (mainBlocks().length === 0) {
+              <div class="empty-state">Arrastra bloques aquí para tu contenido principal</div>
+            }
+
+            @for (b of mainBlocks(); track b.id) {
+              <div class="canvas-block" cdkDrag (click)="selectBlock(b)" [class.selected]="selectedBlock()?.id === b.id"
+                   [style.margin-top.px]="b.data.marginTop || 0"
+                   [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()">✕</button>
+
+                @if (b.type === 'hero') {
+                  <div class="preview-hero" 
+                       [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
+                       [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
+                       [style.background-size]="b.data.bgSize || 'cover'"
+                       [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
+                    <div class="hero-overlay"></div>
+                    <div class="hero-content">
+                      <h2>{{ b.data.title }}</h2>
+                      <p>{{ b.data.subtitle }}</p>
+                      @if (b.data.buttonText) { <button class="preview-btn" [style.color]="b.data.buttonTextColor || '#1a1d24'">{{ b.data.buttonText }}</button> }
+                    </div>
+                  </div>
+                }
+                @if (b.type === 'stats') {
+                  <div style="display:flex; justify-content:center; gap:16px; padding:24px 10px; background:#f5f6f8; flex-wrap:wrap; color: #1a1d24; border-radius: 8px;">
+                    @if (b.data.showRating) { <div style="text-align:center;"><strong>5.0/5</strong><br><span style="font-size:10px;">ESTRELLAS</span></div> }
+                    @if (b.data.showCount) { <div style="text-align:center;"><strong>100+</strong><br><span style="font-size:10px;">TRÁMITES</span></div> }
+                    @if (b.data.showExperience) { <div style="text-align:center;"><strong>5 Años</strong><br><span style="font-size:10px;">EXPERIENCIA</span></div> }
+                  </div>
+                }
+                @if (b.type === 'text') {
+                  <div class="preview-text">
+                    <p>{{ b.data.content }}</p>
+                  </div>
+                }
+                @if (b.type === 'gallery') {
+                  <div class="preview-gallery">
+                    @if (b.data.images?.length === 0) {
+                      <p style="text-align:center; padding: 20px; border:2px dashed var(--border);">Galería vacía</p>
+                    }
+                    <div class="gallery-grid">
+                      @for (img of b.data.images; track img) {
+                        <img [src]="img" alt="gallery">
+                      }
+                    </div>
+                  </div>
+                }
+                @if (b.type === 'services') {
+                  <div class="preview-services">
+                    <h3 class="section-title">{{ b.data.title }}</h3>
+                    <div class="svc-box">Tus servicios aparecerán aquí...</div>
+                  </div>
+                }
+                @if (b.type === 'reviews') {
+                  <div class="preview-services">
+                    <h3 class="section-title reviews-title">{{ b.data.title }}</h3>
+                    <div class="svc-box">Tus reseñas aparecerán aquí...</div>
+                  </div>
+                }
+                @if (b.type === 'form') {
+                  <div class="contact-card">
+                    <h3>{{ b.data.title }}</h3>
+                    <p>{{ b.data.subtitle }}</p>
+                    <div class="solicitud-form">
+                      <input type="text" placeholder="Tu nombre *" disabled>
+                      <input type="email" placeholder="Email *" disabled>
+                      <input type="text" placeholder="Teléfono / WhatsApp" disabled>
+                      <select disabled><option>Trámite que necesitas *</option></select>
+                      <input type="text" placeholder="Ubicación" disabled>
+                      <button type="button" class="btn-submit" disabled>ENVIAR SOLICITUD</button>
+                    </div>
+                  </div>
+                }
+                @if (b.type === 'tracker') {
+                  <div class="contact-card track-card">
+                    <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
+                    <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">{{ b.data.subtitle }}</p>
+                    <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+                      <input placeholder="Ej: A1B2C3D4" disabled>
+                      <button type="button" class="btn-submit" disabled>Buscar</button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- COLUMNA ASIDE (SIDEBAR) -->
+          <aside class="classic-aside">
+            <div cdkDropList
+                 id="canvas-list-sidebar"
+                 [cdkDropListData]="sidebarBlocks()"
+                 [cdkDropListConnectedTo]="['toolbarList', 'canvas-list-main']"
+                 (cdkDropListDropped)="drop($event, 'sidebar')"
+                 class="canvas-drop-zone sidebar-zone">
+              
+              @if (sidebarBlocks().length === 0) {
+                <div class="empty-state">Agrega herramientas a la barra lateral</div>
+              }
+
+              @for (b of sidebarBlocks(); track b.id) {
+                <div class="canvas-block" cdkDrag (click)="selectBlock(b)" [class.selected]="selectedBlock()?.id === b.id"
+                     [style.margin-top.px]="b.data.marginTop || 0"
+                     [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                  <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()">✕</button>
+
+                  @if (b.type === 'hero') {
+                    <div class="preview-hero" 
+                         [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
+                         [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
+                         [style.background-size]="b.data.bgSize || 'cover'"
+                         [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
+                      <div class="hero-overlay"></div>
+                      <div class="hero-content">
+                        <h2>{{ b.data.title }}</h2>
+                        <p>{{ b.data.subtitle }}</p>
+                        @if (b.data.buttonText) { <button class="preview-btn" [style.color]="b.data.buttonTextColor || '#1a1d24'">{{ b.data.buttonText }}</button> }
+                      </div>
+                    </div>
+                  }
+                  @if (b.type === 'stats') {
+                    <div style="display:flex; justify-content:center; gap:16px; padding:24px 10px; background:#f5f6f8; flex-wrap:wrap; color: #1a1d24; border-radius: 8px;">
+                      @if (b.data.showRating) { <div style="text-align:center;"><strong>5.0/5</strong><br><span style="font-size:10px;">ESTRELLAS</span></div> }
+                      @if (b.data.showCount) { <div style="text-align:center;"><strong>100+</strong><br><span style="font-size:10px;">TRÁMITES</span></div> }
+                      @if (b.data.showExperience) { <div style="text-align:center;"><strong>5 Años</strong><br><span style="font-size:10px;">EXPERIENCIA</span></div> }
+                    </div>
+                  }
+                  @if (b.type === 'text') {
+                    <div class="preview-text">
+                      <p>{{ b.data.content }}</p>
+                    </div>
+                  }
+                  @if (b.type === 'gallery') {
+                    <div class="preview-gallery">
+                      @if (b.data.images?.length === 0) {
+                        <p style="text-align:center; padding: 20px; border:2px dashed var(--border);">Galería vacía</p>
+                      }
+                      <div class="gallery-grid">
+                        @for (img of b.data.images; track img) {
+                          <img [src]="img" alt="gallery">
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (b.type === 'services') {
+                    <div class="preview-services">
+                      <h3 class="section-title">{{ b.data.title }}</h3>
+                      <div class="svc-box">Tus servicios aparecerán aquí...</div>
+                    </div>
+                  }
+                  @if (b.type === 'reviews') {
+                    <div class="preview-services">
+                      <h3 class="section-title reviews-title">{{ b.data.title }}</h3>
+                      <div class="svc-box">Tus reseñas aparecerán aquí...</div>
+                    </div>
+                  }
+                  @if (b.type === 'form') {
+                    <div class="contact-card">
+                      <h3>{{ b.data.title }}</h3>
+                      <p>{{ b.data.subtitle }}</p>
+                      <div class="solicitud-form">
+                        <input type="text" placeholder="Tu nombre *" disabled>
+                        <input type="email" placeholder="Email *" disabled>
+                        <input type="text" placeholder="Teléfono / WhatsApp" disabled>
+                        <select disabled><option>Trámite que necesitas *</option></select>
+                        <input type="text" placeholder="Ubicación" disabled>
+                        <button type="button" class="btn-submit" disabled>ENVIAR SOLICITUD</button>
+                      </div>
+                    </div>
+                  }
+                  @if (b.type === 'tracker') {
+                    <div class="contact-card track-card">
+                      <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
+                      <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">{{ b.data.subtitle }}</p>
+                      <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+                        <input placeholder="Ej: A1B2C3D4" disabled>
+                        <button type="button" class="btn-submit" disabled>Buscar</button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </aside>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar Edición -->
+  <div class="sidebar edit-sidebar">
+    <h3>Propiedades</h3>
+    
+    @if (selectedBlock()) {
+      @let b = selectedBlock()!;
+      <div class="edit-panel">
+        
+        @if (b.type === 'hero') {
+          <label>Título</label>
+          <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
+          <label>Subtítulo</label>
+          <textarea [(ngModel)]="b.data.subtitle" (change)="emitChange()"></textarea>
+          
+          <label>Fondo del Hero</label>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label class="btn-copy" style="display:block; text-align:center; cursor:pointer;" [class.disabled]="isUploading()">
+              {{ isUploading() ? 'Subiendo...' : '+ Subir Imagen' }}
+              <input type="file" style="display:none" accept="image/*" (change)="uploadHeroImage($event, b)" [disabled]="isUploading()">
+            </label>
+            <input type="text" placeholder="O pega una URL..." [(ngModel)]="b.data.bgUrl" (change)="emitChange()">
+          </div>
+
+          <label>Ajuste de Imagen</label>
+          <select [(ngModel)]="b.data.bgSize" (change)="emitChange()">
+            <option value="cover">Cubrir (Cover)</option>
+            <option value="contain">Contener (Contain)</option>
+          </select>
+          <label><input type="checkbox" [(ngModel)]="b.data.bgRepeat" (change)="emitChange()"> Repetir Imagen</label>
+          
+          <label>Texto Botón</label>
+          <input type="text" [(ngModel)]="b.data.buttonText" (change)="emitChange()">
+          <label>Color Letra Botón</label>
+          <input type="color" [(ngModel)]="b.data.buttonTextColor" (change)="emitChange()">
+        }
+
+        @if (b.type === 'stats') {
+          <label><input type="checkbox" [(ngModel)]="b.data.showRating" (change)="emitChange()"> Mostrar Estrellas</label>
+          <label><input type="checkbox" [(ngModel)]="b.data.showCount" (change)="emitChange()"> Mostrar Trámites</label>
+          <label><input type="checkbox" [(ngModel)]="b.data.showExperience" (change)="emitChange()"> Mostrar Experiencia</label>
+        }
+
+        @if (b.type === 'text') {
+          <label>Contenido</label>
+          <textarea [(ngModel)]="b.data.content" rows="6" (change)="emitChange()"></textarea>
+        }
+
+        @if (b.type === 'gallery') {
+          <label class="btn-copy" style="margin-bottom:10px; display:inline-block; text-align:center; cursor:pointer;" [class.disabled]="isUploading()">
+            {{ isUploading() ? 'Subiendo...' : '+ Subir Imagen' }}
+            <input type="file" style="display:none" accept="image/*" (change)="uploadGalleryImage($event, b)" [disabled]="isUploading()">
+          </label>
+          <button type="button" class="btn-ghost" style="margin-bottom:10px; width: 100%; border-color: var(--border);" (click)="addGalleryImage(b)">+ URL Manual</button>
+          
+          @for (img of b.data.images; track $index) {
+            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
+              <img [src]="img" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
+              <button class="btn-delete-block" style="position:static;" (click)="removeGalleryImage(b, $index)">✕</button>
+            </div>
+          }
+        }
+
+        @if (b.type === 'services' || b.type === 'reviews') {
+          <label>Título de la Sección</label>
+          <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
+          @if (b.type === 'services') {
+            <label><input type="checkbox" [(ngModel)]="b.data.showPrices" (change)="emitChange()"> Mostrar Precios</label>
+          }
+        }
+
+        @if (b.type === 'form' || b.type === 'tracker') {
+          <p class="locked-note" style="background: rgba(255, 193, 7, 0.1); color: var(--gold); padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 16px;">
+            ⚠️ Los campos de este bloque no se pueden modificar, solo sus textos principales y su posición.
+          </p>
+          <label>Título</label>
+          <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
+          <label>Subtítulo</label>
+          <textarea [(ngModel)]="b.data.subtitle" (change)="emitChange()"></textarea>
+        }
+
+        <hr style="border:none; border-top:1px solid var(--border); margin: 20px 0;">
+        <h4 style="margin-bottom: 12px;">Separación del Bloque</h4>
+        <label>Margen Superior (px)</label>
+        <input type="number" [(ngModel)]="b.data.marginTop" (change)="emitChange()">
+        <label>Margen Inferior (px)</label>
+        <input type="number" [(ngModel)]="b.data.marginBottom" (change)="emitChange()">
+
+      </div>
+    } @else {
+      <p style="color:var(--muted); font-size:13px;">Haz clic en un bloque del lienzo para editar sus propiedades.</p>
+    }
+  </div>
+
+</div>
+
+

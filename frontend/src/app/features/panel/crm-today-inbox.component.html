@@ -1,0 +1,51 @@
+@if (hasItems()) {
+  <div class="dash-card today-inbox">
+    <h2 class="card-title">📅 Bandeja de hoy</h2>
+    <p class="card-desc" style="margin-bottom:4px;">Acciones prioritarias para tus trámites y leads.</p>
+
+    @if (inbox().overdueTasks.length) {
+      <h4 class="inbox-section-title warn">⚠️ Tareas vencidas ({{ inbox().overdueTasks.length }})</h4>
+      @for (t of inbox().overdueTasks; track t.id) {
+        <button type="button" class="inbox-row stalled" (click)="openTaskDeal.emit(t.dealId)">
+          <span style="font-weight:600;color:var(--mx-white);">{{ t.title }}</span>
+          <span class="user-meta">{{ t.contactName }} — venció {{ t.dueAt | date:'short' }}</span>
+        </button>
+      }
+    }
+
+    @if (inbox().todayTasks.length) {
+      <h4 class="inbox-section-title">📌 Tareas de hoy ({{ inbox().todayTasks.length }})</h4>
+      @for (t of inbox().todayTasks; track t.id) {
+        <button type="button" class="inbox-row" (click)="openTaskDeal.emit(t.dealId)">
+          <span style="font-weight:600;color:var(--mx-white);">{{ t.title }}</span>
+          <span class="user-meta">{{ t.contactName }} — {{ t.dueAt | date:'shortTime' }}</span>
+        </button>
+      }
+    }
+
+    @if (inbox().uncontactedDeals.length) {
+      <h4 class="inbox-section-title">🔔 Sin primera respuesta ({{ inbox().uncontactedDeals.length }})</h4>
+      @for (d of inbox().uncontactedDeals; track d.id) {
+        <button type="button" class="inbox-row" (click)="openDeal.emit(d)">
+          <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
+          <span class="user-meta">{{ d.contact?.name }} — nuevo</span>
+        </button>
+      }
+    }
+
+    @if (inbox().stalledDeals.length) {
+      <h4 class="inbox-section-title warn">🛑 Estancados +2 días ({{ inbox().stalledDeals.length }})</h4>
+      @for (d of inbox().stalledDeals; track d.id) {
+        <button type="button" class="inbox-row stalled" (click)="openDeal.emit(d)">
+          <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
+          <span class="user-meta">{{ d.contact?.name }} — {{ stageLabels()[d.stage] || d.stage }} ({{ d.daysInStage }}d)</span>
+        </button>
+      }
+    }
+  </div>
+} @else {
+  <div class="dash-card today-inbox">
+    <h2 class="card-title">📅 Bandeja de hoy</h2>
+    <p class="empty" style="padding:20px 0;">✅ ¡Al día! No hay tareas urgentes ni leads pendientes.</p>
+  </div>
+}

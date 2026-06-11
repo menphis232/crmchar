@@ -1,0 +1,311 @@
+@if (deal(); as d) {
+  <div class="deal-panel-overlay" (click)="onOverlayClick($event)">
+    <div class="deal-panel" (click)="$event.stopPropagation()">
+
+      <!-- ── HEADER ── -->
+      <div class="deal-panel-header">
+        <div style="flex:1; min-width:0;">
+          <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Trámite</p>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <h3 style="margin:0;">{{ d.title }}</h3>
+            @if (d.trackingCode) {
+              <span style="font-size:11px; background:rgba(200,169,74,0.15); color:var(--gold); padding:2px 8px; border-radius:12px; border:1px solid rgba(200,169,74,0.3);">
+                Código: {{ d.trackingCode }}
+              </span>
+            }
+          </div>
+        </div>
+        <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">✕</button>
+      </div>
+
+      <!-- ── BODY ── -->
+      <div class="deal-panel-body">
+
+        <!-- CONTACTO -->
+        <div class="deal-section">
+          <h4>Contacto</h4>
+          <div class="deal-contact-card">
+            @if (d.contact?.id) {
+              <button type="button" class="link-name" (click)="openContact.emit(d.contact!.id!)">
+                👤 {{ d.contact?.name }}
+              </button>
+            } @else {
+              <strong style="color:var(--mx-white);font-size:14px;">{{ d.contact?.name }}</strong>
+            }
+            @if (d.contact?.email) {
+              <p>✉️ {{ d.contact?.email }}</p>
+            }
+            @if (d.contact?.phone) {
+              <p>📞 {{ d.contact?.phone }}</p>
+            }
+            @if (d.contact?.whatsapp || d.contact?.phone) {
+              <a [href]="whatsappLink()" target="_blank" class="btn-copy small" style="margin-top:8px;align-self:flex-start;">
+                💬 WhatsApp
+              </a>
+            }
+          </div>
+        </div>
+
+        <!-- ETAPA -->
+        <div class="deal-section">
+          <h4>Etapa del trámite</h4>
+          <select [ngModel]="d.stage" (ngModelChange)="changeStage($event)">
+            @for (s of stages(); track s) {
+              <option [value]="s">{{ stageLabels()[s] || s }}</option>
+            }
+          </select>
+          @if (d.stage === 'perdido' || d.lostReason) {
+            <label class="card-desc" style="margin-top:10px;display:block;">Motivo de pérdida</label>
+            <select [(ngModel)]="lostReason" (change)="changeStage('perdido')">
+              <option value="">— Selecciona —</option>
+              @for (r of lostReasons; track r) {
+                <option [value]="r">{{ r }}</option>
+              }
+            </select>
+          }
+          @if (d.firstResponseAt) {
+            <p class="card-desc" style="margin-top:8px;">⏱️ 1ª respuesta: {{ d.firstResponseAt | date:'short' }}</p>
+          }
+        </div>
+
+        <!-- VALOR ESTIMADO -->
+        <div class="deal-section">
+          <h4>Valor estimado (MXN)</h4>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <input type="number" [(ngModel)]="estimatedValue" placeholder="0" style="flex:1;min-width:100px;">
+            <button type="button" class="btn-copy small" (click)="saveNotes()">💾 Guardar</button>
+          </div>
+          
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:13px; color:var(--muted);">Estado de Pago: 
+                <strong [style.color]="d.paymentStatus === 'paid' ? 'var(--mx-green)' : 'var(--gold)'">
+                  {{ d.paymentStatus === 'paid' ? '✅ PAGADO' : '⏳ PENDIENTE' }}
+                </strong>
+              </span>
+              @if (d.paymentStatus !== 'paid') {
+                <button type="button" class="btn-ghost small" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
+                  {{ isGeneratingPayment() ? 'Generando...' : '💳 Cobrar en Línea' }}
+                </button>
+              }
+            </div>
+            
+            @if (paymentLink()) {
+              <div style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:8px;">
+                <p style="font-size:12px; color:var(--gold); margin-bottom:8px;">Link generado. Cópialo y envíalo al cliente:</p>
+                <div style="display:flex; gap:8px;">
+                  <input type="text" readonly [value]="paymentLink()" style="flex:1; font-size:11px; padding:6px; background:var(--bg); border:1px solid var(--border); color:var(--muted);" #linkInput>
+                  <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
+                </div>
+              </div>
+            }
+            @if (paymentError()) {
+              <p style="color:var(--mx-red); font-size:12px; margin-top:8px;">{{ paymentError() }}</p>
+            }
+          </div>
+        </div>
+
+        <!-- DOCUMENTOS (Phase 3.2) -->
+        <div class="deal-section" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px;">
+          <h4 style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+            Documentos Adjuntos
+            <label class="btn-copy small" style="cursor:pointer; margin:0;" [class.disabled]="isUploading()">
+              <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
+              {{ isUploading() ? 'Subiendo...' : '📄 Subir Archivo' }}
+            </label>
+          </h4>
+          
+          @if (documents().length > 0) {
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              @for (doc of documents(); track doc.id) {
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:8px 12px; border-radius:4px;">
+                  <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
+                    <span style="font-size:16px;">📎</span>
+                    <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                      <a [href]="doc.file_url" target="_blank" style="color:var(--mx-green); text-decoration:none; font-size:13px; font-weight:500;">
+                        {{ doc.file_name }}
+                      </a>
+                      <div style="font-size:10px; color:var(--muted);">{{ doc.created_at | date:'short' }}</div>
+                    </div>
+                  </div>
+                  <button type="button" class="btn-ghost small" style="color:#ff4d4f; border-color:transparent; padding:4px;" title="Eliminar" (click)="deleteDocument(doc.id)">
+                    ✕
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc">No hay documentos adjuntos en este trámite.</p>
+          }
+        </div>
+
+        <!-- COTIZACIONES (Phase 3.1) -->
+        @if (d.dealType === 'venta_auto') {
+          <div class="deal-section" style="background:rgba(200,169,74,0.05); border:1px solid var(--gold); border-radius:8px; padding:16px;">
+            <h4 style="color:var(--gold); margin-bottom:12px;">Cotizaciones PDF</h4>
+            
+            @if (quotes().length > 0) {
+              <div style="margin-bottom:16px;">
+                @for (q of quotes(); track q.id) {
+                  <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:8px 12px; margin-bottom:8px; border-radius:4px;">
+                    <div>
+                      <strong style="color:var(--mx-white); font-size:12px;">Folio: {{ q.id.split('-')[0] | uppercase }}</strong>
+                      <div style="font-size:10px; color:var(--muted);">Total: ${{ q.total | number }} | {{ q.created_at | date:'shortDate' }}</div>
+                    </div>
+                    <button type="button" class="btn-copy small" (click)="downloadQuote(q.id)">Descargar PDF</button>
+                  </div>
+                }
+              </div>
+            }
+
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                <div>
+                  <label class="card-desc">Enganche</label>
+                  <input type="number" [(ngModel)]="downPayment" placeholder="0">
+                </div>
+                <div>
+                  <label class="card-desc">Auto a cuenta</label>
+                  <input type="number" [(ngModel)]="tradeInValue" placeholder="0">
+                </div>
+              </div>
+              <div>
+                <label class="card-desc">Plazo (meses)</label>
+                <select [(ngModel)]="termMonths">
+                  <option value="0">Contado (0 meses)</option>
+                  <option value="12">12 meses</option>
+                  <option value="24">24 meses</option>
+                  <option value="36">36 meses</option>
+                  <option value="48">48 meses</option>
+                  <option value="60">60 meses</option>
+                </select>
+              </div>
+              <button type="button" class="btn-ghost small" style="margin-top:8px; border-color:var(--gold); color:var(--gold);" (click)="generateQuote()">
+                + Generar Nueva Cotización
+              </button>
+            </div>
+          </div>
+        }
+
+        <!-- NOTAS INTERNAS -->
+        <div class="deal-section">
+          <h4>Notas internas</h4>
+          <textarea [(ngModel)]="internalNotes" rows="3" placeholder="Escribe notas privadas del trámite..."></textarea>
+          <button type="button" class="btn-ghost small" style="margin-top:8px;" (click)="saveNotes()">Guardar notas</button>
+        </div>
+
+        <!-- TAREAS -->
+        <div class="deal-section">
+          <h4>Tareas pendientes</h4>
+          @for (t of d.tasks; track t.id) {
+            <label class="task-row">
+              <input type="checkbox" [checked]="t.completed" (change)="toggleTask(t.id, t.completed)">
+              <span [class.done]="t.completed" style="flex:1;">{{ t.title }}</span>
+              <span class="review-author">{{ t.dueAt | date:'shortDate' }}</span>
+            </label>
+          }
+          @if (!d.tasks?.length) {
+            <p class="card-desc">Sin tareas aún.</p>
+          }
+          <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
+            <input [(ngModel)]="taskTitle" placeholder="Ej: Llamar al cliente">
+            <input type="datetime-local" [(ngModel)]="taskDue" [value]="taskDue || defaultTaskDue()">
+            <button type="button" class="btn-ghost small" (click)="addTask()">+ Agendar tarea</button>
+          </div>
+        </div>
+
+        <!-- MENSAJE DEL CLIENTE -->
+        @if (d.clientMessage) {
+          <div class="deal-section">
+            <h4>Mensaje del cliente</h4>
+            <p class="inquiry-msg">"{{ d.clientMessage }}"</p>
+            @if (d.clientReply) {
+              <p class="reply-msg">✓ Respondido: {{ d.clientReply }}</p>
+            }
+          </div>
+        }
+
+        <!-- RESPONDER AL CLIENTE -->
+        @if (showReply() && d.refType === 'auto_inquiry') {
+          <div class="deal-section">
+            <h4>Responder al cliente</h4>
+            @if (templates().length) {
+              <div class="template-chips">
+                @for (t of templates(); track t.id) {
+                  <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
+                }
+                <button type="button" class="chip" style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; border: none;" (click)="generateAIReply()">✨ Generar Respuesta IA</button>
+              </div>
+            } @else {
+              <div class="template-chips">
+                <button type="button" class="chip" style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; border: none;" (click)="generateAIReply()">✨ Generar Respuesta IA</button>
+              </div>
+            }
+            <textarea [(ngModel)]="replyText" rows="3" placeholder="Escribe tu respuesta..."></textarea>
+            <button type="button" class="btn-copy small" style="margin-top:8px;" (click)="sendReply()">📤 Enviar respuesta</button>
+          </div>
+        }
+
+        <!-- CHAT CON CLIENTE -->
+        <div class="deal-section">
+          <h4>Chat con Cliente</h4>
+          <div class="chat-container card" style="height: 300px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden;">
+            <div class="chat-messages" id="gestor-chat-box" style="flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg);">
+              @for (msg of messages; track msg.id) {
+                <div class="message" [style.align-self]="msg.sender_id === auth.user()?.id ? 'flex-end' : 'flex-start'" [style.background]="msg.sender_id === auth.user()?.id ? 'var(--gold)' : 'var(--surface)'" [style.color]="msg.sender_id === auth.user()?.id ? '#000' : 'var(--mx-white)'" style="max-width: 80%; padding: 0.5rem 1rem; border-radius: 8px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
+                    <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
+                    <span>{{ msg.created_at | date:'shortTime' }}</span>
+                  </div>
+                  <div style="font-size: 13px; line-height: 1.4;">
+                    {{ msg.message }}
+                    @if (msg.file_url) {
+                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
+                        <a [href]="msg.file_url" target="_blank" style="color: inherit; text-decoration: underline;">📎 Ver Documento</a>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="chat-input" style="display: flex; padding: 0.5rem; background: var(--surface); border-top: 1px solid rgba(255,255,255,0.1); gap: 0.5rem;">
+              <button type="button" class="btn-ghost small" (click)="fileInput.click()">📎</button>
+              <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
+              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()" style="flex-grow: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: var(--bg); color: var(--mx-white);">
+              <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- AGREGAR NOTA -->
+        <div class="deal-section">
+          <h4>Agregar nota de seguimiento</h4>
+          @if (!showReply() && templates().length) {
+            <div class="template-chips">
+              @for (t of templates(); track t.id) {
+                <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
+              }
+            </div>
+          }
+          <textarea [(ngModel)]="noteText" rows="2" placeholder="Nota de seguimiento..."></textarea>
+          <button type="button" class="btn-ghost small" style="margin-top:8px;" (click)="addNote()">Agregar nota</button>
+        </div>
+
+        <!-- HISTORIAL -->
+        @if (d.activities?.length) {
+          <div class="deal-section">
+            <h4>Historial de actividad</h4>
+            @for (a of d.activities; track a.id) {
+              <div class="activity-item">
+                <span class="activity-type">{{ a.activityType }}</span>
+                <p>{{ a.content }}</p>
+                <span class="review-author">{{ a.createdAt | date:'short' }}</span>
+              </div>
+            }
+          </div>
+        }
+
+      </div><!-- /deal-panel-body -->
+    </div><!-- /deal-panel -->
+  </div><!-- /overlay -->
+}

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trámites Vehiculares de México | Gestión Vehicular 100% en Línea</title>
+  <meta name="description" content="Realiza tus trámites vehiculares en México desde casa: alta de vehículo, cambio de propietario, placas, verificación y más. Rápido, seguro y oficial." />
+  <meta name="keywords" content="trámites vehiculares México, alta de vehículo, cambio de propietario, placas CDMX, verificación vehicular, tenencia" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body>
+
+  <!-- LOADER -->
+  <div id="loader" aria-label="Cargando">
+    <div class="loader-inner">
+      <div class="loader-emblem">
+        <img src="escudo.svg" alt="" aria-hidden="true" onerror="this.style.display='none'" />
+        <span class="loader-logo-text">TRÁMITES<span>VEHICULARES</span></span>
+        <span class="loader-logo-sub">DE MÉXICO</span>
+      </div>
+      <div class="loader-bar-wrap"><div class="loader-bar" id="loader-bar"></div></div>
+      <div class="loader-percent" id="loader-percent">0%</div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <nav id="main-nav" aria-label="Navegación principal">
+    <a href="#hero" class="nav-logo" aria-label="Inicio">
+      <span class="logo-icon">🏛️</span>
+      <span class="logo-text">TRÁMITES<span class="logo-accent">VEHICULARES</span><em>.mx</em></span>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="#tramites" id="nl-tramites">Trámites</a></li>
+      <li><a href="autos.html" style="color:var(--gold);">Autos en Venta</a></li>
+      <li><a href="gestores.html" style="color:var(--mx-green);">Gestores Autorizados</a></li>
+      <li><a href="#como-funciona" id="nl-como">¿Cómo funciona?</a></li>
+      <li><a href="#requisitos" id="nl-req">Requisitos</a></li>
+      <li><a href="#contacto" id="nl-contacto">Contacto</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn-ghost" id="btn-login" style="padding: 10px 16px;">👤 INICIAR SESIÓN</a>
+      <a href="#contacto" class="btn-cta-nav" id="btn-nav-cta">INICIAR TRÁMITE →</a>
+    </div>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero" class="section section--hero" aria-label="Hero">
+    <!-- Animated background layers -->
+    <div class="hero-grid" aria-hidden="true"></div>
+    <div class="hero-gradient" aria-hidden="true"></div>
+    <div class="hero-scan" aria-hidden="true"></div>
+
+    <!-- Flag accent stripe -->
+    <div class="mx-stripe" aria-hidden="true">
+      <span style="background:#006847"></span>
+      <span style="background:#fff"></span>
+      <span style="background:#CE1126"></span>
+    </div>
+
+    <!-- Car image — parallax layer -->
+    <div class="hero-car-wrap" id="hero-car-wrap" aria-hidden="true">
+      <img src="mustang.png" alt="Ford Mustang Dark Horse" class="hero-car-img" id="hero-car-img" />
+      <div class="hero-car-glow"></div>
+      <div class="hero-car-reflection"></div>
+    </div>
+
+    <!-- Content -->
+    <div class="hero-content" id="hero-content">
+      <div class="hero-badge" id="hero-badge">
+        <span class="badge-dot"></span> PLATAFORMA OFICIAL · 100% DIGITAL
+      </div>
+      <h1 class="hero-title" id="hero-title">
+        <span class="ht-line" id="ht-1">TUS TRÁMITES</span>
+        <span class="ht-line ht-accent" id="ht-2">VEHICULARES</span>
+        <span class="ht-line ht-sub" id="ht-3">EN MINUTOS</span>
+      </h1>
+      <p class="hero-desc" id="hero-desc">
+        Alta de vehículo, cambio de propietario, placas, verificación y más.<br>
+        Sin filas. Sin traslados. Desde cualquier estado de México.
+      </p>
+      <div class="hero-actions" id="hero-actions">
+        <a href="#tramites" class="btn-primary" id="btn-ver-tramites">VER TRÁMITES</a>
+        <a href="#como-funciona" class="btn-ghost" id="btn-como-funciona">¿CÓMO FUNCIONA?</a>
+      </div>
+      <!-- Trust indicators -->
+      <div class="hero-trust" id="hero-trust">
+        <div class="trust-item"><span class="trust-num">+150K</span><span class="trust-label">Trámites completados</span></div>
+        <div class="trust-sep"></div>
+        <div class="trust-item"><span class="trust-num">32</span><span class="trust-label">Estados cubiertos</span></div>
+        <div class="trust-sep"></div>
+        <div class="trust-item"><span class="trust-num">4.9★</span><span class="trust-label">Calificación promedio</span></div>
+      </div>
+    </div>
+
+    <a href="#tramites" class="scroll-hint" id="scroll-hint" aria-label="Ir a trámites">
+      <span class="sh-text">EXPLORAR</span>
+      <span class="sh-line"></span>
+    </a>
+  </section>
+
+  <!-- ============= SCROLL JOURNEY (sticky car) ============= -->
+  <section id="section-journey" class="section section--journey" aria-label="Proceso de trámite">
+    <!-- Panels that scroll cleanly without sticky car -->
+    <div id="journey-panels">
+      <!-- Panel 1 -->
+      <div class="j-panel" id="jp-1" data-step="1" data-status="SELECCIONANDO TRÁMITE">
+        <div class="jp-content jp-right">
+          <div class="jp-number">01</div>
+          <h2 class="jp-title">ELIGE TU<br><span class="accent-mx">TRÁMITE</span></h2>
+          <p class="jp-body">Selecciona el servicio que necesitas: alta de vehículo, cambio de propietario, reposición de placas o verificación vehicular. Todo en una sola plataforma.</p>
+          <ul class="jp-tags">
+            <li>Alta de vehículo</li>
+            <li>Cambio de propietario</li>
+            <li>Reposición de placas</li>
+            <li>Verificación</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Panel 2 -->
+      <div class="j-panel" id="jp-2" data-step="2" data-status="CARGANDO DOCUMENTOS">
+        <div class="jp-content jp-left">
+          <div class="jp-number">02</div>
+          <h2 class="jp-title">SUBE TUS<br><span class="accent-mx">DOCUMENTOS</span></h2>
+          <p class="jp-body">Fotografía o escanea tus documentos y cárgalos en segundos. Nuestro sistema con IA verifica automáticamente la validez y legibilidad.</p>
+          <ul class="jp-tags">
+            <li>INE vigente</li>
+            <li>Factura del vehículo</li>
+            <li>Comprobante de domicilio</li>
+            <li>CURP</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Panel 3 -->
+      <div class="j-panel" id="jp-3" data-step="3" data-status="PROCESANDO PAGO">
+        <div class="jp-content jp-right">
+          <div class="jp-number">03</div>
+          <h2 class="jp-title">PAGA EN<br><span class="accent-mx">LÍNEA</span></h2>
+          <p class="jp-body">Pago 100% seguro con tarjeta, SPEI o tiendas de conveniencia. Recibe tu comprobante de pago al instante con folio oficial de la Secretaría de Movilidad.</p>
+          <ul class="jp-tags">
+            <li>Tarjeta débito/crédito</li>
+            <li>Transferencia SPEI</li>
+            <li>OXXO Pay</li>
+            <li>CoDi</li>
+          </ul>
+        </div>
+      </div>
+      <!-- Panel 4 -->
+      <div class="j-panel" id="jp-4" data-step="4" data-status="TRÁMITE COMPLETADO ✓">
+        <div class="jp-content jp-left">
+          <div class="jp-number">04</div>
+          <h2 class="jp-title">RECIBE TUS<br><span class="accent-mx">DOCUMENTOS</span></h2>
+          <p class="jp-body">Descarga tu tarjeta de circulación digital o recibe tus placas físicas en tu domicilio en 3-5 días hábiles. Totalmente válido ante cualquier autoridad.</p>
+          <ul class="jp-tags">
+            <li>Documento digital PDF</li>
+            <li>Envío a domicilio</li>
+            <li>Validez nacional</li>
+            <li>Folio SAT</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= TRÁMITES GRID ============= -->
+  <section id="tramites" class="section section--tramites" aria-label="Catálogo de trámites">
+    <div class="section-inner">
+      <div class="sec-header">
+        <p class="sec-eyebrow">CATÁLOGO COMPLETO</p>
+        <h2 class="sec-title">NUESTROS <span class="accent-mx">TRÁMITES</span></h2>
+        <p class="sec-sub">Todos los servicios vehiculares en un solo lugar, disponibles en los 32 estados.</p>
+      </div>
+      <div class="tramites-grid" id="tramites-grid">
+        <article class="tramite-card" id="tc-0" tabindex="0" aria-label="Alta de vehículo">
+          <div class="tc-icon">🚗</div>
+          <div class="tc-badge">MÁS SOLICITADO</div>
+          <h3 class="tc-title">Alta de Vehículo</h3>
+          <p class="tc-desc">Registra tu vehículo nuevo o importado ante la Secretaría de Movilidad de tu estado. Proceso 100% digital.</p>
+          <ul class="tc-list">
+            <li>✓ En línea sin citas</li>
+            <li>✓ Resultado en 24-48 hrs</li>
+            <li>✓ Válido en toda la república</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$350 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Iniciar alta de vehículo">INICIAR TRÁMITE →</a>
+        </article>
+
+        <article class="tramite-card" id="tc-1" tabindex="0" aria-label="Cambio de propietario">
+          <div class="tc-icon">🔑</div>
+          <h3 class="tc-title">Cambio de Propietario</h3>
+          <p class="tc-desc">Transfiere legalmente la propiedad de un vehículo. Protégete como comprador o vendedor con un proceso transparente.</p>
+          <ul class="tc-list">
+            <li>✓ Firma electrónica</li>
+            <li>✓ Sin notario requerido</li>
+            <li>✓ Historial verificado</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$480 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Iniciar cambio de propietario">INICIAR TRÁMITE →</a>
+        </article>
+
+        <article class="tramite-card" id="tc-2" tabindex="0" aria-label="Placas y calcomanía">
+          <div class="tc-icon">🔢</div>
+          <h3 class="tc-title">Placas y Calcomanía</h3>
+          <p class="tc-desc">Solicita placas nuevas, reposición por robo o extravío, o el cambio de tarjeta de circulación. Envío a domicilio incluido.</p>
+          <ul class="tc-list">
+            <li>✓ Diseño por estado</li>
+            <li>✓ Envío en 3-5 días</li>
+            <li>✓ Calcomanía digital</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$620 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Solicitar placas">INICIAR TRÁMITE →</a>
+        </article>
+
+        <article class="tramite-card" id="tc-3" tabindex="0" aria-label="Verificación vehicular">
+          <div class="tc-icon">🔍</div>
+          <h3 class="tc-title">Verificación Vehicular</h3>
+          <p class="tc-desc">Pre-verificación en línea y cita prioritaria en el verificentro más cercano. Evita multas y circula sin restricciones.</p>
+          <ul class="tc-list">
+            <li>✓ Cita sin espera</li>
+            <li>✓ Pre-diagnóstico digital</li>
+            <li>✓ Hologramas 00, 0, 1 y 2</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$290 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Agendar verificación">INICIAR TRÁMITE →</a>
+        </article>
+
+        <article class="tramite-card" id="tc-4" tabindex="0" aria-label="Pago de tenencia">
+          <div class="tc-icon">📋</div>
+          <h3 class="tc-title">Pago de Tenencia</h3>
+          <p class="tc-desc">Consulta y paga tu tenencia o impuesto sobre tenencia vehicular en todos los estados. Evita recargos con pago oportuno.</p>
+          <ul class="tc-list">
+            <li>✓ Consulta instantánea</li>
+            <li>✓ Múltiples métodos de pago</li>
+            <li>✓ Comprobante oficial</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$0 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Pagar tenencia">INICIAR TRÁMITE →</a>
+        </article>
+
+        <article class="tramite-card" id="tc-5" tabindex="0" aria-label="Importación de vehículo">
+          <div class="tc-icon">✈️</div>
+          <h3 class="tc-title">Importación de Vehículo</h3>
+          <p class="tc-desc">Legaliza tu vehículo de procedencia extranjera (regularización). Incluye gestión ante el SAT, SEMOVI y aduanas.</p>
+          <ul class="tc-list">
+            <li>✓ Regularización "chocolate"</li>
+            <li>✓ Gestoría SAT incluida</li>
+            <li>✓ Asesoría personalizada</li>
+          </ul>
+          <div class="tc-price">Desde <strong>$1,200 MXN</strong></div>
+          <a href="#contacto" class="tc-btn" aria-label="Importar vehículo">INICIAR TRÁMITE →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= CÓMO FUNCIONA ============= -->
+  <section id="como-funciona" class="section section--como" aria-label="Cómo funciona el proceso">
+    <div class="section-inner">
+      <div class="sec-header">
+        <p class="sec-eyebrow">PROCESO SIMPLIFICADO</p>
+        <h2 class="sec-title">¿CÓMO <span class="accent-mx">FUNCIONA?</span></h2>
+      </div>
+      <div class="steps-track" id="steps-track">
+        <div class="step-item" id="si-0">
+          <div class="step-bubble">1</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3 class="step-title">Selecciona tu trámite</h3>
+            <p class="step-desc">Elige entre nuestra catálogo completo de trámites vehiculares disponibles en tu estado.</p>
+          </div>
+        </div>
+        <div class="step-item" id="si-1">
+          <div class="step-bubble">2</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3 class="step-title">Sube tus documentos</h3>
+            <p class="step-desc">Fotografía tus documentos con tu teléfono. Nuestra IA verifica calidad e integridad en segundos.</p>
+          </div>
+        </div>
+        <div class="step-item" id="si-2">
+          <div class="step-bubble">3</div>
+          <div class="step-line"></div>
+          <div class="step-body">
+            <h3 class="step-title">Realiza tu pago</h3>
+            <p class="step-desc">Paga de forma segura con tarjeta, transferencia, OXXO o CoDi. Recibes comprobante oficial al instante.</p>
+          </div>
+        </div>
+        <div class="step-item" id="si-3">
+          <div class="step-bubble">4</div>
+          <div class="step-line last"></div>
+          <div class="step-body">
+            <h3 class="step-title">Recibe tu documentación</h3>
+            <p class="step-desc">Descarga tu documento digital o recibe placas/documentos físicos a domicilio. ¡Listo!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= REQUISITOS ============= -->
+  <section id="requisitos" class="section section--requisitos" aria-label="Requisitos">
+    <div class="section-inner req-layout">
+      <div class="req-car-side" aria-hidden="true" style="position: relative; min-height: 400px; display: flex; align-items: center; justify-content: center;">
+        <div id="canvas-container" style="position: absolute; inset: 0;"></div>
+        
+        <div style="position: absolute; top: -10px; right: 0; font-family: var(--f-ui); font-size: 9px; color: var(--gold); border: 1px solid var(--gold); padding: 4px 8px; border-radius: 4px; background: rgba(200,169,74,0.1);">
+          [ ROTA CON EL MOUSE / CLIC PARA INTERACTUAR ]
+        </div>
+      </div>
+      <div class="req-content-side">
+        <p class="sec-eyebrow">DOCUMENTACIÓN NECESARIA</p>
+        <h2 class="sec-title">REQUISITOS<br><span class="accent-mx">GENERALES</span></h2>
+        <p class="req-intro">Para la mayoría de nuestros trámites necesitarás estos documentos básicos. Documentos adicionales se indican en cada servicio.</p>
+        <div class="req-list" id="req-list">
+          <div class="req-item" id="ri-0">
+            <div class="req-icon">🪪</div>
+            <div>
+              <strong>Identificación oficial vigente</strong>
+              <p>INE/IFE, pasaporte o cédula profesional con fotografía.</p>
+            </div>
+          </div>
+          <div class="req-item" id="ri-1">
+            <div class="req-icon">🏠</div>
+            <div>
+              <strong>Comprobante de domicilio</strong>
+              <p>No mayor a 3 meses: CFE, TELMEX, agua o estado de cuenta bancario.</p>
+            </div>
+          </div>
+          <div class="req-item" id="ri-2">
+            <div class="req-icon">🧾</div>
+            <div>
+              <strong>Factura o pedimento</strong>
+              <p>Factura original del vehículo o pedimento de importación (para vehículos extranjeros).</p>
+            </div>
+          </div>
+          <div class="req-item" id="ri-3">
+            <div class="req-icon">📱</div>
+            <div>
+              <strong>CURP y RFC</strong>
+              <p>Puedes obtenerlos gratis en línea si no los tienes a la mano. Te ayudamos.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= ESTADOS ============= -->
+  <section id="estados" class="section section--estados" aria-label="Estados disponibles">
+    <div class="section-inner">
+      <div class="sec-header">
+        <p class="sec-eyebrow">COBERTURA NACIONAL</p>
+        <h2 class="sec-title">OPERAMOS EN LOS<br><span class="accent-mx">32 ESTADOS</span></h2>
+      </div>
+      <div class="estados-marquee-wrap" aria-hidden="true">
+        <div class="estados-marquee" id="estados-marquee">
+          <span>CDMX</span><span>Jalisco</span><span>Nuevo León</span><span>Estado de México</span>
+          <span>Puebla</span><span>Guanajuato</span><span>Chihuahua</span><span>Veracruz</span>
+          <span>Baja California</span><span>Sonora</span><span>Coahuila</span><span>Tamaulipas</span>
+          <span>Sinaloa</span><span>Oaxaca</span><span>Guerrero</span><span>Michoacán</span>
+          <span>Hidalgo</span><span>Querétaro</span><span>San Luis Potosí</span><span>Yucatán</span>
+          <span>Morelos</span><span>Tabasco</span><span>Chiapas</span><span>Quintana Roo</span>
+          <!-- Repeat for infinite -->
+          <span>CDMX</span><span>Jalisco</span><span>Nuevo León</span><span>Estado de México</span>
+          <span>Puebla</span><span>Guanajuato</span><span>Chihuahua</span><span>Veracruz</span>
+          <span>Baja California</span><span>Sonora</span><span>Coahuila</span><span>Tamaulipas</span>
+          <span>Sinaloa</span><span>Oaxaca</span><span>Guerrero</span><span>Michoacán</span>
+          <span>Hidalgo</span><span>Querétaro</span><span>San Luis Potosí</span><span>Yucatán</span>
+          <span>Morelos</span><span>Tabasco</span><span>Chiapas</span><span>Quintana Roo</span>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="estados-stats" id="estados-stats">
+        <div class="es-stat" id="es-0"><span class="es-num" data-target="150432">0</span><span class="es-label">Trámites Completados</span></div>
+        <div class="es-stat" id="es-1"><span class="es-num" data-target="32">0</span><span class="es-label">Estados Cubiertos</span></div>
+        <div class="es-stat" id="es-2"><span class="es-num" data-target="48">0</span><span class="es-label">Hrs Tiempo Promedio</span></div>
+        <div class="es-stat" id="es-3"><span class="es-num" data-target="99">0</span><span class="es-label">% Satisfacción</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============= CONTACTO / CTA ============= -->
+  <section id="contacto" class="section section--contacto" aria-label="Formulario de contacto">
+    <div class="section-inner">
+      <div class="contacto-layout">
+        <div class="contacto-left">
+          <p class="sec-eyebrow">EMPIEZA HOY</p>
+          <h2 class="contact-title">¿LISTO PARA<br>TRAMITAR<br><span class="accent-mx">SIN FILAS?</span></h2>
+          <p class="contact-desc">Nuestros asesores están disponibles de Lunes a Viernes 9:00 – 19:00 hrs y Sábados 10:00 – 14:00 hrs.</p>
+          <div class="contact-channels">
+            <a href="tel:+525511223344" class="ch-item" id="ch-tel" aria-label="Llamar">
+              <span class="ch-icon">📞</span>
+              <div><strong>55 1122 3344</strong><small>Llamada gratuita</small></div>
+            </a>
+            <a href="https://wa.me/525511223344" class="ch-item" id="ch-wa" aria-label="WhatsApp" target="_blank" rel="noopener">
+              <span class="ch-icon">💬</span>
+              <div><strong>WhatsApp</strong><small>Respuesta en minutos</small></div>
+            </a>
+            <a href="mailto:atencion@tramitesvehicularesdemexico.com" class="ch-item" id="ch-mail" aria-label="Email">
+              <span class="ch-icon">📧</span>
+              <div><strong>Correo electrónico</strong><small>atencion@tramitesvehicularesdemexico.com</small></div>
+            </a>
+          </div>
+        </div>
+        <div class="contacto-right">
+          <form class="contact-form" id="contact-form" novalidate aria-label="Formulario de contacto">
+            <h3 class="form-title">Solicita Información Gratuita</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="f-name">Nombre completo *</label>
+                <input type="text" id="f-name" name="name" placeholder="Juan García López" required autocomplete="name" />
+              </div>
+              <div class="form-group">
+                <label for="f-phone">Teléfono *</label>
+                <input type="tel" id="f-phone" name="phone" placeholder="55 1234 5678" required autocomplete="tel" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="f-email">Correo electrónico *</label>
+              <input type="email" id="f-email" name="email" placeholder="tucorreo@ejemplo.com" required autocomplete="email" />
+            </div>
+            <div class="form-group">
+              <label for="f-tramite">Trámite que necesitas *</label>
+              <select id="f-tramite" name="tramite" required>
+                <option value="">Selecciona un trámite</option>
+                <option value="alta">Alta de vehículo</option>
+                <option value="propietario">Cambio de propietario</option>
+                <option value="placas">Placas / Calcomanía</option>
+                <option value="verificacion">Verificación vehicular</option>
+                <option value="tenencia">Pago de tenencia</option>
+                <option value="importacion">Importación / Regularización</option>
+                <option value="otro">Otro trámite</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-estado">Estado de la república *</label>
+              <select id="f-estado" name="estado" required>
+                <option value="">Selecciona tu estado</option>
+                <option>Ciudad de México</option><option>Jalisco</option>
+                <option>Nuevo León</option><option>Estado de México</option>
+                <option>Puebla</option><option>Guanajuato</option>
+                <option>Chihuahua</option><option>Veracruz</option>
+                <option>Baja California</option><option>Sonora</option>
+                <option>Otro estado</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="f-msg">Mensaje o dudas (opcional)</label>
+              <textarea id="f-msg" name="message" rows="3" placeholder="Describe brevemente tu situación o dudas..."></textarea>
+            </div>
+            <button type="submit" class="btn-submit" id="btn-submit-form">
+              ENVIAR SOLICITUD GRATUITA →
+            </button>
+            <p class="form-disclaimer">Al enviar aceptas nuestra <a href="#">Política de Privacidad</a>. Tus datos están protegidos bajo la Ley Federal de Protección de Datos (LFPDPPP).</p>
+          </form>
+          <div class="form-success hidden" id="form-success" role="alert" aria-live="assertive">
+            <div class="success-icon">✅</div>
+            <h3>¡Solicitud Recibida!</h3>
+            <p>Un asesor se pondrá en contacto contigo en menos de 2 horas. Revisa tu correo y WhatsApp.</p>
+            <p class="success-folio">Folio: <strong id="success-folio-num">TVM-2026-XXXXX</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" aria-label="Pie de página">
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="footer-logo">TRÁMITES<span>VEHICULARES</span>.mx</div>
+          <p class="footer-tagline">Tu gestoría vehicular digital de confianza en México.</p>
+          <div class="footer-social" aria-label="Redes sociales">
+            <a href="#" aria-label="Facebook" class="soc-btn" id="soc-fb">f</a>
+            <a href="#" aria-label="Instagram" class="soc-btn" id="soc-ig">ig</a>
+            <a href="#" aria-label="WhatsApp" class="soc-btn" id="soc-wa">wa</a>
+            <a href="#" aria-label="YouTube" class="soc-btn" id="soc-yt">yt</a>
+          </div>
+        </div>
+        <div class="footer-links-col">
+          <h4>Trámites</h4>
+          <ul>
+            <li><a href="#contacto">Alta de vehículo</a></li>
+            <li><a href="#contacto">Cambio de propietario</a></li>
+            <li><a href="#contacto">Placas y calcomanía</a></li>
+            <li><a href="#contacto">Verificación vehicular</a></li>
+            <li><a href="#contacto">Pago de tenencia</a></li>
+            <li><a href="#contacto">Importación</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-col">
+          <h4>Empresa</h4>
+          <ul>
+            <li><a href="#">Acerca de nosotros</a></li>
+            <li><a href="#">Blog vehicular</a></li>
+            <li><a href="#">Preguntas frecuentes</a></li>
+            <li><a href="#">Trabaja con nosotros</a></li>
+            <li><a href="#">Prensa</a></li>
+          </ul>
+        </div>
+        <div class="footer-links-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#">Aviso de privacidad</a></li>
+            <li><a href="#">Términos y condiciones</a></li>
+            <li><a href="#">Política de reembolso</a></li>
+            <li><a href="#">LFPDPPP</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div class="mx-stripe footer-stripe" aria-hidden="true">
+          <span style="background:#006847"></span><span style="background:#fff"></span><span style="background:#CE1126"></span>
+        </div>
+        <p>© 2026 TrámitesVehicularesdeMéxico.com — Todos los derechos reservados.</p>
+        <p class="footer-disclaimer">Este sitio opera como intermediario gestor. No somos dependencia gubernamental. Tramitamos ante las autoridades correspondientes en tu nombre.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- FLOATING WHATSAPP -->
+  <a href="https://wa.me/525511223344" class="wa-float" id="wa-float" target="_blank" rel="noopener" aria-label="Contactar por WhatsApp">
+    <span class="wa-icon">💬</span>
+    <span class="wa-label">¿Necesitas ayuda?</span>
+  </a>
+
+  <!-- SCRIPTS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/DRACOLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/CustomEase.min.js"></script>
+  <script src="model.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+import { Router } from 'express';
+import bcrypt from 'bcryptjs';
+import { get, query, run } from '../db.js';
+import { authRequired, requireRole } from '../middleware/auth.js';
+
+const router = Router();
+
+router.get('/stats', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    const [users, gestores, concesionarias, autosPub, autosDraft, autosBaja, inquiries, reviews] = await Promise.all([
+      get('SELECT COUNT(*) as c FROM users'),
+      get('SELECT COUNT(*) as c FROM gestores'),
+      get("SELECT COUNT(*) as c FROM users WHERE role = 'concesionaria'"),
+      get("SELECT COUNT(*) as c FROM autos WHERE status = 'published'"),
+      get("SELECT COUNT(*) as c FROM autos WHERE status = 'draft'"),
+      get("SELECT COUNT(*) as c FROM autos WHERE status = 'baja'"),
+      get('SELECT COUNT(*) as c FROM auto_inquiries'),
+      get('SELECT COUNT(*) as c FROM concesionaria_reviews'),
+    ]);
+
+    const topGestores = await query(`
+      SELECT name, rating, tramites_count as tramitesCount, state FROM gestores
+      ORDER BY tramites_count DESC LIMIT 5
+    `);
+    const topDealers = await query(`
+      SELECT u.name, COUNT(a.id) as autosCount,
+        COALESCE(AVG(cr.rating), 0) as avgRating
+      FROM users u
+      LEFT JOIN autos a ON a.user_id = u.id AND a.status = 'published'
+      LEFT JOIN concesionaria_reviews cr ON cr.user_id = u.id
+      WHERE u.role = 'concesionaria'
+      GROUP BY u.id ORDER BY autosCount DESC LIMIT 5
+    `);
+
+    res.json({
+      totals: {
+        users: users.c,
+        gestores: gestores.c,
+        concesionarias: concesionarias.c,
+        autosPublished: autosPub.c,
+        autosDraft: autosDraft.c,
+        autosBaja: autosBaja.c,
+        inquiries: inquiries.c,
+        dealerReviews: reviews.c,
+      },
+      topGestores,
+      topDealers,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar estadísticas' });
+  }
+});
+
+router.get('/users', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    const rows = await query(`
+      SELECT id, email, role, name, created_at as createdAt FROM users ORDER BY created_at DESC
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al listar usuarios' });
+  }
+});
+
+// Gestores y concesionarias con detalle para administración
+router.get('/users/managed', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const { role } = req.query;
+    let sql = `
+      SELECT u.id, u.email, u.name, u.role, u.created_at as createdAt,
+             g.id as gestorId, g.slug, g.location, g.state, g.rating,
+             (SELECT COUNT(*) FROM autos a WHERE a.user_id = u.id) as autosCount
+      FROM users u
+      LEFT JOIN gestores g ON g.user_id = u.id
+      WHERE u.role IN ('gestor', 'concesionaria')
+    `;
+    const params = [];
+    if (role === 'gestor' || role === 'concesionaria') {
+      sql += ' AND u.role = ?';
+      params.push(role);
+    }
+    sql += ' ORDER BY u.name ASC';
+    const rows = await query(sql, params);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al listar usuarios' });
+  }
+});
+
+// Cambiar contraseña de gestor o concesionaria
+router.patch('/users/:id/password', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    const user = await get('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!['gestor', 'concesionaria'].includes(user.role)) {
+      return res.status(403).json({ error: 'Solo puedes cambiar claves de gestores y concesionarias' });
+    }
+    const hash = bcrypt.hashSync(newPassword, 10);
+    await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.params.id]);
+    res.json({ ok: true, message: 'Contraseña actualizada' });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cambiar contraseña' });
+  }
+});
+
+// Admin edita datos básicos del usuario
+router.put('/users/:id', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const user = await get('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (!['gestor', 'concesionaria'].includes(user.role)) {
+      return res.status(403).json({ error: 'Solo gestores y concesionarias' });
+    }
+    const { name, email } = req.body;
+    await run('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?',
+      [name, email?.toLowerCase(), req.params.id]);
+
+    if (user.role === 'gestor' && req.body.gestorProfile) {
+      const { location, state, bio, whatsapp, schedule } = req.body.gestorProfile;
+      await run(`
+        UPDATE gestores SET
+          name = COALESCE(?, name), location = COALESCE(?, location), state = COALESCE(?, state),
+          bio = COALESCE(?, bio), whatsapp = COALESCE(?, whatsapp), schedule = COALESCE(?, schedule)
+        WHERE user_id = ?
+      `, [name, location, state, bio, whatsapp, schedule, req.params.id]);
+    }
+
+    const updated = await get('SELECT id, email, name, role, created_at as createdAt FROM users WHERE id = ?', [req.params.id]);
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar usuario' });
+  }
+});
+
+// ─── AUDITORÍA DE ORGS ──────────────────────────────────────
+
+router.get('/orgs/:id/stats', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const orgId = req.params.id;
+    const [clients, openDeals, billed] = await Promise.all([
+      get('SELECT COUNT(*) as c FROM contacts WHERE user_id = ?', [orgId]),
+      get("SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND stage NOT IN ('completado','perdido')", [orgId]),
+      get("SELECT SUM(estimated_value) as s FROM crm_deals WHERE user_id = ? AND stage = 'completado'", [orgId])
+    ]);
+    res.json({
+      clientsCount: clients?.c || 0,
+      openDealsCount: openDeals?.c || 0,
+      totalBilled: billed?.s || 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener estadísticas de org' });
+  }
+});
+
+router.get('/orgs/:id/deals', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const orgId = req.params.id;
+    const rows = await query(`
+      SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at as createdAt,
+             c.name as clientName, c.email as clientEmail
+      FROM crm_deals d
+      LEFT JOIN contacts c ON c.id = d.contact_id
+      WHERE d.user_id = ?
+      ORDER BY d.created_at DESC
+    `, [orgId]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener trámites de org' });
+  }
+});
+
+router.get('/deals/:id/messages', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const dealId = req.params.id;
+    const messages = await query(`
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
+      FROM chat_messages m
+      JOIN users u ON u.id = m.sender_id
+      WHERE m.deal_id = ?
+      ORDER BY m.created_at ASC
+    `, [dealId]);
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener mensajes del trámite' });
+  }
+});
+
+export default router;

@@ -1,0 +1,22 @@
+.autos-header { background: radial-gradient(circle at top, rgba(200,169,74,0.1), transparent); }
+.catalog-title { font-size: var(--page-title-size, clamp(32px, 5vw, 48px)); }
+.subtitle { font-size: var(--page-subtitle-size, 16px); }
+.car-card { border-radius: var(--card-radius, 12px); }
+.filter-group h4.gold { color: var(--gold); }
+
+.car-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 30px; min-width: 0; }
+.subtitle { font-family: var(--f-ui); color: var(--muted); }
+
+.car-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  overflow: hidden; transition: transform 0.3s; color: inherit;
+}
+.car-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+.car-img { height: 180px; width: 100%; object-fit: cover; }
+.car-details { padding: 20px; }
+.car-make { font-family: var(--f-ui); font-size: 12px; color: var(--muted); letter-spacing: 0.1em; }
+.car-model { font-family: var(--f-display); font-size: 24px; color: var(--mx-white); margin: 5px 0 10px; }
+.car-specs { font-family: var(--f-ui); font-size: 13px; color: var(--muted); display: flex; gap: 15px; margin-bottom: 15px; }
+.car-price { font-family: var(--f-display); font-size: 28px; color: var(--gold); border-top: 1px solid var(--border); padding-top: 15px; margin-bottom: 15px; }
+.dealer-badge { display: flex; align-items: center; gap: 8px; font-family: var(--f-ui); font-size: 11px; color: var(--muted); }
+.dealer-icon { width: 20px; height: 20px; background: var(--border); border-radius: 50%; }

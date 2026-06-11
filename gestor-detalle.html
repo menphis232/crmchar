@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestoría López | Trámites Vehiculares</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .profile-header { position: relative; padding-top: 100px; text-align: center; }
+    .profile-banner { position: absolute; top: 0; left: 0; width: 100%; height: 300px; object-fit: cover; z-index: 0; opacity: 0.4; }
+    .profile-banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, var(--bg)); }
+    
+    .profile-info { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 40px 20px; }
+    .profile-img { width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 6px solid var(--bg); margin: 0 auto 20px; display: block; }
+    .profile-name { font-family: var(--f-display); font-size: 48px; color: var(--mx-white); margin-bottom: 5px; }
+    .profile-location { font-family: var(--f-ui); font-size: 14px; color: var(--mx-green); letter-spacing: 0.1em; margin-bottom: 20px; }
+    
+    .profile-stats { display: flex; justify-content: center; gap: 30px; margin-bottom: 30px; }
+    .ps-item { text-align: center; }
+    .ps-val { font-family: var(--f-display); font-size: 24px; color: var(--gold); }
+    .ps-lbl { font-family: var(--f-ui); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+    
+    .profile-content { max-width: 1000px; margin: 0 auto 60px; display: grid; grid-template-columns: 2fr 1fr; gap: 40px; padding: 0 20px; position: relative; z-index: 1; }
+    
+    .services-list { display: flex; flex-direction: column; gap: 15px; }
+    .service-item { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .service-name { font-weight: bold; color: var(--mx-white); font-size: 18px; margin-bottom: 5px; font-family: var(--f-body); }
+    .service-time { font-size: 13px; color: var(--muted); font-family: var(--f-ui); }
+    .service-price { font-family: var(--f-display); font-size: 24px; color: var(--gold); }
+    
+    .contact-card { background: var(--surface); border: 1px solid var(--mx-green); border-radius: 12px; padding: 30px; text-align: center; position: sticky; top: 100px; height: fit-content; }
+    .btn-whatsapp { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: #25D366; color: white; border: none; padding: 18px; font-family: var(--f-ui); font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: transform 0.2s; margin-top: 20px; }
+    .btn-whatsapp:hover { transform: scale(1.02); }
+    
+    @media (max-width: 900px) {
+      .profile-content { grid-template-columns: 1fr; }
+      .contact-card { position: static; margin-bottom: 40px; }
+    }
+  </style>
+</head>
+<body>
+  
+  <nav id="main-nav" aria-label="Navegación principal" class="scrolled">
+    <a href="index.html" class="nav-logo" aria-label="Inicio">
+      <span class="logo-icon">🏛️</span>
+      <span class="logo-text">TRÁMITES<span class="logo-accent">VEHICULARES</span><em>.mx</em></span>
+    </a>
+    <div class="nav-actions">
+      <a href="gestores.html" class="btn-ghost" style="padding: 10px 16px;">← VOLVER AL DIRECTORIO</a>
+    </div>
+  </nav>
+
+  <header class="profile-header">
+    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=1200&auto=format&fit=crop" class="profile-banner" alt="Oficina Banner">
+    <div class="profile-info">
+      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=400&auto=format&fit=crop" class="profile-img" alt="Carlos Mendoza">
+      <h1 class="profile-name">Gestoría López</h1>
+      <div class="profile-location">📍 CDMX, EDOMEX y MORELOS</div>
+      
+      <div class="profile-stats">
+        <div class="ps-item">
+          <div class="ps-val">4.9/5</div>
+          <div class="ps-lbl">ESTRELLAS (84)</div>
+        </div>
+        <div class="ps-item">
+          <div class="ps-val">1,240</div>
+          <div class="ps-lbl">TRÁMITES ÉXITOSOS</div>
+        </div>
+        <div class="ps-item">
+          <div class="ps-val">8 Años</div>
+          <div class="ps-lbl">EXPERIENCIA</div>
+        </div>
+      </div>
+      <p style="color: var(--muted); line-height: 1.8;">
+        Somos un equipo de profesionales dedicados a facilitar tus trámites vehiculares sin que tengas que salir de casa o hacer filas interminables. Trabajamos con transparencia, legalidad y rapidez.
+      </p>
+    </div>
+  </header>
+
+  <div class="profile-content">
+    <div>
+      <h3 style="font-family: var(--f-display); font-size: 28px; margin-bottom: 20px;">Servicios y Tarifas</h3>
+      <div class="services-list">
+        <div class="service-item">
+          <div>
+            <div class="service-name">Alta de Vehículo Nuevo</div>
+            <div class="service-time">⏱️ 24 a 48 horas hábiles</div>
+          </div>
+          <div class="service-price">$1,500 <span style="font-size:14px; color:var(--muted);">MXN</span></div>
+        </div>
+        <div class="service-item">
+          <div>
+            <div class="service-name">Cambio de Propietario</div>
+            <div class="service-time">⏱️ 48 a 72 horas hábiles</div>
+          </div>
+          <div class="service-price">$1,800 <span style="font-size:14px; color:var(--muted);">MXN</span></div>
+        </div>
+        <div class="service-item">
+          <div>
+            <div class="service-name">Baja de Placas</div>
+            <div class="service-time">⏱️ 24 horas hábiles</div>
+          </div>
+          <div class="service-price">$800 <span style="font-size:14px; color:var(--muted);">MXN</span></div>
+        </div>
+      </div>
+
+      <h3 style="font-family: var(--f-display); font-size: 28px; margin: 40px 0 20px;">Reseñas Destacadas</h3>
+      <div style="background: var(--surface); padding: 20px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--gold);">
+        <div style="color: var(--gold); margin-bottom: 5px;">⭐⭐⭐⭐⭐</div>
+        <p style="color: var(--mx-white); font-style: italic; margin-bottom: 10px;">"Excelente servicio. Me sacaron las placas de mi auto nuevo en 2 días y me las trajeron hasta mi oficina."</p>
+        <div style="font-family: var(--f-ui); font-size: 12px; color: var(--muted);">- Roberto Martínez</div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="contact-card" style="margin-bottom: 20px;">
+        <h3 style="font-family: var(--f-display); font-size: 24px; color: var(--gold); margin-bottom: 10px;">Rastrea tu Trámite</h3>
+        <p style="font-family: var(--f-ui); font-size: 13px; color: var(--muted); margin-bottom: 15px;">
+          Ingresa tu código de seguimiento para conocer el estatus actual de tu trámite.
+        </p>
+        <form id="trackForm" style="display: flex; flex-direction: column; gap: 10px;" onsubmit="trackDeal(event)">
+          <input type="text" id="trackCode" placeholder="Ej: A1B2C3D4" style="padding: 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg); color: var(--mx-white); font-family: var(--f-ui); text-transform: uppercase;" required>
+          <button type="submit" class="btn-copy small" style="width: 100%; padding: 12px; justify-content: center;" id="trackBtn">Buscar</button>
+        </form>
+        <div id="trackResult" style="display: none; margin-top: 15px; padding: 15px; background: rgba(200, 169, 74, 0.1); border: 1px solid var(--gold); border-radius: 6px; text-align: left;">
+          <strong style="color: var(--mx-white); font-size: 14px;" id="trackTitle"></strong>
+          <p style="color: var(--gold); font-weight: bold; margin: 8px 0;" id="trackStage"></p>
+          <p style="font-size: 11px; color: var(--muted);" id="trackDate"></p>
+        </div>
+        <div id="trackError" style="display: none; margin-top: 15px; padding: 10px; background: rgba(255, 77, 79, 0.1); border: 1px solid #ff4d4f; border-radius: 6px; color: #ff4d4f; font-size: 13px;">
+          Código no encontrado.
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <h3 style="font-family: var(--f-display); font-size: 24px; color: var(--mx-white); margin-bottom: 10px;">¿Necesitas ayuda?</h3>
+        <p style="font-family: var(--f-ui); font-size: 14px; color: var(--muted); margin-bottom: 20px;">
+          Cotiza tu trámite sin compromiso. Envíanos un mensaje directo por WhatsApp y te responderemos en minutos.
+        </p>
+        
+        <button class="btn-whatsapp" onclick="window.open('https://wa.me/525500000000?text=Hola,%20vengo%20del%20Directorio%20y%20necesito%20ayuda%20con%20un%20trámite.', '_blank')">
+          💬 Iniciar Chat en WhatsApp
+        </button>
+        
+        <div style="margin-top: 20px; font-family: var(--f-ui); font-size: 12px; color: var(--muted);">
+          Horario de atención: <br> Lunes a Viernes de 9am a 6pm
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    async function trackDeal(e) {
+      e.preventDefault();
+      const code = document.getElementById('trackCode').value.trim();
+      if (!code) return;
+
+      const btn = document.getElementById('trackBtn');
+      const resDiv = document.getElementById('trackResult');
+      const errDiv = document.getElementById('trackError');
+      
+      btn.disabled = true;
+      btn.textContent = 'Buscando...';
+      resDiv.style.display = 'none';
+      errDiv.style.display = 'none';
+
+      try {
+        // Obtenemos el ID o slug del gestor desde la URL, o usamos un default para propósitos de prueba
+        const params = new URLSearchParams(window.location.search);
+        const gestorId = params.get('id') || 'gestoria-lopez';
+
+        const res = await fetch(`http://localhost:3000/api/gestores/${gestorId}/track/${code}`);
+        const data = await res.json();
+
+        if (res.ok) {
+          const stages = {
+            'nuevo': 'Recibido',
+            'contactado': 'En Revisión',
+            'en_tramite': 'En Trámite',
+            'completado': 'Completado',
+            'perdido': 'Cancelado / Perdido'
+          };
+          document.getElementById('trackTitle').textContent = data.title;
+          document.getElementById('trackStage').textContent = stages[data.stage] || data.stage;
+          document.getElementById('trackDate').textContent = 'Última actualización: ' + new Date(data.updatedAt).toLocaleString();
+          resDiv.style.display = 'block';
+        } else {
+          errDiv.textContent = data.error || 'Código no encontrado.';
+          errDiv.style.display = 'block';
+        }
+      } catch (error) {
+        errDiv.textContent = 'Error de conexión.';
+        errDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Buscar';
+      }
+    }
+
+    // Google Analytics Dinámico
+    async function initAnalytics() {
+      const params = new URLSearchParams(window.location.search);
+      const gestorId = params.get('id') || 'gestoria-lopez';
+      try {
+        const res = await fetch(`http://localhost:3000/api/gestores/${gestorId}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        if (data.google_analytics_id) {
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = `https://www.googletagmanager.com/gtag/js?id=${data.google_analytics_id}`;
+          document.head.appendChild(script);
+
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', data.google_analytics_id);
+          console.log('Analytics inyectado:', data.google_analytics_id);
+        }
+      } catch(e) {}
+    }
+    
+    document.addEventListener('DOMContentLoaded', initAnalytics);
+  </script>
+</body>
+</html>

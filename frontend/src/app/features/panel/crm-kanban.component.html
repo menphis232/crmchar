@@ -1,0 +1,77 @@
+<div class="kanban-hint">
+  💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
+</div>
+
+<div class="kanban-board">
+  @for (stage of stages(); track stage) {
+    <div
+      class="kanban-col"
+      [class.drag-over]="dragOverStage() === stage"
+      (dragover)="onDragOver($event, stage)"
+      (dragleave)="onDragLeave($event, stage)"
+      (drop)="onDrop($event, stage)"
+    >
+      <div class="kanban-col-header">
+        <span>{{ stageLabels()[stage] || stage }}</span>
+        <span class="kanban-count">{{ dealsInStage(stage).length }}</span>
+      </div>
+
+      <div
+        class="kanban-cards"
+        (dragover)="onDragOver($event, stage)"
+        (drop)="onDrop($event, stage)"
+      >
+        @for (deal of dealsInStage(stage); track deal.id) {
+          <div
+            class="kanban-card"
+            [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage !== 'completado' && stage !== 'vendido' && stage !== 'perdido'"
+            draggable="true"
+            (dragstart)="onDragStart($event, deal)"
+            (dragend)="onDragEnd()"
+            (dragover)="onDragOver($event, stage)"
+            (drop)="onDrop($event, stage)"
+            (click)="onCardClick(deal)"
+            role="button"
+            tabindex="0"
+            (keydown.enter)="onCardClick(deal)"
+          >
+            <div class="kanban-card-top">
+              <strong>{{ deal.title }}</strong>
+              @if (stages().indexOf(deal.stage) < stages().length - 1) {
+                <button type="button" class="kanban-next" title="Avanzar etapa" (click)="moveDeal(deal, $event)">→</button>
+              }
+            </div>
+
+            <span class="kanban-contact">{{ deal.contact?.name }}</span>
+
+            @if (deal.contact?.phone || deal.contact?.email) {
+              <span class="kanban-meta">{{ deal.contact?.phone || deal.contact?.email }}</span>
+            }
+
+            @if (showValue() && deal.estimatedValue) {
+              <span class="kanban-value">💰 {{ deal.estimatedValue | number:'1.0-0' }} MXN</span>
+            }
+
+            @if (deal.daysInStage && deal.daysInStage > 0) {
+              <span class="kanban-days">🕐 {{ deal.daysInStage }}d en etapa</span>
+            }
+
+            <select
+              class="kanban-stage-select"
+              [value]="deal.stage"
+              (click)="stopClick($event)"
+              (mousedown)="stopClick($event)"
+              (change)="onSelectStage(deal, $event)"
+            >
+              @for (s of stages(); track s) {
+                <option [value]="s">{{ stageLabels()[s] || s }}</option>
+              }
+            </select>
+          </div>
+        } @empty {
+          <div class="kanban-empty">Soltar aquí</div>
+        }
+      </div>
+    </div>
+  }
+</div>

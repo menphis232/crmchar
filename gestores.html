@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Directorio de Gestores | Trámites Vehiculares</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .catalog-header { padding: 120px 20px 40px; text-align: center; background: radial-gradient(circle at top, rgba(0,104,71,0.2), transparent); border-bottom: 1px solid var(--border); }
+    .catalog-title { font-family: var(--f-display); font-size: 48px; color: var(--mx-white); margin-bottom: 10px; }
+    .catalog-title span { color: var(--mx-green); }
+    
+    .catalog-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; display: flex; gap: 40px; }
+    .filters { width: 250px; }
+    .filter-group { margin-bottom: 25px; }
+    .filter-group h4 { font-family: var(--f-ui); color: var(--mx-green); margin-bottom: 10px; letter-spacing: 0.1em; }
+    .filter-group label { display: block; font-family: var(--f-ui); font-size: 14px; color: var(--muted); margin-bottom: 8px; cursor: pointer; }
+    .filter-group input[type="checkbox"], .filter-group input[type="radio"] { margin-right: 8px; }
+    
+    .agent-grid { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+    .agent-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: transform 0.3s; text-align: center; padding-bottom: 20px; display: block; text-decoration: none; color: inherit; }
+    .agent-card:hover { transform: translateY(-5px); border-color: var(--mx-green); }
+    .agent-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; margin: -50px auto 15px; border: 4px solid var(--bg); position: relative; z-index: 2; }
+    .agent-banner { height: 100px; background: linear-gradient(45deg, #111, #222); width: 100%; object-fit: cover; }
+    .agent-name { font-family: var(--f-display); font-size: 24px; color: var(--mx-white); margin-bottom: 5px; }
+    .agent-location { font-family: var(--f-ui); font-size: 12px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 15px; }
+    .agent-stats { display: flex; justify-content: center; gap: 20px; margin-bottom: 20px; font-family: var(--f-ui); font-size: 13px; color: var(--gold); }
+    .btn-view { display: inline-block; background: transparent; border: 1px solid var(--mx-green); color: var(--mx-green); padding: 8px 24px; border-radius: 20px; font-family: var(--f-ui); font-size: 12px; font-weight: bold; transition: all 0.2s; }
+    .agent-card:hover .btn-view { background: var(--mx-green); color: var(--mx-white); }
+  </style>
+</head>
+<body>
+  
+  <nav id="main-nav" aria-label="Navegación principal" class="scrolled">
+    <a href="index.html" class="nav-logo" aria-label="Inicio">
+      <span class="logo-icon">🏛️</span>
+      <span class="logo-text">TRÁMITES<span class="logo-accent">VEHICULARES</span><em>.mx</em></span>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="index.html#tramites">Trámites</a></li>
+      <li><a href="autos.html">Autos en Venta</a></li>
+      <li><a href="gestores.html" style="color:var(--mx-green);">Gestores Autorizados</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="btn-ghost" style="padding: 10px 16px;">👤 INICIAR SESIÓN</a>
+      <a href="index.html#contacto" class="btn-cta-nav">INICIAR TRÁMITE →</a>
+    </div>
+  </nav>
+
+  <header class="catalog-header">
+    <h1 class="catalog-title">DIRECTORIO DE <span>GESTORES</span></h1>
+    <p style="font-family: var(--f-ui); color: var(--muted);">Encuentra expertos certificados para realizar tus trámites vehiculares sin salir de casa.</p>
+  </header>
+
+  <div class="catalog-container">
+    <aside class="filters">
+      <div class="filter-group">
+        <h4>ESTADO</h4>
+        <label><input type="checkbox"> Ciudad de México (42)</label>
+        <label><input type="checkbox"> Estado de México (38)</label>
+        <label><input type="checkbox"> Nuevo León (15)</label>
+        <label><input type="checkbox"> Jalisco (12)</label>
+      </div>
+      <div class="filter-group">
+        <h4>CALIFICACIÓN</h4>
+        <label><input type="radio" name="rating"> ⭐⭐⭐⭐⭐ 5 Estrellas</label>
+        <label><input type="radio" name="rating"> ⭐⭐⭐⭐ 4+ Estrellas</label>
+      </div>
+    </aside>
+    
+    <main class="agent-grid">
+      <!-- Gestor 1 -->
+      <a href="gestor-detalle.html" class="agent-card">
+        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600&auto=format&fit=crop" class="agent-banner" alt="Oficina">
+        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop" class="agent-img" alt="Carlos Mendoza">
+        <h3 class="agent-name">Gestoría López</h3>
+        <div class="agent-location">📍 CDMX Y ÁREA METROPOLITANA</div>
+        <div class="agent-stats">
+          <span>⭐ 4.9/5</span>
+          <span>📁 1,240 Trámites</span>
+        </div>
+        <div class="btn-view">VER PERFIL</div>
+      </a>
+
+      <!-- Gestor 2 -->
+      <a href="gestor-detalle.html" class="agent-card">
+        <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=600&auto=format&fit=crop" class="agent-banner" alt="Documentos">
+        <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop" class="agent-img" alt="Ana García">
+        <h3 class="agent-name">Trámites Express MTY</h3>
+        <div class="agent-location">📍 NUEVO LEÓN</div>
+        <div class="agent-stats">
+          <span>⭐ 5.0/5</span>
+          <span>📁 850 Trámites</span>
+        </div>
+        <div class="btn-view">VER PERFIL</div>
+      </a>
+      
+      <!-- Gestor 3 -->
+      <a href="gestor-detalle.html" class="agent-card">
+        <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=600&auto=format&fit=crop" class="agent-banner" alt="Desk">
+        <img src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=200&auto=format&fit=crop" class="agent-img" alt="Roberto Gómez">
+        <h3 class="agent-name">Servicios Viales GDL</h3>
+        <div class="agent-location">📍 JALISCO</div>
+        <div class="agent-stats">
+          <span>⭐ 4.7/5</span>
+          <span>📁 420 Trámites</span>
+        </div>
+        <div class="btn-view">VER PERFIL</div>
+      </a>
+    </main>
+  </div>
+
+</body>
+</html>

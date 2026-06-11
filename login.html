@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso al Portal | Trámites Vehiculares de México</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; position: relative; }
+    .bg-particles { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, rgba(200,169,74,0.1), transparent 60%); z-index: 0; }
+    .login-container { position: relative; z-index: 1; max-width: 900px; width: 100%; padding: 40px; text-align: center; }
+    .login-logo { font-family: var(--f-display); font-size: 42px; color: var(--mx-white); margin-bottom: 10px; display: inline-block; }
+    .login-logo span { color: var(--gold); }
+    .login-title { font-family: var(--f-ui); font-size: 16px; color: var(--muted); margin-bottom: 50px; letter-spacing: 0.1em; }
+    
+    .roles-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+    
+    .role-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+      padding: 40px 24px; text-decoration: none; display: flex; flex-direction: column; align-items: center;
+      transition: all 0.3s ease; position: relative; overflow: hidden;
+    }
+    .role-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 2px;
+      background: var(--gold); transform: scaleX(0); transition: transform 0.3s ease;
+    }
+    .role-card:hover { transform: translateY(-5px); border-color: rgba(200,169,74,0.5); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .role-card:hover::before { transform: scaleX(1); }
+    
+    .role-icon { font-size: 48px; margin-bottom: 20px; }
+    .role-name { font-family: var(--f-display); font-size: 28px; color: var(--mx-white); margin-bottom: 10px; }
+    .role-desc { font-family: var(--f-ui); font-size: 14px; color: var(--muted); line-height: 1.5; }
+    
+    .btn-back { position: absolute; top: 30px; left: 30px; font-family: var(--f-ui); color: var(--muted); text-decoration: none; font-size: 12px; letter-spacing: 0.1em; z-index: 2; transition: color 0.2s; }
+    .btn-back:hover { color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="bg-particles"></div>
+  <a href="index.html" class="btn-back">← VOLVER AL INICIO</a>
+  
+  <div class="login-container">
+    <div class="login-logo">TRÁMITES<span>VEHICULARES</span>.mx</div>
+    <div class="login-title">SELECCIONA TU PERFIL DE ACCESO</div>
+    
+    <div class="roles-grid">
+      <!-- Cliente -->
+      <a href="panel-cliente.html" class="role-card">
+        <div class="role-icon">👤</div>
+        <div class="role-name">Soy Cliente</div>
+        <div class="role-desc">Consulta el estado de tu trámite, sube documentos y realiza pagos seguros en línea.</div>
+      </a>
+      
+      <!-- Gestor -->
+      <a href="panel-gestor.html" class="role-card">
+        <div class="role-icon">💼</div>
+        <div class="role-name">Soy Gestor</div>
+        <div class="role-desc">Administra tus servicios, comparte tu enlace único y gestiona las solicitudes de tus clientes.</div>
+      </a>
+      
+      <!-- Concesionaria -->
+      <a href="panel-concesionaria.html" class="role-card">
+        <div class="role-icon">🏢</div>
+        <div class="role-name">Concesionaria</div>
+        <div class="role-desc">Publica vehículos en venta en nuestro catálogo nacional y recibe contactos directos.</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

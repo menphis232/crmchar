@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Concesionaria | Trámites Vehiculares</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body { background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
+    
+    .dash-nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 40px; display: flex; justify-content: space-between; align-items: center; }
+    .dash-logo { font-family: var(--f-display); font-size: 24px; color: var(--mx-white); text-decoration: none; }
+    .dash-logo span { color: var(--gold); }
+    .dash-user { display: flex; align-items: center; gap: 12px; font-family: var(--f-ui); color: var(--muted); font-size: 14px; }
+    .avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--gold); display: flex; align-items: center; justify-content: center; color: var(--bg); font-weight: bold; }
+
+    .dash-container { display: flex; flex: 1; max-width: 1200px; margin: 0 auto; width: 100%; padding: 40px 20px; gap: 40px; }
+    .dash-sidebar { width: 250px; display: flex; flex-direction: column; gap: 10px; }
+    .dash-link { padding: 12px 16px; color: var(--muted); text-decoration: none; font-family: var(--f-ui); border-radius: 8px; transition: all 0.2s; display: flex; align-items: center; gap: 12px; }
+    .dash-link:hover, .dash-link.active { background: rgba(200,169,74,0.1); color: var(--gold); }
+    
+    .dash-main { flex: 1; display: flex; flex-direction: column; gap: 30px; }
+    .dash-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 30px; }
+    .card-title { font-family: var(--f-display); font-size: 24px; color: var(--mx-white); margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+
+    .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .form-group { flex: 1; }
+    .form-group label { display: block; font-family: var(--f-ui); font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+    .form-group input, .form-group select { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 10px; color: var(--mx-white); border-radius: 4px; }
+    
+    .car-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .car-item { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--bg); }
+    .car-img { height: 140px; width: 100%; object-fit: cover; }
+    .car-info { padding: 15px; }
+    .car-info h4 { margin: 0 0 5px 0; color: var(--gold); font-family: var(--f-display); font-size: 20px; }
+    .car-info p { margin: 0; color: var(--muted); font-size: 13px; font-family: var(--f-ui); }
+    .car-price { font-weight: bold; color: var(--mx-white); margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <nav class="dash-nav">
+    <a href="index.html" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+    <div class="dash-user">
+      <span>Autos Premium S.A.</span>
+      <div class="avatar">AP</div>
+      <a href="login.html" style="color:var(--mx-red); margin-left:15px; text-decoration:none;">Salir</a>
+    </div>
+  </nav>
+
+  <div class="dash-container">
+    <aside class="dash-sidebar">
+      <a href="#" class="dash-link active"><span>🚗</span> Mi Inventario</a>
+      <a href="#" class="dash-link"><span>➕</span> Publicar Vehículo</a>
+      <a href="#" class="dash-link"><span>📩</span> Mensajes de Clientes</a>
+    </aside>
+
+    <main class="dash-main">
+      <div class="dash-card">
+        <h2 class="card-title">Publicar Nuevo Vehículo</h2>
+        <div class="form-row">
+          <div class="form-group"><label>Marca</label><input type="text" placeholder="Ej: Porsche"></div>
+          <div class="form-group"><label>Modelo</label><input type="text" placeholder="Ej: 911 Carrera"></div>
+          <div class="form-group"><label>Año</label><input type="number" placeholder="2023"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Precio (MXN)</label><input type="text" placeholder="$2,500,000"></div>
+          <div class="form-group"><label>Kilometraje</label><input type="text" placeholder="15,000 km"></div>
+        </div>
+        <button class="btn-ghost" style="width: 100%; padding: 12px; margin-top: 10px;" onclick="alert('Vehículo publicado en el catálogo público')">PUBLICAR VEHÍCULO</button>
+      </div>
+
+      <div class="dash-card">
+        <h2 class="card-title">Inventario Activo <a href="autos.html" style="font-size:12px; color:var(--gold);">Ver en web pública →</a></h2>
+        <div class="car-list">
+          <div class="car-item">
+            <img src="https://images.unsplash.com/photo-1503376713356-200d72f10255?q=80&w=600&auto=format&fit=crop" class="car-img" alt="Porsche">
+            <div class="car-info">
+              <h4>Porsche 911 Carrera 4S</h4>
+              <p>2023 • 12,000 km • Automático</p>
+              <div class="car-price">$2,850,000 MXN</div>
+            </div>
+          </div>
+          <div class="car-item">
+            <img src="https://images.unsplash.com/photo-1520031441872-265e4ff70366?q=80&w=600&auto=format&fit=crop" class="car-img" alt="Mercedes">
+            <div class="car-info">
+              <h4>Mercedes-Benz Clase G</h4>
+              <p>2022 • 24,000 km • Automático</p>
+              <div class="car-price">$3,100,000 MXN</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<app-nav [showLinks]="false" />
+
+<div class="review-container">
+  @if (loading()) {
+    <p style="text-align: center; color: var(--muted); padding: 40px;">Cargando información del trámite...</p>
+  } @else if (error()) {
+    <div class="error-box">
+      <h2>Oops!</h2>
+      <p>{{ error() }}</p>
+      <a routerLink="/" class="btn-home">Volver al inicio</a>
+    </div>
+  } @else if (success()) {
+    <div class="success-box">
+      <h2>¡Gracias por tu opinión!</h2>
+      <p>Tu reseña ayudará a otras personas a encontrar las mejores gestorías.</p>
+      <a routerLink="/gestores" class="btn-home">Volver al directorio</a>
+    </div>
+  } @else {
+    <div class="review-card">
+      <div class="rc-header">
+        <h1 style="color: var(--gold); font-family: var(--f-display); margin-bottom: 10px;">Califica a tu Gestoría</h1>
+        <p style="color: var(--muted); font-size: 14px;">Comparte tu experiencia para ayudar a nuestra comunidad.</p>
+      </div>
+
+      <div class="deal-context">
+        <p><strong>Gestoría:</strong> {{ context()?.gestorName }}</p>
+        <p><strong>Trámite:</strong> {{ context()?.title }}</p>
+      </div>
+
+      <div class="rating-section">
+        <p style="margin-bottom: 10px; font-weight: bold;">Tu calificación:</p>
+        <div class="stars" (mouseleave)="setHover(0)">
+          @for (star of [1,2,3,4,5]; track star) {
+            <span class="star" 
+                  [class.active]="star <= (hoverRating || rating)"
+                  (mouseover)="setHover(star)"
+                  (click)="setRating(star)">
+              ★
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Tu Nombre:</label>
+        <input type="text" [(ngModel)]="authorName" placeholder="Ej. Juan Pérez">
+      </div>
+
+      <div class="form-group">
+        <label>Comentario:</label>
+        <textarea [(ngModel)]="comment" rows="4" placeholder="¿Cómo fue el servicio? ¿Qué destacarías?"></textarea>
+      </div>
+
+      <button class="btn-submit" 
+              [disabled]="rating === 0 || !comment || !authorName || submitting()" 
+              (click)="submitReview()">
+        {{ submitting() ? 'Enviando...' : 'ENVIAR RESEÑA' }}
+      </button>
+    </div>
+  }
+</div>

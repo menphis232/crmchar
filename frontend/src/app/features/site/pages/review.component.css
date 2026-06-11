@@ -1,0 +1,62 @@
+.review-container {
+  min-height: calc(100vh - 80px);
+  padding: 60px 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: var(--f-ui);
+}
+
+.review-card, .error-box, .success-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.error-box { text-align: center; border-color: #ff4d4f; }
+.error-box h2 { color: #ff4d4f; font-family: var(--f-display); margin-bottom: 10px; }
+
+.success-box { text-align: center; border-color: var(--mx-green); }
+.success-box h2 { color: var(--mx-green); font-family: var(--f-display); margin-bottom: 10px; }
+
+.rc-header { text-align: center; margin-bottom: 30px; }
+
+.deal-context {
+  background: rgba(200, 169, 74, 0.05);
+  border-left: 3px solid var(--gold);
+  padding: 15px;
+  border-radius: 4px;
+  margin-bottom: 30px;
+  font-size: 14px;
+  color: var(--mx-white);
+}
+.deal-context p { margin-bottom: 5px; }
+.deal-context p:last-child { margin-bottom: 0; }
+
+.rating-section { text-align: center; margin-bottom: 30px; }
+.stars { display: flex; justify-content: center; gap: 10px; cursor: pointer; }
+.star { font-size: 40px; color: #444; transition: color 0.2s ease; }
+.star:hover, .star.active { color: var(--gold); }
+
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--muted); font-size: 13px; }
+.form-group input, .form-group textarea {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  padding: 12px; color: var(--mx-white); border-radius: 6px; font-family: var(--f-ui);
+}
+
+.btn-submit {
+  width: 100%; background: var(--gold); color: var(--bg); border: none; padding: 16px;
+  font-weight: bold; border-radius: 8px; cursor: pointer; font-family: var(--f-ui);
+  margin-top: 10px; font-size: 16px; transition: opacity 0.2s;
+}
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-home {
+  display: inline-block; margin-top: 20px; padding: 12px 24px;
+  background: var(--bg); border: 1px solid var(--border); color: var(--mx-white);
+  border-radius: 6px; text-decoration: none; font-weight: bold;
+}
