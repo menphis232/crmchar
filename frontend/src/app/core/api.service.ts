@@ -23,7 +23,7 @@ export class GestoresService {
   getBySlug(slug: string) { return this.http.get<Gestor>(`${this.base}/${slug}`); }
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
-  addService(data: { name: string; timeEstimate: string; price: number }) { return this.http.post(`${this.base}/me/services`, data); }
+  addService(data: { name: string; timeEstimate: string; price: number; required_documents?: string[] }) { return this.http.post(`${this.base}/me/services`, data); }
   deleteService(id: string) { return this.http.delete(`${this.base}/me/services/${id}`); }
   updateSolicitud(id: string, status: string) { return this.http.patch(`${this.base}/me/solicitudes/${id}`, { status }); }
   createSolicitud(gestorId: string, data: { clientName: string; serviceName: string; location?: string; clientEmail?: string; clientPhone?: string; customData?: any; }) {

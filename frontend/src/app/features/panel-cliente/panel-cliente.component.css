@@ -484,6 +484,40 @@
 }
 
 /* ===========================
+   CHAT & DOCS TABS
+=========================== */
+.deal-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  padding-bottom: 12px;
+}
+
+.deal-tab {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.deal-tab:hover {
+  background: rgba(255,255,255,0.05);
+  color: #fff;
+}
+
+.deal-tab.active {
+  background: rgba(99,102,241,0.15);
+  border-color: rgba(99,102,241,0.4);
+  color: #818cf8;
+}
+
+/* ===========================
    CHAT
 =========================== */
 .chat-section {
@@ -681,6 +715,97 @@
 .send-btn:hover {
   opacity: 0.9;
   transform: scale(1.05);
+}
+
+.send-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+
+/* ===========================
+   DOCS SECTION
+=========================== */
+.docs-section {
+  background: #1e2638;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.docs-header {
+  margin-bottom: 24px;
+}
+
+.docs-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.docs-header p {
+  font-size: 14px;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+}
+
+.docs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.doc-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.doc-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-info strong {
+  font-size: 15px;
+  color: #fff;
+}
+
+.badge-ai {
+  background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+  color: #a78bfa;
+  border: 1px solid rgba(139,92,246,0.3);
+}
+
+.btn-primary.small {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.btn-secondary.small {
+  display: inline-block;
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.btn-secondary.small:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+.btn-primary.loading {
+  opacity: 0.7;
+  cursor: wait;
 }
 
 /* ===========================

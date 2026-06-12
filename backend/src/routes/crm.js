@@ -931,6 +931,48 @@ router.delete('/documents/:id', async (req, res) => {
   }
 });
 
+router.get('/deals/:id/client-documents', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    const rows = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al listar documentos del cliente' });
+  }
+});
+
+router.post('/deals/:id/apply-ocr', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { documentId } = req.body;
+    
+    const deal = await get('SELECT id, internal_notes FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    const doc = await get('SELECT * FROM deal_documents WHERE id = ? AND deal_id = ?', [documentId, req.params.id]);
+    if (!doc || !doc.extracted_data) return res.status(400).json({ error: 'Documento sin datos OCR' });
+
+    let extracted;
+    try { extracted = typeof doc.extracted_data === 'string' ? JSON.parse(doc.extracted_data) : doc.extracted_data; } catch(e) { return res.status(400).json({error: 'Datos corruptos'}); }
+
+    // Format the JSON data into a readable string to append to internal notes
+    const dataStr = Object.entries(extracted).map(([k,v]) => `${k}: ${v}`).join('\n');
+    const newNotes = (deal.internal_notes ? deal.internal_notes + '\n\n' : '') + `--- Datos extraídos de ${doc.document_type} ---\n${dataStr}`;
+
+    await run('UPDATE crm_deals SET internal_notes = ?, updated_at = NOW() WHERE id = ?', [newNotes, req.params.id]);
+    await run("UPDATE deal_documents SET status = 'approved' WHERE id = ?", [documentId]);
+
+    res.json({ success: true, notes: newNotes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al aplicar datos OCR' });
+  }
+});
+
 // --- FASE 3.5: GESTIÓN DE EQUIPO ---
 router.get('/team', async (req, res) => {
   try {

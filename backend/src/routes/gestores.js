@@ -62,7 +62,10 @@ router.get('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
     if (!row) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
 
     const services = await query(
-      'SELECT id, name, time_estimate as timeEstimate, price FROM gestor_services WHERE gestor_id = ?', [row.id]);
+      'SELECT id, name, time_estimate as timeEstimate, price, required_documents FROM gestor_services WHERE gestor_id = ?', [row.id]);
+    services.forEach(s => {
+      try { s.required_documents = typeof s.required_documents === 'string' ? JSON.parse(s.required_documents) : s.required_documents; } catch(e) {}
+    });
     const solicitudes = await query(`
       SELECT id, client_name as clientName, service_name as serviceName, location, status, created_at as createdAt
       FROM solicitudes WHERE gestor_id = ? ORDER BY created_at DESC`, [row.id]);
@@ -107,14 +110,22 @@ router.put('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
 router.post('/me/services', authRequired, requireRole('gestor'), async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
-    const { name, timeEstimate, price } = req.body;
+    const { name, timeEstimate, price, required_documents } = req.body;
     if (!name || !timeEstimate || price == null) {
       return res.status(400).json({ error: 'Datos incompletos' });
     }
     const id = uuid();
-    await run('INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price) VALUES (?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, price]);
-    res.status(201).json({ id, name, timeEstimate, price });
+    let docs = [];
+    if (required_documents && Array.isArray(required_documents)) {
+      docs = required_documents;
+    } else if (typeof required_documents === 'string') {
+      docs = required_documents.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
+
+    await run('INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, row.id, name, timeEstimate, price, JSON.stringify(docs)]);
+    res.status(201).json({ id, name, timeEstimate, price, required_documents: docs });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
   }
@@ -158,7 +169,10 @@ router.get('/:slugOrId', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Gestor no encontrado' });
 
     const services = await query(
-      'SELECT id, name, time_estimate as timeEstimate, price FROM gestor_services WHERE gestor_id = ?', [row.id]);
+      'SELECT id, name, time_estimate as timeEstimate, price, required_documents FROM gestor_services WHERE gestor_id = ?', [row.id]);
+    services.forEach(s => {
+      try { s.required_documents = typeof s.required_documents === 'string' ? JSON.parse(s.required_documents) : s.required_documents; } catch(e) {}
+    });
     const reviews = await query(
       'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC LIMIT 10',
       [row.id]);

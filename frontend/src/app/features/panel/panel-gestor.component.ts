@@ -59,7 +59,7 @@ export class PanelGestorComponent implements OnInit {
   aiInsights = signal<string[]>([]);
   isAiLoading = signal(false);
   message = signal('');
-  newService = { name: '', timeEstimate: '', price: 0 };
+  newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
   newTemplate = { name: '', content: '' };
   isMobileMenuOpen = signal(false);
 
@@ -307,9 +307,13 @@ export class PanelGestorComponent implements OnInit {
 
   addService() {
     if (!this.newService.name || !this.newService.timeEstimate) return;
-    this.gestoresService.addService(this.newService).subscribe({
+    const docs = this.newService.requiredDocumentsStr.split(',').map(s => s.trim()).filter(Boolean);
+    const payload: any = { name: this.newService.name, timeEstimate: this.newService.timeEstimate, price: this.newService.price };
+    if (docs.length > 0) payload.required_documents = docs;
+    
+    this.gestoresService.addService(payload).subscribe({
       next: () => {
-        this.newService = { name: '', timeEstimate: '', price: 0 };
+        this.newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
         this.loadProfile();
         this.message.set('Servicio agregado');
       },

@@ -189,9 +189,16 @@
             </div>
           </div>
 
-          <!-- CHAT EN TIEMPO REAL -->
-          <div class="chat-section">
-            <div class="chat-section-header">
+          <!-- TABS: CHAT vs DOCS -->
+          <div class="deal-tabs">
+            <button class="deal-tab" [class.active]="dealTab() === 'chat'" (click)="dealTab.set('chat')">💬 Chat</button>
+            <button class="deal-tab" [class.active]="dealTab() === 'docs'" (click)="dealTab.set('docs')">📄 Documentos Requeridos</button>
+          </div>
+
+          @if (dealTab() === 'chat') {
+            <!-- CHAT EN TIEMPO REAL -->
+            <div class="chat-section">
+              <div class="chat-section-header">
               <h3>💬 Chat con tu Gestor</h3>
               <span class="online-badge">🟢 En línea</span>
             </div>
@@ -242,7 +249,42 @@
                 ➤
               </button>
             </div>
-          </div>
+          } @else {
+            <!-- SECCIÓN DE DOCUMENTOS -->
+            <div class="docs-section">
+              <div class="docs-header">
+                <h3>Documentos Requeridos</h3>
+                <p>Por favor sube los siguientes documentos. Usaremos IA para extraer tus datos de forma segura.</p>
+              </div>
+              <div class="docs-list">
+                @for (doc of selectedDeal().required_documents; track doc) {
+                  <div class="doc-card">
+                    <div class="doc-info">
+                      <strong>{{ doc }}</strong>
+                      @if (getDocStatus(doc)) {
+                        <span class="badge badge-done">Subido</span>
+                        @if (getDocStatus(doc).extracted_data) {
+                          <span class="badge badge-ai">✨ Datos Extraídos</span>
+                        }
+                      } @else {
+                        <span class="badge badge-new">Pendiente</span>
+                      }
+                    </div>
+                    <div class="doc-actions">
+                      @if (!getDocStatus(doc)) {
+                        <label class="btn-primary small" [class.loading]="uploadingDocType() === doc">
+                          <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*">
+                          {{ uploadingDocType() === doc ? '⏳ Leyendo con IA...' : '📸 Subir Foto' }}
+                        </label>
+                      } @else {
+                        <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-secondary small">Ver Archivo</a>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
         </div>
       }
     }

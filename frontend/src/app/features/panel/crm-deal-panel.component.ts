@@ -273,8 +273,8 @@ export class CrmDealPanelComponent {
     });
   }
 
-  // Phase 3.2: Documents
   documents = signal<any[]>([]);
+  clientDocuments = signal<any[]>([]);
   isUploading = signal(false);
   uploadService = inject(UploadService);
 
@@ -319,6 +319,7 @@ export class CrmDealPanelComponent {
 
   loadDocuments(dealId: string) {
     this.crmService.getDocuments(dealId).subscribe(docs => this.documents.set(docs));
+    this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => this.clientDocuments.set(docs));
   }
 
   uploadDocument(event: Event) {
@@ -353,6 +354,22 @@ export class CrmDealPanelComponent {
       const d = this.deal();
       if (d) this.loadDocuments(d.id);
       this.updated.emit();
+    });
+  }
+
+  applyOcrData(docId: string) {
+    const d = this.deal();
+    if (!d) return;
+    if (!confirm('¿Aplicar los datos extraídos a la Nota Interna?')) return;
+    
+    this.http.post<{success: boolean, notes: string}>(`${environment.apiUrl}/crm/deals/${d.id}/apply-ocr`, { documentId: docId }).subscribe({
+      next: (res) => {
+        this.internalNotes = res.notes;
+        this.loadDocuments(d.id);
+        this.updated.emit();
+        alert('Datos aplicados correctamente');
+      },
+      error: () => alert('Error al aplicar datos OCR')
     });
   }
 

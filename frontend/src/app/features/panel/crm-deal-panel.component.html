@@ -105,6 +105,45 @@
           </div>
         </div>
 
+        <!-- DOCUMENTOS DEL CLIENTE (OCR) -->
+        <div class="deal-section" style="background:rgba(99,102,241,0.05); border:1px solid rgba(99,102,241,0.3); border-radius:8px; padding:16px;">
+          <h4 style="margin-bottom:12px; color:#818cf8;">Documentos del Cliente (OCR)</h4>
+          @if (clientDocuments().length > 0) {
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              @for (doc of clientDocuments(); track doc.id) {
+                <div style="background:var(--surface); padding:10px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                    <div>
+                      <strong style="color:var(--mx-white); font-size:13px;">{{ doc.document_type }}</strong>
+                      <div style="font-size:11px; color:var(--muted);">{{ doc.created_at | date:'short' }}</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                      <a [href]="doc.file_url" target="_blank" class="btn-ghost small" style="padding:2px 8px; font-size:11px;">Ver Foto</a>
+                    </div>
+                  </div>
+                  @if (doc.extracted_data) {
+                    <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1);">
+                      <p style="font-size:11px; color:#a78bfa; margin:0 0 6px;">✨ Datos Extraídos:</p>
+                      <pre style="font-size:10px; color:var(--muted); margin:0 0 8px; max-height:60px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:4px; border-radius:4px;">{{ doc.extracted_data | json }}</pre>
+                      @if (doc.status !== 'approved') {
+                        <button type="button" class="btn-copy small" style="width:100%; font-size:11px; background:linear-gradient(135deg, #6366f1, #8b5cf6);" (click)="applyOcrData(doc.id)">
+                          Aplicar a Nota Interna
+                        </button>
+                      } @else {
+                        <p style="font-size:11px; color:#34d399; margin:0; text-align:center;">✓ Datos aplicados</p>
+                      }
+                    </div>
+                  } @else {
+                    <p style="font-size:11px; color:var(--muted); margin:4px 0 0;">Sin datos OCR</p>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc">El cliente aún no ha subido documentos.</p>
+          }
+        </div>
+
         <!-- DOCUMENTOS (Phase 3.2) -->
         <div class="deal-section" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px;">
           <h4 style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">

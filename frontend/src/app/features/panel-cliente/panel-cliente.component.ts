@@ -20,9 +20,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   router = inject(Router);
 
   activeTab = signal<'dashboard' | 'tramites' | 'ajustes'>('dashboard');
+  dealTab = signal<'chat' | 'docs'>('chat');
   deals = signal<any[]>([]);
   selectedDeal = signal<any>(null);
   loading = signal(true);
+  documents = signal<any[]>([]);
+  uploadingDocType = signal<string | null>(null);
 
   // Chat
   messages = signal<any[]>([]);
@@ -75,6 +78,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   openDeal(deal: any) {
     this.selectedDeal.set(deal);
     this.activeTab.set('tramites');
+    this.dealTab.set('chat');
     this.chatLoading.set(true);
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/messages`).subscribe({
       next: res => {
@@ -85,6 +89,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       },
       error: () => this.chatLoading.set(false)
     });
+    this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
+      next: docs => this.documents.set(docs)
+    });
   }
 
   closeDeal() {
@@ -92,6 +99,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (deal) this.socket.emit('leave_deal', deal.id);
     this.selectedDeal.set(null);
     this.messages.set([]);
+    this.documents.set([]);
   }
 
   sendMessage() {
@@ -126,6 +134,32 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       },
       error: () => this.uploadingFile.set(false)
     });
+  }
+
+  onDocSelected(docType: string, event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.uploadingDocType.set(docType);
+    const formData = new FormData();
+    formData.append('file', file);
+    this.http.post<{ url: string }>(`${environment.apiUrl}/upload`, formData).subscribe({
+      next: res => {
+        const dealId = this.selectedDeal()?.id;
+        if (!dealId) return;
+        this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/documents`, {
+          documentType: docType,
+          fileUrl: res.url
+        }).subscribe(newDoc => {
+          this.documents.update(docs => [newDoc, ...docs]);
+          this.uploadingDocType.set(null);
+        });
+      },
+      error: () => this.uploadingDocType.set(null)
+    });
+  }
+
+  getDocStatus(docType: string) {
+    return this.documents().find(d => d.document_type === docType);
   }
 
   updatePassword() {

@@ -209,6 +209,9 @@
             <div class="inbox-info">
               <h4>{{ s.name }}</h4>
               <p>⏱️ {{ s.timeEstimate }} — ${{ s.price | number }} MXN</p>
+              @if (s.required_documents?.length) {
+                <p style="font-size:11px; color:var(--muted); margin-top:4px;">Requisitos: {{ s.required_documents.join(', ') }}</p>
+              }
             </div>
             <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
           </div>
@@ -230,6 +233,11 @@
             <label>Precio (MXN)</label>
             <input type="number" [(ngModel)]="newService.price" placeholder="0">
           </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>Documentos Requeridos (separados por coma)</label>
+          <input [(ngModel)]="newService.requiredDocumentsStr" placeholder="Ej: INE, Tarjeta de Circulación, Factura">
+          <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas en blanco, se pedirá por defecto: INE, Tarjeta de Circulación, Factura de Origen.</p>
         </div>
         <button class="btn-copy" (click)="addService()">+ Agregar servicio</button>
       </div>
