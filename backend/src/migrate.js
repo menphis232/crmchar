@@ -208,7 +208,7 @@ async function migrate() {
       multipleStatements: true,
     });
     for (const stmt of v7.split(';').map(s => s.trim()).filter(Boolean)) {
-      if (stmt.includes('ADD COLUMN IF NOT EXISTS')) {
+      if (stmt.includes('ADD COLUMN IF NOT EXISTS') || stmt.includes('ADD COLUMN')) {
         try { await conn6.query(stmt); } catch (e) {
           if (e.code !== 'ER_DUP_FIELDNAME') throw e;
         }
@@ -232,7 +232,7 @@ async function migrate() {
         multipleStatements: true,
       });
       for (const stmt of v8.split(';').map(s => s.trim()).filter(Boolean)) {
-        if (stmt.includes('ADD COLUMN IF NOT EXISTS')) {
+        if (stmt.includes('ADD COLUMN IF NOT EXISTS') || stmt.includes('ADD COLUMN')) {
           try { await conn7.query(stmt); } catch (e) {
             if (e.code !== 'ER_DUP_FIELDNAME') throw e;
           }
@@ -257,7 +257,7 @@ async function migrate() {
         multipleStatements: true,
       });
       for (const stmt of v9.split(';').map(s => s.trim()).filter(Boolean)) {
-        if (stmt.includes('ADD COLUMN IF NOT EXISTS')) {
+        if (stmt.includes('ADD COLUMN IF NOT EXISTS') || stmt.includes('ADD COLUMN')) {
           try { await conn8.query(stmt); } catch (e) {
             if (e.code !== 'ER_DUP_FIELDNAME') throw e;
           }
