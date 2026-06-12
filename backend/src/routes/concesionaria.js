@@ -172,6 +172,11 @@ router.get('/public/:slug', async (req, res) => {
     `, [slug]);
     if (!user) return res.status(404).json({ error: 'Concesionaria no encontrada' });
 
+    if (!user.has_ai) {
+      const admin = await get("SELECT ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
+      if (admin && admin.ai_api_key) user.has_ai = 1;
+    }
+
     const stats = await get(`
       SELECT COUNT(*) as autosCount, AVG(r.rating) as avgRating, COUNT(r.id) as reviewCount
       FROM autos a
