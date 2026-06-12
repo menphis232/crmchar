@@ -1,7 +1,11 @@
-import { Component, OnInit, signal, effect, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, signal, effect, HostListener, ElementRef, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Router } from '@angular/router';
 import { CrmService } from '../core/api.service';
 import { AuthService } from '../core/auth.service';
+import { ToastService } from '../core/toast.service';
+import { environment } from '../../environments/environment';
+import { io } from 'socket.io-client';
 
 @Component({
   selector: 'app-notification-bell',
@@ -71,12 +75,42 @@ export class NotificationBellComponent implements OnInit {
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
 
-  constructor(private auth: AuthService, private crmService: CrmService, private eRef: ElementRef) {
+  constructor(
+    private auth: AuthService, 
+    private crmService: CrmService, 
+    private eRef: ElementRef,
+    private router: Router,
+    private toast: ToastService,
+    private zone: NgZone
+  ) {
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.loadNotifications();
+        this.setupSocket();
       }
     });
+  }
+
+  setupSocket() {
+    const user = this.auth.user();
+    if (user) {
+      const socket = io(environment.apiUrl.replace('/api', ''));
+      socket.emit('identify', user.id);
+      
+      socket.on('notification', (notif: any) => {
+        this.zone.run(() => {
+          this.notifications.update(list => [notif, ...list]);
+          this.unreadCount.update(c => c + 1);
+          
+          this.toast.info(notif.body, notif.title, () => {
+            if (notif.ref_id) {
+              const currentPath = this.router.url.split('?')[0];
+              this.router.navigate([currentPath], { queryParams: { deal: notif.ref_id }, queryParamsHandling: 'merge' });
+            }
+          });
+        });
+      });
+    }
   }
 
   @HostListener('document:click', ['$event'])
@@ -110,7 +144,16 @@ export class NotificationBellComponent implements OnInit {
         n.isRead = 1;
         this.notifications.set([...this.notifications()]);
         this.unreadCount.update(c => Math.max(0, c - 1));
+        if (n.ref_id) {
+          const currentPath = this.router.url.split('?')[0];
+          this.router.navigate([currentPath], { queryParams: { deal: n.ref_id }, queryParamsHandling: 'merge' });
+        }
       });
+    } else {
+      if (n.ref_id) {
+        const currentPath = this.router.url.split('?')[0];
+        this.router.navigate([currentPath], { queryParams: { deal: n.ref_id }, queryParamsHandling: 'merge' });
+      }
     }
   }
 

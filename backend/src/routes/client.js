@@ -72,6 +72,23 @@ router.post('/deals/:id/messages', authRequired, async (req, res) => {
       WHERE m.id = ?
     `, [id]);
     
+    // Send notification to Gestor/Concesionaria
+    const deal = await get('SELECT user_id, title FROM crm_deals WHERE id = ?', [req.params.id]);
+    if (deal && deal.user_id) {
+      const notifId = uuid();
+      const title = 'Nuevo mensaje del Cliente';
+      const body = message ? message.substring(0, 100) : 'El cliente envió un archivo.';
+      await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
+        [notifId, deal.user_id, title, body, req.params.id]);
+      
+      const io = req.app.get('io');
+      if (io) {
+        io.to('user_' + deal.user_id).emit('notification', {
+          id: notifId, type: 'new_message', title, body, ref_id: req.params.id, is_read: 0, created_at: new Date().toISOString()
+        });
+      }
+    }
+
     res.status(201).json(saved);
   } catch (err) {
     console.error(err);
@@ -109,26 +126,47 @@ router.post('/deals/:id/documents', authRequired, async (req, res) => {
 
       if (provider === 'gemini' && apiKey) {
         try {
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
           const genAI = new GoogleGenerativeAI(apiKey);
-          const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+          const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
           
           const filename = fileUrl.split('/').pop();
           const filePath = path.join(__dirname, '..', '..', 'uploads', filename);
           
           if (fs.existsSync(filePath)) {
             const fileData = fs.readFileSync(filePath);
+            const ext = filename.split('.').pop().toLowerCase();
+            const mimeType = ext === 'pdf' ? 'application/pdf' :
+                             (ext === 'jpg' || ext === 'jpeg') ? 'image/jpeg' :
+                             ext === 'webp' ? 'image/webp' : 'image/png';
+
             const imagePart = {
-              inlineData: { data: fileData.toString('base64'), mimeType: 'image/png' }
+              inlineData: { data: fileData.toString('base64'), mimeType }
             };
             
-            const prompt = `Extrae la información principal de este documento (${documentType}). Devuelve SOLO un JSON válido con las claves en formato camelCase (ej: nombre, fechaNacimiento, curp, rfc, numeroIdentificacion, placas, niv, marca, modelo, etc). No incluyas markdown como \`\`\`json.`;
+            const prompt = `Extrae la información principal de este documento (${documentType}). Adicionalmente, analiza detalladamente la imagen para determinar si parece un documento físico real y auténtico (evalúa textura, bordes, iluminación natural, hologramas, reflejos) o si parece falso, alterado digitalmente o una captura de pantalla.
+Devuelve SOLO un JSON válido con las claves en formato camelCase (ej: nombre, fechaNacimiento, curp, rfc, numeroIdentificacion, placas, niv, marca, modelo). INCLUYE obligatoriamente dos campos extras:
+"esDocumentoFalso": (boolean) true si parece falso, captura de pantalla o montaje; false si parece un documento físico legítimo.
+"analisisAutenticidad": (string) Breve explicación de por qué consideras que la imagen es de un documento real o falso.
+No incluyas markdown como \`\`\`json.`;
             
-            const result = await model.generateContent([prompt, imagePart]);
-            const responseText = result.response.text().trim().replace(/^```json/g, '').replace(/```$/g, '').trim();
+            let resultObj = null;
+            let lastError;
+            for (const modelName of modelsToTry) {
+              try {
+                const model = genAI.getGenerativeModel({ model: modelName });
+                const result = await model.generateContent([prompt, imagePart]);
+                const responseText = result.response.text().trim().replace(/^```json/g, '').replace(/```$/g, '').trim();
+                resultObj = JSON.parse(responseText);
+                break;
+              } catch (err) {
+                lastError = err;
+                continue;
+              }
+            }
             
-            try {
-              extractedData = JSON.parse(responseText);
-            } catch (e) { console.error('Error parsing OCR JSON:', responseText); }
+            if (!resultObj && lastError) throw lastError;
+            extractedData = resultObj;
           }
         } catch (ocrErr) {
           console.error('OCR Error:', ocrErr);

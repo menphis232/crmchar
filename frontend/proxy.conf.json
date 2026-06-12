@@ -4,5 +4,11 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "info"
+  },
+  "/socket.io": {
+    "target": "http://localhost:3001",
+    "secure": false,
+    "ws": true,
+    "logLevel": "info"
   }
 }

@@ -1,17 +1,18 @@
-import { Component, input, output, signal, effect, inject } from '@angular/core';
+import { Component, input, output, signal, effect, inject, NgZone } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe } from '@angular/common';
+import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
 import { CrmService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate } from '../../models';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
+import { ToastService } from '../../core/toast.service';
 
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -47,15 +48,18 @@ export class CrmDealPanelComponent {
   socket!: Socket;
 
   auth = inject(AuthService);
+  toast = inject(ToastService);
 
-  constructor(private crmService: CrmService, private http: HttpClient) {
+  constructor(private crmService: CrmService, private http: HttpClient, private zone: NgZone) {
     this.socket = io(environment.apiUrl.replace('/api', ''));
     
     this.socket.on('receive_message', (msg: any) => {
-      if (this.deal() && msg.dealId === this.deal()!.id) {
-        this.messages.push(msg);
-        this.scrollToBottom();
-      }
+      this.zone.run(() => {
+        if (this.deal() && msg.dealId === this.deal()!.id) {
+          this.messages.push(msg);
+          this.scrollToBottom();
+        }
+      });
     });
 
     effect(() => {
@@ -101,6 +105,10 @@ export class CrmDealPanelComponent {
     this.newMessage = '';
     
     this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, { message: txt }).subscribe(saved => {
+      if (!this.messages.find(m => m.id === saved.id)) {
+        this.messages.push({ dealId: d.id, ...saved });
+        this.scrollToBottom();
+      }
       this.socket.emit('send_message', { dealId: d.id, ...saved });
     });
   }
@@ -116,6 +124,10 @@ export class CrmDealPanelComponent {
     
     this.http.post<{url: string}>(`${environment.apiUrl}/upload`, formData).subscribe(res => {
       this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, { message: 'He subido un documento.', fileUrl: res.url }).subscribe(saved => {
+        if (!this.messages.find(m => m.id === saved.id)) {
+          this.messages.push({ dealId: d.id, ...saved });
+          this.scrollToBottom();
+        }
         this.socket.emit('send_message', { dealId: d.id, ...saved });
       });
     });
@@ -148,6 +160,7 @@ export class CrmDealPanelComponent {
     if (!d) return;
     this.crmService.updateDeal(d.id, { internalNotes: this.internalNotes, estimatedValue: this.estimatedValue }).subscribe(() => {
       this.loadDeal(d.id);
+      this.toast.success('Notas guardadas');
       this.updated.emit();
     });
   }
@@ -158,6 +171,7 @@ export class CrmDealPanelComponent {
     this.crmService.addActivity(d.id, this.noteText.trim()).subscribe(() => {
       this.noteText = '';
       this.loadDeal(d.id);
+      this.toast.success('Nota agregada');
       this.updated.emit();
     });
   }
@@ -168,6 +182,7 @@ export class CrmDealPanelComponent {
     this.crmService.replyDeal(d.id, this.replyText.trim()).subscribe(() => {
       this.replyText = '';
       this.loadDeal(d.id);
+      this.toast.success('Respuesta enviada');
       this.updated.emit();
     });
   }
@@ -194,6 +209,7 @@ export class CrmDealPanelComponent {
       this.taskTitle = '';
       this.taskDue = '';
       this.loadDeal(d.id);
+      this.toast.success('Tarea agregada');
       this.updated.emit();
     });
   }
@@ -319,7 +335,15 @@ export class CrmDealPanelComponent {
 
   loadDocuments(dealId: string) {
     this.crmService.getDocuments(dealId).subscribe(docs => this.documents.set(docs));
-    this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => this.clientDocuments.set(docs));
+    this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => {
+      const parsedDocs = docs.map(d => {
+        if (typeof d.extracted_data === 'string') {
+          try { d.extracted_data = JSON.parse(d.extracted_data); } catch(e) {}
+        }
+        return d;
+      });
+      this.clientDocuments.set(parsedDocs);
+    });
   }
 
   uploadDocument(event: Event) {

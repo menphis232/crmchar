@@ -255,7 +255,7 @@
             <div class="docs-section">
               <div class="docs-header">
                 <h3>Documentos Requeridos</h3>
-                <p>Por favor sube los siguientes documentos. Usaremos IA para extraer tus datos de forma segura.</p>
+                <p>Por favor sube los siguientes documentos. Nuestro sistema los analizará de forma segura.</p>
               </div>
               <div class="docs-list">
                 @for (doc of selectedDeal().required_documents; track doc) {
@@ -275,7 +275,7 @@
                       @if (!getDocStatus(doc)) {
                         <label class="btn-primary small" [class.loading]="uploadingDocType() === doc">
                           <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*">
-                          {{ uploadingDocType() === doc ? '⏳ Leyendo con IA...' : '📸 Subir Foto' }}
+                          {{ uploadingDocType() === doc ? '⏳ Analizando...' : '📸 Subir Foto' }}
                         </label>
                       } @else {
                         <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-secondary small">Ver Archivo</a>

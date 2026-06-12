@@ -104,19 +104,25 @@ router.post('/inquiries', async (req, res) => {
         
         // Enviar correo con credenciales provisionales
         const html = `
-          <h2>Bienvenido a Trámites Vehiculares</h2>
-          <p>Hola ${clientName},</p>
-          <p>Hemos recibido tu interés sobre el vehículo <strong>${auto.make} ${auto.model}</strong>.</p>
-          <p>Te hemos creado una cuenta para que puedas chatear directamente con la concesionaria, subir documentos o hacer seguimiento.</p>
-          <p><strong>Tus credenciales de acceso:</strong></p>
-          <ul>
-            <li><strong>Usuario/Email:</strong> ${clientEmail}</li>
-            <li><strong>Contraseña provisional:</strong> ${tempPassword}</li>
-          </ul>
-          <p>Por favor, <a href="http://localhost:4200/login">inicia sesión aquí</a> y cambia tu contraseña lo antes posible.</p>
+          <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+          <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido tu interés sobre el vehículo <strong>${auto.make} ${auto.model}</strong>.</p>
+          <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas chatear directamente con la concesionaria, subir documentos o hacer seguimiento.</p>
+          
+          <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
+            <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
+            <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
+              <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
+            </ul>
+          </div>
+          
+          <div style="text-align: center; margin: 40px 0;">
+            <a href="http://localhost:4200/login" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
+          </div>
+          <p style="color: #a0aec0; font-size: 15px; line-height: 1.6; text-align: center;">Por favor cambia tu contraseña lo antes posible en la sección de Ajustes.</p>
         `;
         try {
-          await sendEmail(clientEmail, 'Tu cuenta ha sido creada', 'Tu cuenta ha sido creada', html);
+          await sendEmail(clientEmail, 'Tu cuenta ha sido creada', 'Tu cuenta ha sido creada', html, auto.user_id);
         } catch(e) {
           console.error("No se pudo enviar el correo:", e);
         }
@@ -132,7 +138,20 @@ router.post('/inquiries', async (req, res) => {
       SELECT i.*, a.make, a.model FROM auto_inquiries i
       JOIN autos a ON a.id = i.auto_id WHERE i.id = ?
     `, [id]);
-    await createDealFromInquiry(inquiry, auto.user_id);
+    const dealId = await createDealFromInquiry(inquiry, auto.user_id);
+
+    const io = req.app.get('io');
+    if (io) {
+      const notifId = uuid();
+      const title = 'Nuevo interés en vehículo';
+      const body = `${clientName} está interesado en ${inquiry.make} ${inquiry.model}.`;
+      await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'nuevo_lead', ?, ?, ?)`,
+        [notifId, auto.user_id, title, body, dealId]);
+      
+      io.to('user_' + auto.user_id).emit('notification', {
+        id: notifId, type: 'nuevo_lead', title, body, ref_id: dealId, is_read: 0, created_at: new Date().toISOString()
+      });
+    }
 
     res.status(201).json({ id, status: 'nuevo' });
   } catch (err) {
@@ -297,7 +316,7 @@ Instrucciones: Eres un asesor de ventas amable y profesional. Responde preguntas
     if (user.ai_provider === 'gemini') {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
       let lastError;
       for (const modelName of modelsToTry) {
         try {

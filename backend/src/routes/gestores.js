@@ -204,19 +204,25 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
       
       // Enviar correo con credenciales provisionales
       const html = `
-        <h2>Bienvenido a Trámites Vehiculares</h2>
-        <p>Hola ${clientName},</p>
-        <p>Hemos recibido tu solicitud para el trámite de <strong>${serviceName}</strong> con el gestor ${gestor.name || 'asignado'}.</p>
-        <p>Te hemos creado una cuenta para que puedas hacer seguimiento a tu trámite, chatear con tu gestor y subir documentos.</p>
-        <p><strong>Tus credenciales de acceso:</strong></p>
-        <ul>
-          <li><strong>Usuario/Email:</strong> ${clientEmail}</li>
-          <li><strong>Contraseña provisional:</strong> ${tempPassword}</li>
-        </ul>
-        <p>Por favor, <a href="http://localhost:4200/login">inicia sesión aquí</a> y cambia tu contraseña lo antes posible.</p>
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido tu solicitud para el trámite de <strong>${serviceName}</strong> con el gestor ${gestor.name || 'asignado'}.</p>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento a tu trámite, chatear con tu gestor y subir documentos.</p>
+        
+        <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
+          <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
+          <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
+            <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
+          </ul>
+        </div>
+        
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="http://localhost:4200/login" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
+        </div>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6; text-align: center;">Por favor cambia tu contraseña lo antes posible en la sección de Ajustes.</p>
       `;
       try {
-        await sendEmail(clientEmail, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html);
+        await sendEmail(clientEmail, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html, gestor.user_id);
       } catch(e) {
         console.error("No se pudo enviar el correo:", e);
       }
@@ -243,16 +249,16 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
       .join('\n\n');
   }
 
-  await createDealFromSolicitud(solicitud, gestor.user_id, { clientEmail, clientPhone, estimatedValue, clientMessage });
+  const dealId = await createDealFromSolicitud(solicitud, gestor.user_id, { clientEmail, clientPhone, estimatedValue, clientMessage });
 
   // FASE 3.3: Automatización en tiempo real (Notificación)
   const notifId = uuid();
   await run(
-    'INSERT INTO notifications (id, user_id, type, title, body) VALUES (?, ?, ?, ?, ?)',
-    [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`]
+    'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
+    [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`, dealId]
   );
 
-  return id;
+  return { id, dealId };
 }
 
 router.post('/:id/solicitudes', async (req, res) => {
@@ -266,9 +272,22 @@ router.post('/:id/solicitudes', async (req, res) => {
     }
 
     // Calls the extracted function
-    const id = await processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData);
+    const result = await processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData);
 
-    res.status(201).json({ id, status: 'nuevo' });
+    const io = req.app.get('io');
+    if (io) {
+      io.to('user_' + gestor.user_id).emit('notification', {
+        id: uuid(),
+        type: 'nuevo_lead',
+        title: 'Nueva Solicitud Recibida',
+        body: `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`,
+        ref_id: result.dealId,
+        is_read: 0,
+        created_at: new Date().toISOString()
+      });
+    }
+
+    res.status(201).json({ id: result.id, status: 'nuevo' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear solicitud' });
@@ -408,7 +427,7 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
     if (user.ai_provider === 'gemini') {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-pro'];
+      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
       
       let lastError;
       for (const modelName of modelsToTry) {

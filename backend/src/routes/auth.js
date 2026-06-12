@@ -9,17 +9,13 @@ import { sendEmail } from '../utils/mailer.js';
 async function sendPaymentReminderEmail(toEmail, name, roleName, checkoutUrl) {
   const subject = `💳 Activa tu cuenta de ${roleName} en Trámites Vehiculares`;
   const html = `
-    <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
-      <h2 style="color: #c8a94a;">Bienvenido, ${name}!</h2>
-      <p>Tu cuenta de <strong>${roleName}</strong> fue creada exitosamente.</p>
-      <p>Para acceder a tu panel y comenzar a operar, es necesario que actives tu suscripción mensual haciendo clic en el botón de abajo:</p>
+      <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Bienvenido, ${name}!</h2>
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Tu cuenta de <strong>${roleName}</strong> fue creada exitosamente.</p>
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Para acceder a tu panel y comenzar a operar, es necesario que actives tu suscripción mensual haciendo clic en el botón de abajo:</p>
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${checkoutUrl}" style="background: #c8a94a; color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">Activar mi cuenta &rarr;</a>
+        <a href="${checkoutUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">Activar mi cuenta &rarr;</a>
       </div>
-      <p style="color: #888; font-size: 13px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><a href="${checkoutUrl}">${checkoutUrl}</a></p>
-      <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;">
-      <p style="color: #888; font-size: 12px;">Trámites Vehiculares &mdash; Si no te registraste, ignora este correo.</p>
-    </div>
+      <p style="color: #888; font-size: 13px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><a href="${checkoutUrl}" style="color: #c8a94a;">${checkoutUrl}</a></p>
   `;
   await sendEmail(toEmail, subject, `Activa tu cuenta: ${checkoutUrl}`, html);
 }
@@ -27,10 +23,6 @@ async function sendPaymentReminderEmail(toEmail, name, roleName, checkoutUrl) {
 async function sendForgotPasswordEmail(toEmail, name, newPassword) {
   const subject = `Tu nueva contraseña de Trámites Vehiculares`;
   const html = `
-    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1e2638; padding: 40px; border-radius: 12px; border: 1px solid #333;">
-      <div style="text-align: center; margin-bottom: 30px;">
-        <h1 style="color: #c8a94a; margin: 0; font-size: 24px; letter-spacing: 1px;">TRÁMITES<span style="color: #fff;">VEHICULARES</span>.mx</h1>
-      </div>
       <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola, ${name}</h2>
       <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido una solicitud para restablecer tu contraseña. A continuación, te proporcionamos una contraseña provisional generada automáticamente de forma segura.</p>
       
@@ -44,11 +36,6 @@ async function sendForgotPasswordEmail(toEmail, name, newPassword) {
       <div style="text-align: center; margin: 40px 0;">
         <a href="http://localhost:4200/login" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
       </div>
-
-      <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
-      <p style="color: #718096; font-size: 12px; text-align: center; margin: 0;">Si no solicitaste este cambio, por favor contacta a nuestro equipo de soporte inmediatamente.</p>
-      <p style="color: #718096; font-size: 12px; text-align: center; margin: 10px 0 0 0;">&copy; ${new Date().getFullYear()} Trámites Vehiculares. Todos los derechos reservados.</p>
-    </div>
   `;
   await sendEmail(toEmail, subject, `Tu contraseña provisional es: ${newPassword}`, html);
 }

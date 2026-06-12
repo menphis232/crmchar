@@ -1,5 +1,5 @@
 import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
@@ -14,13 +14,14 @@ import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
 
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, AiAssistantComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -61,6 +62,7 @@ export class PanelConcesionariaComponent implements OnInit {
     private themeService: ThemeService,
     private uploadService: UploadService,
     private toast: ToastService,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
@@ -71,6 +73,12 @@ export class PanelConcesionariaComponent implements OnInit {
     this.loadDashboard();
     this.loadCrm();
     this.loadInventory();
+
+    this.route.queryParams.subscribe(params => {
+      if (params['deal']) {
+        this.openDeal(params['deal']);
+      }
+    });
 
     // Load profile fields from /auth/me
     this.auth.getMe().subscribe(res => {

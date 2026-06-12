@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, effect } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
@@ -8,13 +8,14 @@ import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe } from '@angular/common';
 
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, AiAssistantComponent],
   templateUrl: './panel-admin.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -47,23 +48,45 @@ export class PanelAdminComponent implements OnInit {
   stripeMsg = signal('');
   stripeSaving = signal(false);
 
-  aiProvider = '';
-  aiApiKey = '';
+  aiConfigs: { provider: string, key: string }[] = [{ provider: '', key: '' }];
   aiMsg = signal('');
   aiSaving = signal(false);
 
   constructor(public auth: AuthService, private adminService: AdminService) {
-    const me = this.auth.user();
-    if (me) {
-      this.stripePublicKey = me.stripe_public_key || '';
-      this.stripeSecretKey = me.stripe_secret_key || '';
-      this.stripePriceId = me.stripe_price_id || '';
-      this.aiProvider = me.ai_provider || '';
-      this.aiApiKey = me.ai_api_key || '';
-    }
+    effect(() => {
+      const me = this.auth.user();
+      if (me) {
+        this.stripePublicKey = me.stripe_public_key || '';
+        this.stripeSecretKey = me.stripe_secret_key || '';
+        this.stripePriceId = me.stripe_price_id || '';
+        
+        const rawApiKey = me.ai_api_key || '';
+        try {
+          if (rawApiKey.trim().startsWith('[')) {
+            this.aiConfigs = JSON.parse(rawApiKey);
+          } else {
+            const keys = rawApiKey.split(',').map(k => k.trim()).filter(Boolean);
+            if (keys.length > 0) {
+              this.aiConfigs = keys.map(k => ({ provider: me.ai_provider || '', key: k }));
+            } else {
+              this.aiConfigs = [{ provider: me.ai_provider || '', key: '' }];
+            }
+          }
+        } catch (e) {
+          this.aiConfigs = [{ provider: me.ai_provider || '', key: rawApiKey }];
+        }
+        
+        if (this.aiConfigs.length === 0) {
+          this.aiConfigs = [{ provider: '', key: '' }];
+        }
+      }
+    });
   }
 
   ngOnInit() {
+    this.auth.getMe().subscribe(res => {
+      this.auth.user.set(res.user);
+    });
     this.loadStats();
     this.loadUsers();
   }
@@ -155,11 +178,27 @@ export class PanelAdminComponent implements OnInit {
     });
   }
 
+  addAiConfig() {
+    this.aiConfigs.push({ provider: '', key: '' });
+  }
+
+  removeAiConfig(index: number) {
+    this.aiConfigs.splice(index, 1);
+    if (this.aiConfigs.length === 0) {
+      this.addAiConfig();
+    }
+  }
+
   saveAiConfig() {
     this.aiSaving.set(true);
+    
+    // Filtrar las que están vacías
+    const validConfigs = this.aiConfigs.filter(c => c.key.trim() !== '');
+    const firstProvider = validConfigs.length > 0 ? validConfigs[0].provider : '';
+
     this.adminService.updateMyProfile({
-      ai_provider: this.aiProvider,
-      ai_api_key: this.aiApiKey
+      ai_provider: firstProvider,
+      ai_api_key: JSON.stringify(validConfigs)
     }).subscribe({
       next: (res) => {
         this.auth.user.set(res.user);

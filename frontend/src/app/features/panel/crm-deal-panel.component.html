@@ -124,7 +124,14 @@
                   @if (doc.extracted_data) {
                     <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1);">
                       <p style="font-size:11px; color:#a78bfa; margin:0 0 6px;">✨ Datos Extraídos:</p>
-                      <pre style="font-size:10px; color:var(--muted); margin:0 0 8px; max-height:60px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:4px; border-radius:4px;">{{ doc.extracted_data | json }}</pre>
+                      <div style="font-size:11px; margin:0 0 8px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                        @for (item of doc.extracted_data | keyvalue; track item.key) {
+                          <div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.02); padding-bottom:4px; display:flex; justify-content:space-between; gap:8px;">
+                            <strong style="color:var(--mx-white); text-transform:capitalize;">{{ item.key }}:</strong> 
+                            <span style="color:var(--gold); text-align:right;">{{ item.value }}</span>
+                          </div>
+                        }
+                      </div>
                       @if (doc.status !== 'approved') {
                         <button type="button" class="btn-copy small" style="width:100%; font-size:11px; background:linear-gradient(135deg, #6366f1, #8b5cf6);" (click)="applyOcrData(doc.id)">
                           Aplicar a Nota Interna
@@ -247,7 +254,7 @@
             <p class="card-desc">Sin tareas aún.</p>
           }
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
-            <input [(ngModel)]="taskTitle" placeholder="Ej: Llamar al cliente">
+            <input type="text" [(ngModel)]="taskTitle" placeholder="Ej: Llamar al cliente">
             <input type="datetime-local" [(ngModel)]="taskDue" [value]="taskDue || defaultTaskDue()">
             <button type="button" class="btn-ghost small" (click)="addTask()">+ Agendar tarea</button>
           </div>

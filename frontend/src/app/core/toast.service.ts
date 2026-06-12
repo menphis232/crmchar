@@ -31,8 +31,23 @@ export class ToastService {
     this.toast.fire({ icon: 'warning', title, text: message });
   }
 
-  info(message: string, title = 'Info') {
-    this.toast.fire({ icon: 'info', title, text: message });
+  info(message: string, title = 'Info', onClick?: () => void) {
+    this.toast.fire({ 
+      icon: 'info', 
+      title, 
+      text: message,
+      didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+        if (onClick) {
+          toast.style.cursor = 'pointer';
+          toast.addEventListener('click', () => {
+            Swal.close();
+            onClick();
+          });
+        }
+      }
+    });
   }
 
   async confirm(message: string, title = '¿Estás seguro?'): Promise<boolean> {

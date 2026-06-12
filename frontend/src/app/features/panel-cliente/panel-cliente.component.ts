@@ -1,9 +1,10 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { ToastService } from '../../core/toast.service';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 
@@ -18,6 +19,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   http = inject(HttpClient);
   router = inject(Router);
+  toast = inject(ToastService);
+  zone = inject(NgZone);
 
   activeTab = signal<'dashboard' | 'tramites' | 'ajustes'>('dashboard');
   dealTab = signal<'chat' | 'docs'>('chat');
@@ -51,12 +54,33 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadDeals();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
+    const user = this.auth.user();
+    if (user) {
+      this.socket.emit('identify', user.id);
+    }
+
     this.socket.on('receive_message', (msg: any) => {
-      const deal = this.selectedDeal();
-      if (deal && msg.dealId === deal.id) {
-        this.messages.update(msgs => [...msgs, msg]);
-        this.scrollToBottom();
-      }
+      this.zone.run(() => {
+        const deal = this.selectedDeal();
+        if (deal && msg.dealId === deal.id) {
+          this.messages.update(msgs => [...msgs, msg]);
+          this.scrollToBottom();
+        }
+      });
+    });
+
+    this.socket.on('notification', (notif: any) => {
+      this.zone.run(() => {
+        const toast = this.toast;
+        if (toast) {
+          toast.info(notif.body, notif.title, () => {
+            if (notif.ref_id) {
+              const d = this.deals().find(x => x.id === notif.ref_id);
+              if (d) this.openDeal(d);
+            }
+          });
+        }
+      });
     });
   }
 
@@ -110,6 +134,16 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.newMessage = '';
 
     this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/messages`, { message: txt }).subscribe(saved => {
+      // Optimistic update for the sender
+      this.messages.update(msgs => {
+        // Only append if it's not already there (in case socket was faster)
+        if (!msgs.find(m => m.id === saved.id)) {
+          return [...msgs, { dealId, ...saved }];
+        }
+        return msgs;
+      });
+      this.scrollToBottom();
+      
       this.socket.emit('send_message', { dealId, ...saved });
     });
   }
@@ -128,6 +162,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
           message: `📎 Documento adjunto: ${file.name}`,
           fileUrl: res.url
         }).subscribe(saved => {
+          this.messages.update(msgs => {
+            if (!msgs.find(m => m.id === saved.id)) {
+              return [...msgs, { dealId, ...saved }];
+            }
+            return msgs;
+          });
+          this.scrollToBottom();
           this.socket.emit('send_message', { dealId, ...saved });
           this.uploadingFile.set(false);
         });

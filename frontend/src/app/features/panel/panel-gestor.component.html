@@ -56,6 +56,7 @@
     @if (hasPerm('perfil')) {
       <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">👤 Mi perfil</button>
       <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
+      <button class="dash-link" [class.active]="tab() === 'automatizaciones'" (click)="setTab('automatizaciones'); isMobileMenuOpen.set(false)">🤖 Automatizaciones</button>
     }
     @if (hasPerm('plantillas')) {
       <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
@@ -296,21 +297,31 @@
             <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">🤖 Inteligencia Artificial</h3>
             <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tu asistente de IA para autocompletar respuestas a clientes en base a tus trámites.</p>
             
-            <!-- Ocultado temporalmente: el admin configurará la API Key global
-            <div class="form-group" style="margin-bottom:12px;">
-              <label>Proveedor de IA</label>
-              <select [(ngModel)]="aiProvider" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                <option value="">Ninguno</option>
-                <option value="gemini">Google Gemini</option>
-                <option value="openai">OpenAI (ChatGPT)</option>
-              </select>
+            <div class="stripe-settings" style="display: flex; flex-direction: column; gap: 15px;">
+              @for (config of aiConfigs; track $index) {
+                <div style="display: flex; gap: 15px; align-items: flex-end; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+                  <div class="form-group" style="flex: 1; margin: 0;">
+                    <label>Proveedor de IA</label>
+                    <select [(ngModel)]="config.provider" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                      <option value="">Usar Global (Predeterminado)</option>
+                      <option value="gemini">Google Gemini</option>
+                      <option value="openai">OpenAI (ChatGPT)</option>
+                      <option value="deepseek">DeepSeek</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="flex: 2; margin: 0;">
+                    <label>API Key Propia</label>
+                    <input type="password" [(ngModel)]="config.key" placeholder="sk-key..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                  </div>
+                  <button class="btn-delete" style="padding: 12px 16px; margin: 0;" (click)="removeAiConfig($index)">
+                    <span style="font-size: 16px;">&times;</span>
+                  </button>
+                </div>
+              }
+              <button class="btn-ghost" style="align-self: flex-start;" (click)="addAiConfig()">
+                + Añadir API Key Propia de Respaldo
+              </button>
             </div>
-            <div class="form-group">
-              <label>API Key</label>
-              <input type="password" [(ngModel)]="aiApiKey" placeholder="AI API Key..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-            </div>
-            -->
-            
             <h4 style="color:var(--gold); font-size:12px; margin-top:16px; margin-bottom:8px;">🎨 Diseño del Chatbot</h4>
             <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
               <div class="form-group" style="flex:1; min-width: 250px;">
@@ -435,5 +446,81 @@
         </div>
       </div>
     }
+
+    <!-- ── AUTOMATIZACIONES ── -->
+    @if (tab() === 'automatizaciones') {
+      <div class="dash-card">
+        <h2 class="card-title">🤖 Automatizaciones de Embudo</h2>
+        <p class="card-desc">Haz que el CRM trabaje por ti. Configura reglas para enviar correos automáticos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
+        
+        <div class="stages-list" style="margin-top: 20px;">
+          @for (auto of automations(); track auto.id) {
+            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border-left: 3px solid var(--gold);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="color:var(--mx-white); margin:0;">{{ auto.name }}</h4>
+                <button class="btn-delete small" (click)="deleteAutomation(auto.id)">Eliminar</button>
+              </div>
+              <p style="font-size:12px; color:var(--muted); margin:0;">
+                <strong style="color:var(--gold);">Trigger:</strong> 
+                {{ auto.trigger_event === 'stage_change' ? 'Al entrar a la etapa' : ('Tras ' + auto.trigger_delay_days + ' días en la etapa') }} 
+                <span style="color:#a78bfa;">"{{ auto.trigger_stage }}"</span>
+              </p>
+              <p style="font-size:12px; color:var(--muted); margin:0;">
+                <strong style="color:var(--gold);">Acción:</strong> Enviar Correo Automático
+              </p>
+            </div>
+          } @empty {
+            <p class="empty" style="margin-bottom: 20px;">No tienes automatizaciones activas. ¡Crea la primera para vender en automático!</p>
+          }
+        </div>
+        
+        <hr class="divider">
+        <h4 class="section-sub">Nueva Automatización</h4>
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label>Nombre de la regla</label>
+            <input [(ngModel)]="newAutomation.name" placeholder="Ej: Pedir Reseña Google">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>Tipo de Evento</label>
+            <select [(ngModel)]="newAutomation.trigger_event">
+              <option value="stage_change">Al mover trámite a esta etapa</option>
+              <option value="time_in_stage">Inactividad de días en esta etapa</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group" style="flex:1;">
+            <label>Etapa Objetivo</label>
+            <select [(ngModel)]="newAutomation.trigger_stage">
+              <option value="">-- Selecciona una etapa --</option>
+              @for (stage of crmStages; track stage.id) {
+                <option [value]="stage.id">{{ stage.label }}</option>
+              }
+            </select>
+          </div>
+          @if (newAutomation.trigger_event === 'time_in_stage') {
+            <div class="form-group" style="flex:1;">
+              <label>Días a esperar</label>
+              <input type="number" [(ngModel)]="newAutomation.trigger_delay_days" placeholder="3">
+            </div>
+          }
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+          <label>Contenido del Correo</label>
+          <p class="card-desc" style="font-size:11px; margin-bottom:8px;">Puedes usar variables: <code style="color:var(--gold);">{{ '{' }}{{ '{' }}nombre{{ '}' }}{{ '}' }}</code>, <code style="color:var(--gold);">{{ '{' }}{{ '{' }}tramite{{ '}' }}{{ '}' }}</code></p>
+          <textarea [(ngModel)]="newAutomation.action_content" rows="4" placeholder="Hola {{ '{' }}{{ '{' }}nombre{{ '}' }}{{ '}' }}, tu trámite está listo..."></textarea>
+        </div>
+        
+        <div style="margin-top:15px;">
+          <button class="btn-copy" (click)="addAutomation()">+ Crear Automatización</button>
+        </div>
+      </div>
+    }
   </main>
 </div>
+
+<!-- VEGA AI Assistant — Asistente Animado del Panel Gestor -->
+<app-ai-assistant panelRole="gestor" />

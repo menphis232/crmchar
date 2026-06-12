@@ -1,6 +1,6 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, effect } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
@@ -18,15 +18,16 @@ import { FinancesComponent } from './finances.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
 import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm';
+type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm' | 'automatizaciones';
 
 @Component({
   selector: 'app-panel-gestor',
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, ColorPickerComponent
+    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, ColorPickerComponent, AiAssistantComponent
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrl: './panel-dashboard.css',
@@ -46,10 +47,10 @@ export class PanelGestorComponent implements OnInit {
   editBio = signal(false);
   bio = '';
   googleAnalyticsId = '';
-  stripeSecretKey = '';
   stripePublicKey = '';
-  aiProvider = '';
-  aiApiKey = '';
+  stripeSecretKey = '';
+
+  aiConfigs: { provider: string, key: string }[] = [{ provider: '', key: '' }];
   chatbotBgColor = '#000000';
   chatbotBtnColor = '#4F46E5';
   chatbotTextColor = '#FFFFFF';
@@ -61,6 +62,8 @@ export class PanelGestorComponent implements OnInit {
   message = signal('');
   newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
   newTemplate = { name: '', content: '' };
+  automations = signal<any[]>([]);
+  newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
   isMobileMenuOpen = signal(false);
 
   // CRM Stages Settings
@@ -76,15 +79,28 @@ export class PanelGestorComponent implements OnInit {
     private uploadService: UploadService,
     private http: HttpClient,
     private toast: ToastService,
-  ) {}
+    private route: ActivatedRoute
+  ) {
+    effect(() => {
+      const settings = this.panelTheme();
+      if (settings && Object.keys(settings).length > 0) {
+        this.themeService.applyPanel(settings);
+      }
+    });
+  }
 
   ngOnInit() {
     this.siteService.get('panel-gestor').subscribe(t => {
       this.panelTheme.set(t);
-      this.themeService.applyPanel(t);
     });
     this.loadProfile();
     this.loadCrm();
+
+    this.route.queryParams.subscribe(params => {
+      if (params['deal']) {
+        this.openDeal(params['deal']);
+      }
+    });
 
     const user = this.auth.user();
     if (user?.parent_id && user?.permissions && user.permissions.length > 0) {
@@ -109,6 +125,7 @@ export class PanelGestorComponent implements OnInit {
     this.tab.set(t);
     if (t === 'dashboard' || t === 'pipeline') this.loadCrm();
     if (t === 'plantillas') this.loadTemplates();
+    if (t === 'automatizaciones') this.loadAutomations();
   }
 
   loadProfile() {
@@ -124,8 +141,25 @@ export class PanelGestorComponent implements OnInit {
       this.googleAnalyticsId = res.user.google_analytics_id || '';
       this.stripeSecretKey = res.user.stripe_secret_key || '';
       this.stripePublicKey = res.user.stripe_public_key || '';
-      this.aiProvider = res.user.ai_provider || '';
-      this.aiApiKey = res.user.ai_api_key || '';
+      
+      const rawApiKey = res.user.ai_api_key || '';
+      try {
+        if (rawApiKey.trim().startsWith('[')) {
+          this.aiConfigs = JSON.parse(rawApiKey);
+        } else {
+          const keys = rawApiKey.split(',').map(k => k.trim()).filter(Boolean);
+          if (keys.length > 0) {
+            this.aiConfigs = keys.map(k => ({ provider: res.user.ai_provider || '', key: k }));
+          } else {
+            this.aiConfigs = [{ provider: res.user.ai_provider || '', key: '' }];
+          }
+        }
+      } catch (e) {
+        this.aiConfigs = [{ provider: res.user.ai_provider || '', key: rawApiKey }];
+      }
+      if (this.aiConfigs.length === 0) {
+        this.aiConfigs = [{ provider: '', key: '' }];
+      }
       this.chatbotBgColor = res.user.chatbot_bg_color || '#000000';
       this.chatbotBtnColor = res.user.chatbot_btn_color || '#4F46E5';
       this.chatbotTextColor = res.user.chatbot_text_color || '#FFFFFF';
@@ -149,10 +183,26 @@ export class PanelGestorComponent implements OnInit {
   }
 
   loadAiInsights() {
+    const today = new Date().toDateString();
+    const cachedData = localStorage.getItem('crm_ai_insights');
+    const cachedDate = localStorage.getItem('crm_ai_insights_date');
+
+    if (cachedDate === today && cachedData) {
+      try {
+        this.aiInsights.set(JSON.parse(cachedData));
+        return;
+      } catch (e) {
+        // Fallback to fetch if parse fails
+      }
+    }
+
     this.isAiLoading.set(true);
     this.http.get<{insights: string[]}>(`${environment.apiUrl}/crm/ai/insights`).subscribe({
       next: (res) => {
-        this.aiInsights.set(res.insights || []);
+        const insights = res.insights || [];
+        this.aiInsights.set(insights);
+        localStorage.setItem('crm_ai_insights', JSON.stringify(insights));
+        localStorage.setItem('crm_ai_insights_date', today);
         this.isAiLoading.set(false);
       },
       error: () => {
@@ -180,10 +230,10 @@ export class PanelGestorComponent implements OnInit {
     }
     this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
     this.crmService.updateDeal(deal.id, { stage }).subscribe({
-      next: () => this.loadCrm(),
+      next: () => this.loadDeals(),
       error: () => {
         this.message.set('No se pudo mover la tarjeta');
-        this.loadCrm();
+        this.loadDeals();
       },
     });
   }
@@ -195,8 +245,7 @@ export class PanelGestorComponent implements OnInit {
   }
 
   onDealUpdated() {
-    this.loadCrm();
-    this.loadProfile();
+    this.loadDeals();
   }
 
   copyLink() {
@@ -227,6 +276,17 @@ export class PanelGestorComponent implements OnInit {
     });
   }
 
+  addAiConfig() {
+    this.aiConfigs.push({ provider: '', key: '' });
+  }
+
+  removeAiConfig(index: number) {
+    this.aiConfigs.splice(index, 1);
+    if (this.aiConfigs.length === 0) {
+      this.addAiConfig();
+    }
+  }
+
   saveBio() {
     this.gestoresService.updateProfile({
       bio: this.bio,
@@ -237,17 +297,20 @@ export class PanelGestorComponent implements OnInit {
       next: p => {
         this.profile.set({ ...this.profile()!, ...p });
 
-        this.auth.updateMe({
-          name: this.profile()?.name,
-          logo_url: this.profileLogoUrl,
-          google_analytics_id: this.googleAnalyticsId,
-          stripe_secret_key: this.stripeSecretKey,
-          stripe_public_key: this.stripePublicKey,
-          ai_provider: this.aiProvider,
-          ai_api_key: this.aiApiKey,
-          chatbot_bg_color: this.chatbotBgColor,
-          chatbot_btn_color: this.chatbotBtnColor,
-          chatbot_text_color: this.chatbotTextColor,
+          const validConfigs = this.aiConfigs.filter(c => c.key.trim() !== '');
+          const firstProvider = validConfigs.length > 0 ? validConfigs[0].provider : '';
+
+          this.auth.updateMe({
+            name: this.profile()?.name,
+            logo_url: this.profileLogoUrl,
+            google_analytics_id: this.googleAnalyticsId,
+            stripe_secret_key: this.stripeSecretKey,
+            stripe_public_key: this.stripePublicKey,
+            ai_provider: firstProvider,
+            ai_api_key: JSON.stringify(validConfigs),
+            chatbot_bg_color: this.chatbotBgColor,
+            chatbot_btn_color: this.chatbotBtnColor,
+            chatbot_text_color: this.chatbotTextColor,
         }).subscribe(() => {
           this.editBio.set(false);
           this.message.set('Perfil actualizado exitosamente');
@@ -342,5 +405,28 @@ export class PanelGestorComponent implements OnInit {
 
   initials(name?: string) {
     return (name || 'GL').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  // --- AUTOMATIONS ---
+  loadAutomations() {
+    this.http.get<any[]>(`${environment.apiUrl}/crm/automations`).subscribe(data => this.automations.set(data));
+  }
+
+  addAutomation() {
+    if (!this.newAutomation.name || !this.newAutomation.trigger_stage || !this.newAutomation.action_content) {
+      alert('Por favor completa todos los campos de la regla.');
+      return;
+    }
+    this.http.post(`${environment.apiUrl}/crm/automations`, this.newAutomation).subscribe(() => {
+      this.message.set('Automatización creada exitosamente');
+      this.newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
+      this.loadAutomations();
+      setTimeout(() => this.message.set(''), 3000);
+    });
+  }
+
+  deleteAutomation(id: string) {
+    if (!confirm('¿Eliminar esta automatización?')) return;
+    this.http.delete(`${environment.apiUrl}/crm/automations/${id}`).subscribe(() => this.loadAutomations());
   }
 }

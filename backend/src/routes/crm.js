@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
 } from '../crm/helpers.js';
@@ -173,46 +174,82 @@ Analiza las siguientes métricas de un usuario (${role}):
 
 Instrucciones: Devuelve EXACTAMENTE 3 puntos clave accionables (insights) para mejorar su rendimiento comercial o eficiencia operativa. Sé directo y útil. Devuelve los 3 puntos separados por un salto de línea y numerados (1. 2. 3.). Nada más.`;
 
-    let generatedText = '';
+    let aiConfigs = [];
+    try {
+      if (user.ai_api_key && user.ai_api_key.trim().startsWith('[')) {
+        aiConfigs = JSON.parse(user.ai_api_key);
+      } else {
+        const keys = (user.ai_api_key || '').split(',').map(k => k.trim()).filter(Boolean);
+        aiConfigs = keys.map(k => ({ provider: user.ai_provider, key: k }));
+      }
+    } catch (e) {
+      aiConfigs = [{ provider: user.ai_provider, key: user.ai_api_key }];
+    }
 
-    if (user.ai_provider === 'gemini') {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-pro'];
-      let lastError;
-      for (const modelName of modelsToTry) {
+    const validConfigs = aiConfigs.filter(c => c.provider && c.key);
+    if (!validConfigs.length) {
+      throw new Error('Configuración de IA incompleta');
+    }
+
+    let generatedText = '';
+    let lastGlobalError = null;
+
+    keyLoop: for (const cfg of validConfigs) {
+      const { provider, key } = cfg;
+
+      if (provider === 'gemini') {
+        const { GoogleGenerativeAI } = await import('@google/generative-ai');
+        const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
+        const genAI = new GoogleGenerativeAI(key);
+        
+        for (const modelName of modelsToTry) {
+          try {
+            const model = genAI.getGenerativeModel({ model: modelName });
+            const result = await model.generateContent(prompt);
+            const response = await result.response;
+            generatedText = response.text();
+            break keyLoop;
+          } catch (err) {
+            lastGlobalError = err;
+            if (err.message && err.message.includes('404')) continue;
+            break; // Intentar la siguiente config
+          }
+        }
+      } else if (provider === 'openai' || provider === 'deepseek') {
+        const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+        const modelName = provider === 'deepseek' ? 'deepseek-chat' : 'gpt-3.5-turbo';
+
         try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const result = await model.generateContent(prompt);
-          const response = await result.response;
-          generatedText = response.text();
-          break;
+          const resp = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${key}`
+            },
+            body: JSON.stringify({
+              model: modelName,
+              messages: [{ role: 'user', content: prompt }],
+              max_tokens: 300,
+              temperature: 0.7
+            })
+          });
+          if (!resp.ok) {
+            const errText = await resp.text();
+            lastGlobalError = new Error(errText);
+            continue; // Intentar la siguiente config
+          }
+          const data = await resp.json();
+          generatedText = data.choices[0].message.content;
+          break keyLoop;
         } catch (err) {
-          lastError = err;
-          continue;
+          lastGlobalError = err;
+          continue; // Intentar la siguiente config
         }
       }
-      if (!generatedText && lastError) throw lastError;
-    } else if (user.ai_provider === 'openai') {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.ai_api_key}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: 300,
-          temperature: 0.7
-        })
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      generatedText = data.choices[0].message.content;
-    } else {
-      return res.status(400).json({ error: 'Proveedor de IA no soportado' });
     }
+    
+    if (!generatedText && lastGlobalError) throw lastGlobalError;
+    if (!generatedText) throw new Error('No se pudo generar análisis con ningún proveedor.');
 
     const insights = generatedText.split('\n').map(l => l.trim()).filter(l => l.match(/^[1-3]\./)).map(l => l.replace(/^[1-3]\.\s*/, ''));
     res.json({ insights: insights.length > 0 ? insights : generatedText.split('\n').filter(l=>l.trim()!=='') });
@@ -416,7 +453,7 @@ Mensaje inicial del cliente: "${row.client_message || 'El cliente ha solicitado 
     if (user.ai_provider === 'gemini') {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
       const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-3.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-pro'];
+      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
       let lastError;
       for (const modelName of modelsToTry) {
         try {
@@ -527,8 +564,9 @@ router.patch('/deals/:id', async (req, res) => {
     if (stage && stage !== oldStage) {
       await run(
         `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'stage_change', ?)`,
-        [uuid(), req.params.id, uid, `Etapa: ${oldStage} → ${stage}`],
+        [uuid(), req.params.id, uid, `Etapa: ${oldStage} → ${stage}`]
       );
+      processStageChangeAutomations(req.params.id, stage);
 
       if (deal.ref_type === 'solicitud' && deal.ref_id) {
         const solStatus = mapDealStageToSolicitudStatus(stage);
@@ -1154,7 +1192,12 @@ router.post('/deals/:id/messages', async (req, res) => {
     const uid = req.orgId;
     const { message, fileUrl } = req.body;
     if (!message && !fileUrl) return res.status(400).json({ error: 'Mensaje vacío' });
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await get(`
+      SELECT d.id, d.title, c.user_id as client_user_id 
+      FROM crm_deals d 
+      LEFT JOIN contacts c ON c.id = d.contact_id 
+      WHERE d.id = ? AND d.user_id = ?
+    `, [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     const id = uuid();
     await run(`INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url) VALUES (?, ?, ?, ?, ?)`,
@@ -1163,6 +1206,23 @@ router.post('/deals/:id/messages', async (req, res) => {
       SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
       FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
     `, [id]);
+
+    // Send notification to client
+    if (deal.client_user_id) {
+      const notifId = uuid();
+      const title = 'Nuevo mensaje de tu Gestor/Concesionaria';
+      const body = message ? message.substring(0, 100) : 'Te han enviado un archivo.';
+      await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
+        [notifId, deal.client_user_id, title, body, deal.id]);
+      
+      const io = req.app.get('io');
+      if (io) {
+        io.to('user_' + deal.client_user_id).emit('notification', {
+          id: notifId, type: 'new_message', title, body, ref_id: deal.id, is_read: 0, created_at: new Date().toISOString()
+        });
+      }
+    }
+
     res.status(201).json(saved);
   } catch (err) {
     console.error(err);
@@ -1170,5 +1230,40 @@ router.post('/deals/:id/messages', async (req, res) => {
   }
 });
 
-export default router;
+// --- AUTOMATIONS ---
+router.get('/automations', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const rows = await query('SELECT * FROM crm_automations WHERE user_id = ? ORDER BY created_at DESC', [uid]);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al listar automatizaciones' });
+  }
+});
 
+router.post('/automations', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { name, trigger_event, trigger_stage, trigger_delay_days, action_type, action_content, is_active } = req.body;
+    const id = uuid();
+    await run(`INSERT INTO crm_automations (id, user_id, name, trigger_event, trigger_stage, trigger_delay_days, action_type, action_content, is_active) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, uid, name, trigger_event, trigger_stage, trigger_delay_days || 0, action_type, action_content, is_active === undefined ? true : is_active]);
+    res.status(201).json({ id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al crear automatización' });
+  }
+});
+
+router.delete('/automations/:id', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    await run('DELETE FROM crm_automations WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar automatización' });
+  }
+});
+
+export default router;

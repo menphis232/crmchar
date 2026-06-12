@@ -127,19 +127,30 @@
         <h2 class="card-title">🤖 Configuración de Inteligencia Artificial (Global)</h2>
         <p class="card-desc">Esta API Key será utilizada por todos los gestores y concesionarias para el autocompletado y chatbots si no configuran una propia.</p>
         
-        <div class="stripe-settings">
-          <div class="form-group">
-            <label>Proveedor de IA</label>
-            <select [(ngModel)]="aiProvider">
-              <option value="">Ninguno</option>
-              <option value="gemini">Google Gemini</option>
-              <option value="openai">OpenAI (ChatGPT)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>API Key Global</label>
-            <input type="password" [(ngModel)]="aiApiKey" placeholder="AI API Key...">
-          </div>
+        <div class="stripe-settings" style="display: flex; flex-direction: column; gap: 15px;">
+          @for (config of aiConfigs; track $index) {
+            <div style="display: flex; gap: 15px; align-items: flex-end; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
+              <div class="form-group" style="flex: 1; margin: 0;">
+                <label>Proveedor de IA</label>
+                <select [(ngModel)]="config.provider">
+                  <option value="">Ninguno</option>
+                  <option value="gemini">Google Gemini</option>
+                  <option value="openai">OpenAI (ChatGPT)</option>
+                  <option value="deepseek">DeepSeek</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex: 2; margin: 0;">
+                <label>API Key</label>
+                <input type="password" [(ngModel)]="config.key" placeholder="sk-key...">
+              </div>
+              <button class="btn-delete" style="padding: 12px 16px; margin: 0;" (click)="removeAiConfig($index)">
+                <span style="font-size: 16px;">&times;</span>
+              </button>
+            </div>
+          }
+          <button class="btn-ghost" style="align-self: flex-start;" (click)="addAiConfig()">
+            + Añadir API Key de Respaldo
+          </button>
         </div>
         @if (aiMsg()) { <p class="success-msg banner-msg" style="margin-top: 16px;">{{ aiMsg() }}</p> }
         <button class="btn-copy full" [disabled]="aiSaving()" style="margin-top: 20px; margin-bottom: 40px;" (click)="saveAiConfig()">
@@ -265,3 +276,5 @@
   </main>
 </div>
 
+<!-- VEGA AI Assistant — Asistente Animado del Panel Admin -->
+<app-ai-assistant panelRole="admin" />

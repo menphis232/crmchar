@@ -15,10 +15,12 @@ import financesRoutes from './routes/finances.js';
 import paymentsRoutes from './routes/payments.js';
 import clientRoutes from './routes/client.js';
 import webhooksRoutes from './routes/webhooks.js';
+import aiRoutes from './routes/ai.js';
 import { testConnection } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkStalledDeals } from './crm/automations.js';
+import { startAutomationsCron } from './cron/automations.js';
 
 dotenv.config();
 
@@ -26,12 +28,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
-// FASE 3.3 Automatizaciones: Ejecutar robot cada 1 hora (3600000 ms)
-// Para propósitos de test, configuraremos el tiempo en 1 hora, pero tú puedes llamarlo
-// manualmente para debug o cambiar el intervalo si se requiere.
-setInterval(() => {
-  checkStalledDeals();
-}, 3600000);
+// FASE 3.3 Automatizaciones: Ejecutar robot
+startAutomationsCron();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: '*' }));
@@ -55,6 +53,7 @@ app.use('/api/site', siteRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client', clientRoutes);
+app.use('/api/ai', aiRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);
@@ -65,11 +64,19 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: '*' }
 });
+app.set('io', io);
 
 // Socket.io connection handling
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
   
+  socket.on('identify', (userId) => {
+    if (userId) {
+      socket.join('user_' + userId);
+      console.log(`Socket ${socket.id} identified as user_${userId}`);
+    }
+  });
+
   socket.on('join_deal', (dealId) => {
     socket.join(dealId);
     console.log(`Socket ${socket.id} joined deal ${dealId}`);
