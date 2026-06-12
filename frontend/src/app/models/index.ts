@@ -367,6 +367,7 @@ export interface FinTransaction {
   amount: number;
   description: string;
   category: string;
+  payment_method?: string;
   date: string;
   created_at?: string;
 }
@@ -379,7 +380,19 @@ export interface FinDashboard {
   monthExpense: number;
   monthBalance: number;
   projectedIncome: number;
+  byMethod?: Record<string, number>;
 }
+
+export interface FinPaymentConfig {
+  methods: string[];
+}
+
+export const FIN_ALL_METHODS = [
+  { id: 'efectivo', label: 'Efectivo', icon: '💵', color: '#22c55e' },
+  { id: 'transferencia', label: 'Transferencia', icon: '🏦', color: '#3b82f6' },
+  { id: 'mercadopago', label: 'MercadoPago', icon: '💳', color: '#a855f7' },
+  { id: 'stripe', label: 'Stripe', icon: '⚡', color: '#6366f1' },
+] as const;
 
 export interface DealerProfile {
   id: string;

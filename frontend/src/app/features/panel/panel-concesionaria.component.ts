@@ -12,15 +12,15 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
-
+import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 
-type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm';
+type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
 
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrl: './panel-dashboard.css',
 })

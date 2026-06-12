@@ -266,9 +266,48 @@ export class FinancesService {
   private base = `${environment.apiUrl}/finances`;
   constructor(private http: HttpClient) {}
 
-  getDashboard() { return this.http.get<FinDashboard>(`${this.base}/dashboard`); }
-  getTransactions() { return this.http.get<FinTransaction[]>(this.base); }
-  createTransaction(data: Partial<FinTransaction>) { return this.http.post<{ id: string }>(this.base, data); }
+  getDashboard(from?: string, to?: string) {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    if (to) params = params.set('to', to);
+    return this.http.get<FinDashboard>(`${this.base}/dashboard`, { params });
+  }
+
+  getTransactions(from?: string, to?: string) {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    if (to) params = params.set('to', to);
+    return this.http.get<FinTransaction[]>(this.base, { params });
+  }
+
+  createTransaction(data: Partial<FinTransaction>) {
+    return this.http.post<{ id: string }>(this.base, data);
+  }
+
   deleteTransaction(id: string) { return this.http.delete(`${this.base}/${id}`); }
+
   getPendingDeals() { return this.http.get<any[]>(`${this.base}/deals/pending`); }
+
+  getPaymentMethods() { return this.http.get<{ methods: string[] }>(`${this.base}/payment-methods`); }
+
+  savePaymentMethods(methods: (string | { id: string; label: string; icon: string })[]) {
+    return this.http.put<{ success: boolean }>(`${this.base}/payment-methods`, { methods });
+  }
+
+  exportCsv(from?: string, to?: string): string {
+    const token = localStorage.getItem('tramites_token') || '';
+    let url = `${this.base}/export/csv?token=${token}`;
+    if (from) url += `&from=${from}`;
+    if (to) url += `&to=${to}`;
+    return url;
+  }
+
+  exportPdf(from?: string, to?: string): string {
+    const token = localStorage.getItem('tramites_token') || '';
+    let url = `${this.base}/export/pdf?token=${token}`;
+    if (from) url += `&from=${from}`;
+    if (to) url += `&to=${to}`;
+    return url;
+  }
 }
+

@@ -19,11 +19,14 @@ export function signToken(user) {
 
 export function authRequired(req, res, next) {
   const header = req.headers.authorization;
-  if (!header?.startsWith('Bearer ')) {
+  // Also support token via query string (for direct download links)
+  const queryToken = req.query.token;
+  const rawToken = header?.startsWith('Bearer ') ? header.slice(7) : queryToken;
+  if (!rawToken) {
     return res.status(401).json({ error: 'Token requerido' });
   }
   try {
-    req.user = jwt.verify(header.slice(7), JWT_SECRET);
+    req.user = jwt.verify(rawToken, JWT_SECRET);
     next();
   } catch {
     return res.status(401).json({ error: 'Token inválido o expirado' });

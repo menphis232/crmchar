@@ -514,6 +514,32 @@ async function migrate() {
       await conn18.end();
       console.log('Migración v21 (Dealer Profile & Google Maps) aplicada.');
     }
+
+    // v23: Finances v2 — payment_method + fin_payment_methods
+    const v23Path = path.join(__dirname, '..', 'sql', 'migration-v23-finances-v2.sql');
+    if (fs.existsSync(v23Path)) {
+      const v23 = fs.readFileSync(v23Path, 'utf8');
+      const conn19 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn19.query('USE tramites_vehiculares');
+      for (const stmt of v23.split(';').map(s => s.trim()).filter(Boolean)) {
+        if (stmt.includes('ADD COLUMN')) {
+          try { await conn19.query(stmt); } catch (e) {
+            if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+          }
+        } else {
+          try { await conn19.query(stmt); } catch (e) {
+            if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+          }
+        }
+      }
+      await conn19.end();
+      console.log('Migración v23 (Finanzas v2) aplicada.');
+    }
 }
 
 migrate().catch(err => {

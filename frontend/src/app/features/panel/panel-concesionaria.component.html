@@ -49,8 +49,7 @@
     <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
     <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">⚙️ Perfil</button>
     <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
-    <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer'); isMobileMenuOpen.set(false)">📄 PDF Cotización</button>
-    <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">🌐 Constructor Web</button>
+    <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">💰 Finanzas</button>
     <a routerLink="/autos" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Ver catálogo</a>
   </aside>
 
@@ -412,6 +411,10 @@
           </button>
         </div>
       </div>
+    }
+    <!-- ── FINANZAS ── -->
+    @if (tab() === 'finanzas') {
+      <app-finances />
     }
   </main>
 </div>
