@@ -540,6 +540,32 @@ async function migrate() {
       await conn19.end();
       console.log('Migración v23 (Finanzas v2) aplicada.');
     }
+
+    // v24: gestor_services required_documents
+    const v24Path = path.join(__dirname, '..', 'sql', 'migration-v24-required-documents.sql');
+    if (fs.existsSync(v24Path)) {
+      const v24 = fs.readFileSync(v24Path, 'utf8');
+      const conn20 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn20.query('USE tramites_vehiculares');
+      for (const stmt of v24.split(';').map(s => s.trim()).filter(Boolean)) {
+        if (stmt.includes('ADD COLUMN')) {
+          try { await conn20.query(stmt); } catch (e) {
+            if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+          }
+        } else {
+          try { await conn20.query(stmt); } catch (e) {
+            if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+          }
+        }
+      }
+      await conn20.end();
+      console.log('Migración v24 (gestor_services required_documents) aplicada.');
+    }
 }
 
 migrate().catch(err => {
