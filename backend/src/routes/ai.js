@@ -151,7 +151,7 @@ ${dealsStr}
     let lastGlobalError = null;
     
     const geminiHistory = history.map(h => ({
-      role: h.role === 'assistant' ? 'model' : 'user',
+      role: (h.role === 'assistant' || h.role === 'model') ? 'model' : 'user',
       parts: [{ text: h.content }]
     }));
     while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
@@ -160,7 +160,7 @@ ${dealsStr}
     
     const openAiMessages = [
       { role: 'system', content: systemPrompt },
-      ...history.map(h => ({ role: h.role, content: h.content })),
+      ...history.map(h => ({ role: (h.role === 'assistant' || h.role === 'model') ? 'assistant' : 'user', content: h.content })),
       { role: 'user', content: message }
     ];
 
