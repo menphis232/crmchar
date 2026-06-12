@@ -157,6 +157,8 @@ export class ConcesionariaService {
   sendInquiry(data: { autoId: string; clientName: string; clientEmail?: string; clientPhone?: string; message: string }) {
     return this.http.post(`${this.base}/inquiries`, data);
   }
+
+
   sendReview(data: { userId: string; author: string; rating: number; comment: string }) {
     return this.http.post(`${this.base}/reviews`, data);
   }

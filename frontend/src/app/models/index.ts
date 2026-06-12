@@ -188,6 +188,7 @@ export interface GestorService {
   name: string;
   timeEstimate: string;
   price: number;
+  required_documents?: string[];
 }
 
 export interface GestorReview {

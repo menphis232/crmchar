@@ -210,7 +210,7 @@
               <h4>{{ s.name }}</h4>
               <p>⏱️ {{ s.timeEstimate }} — ${{ s.price | number }} MXN</p>
               @if (s.required_documents?.length) {
-                <p style="font-size:11px; color:var(--muted); margin-top:4px;">Requisitos: {{ s.required_documents.join(', ') }}</p>
+                <p style="font-size:11px; color:var(--muted); margin-top:4px;">Requisitos: {{ s.required_documents?.join(', ') }}</p>
               }
             </div>
             <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>

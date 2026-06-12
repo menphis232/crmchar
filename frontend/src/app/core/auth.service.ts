@@ -21,6 +21,10 @@ export class AuthService {
     );
   }
 
+  forgotPassword(email: string) {
+    return this.http.post<{ success: boolean }>(`${environment.apiUrl}/auth/forgot-password`, { email });
+  }
+
   register(data: { email: string; password: string; role: string; name: string }) {
     return this.http.post<{ token?: string; user?: User; requirePayment?: boolean; checkoutUrl?: string }>(`${environment.apiUrl}/auth/register`, data).pipe(
       tap(res => {

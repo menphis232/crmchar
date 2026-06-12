@@ -11,12 +11,13 @@ import { AuthService } from '../../core/auth.service';
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
-  mode = signal<'select' | 'login' | 'register'>('select');
+  mode = signal<'select' | 'login' | 'register' | 'forgot'>('select');
   role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente'>('cliente');
   email = '';
   password = '';
   name = '';
   error = signal('');
+  successMsg = signal('');
   loading = signal(false);
 
   constructor(private auth: AuthService) {}
@@ -43,6 +44,7 @@ export class LoginComponent {
   submitRegister() {
     this.loading.set(true);
     this.error.set('');
+    this.successMsg.set('');
     this.auth.register({ email: this.email, password: this.password, role: this.role(), name: this.name }).subscribe({
       next: (res) => {
         this.loading.set(false);
@@ -53,6 +55,27 @@ export class LoginComponent {
         }
       },
       error: (e) => { this.loading.set(false); this.error.set(e.error?.error || 'Error al registrarse'); },
+    });
+  }
+
+  submitForgot() {
+    if (!this.email) {
+      this.error.set('Por favor, ingresa tu correo electrónico.');
+      return;
+    }
+    this.loading.set(true);
+    this.error.set('');
+    this.successMsg.set('');
+    this.auth.forgotPassword(this.email).subscribe({
+      next: () => {
+        this.loading.set(false);
+        this.successMsg.set('Si el correo existe, hemos enviado una clave provisional. Por favor revisa tu bandeja de entrada.');
+        this.email = '';
+      },
+      error: () => {
+        this.loading.set(false);
+        this.error.set('Hubo un error al intentar restablecer la contraseña.');
+      }
     });
   }
 }

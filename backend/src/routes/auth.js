@@ -24,6 +24,35 @@ async function sendPaymentReminderEmail(toEmail, name, roleName, checkoutUrl) {
   await sendEmail(toEmail, subject, `Activa tu cuenta: ${checkoutUrl}`, html);
 }
 
+async function sendForgotPasswordEmail(toEmail, name, newPassword) {
+  const subject = `Tu nueva contraseña de Trámites Vehiculares`;
+  const html = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #1e2638; padding: 40px; border-radius: 12px; border: 1px solid #333;">
+      <div style="text-align: center; margin-bottom: 30px;">
+        <h1 style="color: #c8a94a; margin: 0; font-size: 24px; letter-spacing: 1px;">TRÁMITES<span style="color: #fff;">VEHICULARES</span>.mx</h1>
+      </div>
+      <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola, ${name}</h2>
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido una solicitud para restablecer tu contraseña. A continuación, te proporcionamos una contraseña provisional generada automáticamente de forma segura.</p>
+      
+      <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
+        <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tu contraseña provisional es:</p>
+        <span style="font-size: 28px; font-weight: bold; color: #c8a94a; letter-spacing: 4px;">${newPassword}</span>
+      </div>
+
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te recomendamos iniciar sesión lo antes posible. Una vez dentro de tu panel, puedes cambiar esta contraseña desde la sección de <strong>Ajustes</strong>.</p>
+
+      <div style="text-align: center; margin: 40px 0;">
+        <a href="http://localhost:4200/login" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
+      <p style="color: #718096; font-size: 12px; text-align: center; margin: 0;">Si no solicitaste este cambio, por favor contacta a nuestro equipo de soporte inmediatamente.</p>
+      <p style="color: #718096; font-size: 12px; text-align: center; margin: 10px 0 0 0;">&copy; ${new Date().getFullYear()} Trámites Vehiculares. Todos los derechos reservados.</p>
+    </div>
+  `;
+  await sendEmail(toEmail, subject, `Tu contraseña provisional es: ${newPassword}`, html);
+}
+
 const router = Router();
 
 router.post('/register', async (req, res) => {
@@ -124,6 +153,40 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al iniciar sesión' });
+  }
+});
+
+// ─── FORGOT PASSWORD ─────────────────────────────────────────
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email requerido' });
+
+    const user = await get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+    // For security, always return success even if user not found, 
+    // but in this case we return success to UI but log if not found.
+    if (!user) {
+      return res.json({ success: true });
+    }
+
+    // Generate random 8-char alphanumeric password
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let newPassword = '';
+    for (let i = 0; i < 8; i++) {
+      newPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // Hash and update
+    const hash = bcrypt.hashSync(newPassword, 10);
+    await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, user.id]);
+
+    // Send email
+    await sendForgotPasswordEmail(user.email, user.name, newPassword);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
 });
 

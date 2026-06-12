@@ -1,6 +1,6 @@
 import { Component, input, output, signal, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe } from '@angular/common';
 import { CrmService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate } from '../../models';
 import { io, Socket } from 'socket.io-client';
@@ -11,7 +11,7 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
 })
