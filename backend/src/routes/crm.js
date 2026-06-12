@@ -139,9 +139,12 @@ router.get('/dashboard', async (req, res) => {
 router.get('/ai/insights', async (req, res) => {
   try {
     const uid = req.orgId;
-    const user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
+    let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
     if (!user || !user.ai_provider || !user.ai_api_key) {
-      return res.status(400).json({ error: 'Debes configurar tu proveedor de IA y API Key en Perfil -> Ajustes' });
+      user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
+    }
+    if (!user || !user.ai_provider || !user.ai_api_key) {
+      return res.status(400).json({ error: 'El administrador debe configurar el proveedor de IA y API Key globalmente.' });
     }
 
     const role = req.user.role;
@@ -371,9 +374,12 @@ router.get('/deals/:id', async (req, res) => {
 router.post('/deals/:id/ai-reply', async (req, res) => {
   try {
     const uid = req.orgId;
-    const user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
+    let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
     if (!user || !user.ai_provider || !user.ai_api_key) {
-      return res.status(400).json({ error: 'Debes configurar tu proveedor de IA y API Key en Perfil -> Ajustes' });
+      user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
+    }
+    if (!user || !user.ai_provider || !user.ai_api_key) {
+      return res.status(400).json({ error: 'El administrador debe configurar el proveedor de IA y API Key globalmente.' });
     }
 
     const row = await get(`

@@ -254,11 +254,18 @@ router.post('/public/:slug/chat', async (req, res) => {
     const { message, history } = req.body;
     if (!message) return res.status(400).json({ error: 'Mensaje requerido' });
 
-    const user = await get(`
+    let user = await get(`
       SELECT id, name, description, ai_provider, ai_api_key
       FROM users WHERE slug = ? AND role = 'concesionaria'
     `, [req.params.slug]);
     if (!user) return res.status(404).json({ error: 'Concesionaria no encontrada' });
+    if (!user.ai_provider || !user.ai_api_key) {
+      const admin = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
+      if (admin && admin.ai_provider && admin.ai_api_key) {
+        user.ai_provider = admin.ai_provider;
+        user.ai_api_key = admin.ai_api_key;
+      }
+    }
     if (!user.ai_provider || !user.ai_api_key) {
       return res.status(400).json({ error: 'El asistente IA no está configurado en este momento.' });
     }

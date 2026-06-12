@@ -47,12 +47,19 @@ export class PanelAdminComponent implements OnInit {
   stripeMsg = signal('');
   stripeSaving = signal(false);
 
+  aiProvider = '';
+  aiApiKey = '';
+  aiMsg = signal('');
+  aiSaving = signal(false);
+
   constructor(public auth: AuthService, private adminService: AdminService) {
     const me = this.auth.user();
     if (me) {
       this.stripePublicKey = me.stripe_public_key || '';
       this.stripeSecretKey = me.stripe_secret_key || '';
       this.stripePriceId = me.stripe_price_id || '';
+      this.aiProvider = me.ai_provider || '';
+      this.aiApiKey = me.ai_api_key || '';
     }
   }
 
@@ -144,6 +151,24 @@ export class PanelAdminComponent implements OnInit {
       error: (e) => {
         this.stripeMsg.set(e.error?.error || 'Error al guardar configuración');
         this.stripeSaving.set(false);
+      }
+    });
+  }
+
+  saveAiConfig() {
+    this.aiSaving.set(true);
+    this.adminService.updateMyProfile({
+      ai_provider: this.aiProvider,
+      ai_api_key: this.aiApiKey
+    }).subscribe({
+      next: (res) => {
+        this.auth.user.set(res.user);
+        this.aiMsg.set('Configuración de IA guardada.');
+        this.aiSaving.set(false);
+      },
+      error: (e) => {
+        this.aiMsg.set(e.error?.error || 'Error al guardar configuración de IA');
+        this.aiSaving.set(false);
       }
     });
   }

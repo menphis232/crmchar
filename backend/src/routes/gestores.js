@@ -362,9 +362,12 @@ router.post('/:slugOrId/chat', async (req, res) => {
     const gestor = await get('SELECT user_id, name, bio FROM gestores WHERE slug = ? OR id = ?', [req.params.slugOrId, req.params.slugOrId]);
     if (!gestor) return res.status(404).json({ error: 'Gestor no encontrado' });
 
-    const user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [gestor.user_id]);
+    let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [gestor.user_id]);
     if (!user || !user.ai_provider || !user.ai_api_key) {
-      return res.status(400).json({ error: 'El gestor no tiene configurado el asistente IA en este momento.' });
+      user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
+    }
+    if (!user || !user.ai_provider || !user.ai_api_key) {
+      return res.status(400).json({ error: 'El administrador debe configurar el asistente IA.' });
     }
 
     const services = await query('SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?)', [gestor.user_id]);

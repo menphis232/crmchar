@@ -42,7 +42,7 @@
     <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme'); isMobileMenuOpen.set(false)">🎨 Página Gestores</button>
     <button class="dash-link" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor'); isMobileMenuOpen.set(false)">🛠 Panel Gestor</button>
     <button class="dash-link" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria'); isMobileMenuOpen.set(false)">🛠 Panel Concesionaria</button>
-    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">💳 Suscripción / Stripe</button>
+    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">⚙️ Configuración Global</button>
   </aside>
 
   <main class="dash-main">
@@ -124,6 +124,30 @@
 
     @if (tab() === 'stripe') {
       <div class="dash-card">
+        <h2 class="card-title">🤖 Configuración de Inteligencia Artificial (Global)</h2>
+        <p class="card-desc">Esta API Key será utilizada por todos los gestores y concesionarias para el autocompletado y chatbots si no configuran una propia.</p>
+        
+        <div class="stripe-settings">
+          <div class="form-group">
+            <label>Proveedor de IA</label>
+            <select [(ngModel)]="aiProvider">
+              <option value="">Ninguno</option>
+              <option value="gemini">Google Gemini</option>
+              <option value="openai">OpenAI (ChatGPT)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>API Key Global</label>
+            <input type="password" [(ngModel)]="aiApiKey" placeholder="AI API Key...">
+          </div>
+        </div>
+        @if (aiMsg()) { <p class="success-msg banner-msg" style="margin-top: 16px;">{{ aiMsg() }}</p> }
+        <button class="btn-copy full" [disabled]="aiSaving()" style="margin-top: 20px; margin-bottom: 40px;" (click)="saveAiConfig()">
+          {{ aiSaving() ? 'Guardando...' : '💾 GUARDAR API KEY DE IA' }}
+        </button>
+
+        <hr class="divider">
+
         <h2 class="card-title">💳 Configuración de Pagos y Suscripción</h2>
         <p class="card-desc">Define las claves de Stripe y el precio de suscripción mensual. Al activar esto, los gestores y concesionarias deberán pagar antes de activar su cuenta.</p>
 
