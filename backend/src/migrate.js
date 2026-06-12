@@ -370,7 +370,7 @@ async function migrate() {
         multipleStatements: true,
       });
       for (const stmt of v15.split(';').map(s => s.trim()).filter(Boolean)) {
-        if (stmt.includes('ADD COLUMN IF NOT EXISTS')) {
+        if (stmt.includes('ADD COLUMN IF NOT EXISTS') || stmt.includes('ADD COLUMN')) {
           try { await conn13.query(stmt); } catch (e) {
             if (e.code !== 'ER_DUP_FIELDNAME') throw e;
           }
@@ -396,7 +396,7 @@ async function migrate() {
       });
       await conn14.query('USE tramites_vehiculares');
       for (const stmt of v16.split(';').map(s => s.trim()).filter(Boolean)) {
-        if (stmt.includes('ADD COLUMN IF NOT EXISTS')) {
+        if (stmt.includes('ADD COLUMN IF NOT EXISTS') || stmt.includes('ADD COLUMN')) {
           try { await conn14.query(stmt); } catch (e) {
             if (e.code !== 'ER_DUP_FIELDNAME') throw e;
           }
