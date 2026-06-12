@@ -5,7 +5,7 @@ import { authRequired, requireRole } from '../middleware/auth.js';
 import { createDealFromSolicitud } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
-
+import { callAIProvider } from '../utils/ai_helper.js';
 const router = Router();
 
 function gestorRow(row) {
@@ -423,61 +423,10 @@ Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de 
 Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exactamente con uno de la lista de servicios.`;
 
     let generatedText = '';
-
-    if (user.ai_provider === 'gemini') {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
-      
-      let lastError;
-      for (const modelName of modelsToTry) {
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const chat = model.startChat({
-            history: history ? history.map((h) => ({
-              role: h.role === 'user' ? 'user' : 'model',
-              parts: [{ text: h.content }]
-            })) : []
-          });
-          const result = await chat.sendMessage(prompt + "\n\nPregunta del usuario: " + message);
-          const response = await result.response;
-          generatedText = response.text();
-          break; // success
-        } catch (err) {
-          lastError = err;
-          continue; // Always try the next model on any error (404, 503, 403, etc)
-        }
-      }
-      if (!generatedText && lastError) {
-        throw lastError;
-      }
-    } else if (user.ai_provider === 'openai') {
-      let msgs = [
-        { role: 'system', content: prompt }
-      ];
-      if (history) {
-        msgs = msgs.concat(history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })));
-      }
-      msgs.push({ role: 'user', content: message });
-
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.ai_api_key}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: msgs,
-          max_tokens: 250,
-          temperature: 0.7
-        })
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      generatedText = data.choices[0].message.content;
-    } else {
-      return res.status(400).json({ error: 'Proveedor de IA no soportado' });
+    try {
+      generatedText = await callAIProvider(user, prompt, history, message);
+    } catch (e) {
+      throw e;
     }
 
     // Extract JSON block if AI decided to create a lead

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
+import { callAIProvider } from '../utils/ai_helper.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
@@ -449,47 +450,10 @@ Mensaje inicial del cliente: "${row.client_message || 'El cliente ha solicitado 
     prompt += `\nInstrucción: Redacta una respuesta amable, profesional y concisa (máximo 3 párrafos cortos) al cliente. Solo devuelve la respuesta.`;
 
     let generatedText = '';
-
-    if (user.ai_provider === 'gemini') {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
-      let lastError;
-      for (const modelName of modelsToTry) {
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const result = await model.generateContent(prompt);
-          const response = await result.response;
-          generatedText = response.text();
-          break;
-        } catch (err) {
-          lastError = err;
-          continue;
-        }
-      }
-      if (!generatedText && lastError) throw lastError;
-    } else if (user.ai_provider === 'openai') {
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.ai_api_key}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { role: 'system', content: 'Eres un asistente útil que responde a clientes.' },
-            { role: 'user', content: prompt }
-          ],
-          max_tokens: 300,
-          temperature: 0.7
-        })
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      generatedText = data.choices[0].message.content;
-    } else {
-      return res.status(400).json({ error: 'Proveedor de IA no soportado' });
+    try {
+      generatedText = await callAIProvider(user, 'Eres un asistente útil que responde a clientes.', [], prompt);
+    } catch (e) {
+      throw e;
     }
 
     res.json({ reply: generatedText });

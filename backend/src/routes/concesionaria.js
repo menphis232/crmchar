@@ -5,7 +5,7 @@ import { authRequired, requireRole } from '../middleware/auth.js';
 import { createDealFromInquiry } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
-
+import { callAIProvider } from '../utils/ai_helper.js';
 const router = Router();
 
 router.get('/me/dashboard', authRequired, requireRole('concesionaria'), async (req, res) => {
@@ -312,38 +312,10 @@ ${inventoryText || 'No hay vehículos disponibles en este momento.'}
 Instrucciones: Eres un asesor de ventas amable y profesional. Responde preguntas sobre el inventario, precios, financiamiento y disponibilidad. Si el cliente quiere agendar una cita o solicitar información, pide su nombre, teléfono y correo. No inventes autos ni precios que no estén en la lista.`;
 
     let generatedText = '';
-
-    if (user.ai_provider === 'gemini') {
-      const { GoogleGenerativeAI } = await import('@google/generative-ai');
-      const genAI = new GoogleGenerativeAI(user.ai_api_key);
-      const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
-      let lastError;
-      for (const modelName of modelsToTry) {
-        try {
-          const model = genAI.getGenerativeModel({ model: modelName });
-          const chat = model.startChat({
-            history: history ? history.map(h => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.content }] })) : []
-          });
-          const result = await chat.sendMessage(prompt + '\n\nPregunta del cliente: ' + message);
-          generatedText = (await result.response).text();
-          break;
-        } catch (err) { lastError = err; continue; }
-      }
-      if (!generatedText && lastError) throw lastError;
-    } else if (user.ai_provider === 'openai') {
-      let msgs = [{ role: 'system', content: prompt }];
-      if (history) msgs = msgs.concat(history.map(h => ({ role: h.role === 'user' ? 'user' : 'assistant', content: h.content })));
-      msgs.push({ role: 'user', content: message });
-      const resp = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${user.ai_api_key}` },
-        body: JSON.stringify({ model: 'gpt-3.5-turbo', messages: msgs, max_tokens: 300, temperature: 0.7 })
-      });
-      const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
-      generatedText = data.choices[0].message.content;
-    } else {
-      return res.status(400).json({ error: 'Proveedor de IA no soportado' });
+    try {
+      generatedText = await callAIProvider(user, prompt, history, message);
+    } catch (e) {
+      throw e;
     }
 
     res.json({ reply: generatedText });
