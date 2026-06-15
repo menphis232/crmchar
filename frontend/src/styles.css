@@ -1,44 +1,58 @@
 @import url('./style-shared.css');
 @import 'sweetalert2/dist/sweetalert2.min.css';
 
+/* ── Global Headings ── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--f-display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5em;
+}
+
 /* ── SweetAlert2 Dark Theme Overrides ── */
 .swal2-popup {
-  background: #1e1e2a !important;
-  color: #e2e2e2 !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 16px !important;
-  font-family: 'Inter', 'Outfit', sans-serif !important;
+  background: #111111 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  border-radius: 8px !important;
+  font-family: var(--f-ui) !important;
 }
 
 .swal2-title {
   color: #ffffff !important;
-  font-size: 1.1rem !important;
+  font-size: 1.2rem !important;
+  font-family: var(--f-display) !important;
+  font-weight: 800 !important;
+  text-transform: uppercase !important;
 }
 
 .swal2-html-container, .swal2-content {
   color: #b0b0c0 !important;
-  font-size: 0.9rem !important;
+  font-size: 0.95rem !important;
 }
 
 .swal2-confirm {
-  background: #c8a94a !important;
+  background: var(--gold) !important;
   color: #000 !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
+  font-weight: 800 !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
 }
 
 .swal2-cancel {
-  background: #333 !important;
-  color: #e2e2e2 !important;
-  border-radius: 8px !important;
+  background: #222 !important;
+  color: #fff !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
 }
 
 /* Toast styles */
 .swal2-toast.swal-dark-toast {
-  background: rgba(20, 20, 35, 0.97) !important;
+  background: #111111 !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
   backdrop-filter: blur(12px) !important;
 }
 
@@ -54,7 +68,7 @@
 }
 
 .swal2-toast .swal2-timer-progress-bar {
-  background: #c8a94a !important;
+  background: var(--gold) !important;
 }
 
 .swal2-toast .swal2-icon {

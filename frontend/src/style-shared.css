@@ -1,13 +1,15 @@
 :root {
-  --bg: #060b14;
-  --surface: rgba(255,255,255,0.04);
-  --border: rgba(255,255,255,0.08);
+  --bg: #000000;
+  --surface: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.12);
   --mx-green: #006847;
   --mx-red: #CE1126;
   --mx-white: #ffffff;
-  --gold: #c8a94a;
+  --gold: #F5D100;
+  --neon-pink: #FF1493;
+  --neon-green: #39FF14;
   --text: #ffffff;
-  --muted: #e5e7eb;
+  --muted: #a0aab5;
   --f-display: 'Montserrat', sans-serif;
   --f-ui: 'Inter', sans-serif;
   --f-body: 'Inter', sans-serif;
@@ -41,22 +43,23 @@ img { max-width: 100%; display: block; }
 .nav-actions { display: flex; gap: 16px; align-items: center; margin-left: auto; }
 
 .btn-primary {
-  font-family: var(--f-ui); font-size: 13px; font-weight: 600; letter-spacing: 0.05em;
-  color: var(--bg); background: var(--gold); padding: 10px 24px; border-radius: 6px;
-  border: 1px solid transparent; transition: all 0.2s; white-space: nowrap;
+  font-family: var(--f-display); font-size: 14px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #000000; background: var(--gold); padding: 12px 28px; border-radius: 4px;
+  border: 2px solid transparent; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(245, 209, 0, 0.2);
 }
-.btn-primary:hover { background: #dcc06d; transform: translateY(-1px); }
+.btn-primary:hover { background: #FFEA00; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 209, 0, 0.4); }
 
 .btn-text {
-  font-family: var(--f-ui); font-size: 13px; font-weight: 500; letter-spacing: 0.05em;
-  color: var(--muted); background: transparent; padding: 10px 16px; border-radius: 6px;
-  border: 1px solid transparent; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  font-family: var(--f-display); font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--mx-white); background: transparent; padding: 12px 20px; border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.2); cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.btn-text:hover { color: var(--mx-white); background: rgba(255,255,255,0.05); }
+.btn-text:hover { color: #000000; background: var(--mx-white); border-color: var(--mx-white); }
 
 .btn-icon {
   background: transparent; color: var(--muted); border: 1px solid transparent;
-  padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.2s; position: relative;
+  padding: 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s; position: relative;
 }
 .btn-icon:hover { color: var(--gold); background: rgba(255,255,255,0.05); }
 

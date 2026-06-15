@@ -2,29 +2,29 @@
    DESIGN TOKENS
 ══════════════════════════════════════════════ */
 :root {
-  --gold: #c8a94a;
-  --gold-dim: rgba(200,169,74,0.15);
-  --gold-glow: rgba(200,169,74,0.08);
-  --bg: #060b14;
-  --surface: rgba(255,255,255,0.04);
-  --surface-2: rgba(255,255,255,0.07);
-  --border: rgba(255,255,255,0.08);
-  --border-hover: rgba(200,169,74,0.4);
-  --mx-green: #00a86b;
-  --mx-green-dim: rgba(0,168,107,0.15);
-  --mx-red: #CE1126;
-  --mx-red-dim: rgba(206,17,38,0.15);
+  --gold: #F5D100;
+  --gold-dim: rgba(245, 209, 0, 0.15);
+  --gold-glow: rgba(245, 209, 0, 0.08);
+  --bg: #000000;
+  --surface: rgba(255,255,255,0.06);
+  --surface-2: rgba(255,255,255,0.10);
+  --border: rgba(255,255,255,0.15);
+  --border-hover: rgba(245, 209, 0, 0.5);
+  --mx-green: #39FF14;
+  --mx-green-dim: rgba(57, 255, 20, 0.15);
+  --mx-red: #FF1493;
+  --mx-red-dim: rgba(255, 20, 147, 0.15);
   --mx-white: #ffffff;
-  --muted: #8b93a5;
-  --text: #e2e8f0;
+  --muted: #a0aab5;
+  --text: #ffffff;
   --f-display: 'Montserrat', sans-serif;
   --f-ui: 'Inter', sans-serif;
-  --card-radius: 16px;
+  --card-radius: 8px;
   --sidebar-w: 240px;
   --nav-h: 64px;
-  --transition: 0.2s ease;
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
-  --shadow-modal: 0 24px 80px rgba(0,0,0,0.7);
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.6);
+  --shadow-modal: 0 24px 80px rgba(0,0,0,0.8);
 }
 
 /* ══════════════════════════════════════════════
@@ -36,8 +36,8 @@ body {
   min-height: 100vh;
   background: var(--bg);
   background-image:
-    radial-gradient(ellipse 80% 50% at 10% 10%, rgba(200,169,74,0.06) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 90% 90%, rgba(0,168,107,0.04) 0%, transparent 55%);
+    radial-gradient(ellipse 80% 50% at 10% 10%, rgba(245, 209, 0, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 90%, rgba(57, 255, 20, 0.03) 0%, transparent 55%);
 }
 
 /* ══════════════════════════════════════════════
@@ -670,10 +670,10 @@ select option { background: #0f1624; color: var(--mx-white); }
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-family: var(--f-ui);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--muted);
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--text);
   margin-bottom: 14px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -683,12 +683,12 @@ select option { background: #0f1624; color: var(--mx-white); }
 .kanban-col-header span:first-child { color: var(--text); }
 
 .kanban-count {
-  background: var(--gold-dim);
-  color: var(--gold);
+  background: var(--gold);
+  color: #000;
   padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 700;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 800;
   min-width: 24px;
   text-align: center;
 }
@@ -703,7 +703,7 @@ select option { background: #0f1624; color: var(--mx-white); }
 .kanban-card {
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--card-radius);
   padding: 12px;
   text-align: left;
   cursor: grab;
@@ -718,20 +718,20 @@ select option { background: #0f1624; color: var(--mx-white); }
   content: '';
   position: absolute;
   left: 0; top: 0; bottom: 0;
-  width: 3px;
+  width: 4px;
   background: var(--border);
   transition: var(--transition);
 }
 .kanban-card:hover {
-  border-color: rgba(200,169,74,0.3);
-  background: rgba(200,169,74,0.04);
+  border-color: rgba(245, 209, 0, 0.4);
+  background: rgba(245, 209, 0, 0.04);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
 }
 .kanban-card:hover::before { background: var(--gold); }
 .kanban-card:active { cursor: grabbing; transform: scale(0.98); }
-.kanban-card.stalled { border-color: rgba(206,17,38,0.4); }
-.kanban-card.stalled::before { background: var(--mx-red); }
+.kanban-card.stalled { border-color: rgba(255, 20, 147, 0.4); }
+.kanban-card.stalled::before { background: var(--mx-red); box-shadow: 0 0 10px var(--mx-red); }
 
 .kanban-card-top {
   display: flex;
@@ -749,10 +749,10 @@ select option { background: #0f1624; color: var(--mx-white); }
 }
 
 .kanban-next {
-  background: var(--gold-dim);
-  border: 1px solid rgba(200,169,74,0.3);
+  background: var(--surface);
+  border: 1px solid var(--border);
   color: var(--gold);
-  border-radius: 6px;
+  border-radius: 4px;
   width: 26px;
   height: 26px;
   cursor: pointer;
@@ -764,11 +764,11 @@ select option { background: #0f1624; color: var(--mx-white); }
   justify-content: center;
   transition: var(--transition);
 }
-.kanban-next:hover { background: var(--gold); color: var(--bg); }
+.kanban-next:hover { background: var(--gold); color: #000; }
 
 .kanban-contact { font-size: 12px; color: var(--gold); display: block; margin-bottom: 2px; font-weight: 500; }
 .kanban-meta, .kanban-days { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
-.kanban-value { font-size: 11px; color: var(--mx-green); display: block; margin-top: 4px; font-weight: 600; }
+.kanban-value { font-size: 11px; color: var(--neon-green); display: block; margin-top: 4px; font-weight: 600; text-shadow: 0 0 8px rgba(57, 255, 20, 0.3); }
 
 .kanban-stage-select {
   width: 100%;
@@ -777,7 +777,7 @@ select option { background: #0f1624; color: var(--mx-white); }
   border: 1px solid var(--border);
   color: var(--muted);
   padding: 5px 8px;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 11px;
   cursor: pointer;
   font-family: var(--f-ui);
@@ -786,7 +786,7 @@ select option { background: #0f1624; color: var(--mx-white); }
 
 .kanban-empty {
   border: 1px dashed rgba(255,255,255,0.1);
-  border-radius: 10px;
+  border-radius: var(--card-radius);
   padding: 24px 10px;
   text-align: center;
   font-size: 12px;
@@ -809,9 +809,9 @@ select option { background: #0f1624; color: var(--mx-white); }
 .deal-panel-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.65);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 500;
   display: flex;
   align-items: center;
@@ -832,7 +832,7 @@ select option { background: #0f1624; color: var(--mx-white); }
   width: 480px;
   max-width: 95vw;
   height: 100vh;
-  background: linear-gradient(180deg, rgba(12,20,35,0.98) 0%, rgba(8,14,26,0.99) 100%);
+  background: linear-gradient(180deg, #111111 0%, #0a0a0a 100%);
   border-left: 1px solid var(--border);
   box-shadow: var(--shadow-modal);
   overflow-y: auto;
@@ -841,10 +841,10 @@ select option { background: #0f1624; color: var(--mx-white); }
   flex-direction: column;
   animation: slideInRight 0.25s cubic-bezier(0.32,0.72,0,1);
   scrollbar-width: thin;
-  scrollbar-color: rgba(200,169,74,0.2) transparent;
+  scrollbar-color: rgba(245, 209, 0, 0.2) transparent;
 }
 .deal-panel::-webkit-scrollbar { width: 5px; }
-.deal-panel::-webkit-scrollbar-thumb { background: rgba(200,169,74,0.2); border-radius: 3px; }
+.deal-panel::-webkit-scrollbar-thumb { background: rgba(245, 209, 0, 0.2); border-radius: 3px; }
 
 .deal-panel-header {
   display: flex;
