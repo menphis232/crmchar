@@ -566,6 +566,32 @@ async function migrate() {
       await conn20.end();
       console.log('Migración v24 (gestor_services required_documents) aplicada.');
     }
+
+    // v25: automations
+    const v25Path = path.join(__dirname, '..', 'sql', 'migration-v25-automations.sql');
+    if (fs.existsSync(v25Path)) {
+      const v25 = fs.readFileSync(v25Path, 'utf8');
+      const conn21 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn21.query('USE tramites_vehiculares');
+      for (const stmt of v25.split(';').map(s => s.trim()).filter(Boolean)) {
+        if (stmt.includes('ADD COLUMN')) {
+          try { await conn21.query(stmt); } catch (e) {
+            if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+          }
+        } else {
+          try { await conn21.query(stmt); } catch (e) {
+            if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+          }
+        }
+      }
+      await conn21.end();
+      console.log('Migración v25 (CRM automations) aplicada.');
+    }
 }
 
 migrate().catch(err => {
