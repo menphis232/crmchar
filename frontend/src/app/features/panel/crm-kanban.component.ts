@@ -27,7 +27,7 @@ export class CrmKanbanComponent {
   }
 
   onDragStart(event: DragEvent, deal: CrmDeal) {
-    this.didDrag = false;
+    this.didDrag = true;
     this.draggedDealId = deal.id;
     const dt = event.dataTransfer;
     if (!dt) return;
@@ -42,7 +42,7 @@ export class CrmKanbanComponent {
   onDragEnd() {
     this.draggedDealId = null;
     this.dragOverStage.set(null);
-    setTimeout(() => { this.didDrag = false; }, 100);
+    setTimeout(() => { this.didDrag = false; }, 200);
   }
 
   onDragOver(event: DragEvent, stage: string) {
