@@ -618,6 +618,9 @@ async function migrate() {
       await conn22.end();
       console.log('Migración v26 (deal_documents) aplicada.');
     }
+    
+    console.log('Todas las migraciones completadas.');
+    process.exit(0);
 }
 
 migrate().catch(err => {
