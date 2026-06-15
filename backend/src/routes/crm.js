@@ -474,7 +474,8 @@ router.patch('/deals/:id', async (req, res) => {
 
     const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
     const allowedStages = stagesForRole(role, userRow?.crm_stages);
-    if (stage && !allowedStages.includes(stage)) {
+    const isCustom = stage && stage.startsWith('etapa_');
+    if (stage && !allowedStages.includes(stage) && !isCustom && !['completado', 'perdido'].includes(stage)) {
       return res.status(400).json({ error: 'Etapa inválida' });
     }
     if (stage === 'perdido' && !lostReason && !deal.lost_reason) {
