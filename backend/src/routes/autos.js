@@ -188,7 +188,7 @@ router.post('/', authRequired, requireRole('concesionaria'), async (req, res) =>
 
     const id = uuid();
     const imgs = images?.length ? images : (imageUrl ? [imageUrl] : []);
-    const mainImage = imageUrl || imgs[0] || 'https://images.unsplash.com/photo-1503376713356-200d72f10255?q=80&w=600';
+    const mainImage = imageUrl || imgs[0] || 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop';
     const carStatus = ['draft', 'published', 'baja'].includes(status) ? status : 'published';
 
     await run(`
