@@ -94,7 +94,7 @@
         </div>
         <div class="stat-box">
           <div class="stat-num">{{ (crmDashboard()?.totals?.pipelineValue ?? 0) | number:'1.0-0' }}</div>
-          <div class="stat-label">Pipeline MXN</div>
+          <div class="stat-label">Embudo MXN</div>
         </div>
         <div class="stat-box">
           <div class="stat-num">{{ d.published }}</div>
@@ -132,7 +132,7 @@
     <!-- ── PIPELINE ── -->
     @if (tab() === 'pipeline' && crmDashboard(); as crm) {
       <div class="dash-card kanban-wrap">
-        <h2 class="card-title">🎯 Pipeline de ventas</h2>
+        <h2 class="card-title">🎯 Embudo de ventas</h2>
         <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
         <div class="pipeline-filters">
           <div class="pipeline-filter-field pipeline-filter-search">
