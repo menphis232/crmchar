@@ -260,24 +260,36 @@
                 [alt]="car.model"
                 class="car-img"
               />
-              <div class="car-img-overlay"></div>
-              <div class="car-year-badge">{{ car.year }}</div>
+              <span class="car-badge car-badge-left">Semi nuevo</span>
+              <span class="car-badge car-badge-right">{{ car.make }}</span>
+              @if (car.verified) {
+                <span class="car-badge car-badge-verified">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 4.8 5.4.8-3.9 3.8.9 5.3L12 14.8 7.2 16.7l.9-5.3L4.2 7.6l5.4-.8L12 2z"/></svg>
+                  Verificado
+                </span>
+              }
             </div>
             <div class="car-details">
               <div class="car-make">{{ car.make }}</div>
               <h3 class="car-model">{{ car.model }}</h3>
-              <div class="car-specs">
-                <span>🛣️ {{ car.mileage | number }} km</span>
-                @if (car.transmission) { <span>⚙️ {{ car.transmission }}</span> }
-                @if (car.location) { <span>📍 {{ car.location }}</span> }
+
+              <div class="car-price-block">
+                @if (hasSpecialPrice(car)) {
+                  <div class="car-price-label">Precio normal</div>
+                  <div class="car-price-old">{{ formatPrice(car.price) }}</div>
+                  <div class="car-price-label">Precio especial</div>
+                  <div class="car-price-current">{{ formatPrice(car.specialPrice!) }}</div>
+                } @else {
+                  <div class="car-price-label">Precio</div>
+                  <div class="car-price-current">{{ formatPrice(car.price) }}</div>
+                }
               </div>
-              <div class="car-price">{{ formatPrice(car.price) }}</div>
-              @if (car.dealerName) {
-                <div class="dealer-badge">
-                  <span class="dealer-icon">🏢</span>
-                  {{ car.dealerName }}
-                </div>
-              }
+
+              <ul class="car-meta">
+                <li><span class="car-meta-icon" aria-hidden="true">◷</span>{{ car.year }}</li>
+                <li><span class="car-meta-icon" aria-hidden="true">◎</span>{{ car.mileage | number }} km</li>
+                <li><span class="car-meta-icon" aria-hidden="true">⌂</span>{{ car.dealerName || car.location || '—' }}</li>
+              </ul>
             </div>
           </a>
         }

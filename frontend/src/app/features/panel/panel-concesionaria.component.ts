@@ -140,7 +140,7 @@ export class PanelConcesionariaComponent implements OnInit {
 
   emptyForm() {
     return {
-      make: '', model: '', year: new Date().getFullYear(), price: 0, mileage: 0,
+      make: '', model: '', year: new Date().getFullYear(), price: 0, specialPrice: null as number | null, verified: false, mileage: 0,
       transmission: 'Automático', location: '', description: '', imageUrl: '', images: [],
       videoUrl: '', status: 'draft' as AutoStatus,
     };
@@ -271,7 +271,7 @@ export class PanelConcesionariaComponent implements OnInit {
 
   startEdit(car: Auto) {
     this.editing.set(car);
-    this.form = { ...car, status: car.status || 'draft', images: car.images || [] };
+    this.form = { ...car, status: car.status || 'draft', images: car.images || [], verified: !!car.verified };
     this.newDocLabel = AUTO_DOC_LABELS[0];
     this.newDocNotes = '';
     this.loadPrivateDocuments(car.id);
@@ -423,7 +423,7 @@ export class PanelConcesionariaComponent implements OnInit {
         const wasNew = !this.editing();
         this.toast.success(asDraft ? 'Borrador guardado' : 'Vehículo guardado', '¡Éxito!');
         this.editing.set(saved);
-        this.form = { ...saved, status: saved.status || 'draft', images: saved.images || [] };
+        this.form = { ...saved, status: saved.status || 'draft', images: saved.images || [], verified: !!saved.verified };
         this.loadPrivateDocuments(saved.id);
         this.loadInventory();
         this.loadDashboard();

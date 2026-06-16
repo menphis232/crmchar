@@ -143,12 +143,16 @@ for (const dealer of dealers) {
 }
 
 const [autos] = await c.query(`
-  SELECT a.id, a.make, a.model, u.email
+  SELECT a.id, a.make, a.model, a.price, u.email
   FROM autos a
   JOIN users u ON u.id = a.user_id
   WHERE u.role = 'concesionaria' AND a.status = 'published'
   ORDER BY a.created_at
 `);
+
+let specialPricesSet = 0;
+let specialPricesCleared = 0;
+let verifiedSet = 0;
 
 for (const auto of autos) {
   // ~45% de autos con video (no todos)
@@ -161,6 +165,27 @@ for (const auto of autos) {
     await c.query('UPDATE autos SET video_url = NULL WHERE id = ?', [auto.id]);
     videosCleared++;
   }
+
+  // Precio especial en todos los publicados (descuento 60%–85% del precio normal)
+  const basePrice = Number(auto.price);
+  if (basePrice > 0) {
+    const discount = 0.60 + (hashStr(`${auto.id}-special`) % 26) / 100;
+    const special = Math.max(10000, Math.round((basePrice * discount) / 10000) * 10000);
+    if (special > 0 && special < basePrice) {
+      await c.query('UPDATE autos SET special_price = ? WHERE id = ?', [special, auto.id]);
+      specialPricesSet++;
+    } else {
+      await c.query('UPDATE autos SET special_price = NULL WHERE id = ?', [auto.id]);
+      specialPricesCleared++;
+    }
+  } else {
+    await c.query('UPDATE autos SET special_price = NULL WHERE id = ?', [auto.id]);
+    specialPricesCleared++;
+  }
+
+  const isVerified = hashStr(`${auto.id}-verified`) % 100 < 50;
+  await c.query('UPDATE autos SET verified = ? WHERE id = ?', [isVerified ? 1 : 0, auto.id]);
+  if (isVerified) verifiedSet++;
 }
 
 await c.end();
@@ -171,3 +196,5 @@ console.log(`   Perfiles actualizados: ${profilesUpdated}`);
 console.log(`   Reseñas insertadas: ${reviewsInserted}`);
 console.log(`   Autos con video: ${videosSet}`);
 console.log(`   Autos sin video: ${videosCleared}`);
+console.log(`   Autos con precio especial: ${specialPricesSet}`);
+console.log(`   Autos verificados: ${verifiedSet}`);

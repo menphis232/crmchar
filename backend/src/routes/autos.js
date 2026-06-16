@@ -22,6 +22,8 @@ function autoRow(row) {
     model: row.model,
     year: row.year,
     price: Number(row.price),
+    specialPrice: row.special_price != null ? Number(row.special_price) : null,
+    verified: !!row.verified,
     mileage: row.mileage,
     transmission: row.transmission,
     location: row.location,
@@ -71,8 +73,8 @@ router.get('/', async (req, res) => {
                WHERE a.status = 'published'`;
     const params = [];
     if (make) { sql += ' AND a.make LIKE ?'; params.push(`%${make}%`); }
-    if (minPrice) { sql += ' AND a.price >= ?'; params.push(Number(minPrice)); }
-    if (maxPrice) { sql += ' AND a.price <= ?'; params.push(Number(maxPrice)); }
+    if (minPrice) { sql += ' AND COALESCE(a.special_price, a.price) >= ?'; params.push(Number(minPrice)); }
+    if (maxPrice) { sql += ' AND COALESCE(a.special_price, a.price) <= ?'; params.push(Number(maxPrice)); }
     sql += ' ORDER BY a.created_at DESC';
     const rows = await query(sql, params);
     res.json(rows.map(autoRow));
@@ -181,7 +183,7 @@ router.delete('/:id/private-documents/:docId', authRequired, requireRole('conces
 
 router.post('/', authRequired, requireRole('concesionaria'), async (req, res) => {
   try {
-    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl } = req.body;
+    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl, verified } = req.body;
     if (!make || !model || !year || price == null || mileage == null) {
       return res.status(400).json({ error: 'Campos obligatorios incompletos' });
     }
@@ -191,11 +193,14 @@ router.post('/', authRequired, requireRole('concesionaria'), async (req, res) =>
     const mainImage = imageUrl || imgs[0] || 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop';
     const carStatus = ['draft', 'published', 'baja'].includes(status) ? status : 'published';
 
+    const parsedSpecial = specialPrice != null && specialPrice !== '' ? Number(specialPrice) : null;
+    const validSpecial = parsedSpecial != null && parsedSpecial > 0 && parsedSpecial < Number(price) ? parsedSpecial : null;
+
     await run(`
-      INSERT INTO autos (id, user_id, make, model, year, price, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO autos (id, user_id, make, model, year, price, special_price, verified, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      id, req.user.id, make, model, year, price, mileage,
+      id, req.user.id, make, model, year, price, validSpecial, verified ? 1 : 0, mileage,
       transmission || 'Automático', location || null, description || null,
       mainImage, JSON.stringify(imgs), videoUrl?.trim() || null, dealerName || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
     ]);
@@ -213,21 +218,31 @@ router.put('/:id', authRequired, requireRole('concesionaria'), async (req, res) 
     const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     if (!existing) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
-    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, status, videoUrl } = req.body;
+    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, status, videoUrl, verified } = req.body;
     const imgs = images ? JSON.stringify(images) : (typeof existing.images === 'string' ? existing.images : JSON.stringify(existing.images || []));
     const newStatus = status ?? existing.status ?? 'published';
     const newVideoUrl = videoUrl !== undefined ? (videoUrl?.trim() || null) : existing.video_url;
+    const basePrice = price != null ? Number(price) : Number(existing.price);
+    let validSpecial = existing.special_price != null ? Number(existing.special_price) : null;
+    if (specialPrice !== undefined) {
+      const parsed = specialPrice != null && specialPrice !== '' ? Number(specialPrice) : null;
+      validSpecial = parsed != null && parsed > 0 && parsed < basePrice ? parsed : null;
+    } else if (price != null && validSpecial != null && validSpecial >= basePrice) {
+      validSpecial = null;
+    }
+
+    const newVerified = verified !== undefined ? (verified ? 1 : 0) : existing.verified;
 
     await run(`
       UPDATE autos SET
         make = COALESCE(?, make), model = COALESCE(?, model), year = COALESCE(?, year),
-        price = COALESCE(?, price), mileage = COALESCE(?, mileage),
+        price = COALESCE(?, price), special_price = ?, verified = ?, mileage = COALESCE(?, mileage),
         transmission = COALESCE(?, transmission), location = COALESCE(?, location),
         description = COALESCE(?, description), image_url = COALESCE(?, image_url),
         images = ?, video_url = ?, status = ?, active = ?
       WHERE id = ? AND user_id = ?
     `, [
-      make, model, year, price, mileage, transmission, location, description, imageUrl, imgs,
+      make, model, year, price, validSpecial, newVerified, mileage, transmission, location, description, imageUrl, imgs,
       newVideoUrl, newStatus, newStatus === 'published' ? 1 : 0,
       req.params.id, req.user.id,
     ]);

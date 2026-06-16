@@ -39,6 +39,8 @@ docker exec tramites-backend node apply-v28-analytics.js 2>/dev/null || echo 'v2
 docker exec tramites-backend node apply-v30-auto-docs.js 2>/dev/null || echo 'v30 ok'; ^
 docker exec tramites-backend node apply-v31-auto-video.js 2>/dev/null || echo 'v31 ok'; ^
 docker exec tramites-backend node apply-v32-spartan-fonts.js 2>/dev/null || echo 'v32 ok'; ^
+docker exec tramites-backend node apply-v33-auto-special-price.js 2>/dev/null || echo 'v33 ok'; ^
+docker exec tramites-backend node apply-v34-auto-verified.js 2>/dev/null || echo 'v34 ok'; ^
 echo ''; ^
 echo '=== [6/6] Rebuild y restart ==='; ^
 docker compose build backend frontend 2>/dev/null || docker-compose build backend frontend; ^

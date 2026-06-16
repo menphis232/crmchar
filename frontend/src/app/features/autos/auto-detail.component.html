@@ -115,7 +115,17 @@
               }
             </div>
 
-            <div class="ds-price" style="font-size:28px; font-weight:800; color:var(--gold); margin-bottom:20px;">{{ formatPrice(a.price) }}</div>
+            <div class="ds-price-block" style="margin-bottom:20px;">
+              @if (hasSpecialPrice(a)) {
+                <div class="ds-price-label">Precio normal</div>
+                <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
+                <div class="ds-price-label">Precio especial</div>
+                <div class="ds-price" style="font-size:28px; font-weight:800; color:#2b7de9; margin-bottom:0;">{{ formatPrice(a.specialPrice!) }}</div>
+              } @else {
+                <div class="ds-price-label">Precio</div>
+                <div class="ds-price" style="font-size:28px; font-weight:800; color:var(--gold); margin-bottom:0;">{{ formatPrice(a.price) }}</div>
+              }
+            </div>
 
             <div class="ds-specs" style="margin-bottom: 20px;">
               <div class="ds-spec-item"><div class="ds-spec-label">AÑO</div><div class="ds-spec-value">{{ a.year }}</div></div>
@@ -208,7 +218,17 @@
         <aside class="detail-sidebar">
           <div class="ds-make">{{ a.make }}</div>
           <h1 class="ds-model">{{ a.model }}</h1>
-          <div class="ds-price">{{ formatPrice(a.price) }}</div>
+          <div class="ds-price-block">
+            @if (hasSpecialPrice(a)) {
+              <div class="ds-price-label">Precio normal</div>
+              <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
+              <div class="ds-price-label">Precio especial</div>
+              <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
+            } @else {
+              <div class="ds-price-label">Precio</div>
+              <div class="ds-price">{{ formatPrice(a.price) }}</div>
+            }
+          </div>
 
           <div class="ds-specs">
             <div class="ds-spec-item"><div class="ds-spec-label">AÑO</div><div class="ds-spec-value">{{ a.year }}</div></div>

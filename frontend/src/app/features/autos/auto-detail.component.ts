@@ -7,6 +7,7 @@ import { NavComponent } from '../../shared/nav.component';
 import { AutosService, ConcesionariaService } from '../../core/api.service';
 import { Auto } from '../../models';
 import { buildAutoGalleryItems } from '../../shared/auto-video.util';
+import { hasSpecialPrice } from '../../shared/auto-price.util';
 
 @Component({
   selector: 'app-auto-detail',
@@ -81,6 +82,8 @@ export class AutoDetailComponent implements OnInit {
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
   }
+
+  hasSpecialPrice = hasSpecialPrice;
 
   whatsappLink() {
     const a = this.auto();

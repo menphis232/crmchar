@@ -201,9 +201,22 @@
               <img [src]="car.imageUrl" class="car-img" [alt]="car.model">
               <div class="car-info">
                 <span class="status-tag" [class]="car.status">{{ statusLabel(car.status || 'draft') }}</span>
+                @if (car.verified) {
+                  <span class="status-tag verified-tag">Verificado</span>
+                }
                 <h4>{{ car.make }} {{ car.model }}</h4>
                 <p>{{ car.year }} • {{ car.mileage | number }} km</p>
-                <div class="car-price">{{ formatPrice(car.price) }}</div>
+                <div class="car-price-block-panel">
+                  @if (car.specialPrice && car.specialPrice < car.price) {
+                    <span class="car-price-label-panel">Precio normal</span>
+                    <span class="car-price-old">{{ formatPrice(car.price) }}</span>
+                    <span class="car-price-label-panel">Precio especial</span>
+                    <span class="car-price-special">{{ formatPrice(car.specialPrice) }}</span>
+                  } @else {
+                    <span class="car-price-label-panel">Precio</span>
+                    <span class="car-price">{{ formatPrice(car.price) }}</span>
+                  }
+                </div>
                 <div class="action-row">
                   <button class="btn-ghost small" (click)="startEdit(car)">✏️ Editar</button>
                   @if (car.status !== 'published') {
@@ -237,11 +250,25 @@
         </div>
         <div class="form-row">
           <div class="form-group"><label>Precio (MXN)</label><input type="number" [(ngModel)]="form.price" placeholder="0"></div>
+          <div class="form-group">
+            <label>Precio especial (MXN)</label>
+            <input type="number" [(ngModel)]="form.specialPrice" placeholder="Opcional">
+            <p class="card-desc" style="font-size:11px; margin-top:6px;">Si lo defines, se muestra tachado el precio normal y destacado el especial en el catálogo.</p>
+          </div>
           <div class="form-group"><label>Kilometraje</label><input type="number" [(ngModel)]="form.mileage" placeholder="0"></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label>Transmisión</label><input [(ngModel)]="form.transmission" placeholder="Automático"></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Ubicación</label><input [(ngModel)]="form.location" placeholder="Ciudad"></div>
+          <div class="form-group form-group-check">
+            <label class="check-row">
+              <input type="checkbox" [(ngModel)]="form.verified">
+              <span>Marcar como <strong>Verificado</strong></span>
+            </label>
+            <p class="card-desc" style="font-size:11px; margin-top:6px;">Muestra el badge azul «Verificado» en la tarjeta del catálogo público.</p>
+          </div>
         </div>
         <div class="form-group" style="margin-bottom:16px;">
           <label>Fotos del vehículo (Galería)</label>

@@ -658,6 +658,55 @@ select option {
 .car-info h4 { margin: 0 0 4px; color: var(--brand-black); font-family: var(--f-display); font-size: 15px; font-weight: 800; }
 .car-info p { margin: 0; color: var(--muted); font-size: 12px; }
 .car-price { font-weight: 800; color: var(--brand-black); margin: 8px 0; font-size: 16px; font-family: var(--f-display); }
+.car-price-block-panel { margin: 10px 0 12px; }
+.car-price-label-panel {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.car-price-old {
+  display: block;
+  font-size: 15px;
+  color: #e53935;
+  text-decoration: line-through;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.car-price-special {
+  display: block;
+  font-size: 20px;
+  color: #2b7de9;
+  font-weight: 900;
+  font-family: var(--f-display);
+}
+.verified-tag {
+  background: rgba(43, 125, 233, 0.12);
+  color: #2b7de9;
+  border: 1px solid rgba(43, 125, 233, 0.35);
+}
+.form-group-check {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  margin-top: 28px;
+}
+.check-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand-black);
+}
 
 .action-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
 

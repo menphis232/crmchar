@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { ConcesionariaService } from '../../core/api.service';
 import { DealerProfile, Auto } from '../../models';
+import { hasSpecialPrice, effectivePrice } from '../../shared/auto-price.util';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 
@@ -55,9 +56,9 @@ export class DealerProfileComponent implements OnInit {
         car.model.toLowerCase().includes(q) ||
         car.location?.toLowerCase().includes(q);
       const matchesPrice =
-        range === 'low' ? car.price < 500000 :
-        range === 'mid' ? car.price >= 500000 && car.price <= 1000000 :
-        range === 'high' ? car.price > 1000000 : true;
+        range === 'low' ? effectivePrice(car) < 500000 :
+        range === 'mid' ? effectivePrice(car) >= 500000 && effectivePrice(car) <= 1000000 :
+        range === 'high' ? effectivePrice(car) > 1000000 : true;
       return matchesSearch && matchesPrice;
     });
   });
@@ -139,6 +140,8 @@ export class DealerProfileComponent implements OnInit {
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
   }
+
+  hasSpecialPrice = hasSpecialPrice;
 
   get hasActiveFilters() { return !!this.searchQuery() || !!this.priceRange(); }
 

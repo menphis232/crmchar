@@ -240,8 +240,8 @@ router.get('/public/:slug/autos', async (req, res) => {
 
     if (q) { sql += ' AND (make LIKE ? OR model LIKE ? OR location LIKE ?)'; params.push(`%${q}%`, `%${q}%`, `%${q}%`); }
     if (make) { sql += ' AND make LIKE ?'; params.push(`%${make}%`); }
-    if (minPrice) { sql += ' AND price >= ?'; params.push(Number(minPrice)); }
-    if (maxPrice) { sql += ' AND price <= ?'; params.push(Number(maxPrice)); }
+    if (minPrice) { sql += ' AND COALESCE(special_price, price) >= ?'; params.push(Number(minPrice)); }
+    if (maxPrice) { sql += ' AND COALESCE(special_price, price) <= ?'; params.push(Number(maxPrice)); }
     sql += ' ORDER BY created_at DESC';
 
     const { autoRow: _autoRow } = await import('./autos.js').catch(() => ({ autoRow: null }));
@@ -258,6 +258,8 @@ router.get('/public/:slug/autos', async (req, res) => {
       model: row.model,
       year: row.year,
       price: Number(row.price),
+      specialPrice: row.special_price != null ? Number(row.special_price) : null,
+      verified: !!row.verified,
       mileage: row.mileage,
       transmission: row.transmission,
       location: row.location,

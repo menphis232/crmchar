@@ -60,6 +60,8 @@ export interface Auto {
   model: string;
   year: number;
   price: number;
+  specialPrice?: number | null;
+  verified?: boolean;
   mileage: number;
   transmission?: string;
   location?: string;

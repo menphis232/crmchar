@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { AutosService, SiteService, ThemeService } from '../../core/api.service';
 import { PreviewThemeService } from '../../core/preview-theme.service';
+import { hasSpecialPrice, effectivePrice } from '../../shared/auto-price.util';
 import { Auto, MakeFilter, SiteSettings } from '../../models';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
@@ -73,9 +74,9 @@ export class AutosListComponent implements OnInit, OnDestroy {
       const matchesMake = makes.size === 0 || makes.has(car.make);
       const matchesCity = cities.size === 0 || cities.has(car.location ?? '');
       const matchesPrice =
-        range === 'low' ? car.price < 500000 :
-        range === 'mid' ? car.price >= 500000 && car.price <= 1000000 :
-        range === 'high' ? car.price > 1000000 : true;
+        range === 'low' ? effectivePrice(car) < 500000 :
+        range === 'mid' ? effectivePrice(car) >= 500000 && effectivePrice(car) <= 1000000 :
+        range === 'high' ? effectivePrice(car) > 1000000 : true;
       return matchesSearch && matchesMake && matchesCity && matchesPrice;
     });
   });
@@ -271,6 +272,9 @@ export class AutosListComponent implements OnInit, OnDestroy {
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
   }
+
+  hasSpecialPrice = hasSpecialPrice;
+  effectivePrice = effectivePrice;
 
   isMakeSelected(make: string) { return this.selectedMakes().has(make); }
   isCitySelected(city: string) { return this.selectedCities().has(city); }
