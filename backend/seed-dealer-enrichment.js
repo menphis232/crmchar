@@ -8,17 +8,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-/** Videos de YouTube estables (walkaround / review de autos) */
-const CAR_VIDEOS = [
-  'https://www.youtube.com/watch?v=6XLGxB3T3OQ',
-  'https://www.youtube.com/watch?v=FuXNumBwDOM',
-  'https://www.youtube.com/watch?v=WGwrJA6R5sA',
-  'https://www.youtube.com/watch?v=Cox473qEQec',
-  'https://www.youtube.com/watch?v=9AeB859-VLU',
-  'https://www.youtube.com/watch?v=kwcIllaoNCw',
-  'https://www.youtube.com/watch?v=OeW4A8KQy_8',
-  'https://www.youtube.com/watch?v=XFJ3L9ZqZ9E',
-];
+/** Un solo video demo verificado (Carwow — Mercedes EQS review) */
+const DEMO_CAR_VIDEO = 'https://www.youtube.com/watch?v=_uI_hWmVCjo';
 
 const DEALER_PROFILES = {
   'concesionaria@demo.com': {
@@ -163,8 +154,7 @@ for (const auto of autos) {
   // ~45% de autos con video (no todos)
   const withVideo = hashStr(auto.id) % 100 < 45;
   if (withVideo) {
-    const video = CAR_VIDEOS[hashStr(`${auto.id}-video`) % CAR_VIDEOS.length];
-    await c.query('UPDATE autos SET video_url = ? WHERE id = ?', [video, auto.id]);
+    await c.query('UPDATE autos SET video_url = ? WHERE id = ?', [DEMO_CAR_VIDEO, auto.id]);
     videosSet++;
     console.log(`🎬 Video: ${auto.make} ${auto.model} (${auto.email})`);
   } else {
