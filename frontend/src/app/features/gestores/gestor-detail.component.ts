@@ -146,15 +146,13 @@ export class GestorDetailComponent implements OnInit {
     this.scrollToBottom();
 
     const slug = this.route.snapshot.paramMap.get('slug')!;
-    this.http.post<{reply: string}>(`${environment.apiUrl}/gestores/${slug}/chat`, {
+    this.http.post<{ reply: string; leadCreated?: boolean }>(`${environment.apiUrl}/gestores/${slug}/chat`, {
       message: txt,
       history: this.chatHistory.slice(0, -1)
     }).subscribe({
       next: (res) => {
-        // Check if the reply is a confirmation message indicating a lead was created
-        const isLeadConfirmation = res.reply.toLowerCase().includes('registrad') && (res.reply.toLowerCase().includes('solicitud') || res.reply.toLowerCase().includes('trámite'));
         this.chatHistory.push({ role: 'model', content: res.reply });
-        if (isLeadConfirmation) {
+        if (res.leadCreated) {
           this.leadCreated = true;
         }
         this.isChatLoading = false;

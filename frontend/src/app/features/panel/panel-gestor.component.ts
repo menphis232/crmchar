@@ -34,6 +34,15 @@ const AUTOMATION_VARIABLES = [
   { key: 'gestor', label: 'Tu nombre', example: 'Gestoría Pérez' },
 ] as const;
 
+const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
+  { id: 'nuevo', label: 'Nuevo' },
+  { id: 'contactado', label: 'Contactado' },
+  { id: 'en_tramite', label: 'En trámite' },
+  { id: 'documentacion', label: 'Documentación' },
+  { id: 'completado', label: 'Completado' },
+  { id: 'perdido', label: 'Perdido' },
+];
+
 @Component({
   selector: 'app-panel-gestor',
   standalone: true,
@@ -145,7 +154,10 @@ export class PanelGestorComponent implements OnInit {
     this.tab.set(t);
     if (t === 'dashboard' || t === 'pipeline') this.loadCrm();
     if (t === 'plantillas') this.loadTemplates();
-    if (t === 'automatizaciones') this.loadAutomations();
+    if (t === 'automatizaciones') {
+      this.syncCrmStagesFromDashboard();
+      this.loadAutomations();
+    }
   }
 
   loadProfile() {
@@ -189,19 +201,33 @@ export class PanelGestorComponent implements OnInit {
       this.panelAssistantBgColor = res.user.panel_assistant_bg_color || '#0f172a';
       this.panelAssistantBtnColor = res.user.panel_assistant_btn_color || '#4F46E5';
       this.panelAssistantTextColor = res.user.panel_assistant_text_color || '#FFFFFF';
-      this.crmStages = res.user.crm_stages ? [...res.user.crm_stages] : [
-        { id: 'nuevo', label: 'Nuevo' },
-        { id: 'contactado', label: 'Contactado' },
-        { id: 'en_tramite', label: 'En trámite' },
-        { id: 'documentacion', label: 'Documentación' },
-        { id: 'completado', label: 'Completado' },
-        { id: 'perdido', label: 'Perdido' }
-      ];
+      this.crmStages = Array.isArray(res.user.crm_stages) && res.user.crm_stages.length > 0
+        ? [...res.user.crm_stages]
+        : [...DEFAULT_GESTOR_STAGES];
     });
   }
 
+  syncCrmStagesFromDashboard() {
+    const dash = this.crmDashboard();
+    if (dash?.stages?.length) {
+      this.crmStages = dash.stages.map(id => ({
+        id,
+        label: dash.stageLabels[id] || id,
+      }));
+      return;
+    }
+    if (!this.crmStages.length) {
+      this.crmStages = [...DEFAULT_GESTOR_STAGES];
+    }
+  }
+
   loadCrm() {
-    this.crmService.getDashboard().subscribe(d => this.crmDashboard.set(d));
+    this.crmService.getDashboard().subscribe(d => {
+      this.crmDashboard.set(d);
+      if (this.tab() === 'automatizaciones' || !this.crmStages.length) {
+        this.syncCrmStagesFromDashboard();
+      }
+    });
     this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
     this.loadDeals();
     this.crmService.getTemplates().subscribe(t => this.templates.set(t));

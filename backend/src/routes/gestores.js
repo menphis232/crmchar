@@ -189,7 +189,28 @@ router.get('/:slugOrId', async (req, res) => {
   }
 });
 
+function extractCreateLeadAction(text) {
+  const blockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (blockMatch) {
+    try {
+      const data = JSON.parse(blockMatch[1].trim());
+      if (data.action === 'create_lead') return data;
+    } catch { /* try other patterns */ }
+  }
+  const inlineMatch = text.match(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/);
+  if (inlineMatch) {
+    try {
+      const data = JSON.parse(inlineMatch[0]);
+      if (data.action === 'create_lead') return data;
+    } catch { /* ignore */ }
+  }
+  return null;
+}
+
 async function processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData = null) {
+  if (!gestor?.id || !gestor?.user_id) {
+    throw new Error('Gestor inválido: falta id o user_id');
+  }
   // Auto-registro de cliente
   if (clientEmail) {
     const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
@@ -392,7 +413,10 @@ router.post('/:slugOrId/chat', async (req, res) => {
     const { message, history } = req.body;
     if (!message) return res.status(400).json({ error: 'Mensaje requerido' });
 
-    const gestor = await get('SELECT user_id, name, bio FROM gestores WHERE slug = ? OR id = ?', [req.params.slugOrId, req.params.slugOrId]);
+    const gestor = await get(
+      'SELECT id, user_id, name, bio FROM gestores WHERE slug = ? OR id = ? LIMIT 1',
+      [req.params.slugOrId, req.params.slugOrId],
+    );
     if (!gestor) return res.status(404).json({ error: 'Gestor no encontrado' });
 
     let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [gestor.user_id]);
@@ -429,26 +453,41 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
       throw e;
     }
 
-    // Extract JSON block if AI decided to create a lead
-    const jsonMatch = generatedText.match(/```json\n([\s\S]*?)\n```/);
-    if (jsonMatch) {
+    const leadData = extractCreateLeadAction(generatedText);
+    if (leadData) {
       try {
-        const data = JSON.parse(jsonMatch[1]);
-        if (data.action === 'create_lead') {
-          // Call the lead creation logic
-          await processLeadCreation(gestor, data.clientName, data.clientEmail, data.clientPhone, data.location, data.serviceName);
-          // Remove the JSON block from the generated text so the user doesn't see it
-          generatedText = generatedText.replace(/```json\n[\s\S]*?\n```/, '').trim();
-          if (!generatedText) {
-            generatedText = "¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.";
-          }
+        const result = await processLeadCreation(
+          gestor,
+          leadData.clientName,
+          leadData.clientEmail,
+          leadData.clientPhone,
+          leadData.location,
+          leadData.serviceName,
+        );
+        generatedText = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
+        if (!generatedText) {
+          generatedText = '¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.';
+        }
+        const io = req.app.get('io');
+        if (io) {
+          io.to('user_' + gestor.user_id).emit('notification', {
+            id: uuid(),
+            type: 'nuevo_lead',
+            title: 'Nueva Solicitud Recibida',
+            body: `Tienes un nuevo trámite de ${leadData.serviceName} de ${leadData.clientName}.`,
+            ref_id: result.dealId,
+            is_read: 0,
+            created_at: new Date().toISOString(),
+          });
         }
       } catch (e) {
-        console.error("Error parsing AI JSON output:", e);
+        console.error('Error creando lead desde chatbot:', e.message);
+        generatedText = (generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').trim())
+          || 'Recibí tus datos pero hubo un problema al registrar la solicitud. Por favor intenta de nuevo o contáctanos directamente.';
       }
     }
 
-    res.json({ reply: generatedText });
+    res.json({ reply: generatedText, leadCreated: !!leadData });
   } catch (err) {
     console.error('Error Chatbot IA:', err.message);
     res.status(500).json({ error: 'Error del asistente virtual' });
