@@ -1,84 +1,118 @@
 <div class="builder-container" [style.--p-theme]="theme().primaryColor" [style.--p-text-color]="theme().buttonTextColor || '#1a1d24'">
-  
+
   <!-- Sidebar Herramientas -->
-  <div class="sidebar tools-sidebar">
-    <h3>Bloques</h3>
-    <p style="font-size:12px; color:var(--muted); margin-bottom:16px;">Arrastra un bloque al área principal o a la barra lateral (derecha).</p>
-    
+  <aside class="builder-sidebar tools-sidebar">
+    <div class="sidebar-header">
+      <h3>Bloques</h3>
+      <p class="sidebar-hint">Arrastra al lienzo central o a la barra lateral derecha del preview.</p>
+    </div>
+
     <div cdkDropList
          id="toolbarList"
          [cdkDropListData]="availableBlocks"
          [cdkDropListConnectedTo]="['canvas-list-main', 'canvas-list-sidebar']"
          class="blocks-list">
       @for (b of availableBlocks; track b.id) {
-        <div class="block-item" cdkDrag>
-          <div class="block-preview-box">
-            @if (b.type === 'hero') { 🖼️ Banner }
-            @if (b.type === 'stats') { 📊 Estadísticas }
-            @if (b.type === 'text') { 📝 Texto }
-            @if (b.type === 'gallery') { 🎨 Galería }
-            @if (b.type === 'services') { 📋 Mis Servicios }
-            @if (b.type === 'reviews') { ⭐ Reseñas }
-            @if (b.type === 'form') { ✉️ Formulario (Cotización) }
-            @if (b.type === 'tracker') { 🔍 Rastreador }
+        <div class="block-card" cdkDrag>
+          <div class="block-card-icon" [attr.data-type]="b.type">
+            @switch (b.type) {
+              @case ('hero') {
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+              }
+              @case ('stats') {
+                <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+              }
+              @case ('text') {
+                <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h14"/></svg>
+              }
+              @case ('gallery') {
+                <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+              }
+              @case ('services') {
+                <svg viewBox="0 0 24 24"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+              }
+              @case ('reviews') {
+                <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              }
+              @case ('form') {
+                <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10"/><path d="M7 13h6"/></svg>
+              }
+              @case ('tracker') {
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+              }
+            }
           </div>
-          <!-- Preview when dragging -->
-          <div *cdkDragPreview class="drag-preview">Moviendo {{b.type}}</div>
+          <div class="block-card-text">
+            <span class="block-card-label">{{ blockCatalog[b.type].label }}</span>
+            <span class="block-card-desc">{{ blockCatalog[b.type].desc }}</span>
+          </div>
+          <div class="block-card-grip" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="1"/><circle cx="15" cy="7" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="17" r="1"/><circle cx="15" cy="17" r="1"/></svg>
+          </div>
+          <div *cdkDragPreview class="drag-preview">{{ blockCatalog[b.type].label }}</div>
         </div>
       }
     </div>
 
-    <div style="margin-top:40px; border-top:1px solid var(--border); padding-top:16px;">
-      <h3>Diseño General</h3>
-      <label>Color Principal</label>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; margin-bottom:8px;">
+    <div class="theme-section">
+      <h3>Diseño general</h3>
+
+      <label class="sidebar-label">Color principal</label>
+      <div class="color-swatches">
         @for (c of presetColors; track c) {
-          <div [style.background]="c" (click)="theme().primaryColor = c; emitChange()"
-               style="width:24px; height:24px; border-radius:4px; cursor:pointer; border: 2px solid transparent;"
-               [style.borderColor]="theme().primaryColor === c ? '#fff' : 'transparent'"
-               [style.boxShadow]="theme().primaryColor === c ? '0 0 0 2px var(--gold)' : 'none'"></div>
+          <button type="button" class="color-swatch" [style.background]="c"
+                  [class.active]="theme().primaryColor === c"
+                  (click)="theme().primaryColor = c; emitChange()"
+                  [attr.aria-label]="'Color ' + c"></button>
         }
       </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()" style="width:40px; height:40px; border:none; cursor:pointer; padding:0; background:none;">
-        <span style="font-size:12px; color:var(--muted);">O elige un color personalizado</span>
-      </div>
-      
-      <label style="margin-top:16px; display:block;">Color Texto de Botones</label>
-      <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; margin-bottom:8px;">
-        @for (c of presetColors; track c) {
-          <div [style.background]="c" (click)="theme().buttonTextColor = c; emitChange()"
-               style="width:24px; height:24px; border-radius:4px; cursor:pointer; border: 2px solid transparent;"
-               [style.borderColor]="theme().buttonTextColor === c ? '#fff' : 'transparent'"
-               [style.boxShadow]="theme().buttonTextColor === c ? '0 0 0 2px var(--gold)' : 'none'"></div>
-        }
-      </div>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()" style="width:40px; height:40px; border:none; cursor:pointer; padding:0; background:none;">
-        <span style="font-size:12px; color:var(--muted);">Personalizado</span>
+      <div class="color-picker-row">
+        <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()">
+        <span>Color personalizado</span>
       </div>
 
-      <label style="margin-top:16px; display:block;">Fuente</label>
-      <select [(ngModel)]="theme().fontFamily" (change)="emitChange()">
-        <option value="Inter">Inter</option>
-        <option value="Roboto">Roboto</option>
-        <option value="Outfit">Outfit</option>
+      <label class="sidebar-label">Texto de botones</label>
+      <div class="color-swatches">
+        @for (c of presetColors; track c) {
+          <button type="button" class="color-swatch" [style.background]="c"
+                  [class.active]="theme().buttonTextColor === c"
+                  (click)="theme().buttonTextColor = c; emitChange()"
+                  [attr.aria-label]="'Color ' + c"></button>
+        }
+      </div>
+      <div class="color-picker-row">
+        <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()">
+        <span>Color personalizado</span>
+      </div>
+
+      <label class="sidebar-label">Fuente</label>
+      <select class="sidebar-select" [(ngModel)]="theme().fontFamily" (change)="emitChange()">
+        @for (f of builderFonts; track f.value) {
+          <option [value]="f.value">{{ f.label }}</option>
+        }
       </select>
     </div>
-  </div>
+  </aside>
 
   <!-- Main Canvas -->
   <div class="canvas-area">
     <div class="canvas-toolbar">
-      <button class="preview-toggle-btn" (click)="togglePreview()">
-        @if (previewMode() === 'desktop') { 📱 Vista Móvil } @else { 💻 Vista Escritorio }
+      <span class="canvas-toolbar-label">Vista previa en vivo</span>
+      <button type="button" class="preview-toggle-btn" (click)="togglePreview()">
+        @if (previewMode() === 'desktop') {
+          <svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+          Vista móvil
+        } @else {
+          <svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg>
+          Vista escritorio
+        }
       </button>
     </div>
-    
+
     <div class="canvas-preview-wrapper" [class.is-mobile]="previewMode() === 'mobile'">
       <div class="canvas-preview" [style.font-family]="theme().fontFamily">
         <div class="classic-layout">
-          
+
           <!-- COLUMNA PRINCIPAL -->
           <div cdkDropList
                id="canvas-list-main"
@@ -86,20 +120,25 @@
                [cdkDropListConnectedTo]="['toolbarList', 'canvas-list-sidebar']"
                (cdkDropListDropped)="drop($event, 'main')"
                class="canvas-drop-zone main-zone">
-            
+
             @if (mainBlocks().length === 0) {
-              <div class="empty-state">Arrastra bloques aquí para tu contenido principal</div>
+              <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <p>Arrastra bloques aquí para el contenido principal</p>
+              </div>
             }
 
             @for (b of mainBlocks(); track b.id) {
               <div class="canvas-block" cdkDrag (click)="selectBlock(b)" [class.selected]="selectedBlock()?.id === b.id"
                    [style.margin-top.px]="b.data.marginTop || 0"
                    [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
-                <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()">✕</button>
+                <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()" title="Eliminar bloque">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
 
                 @if (b.type === 'hero') {
-                  <div class="preview-hero" 
-                       [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
+                  <div class="preview-hero"
+                       [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'"
                        [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
                        [style.background-size]="b.data.bgSize || 'cover'"
                        [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
@@ -112,10 +151,10 @@
                   </div>
                 }
                 @if (b.type === 'stats') {
-                  <div style="display:flex; justify-content:center; gap:16px; padding:24px 10px; background:#f5f6f8; flex-wrap:wrap; color: #1a1d24; border-radius: 8px;">
-                    @if (b.data.showRating) { <div style="text-align:center;"><strong>5.0/5</strong><br><span style="font-size:10px;">ESTRELLAS</span></div> }
-                    @if (b.data.showCount) { <div style="text-align:center;"><strong>100+</strong><br><span style="font-size:10px;">TRÁMITES</span></div> }
-                    @if (b.data.showExperience) { <div style="text-align:center;"><strong>5 Años</strong><br><span style="font-size:10px;">EXPERIENCIA</span></div> }
+                  <div class="preview-stats">
+                    @if (b.data.showRating) { <div><strong>5.0/5</strong><span>ESTRELLAS</span></div> }
+                    @if (b.data.showCount) { <div><strong>100+</strong><span>TRÁMITES</span></div> }
+                    @if (b.data.showExperience) { <div><strong>5 Años</strong><span>EXPERIENCIA</span></div> }
                   </div>
                 }
                 @if (b.type === 'text') {
@@ -126,7 +165,7 @@
                 @if (b.type === 'gallery') {
                   <div class="preview-gallery">
                     @if (b.data.images?.length === 0) {
-                      <p style="text-align:center; padding: 20px; border:2px dashed var(--border);">Galería vacía</p>
+                      <p class="gallery-empty">Galería vacía — agrega imágenes en propiedades</p>
                     }
                     <div class="gallery-grid">
                       @for (img of b.data.images; track img) {
@@ -163,9 +202,9 @@
                 }
                 @if (b.type === 'tracker') {
                   <div class="contact-card track-card">
-                    <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
-                    <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">{{ b.data.subtitle }}</p>
-                    <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+                    <h3>{{ b.data.title }}</h3>
+                    <p>{{ b.data.subtitle }}</p>
+                    <div class="solicitud-form">
                       <input placeholder="Ej: A1B2C3D4" disabled>
                       <button type="button" class="btn-submit" disabled>Buscar</button>
                     </div>
@@ -183,20 +222,25 @@
                  [cdkDropListConnectedTo]="['toolbarList', 'canvas-list-main']"
                  (cdkDropListDropped)="drop($event, 'sidebar')"
                  class="canvas-drop-zone sidebar-zone">
-              
+
               @if (sidebarBlocks().length === 0) {
-                <div class="empty-state">Agrega herramientas a la barra lateral</div>
+                <div class="empty-state">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  <p>Arrastra formulario o rastreador aquí</p>
+                </div>
               }
 
               @for (b of sidebarBlocks(); track b.id) {
                 <div class="canvas-block" cdkDrag (click)="selectBlock(b)" [class.selected]="selectedBlock()?.id === b.id"
                      [style.margin-top.px]="b.data.marginTop || 0"
                      [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
-                  <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()">✕</button>
+                  <button type="button" class="btn-delete-block" (click)="removeBlock(b); $event.stopPropagation()" title="Eliminar bloque">
+                    <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                  </button>
 
                   @if (b.type === 'hero') {
-                    <div class="preview-hero" 
-                         [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
+                    <div class="preview-hero"
+                         [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'"
                          [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
                          [style.background-size]="b.data.bgSize || 'cover'"
                          [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
@@ -209,10 +253,10 @@
                     </div>
                   }
                   @if (b.type === 'stats') {
-                    <div style="display:flex; justify-content:center; gap:16px; padding:24px 10px; background:#f5f6f8; flex-wrap:wrap; color: #1a1d24; border-radius: 8px;">
-                      @if (b.data.showRating) { <div style="text-align:center;"><strong>5.0/5</strong><br><span style="font-size:10px;">ESTRELLAS</span></div> }
-                      @if (b.data.showCount) { <div style="text-align:center;"><strong>100+</strong><br><span style="font-size:10px;">TRÁMITES</span></div> }
-                      @if (b.data.showExperience) { <div style="text-align:center;"><strong>5 Años</strong><br><span style="font-size:10px;">EXPERIENCIA</span></div> }
+                    <div class="preview-stats">
+                      @if (b.data.showRating) { <div><strong>5.0/5</strong><span>ESTRELLAS</span></div> }
+                      @if (b.data.showCount) { <div><strong>100+</strong><span>TRÁMITES</span></div> }
+                      @if (b.data.showExperience) { <div><strong>5 Años</strong><span>EXPERIENCIA</span></div> }
                     </div>
                   }
                   @if (b.type === 'text') {
@@ -223,7 +267,7 @@
                   @if (b.type === 'gallery') {
                     <div class="preview-gallery">
                       @if (b.data.images?.length === 0) {
-                        <p style="text-align:center; padding: 20px; border:2px dashed var(--border);">Galería vacía</p>
+                        <p class="gallery-empty">Galería vacía</p>
                       }
                       <div class="gallery-grid">
                         @for (img of b.data.images; track img) {
@@ -260,9 +304,9 @@
                   }
                   @if (b.type === 'tracker') {
                     <div class="contact-card track-card">
-                      <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
-                      <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">{{ b.data.subtitle }}</p>
-                      <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
+                      <h3>{{ b.data.title }}</h3>
+                      <p>{{ b.data.subtitle }}</p>
+                      <div class="solicitud-form">
                         <input placeholder="Ej: A1B2C3D4" disabled>
                         <button type="button" class="btn-submit" disabled>Buscar</button>
                       </div>
@@ -279,45 +323,50 @@
   </div>
 
   <!-- Sidebar Edición -->
-  <div class="sidebar edit-sidebar">
-    <h3>Propiedades</h3>
-    
+  <aside class="builder-sidebar edit-sidebar">
+    <div class="sidebar-header">
+      <h3>Propiedades</h3>
+      @if (selectedBlock()) {
+        <p class="sidebar-hint">Editando: <strong>{{ blockCatalog[selectedBlock()!.type].label }}</strong></p>
+      }
+    </div>
+
     @if (selectedBlock()) {
       @let b = selectedBlock()!;
       <div class="edit-panel">
-        
+
         @if (b.type === 'hero') {
           <label>Título</label>
           <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
           <label>Subtítulo</label>
           <textarea [(ngModel)]="b.data.subtitle" (change)="emitChange()"></textarea>
-          
+
           <label>Fondo del Hero</label>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <label class="btn-copy" style="display:block; text-align:center; cursor:pointer;" [class.disabled]="isUploading()">
-              {{ isUploading() ? 'Subiendo...' : '+ Subir Imagen' }}
-              <input type="file" style="display:none" accept="image/*" (change)="uploadHeroImage($event, b)" [disabled]="isUploading()">
+          <div class="upload-row">
+            <label class="upload-btn" [class.disabled]="isUploading()">
+              {{ isUploading() ? 'Subiendo...' : '+ Subir imagen' }}
+              <input type="file" accept="image/*" (change)="uploadHeroImage($event, b)" [disabled]="isUploading()">
             </label>
             <input type="text" placeholder="O pega una URL..." [(ngModel)]="b.data.bgUrl" (change)="emitChange()">
           </div>
 
-          <label>Ajuste de Imagen</label>
+          <label>Ajuste de imagen</label>
           <select [(ngModel)]="b.data.bgSize" (change)="emitChange()">
             <option value="cover">Cubrir (Cover)</option>
             <option value="contain">Contener (Contain)</option>
           </select>
-          <label><input type="checkbox" [(ngModel)]="b.data.bgRepeat" (change)="emitChange()"> Repetir Imagen</label>
-          
-          <label>Texto Botón</label>
+          <label class="checkbox-label"><input type="checkbox" [(ngModel)]="b.data.bgRepeat" (change)="emitChange()"> Repetir imagen</label>
+
+          <label>Texto botón</label>
           <input type="text" [(ngModel)]="b.data.buttonText" (change)="emitChange()">
-          <label>Color Letra Botón</label>
+          <label>Color letra botón</label>
           <input type="color" [(ngModel)]="b.data.buttonTextColor" (change)="emitChange()">
         }
 
         @if (b.type === 'stats') {
-          <label><input type="checkbox" [(ngModel)]="b.data.showRating" (change)="emitChange()"> Mostrar Estrellas</label>
-          <label><input type="checkbox" [(ngModel)]="b.data.showCount" (change)="emitChange()"> Mostrar Trámites</label>
-          <label><input type="checkbox" [(ngModel)]="b.data.showExperience" (change)="emitChange()"> Mostrar Experiencia</label>
+          <label class="checkbox-label"><input type="checkbox" [(ngModel)]="b.data.showRating" (change)="emitChange()"> Mostrar estrellas</label>
+          <label class="checkbox-label"><input type="checkbox" [(ngModel)]="b.data.showCount" (change)="emitChange()"> Mostrar trámites</label>
+          <label class="checkbox-label"><input type="checkbox" [(ngModel)]="b.data.showExperience" (change)="emitChange()"> Mostrar experiencia</label>
         }
 
         @if (b.type === 'text') {
@@ -326,31 +375,31 @@
         }
 
         @if (b.type === 'gallery') {
-          <label class="btn-copy" style="margin-bottom:10px; display:inline-block; text-align:center; cursor:pointer;" [class.disabled]="isUploading()">
-            {{ isUploading() ? 'Subiendo...' : '+ Subir Imagen' }}
-            <input type="file" style="display:none" accept="image/*" (change)="uploadGalleryImage($event, b)" [disabled]="isUploading()">
+          <label class="upload-btn" [class.disabled]="isUploading()">
+            {{ isUploading() ? 'Subiendo...' : '+ Subir imagen' }}
+            <input type="file" accept="image/*" (change)="uploadGalleryImage($event, b)" [disabled]="isUploading()">
           </label>
-          <button type="button" class="btn-ghost" style="margin-bottom:10px; width: 100%; border-color: var(--border);" (click)="addGalleryImage(b)">+ URL Manual</button>
-          
+          <button type="button" class="props-secondary-btn" (click)="addGalleryImage(b)">+ URL manual</button>
+
           @for (img of b.data.images; track $index) {
-            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-              <img [src]="img" style="width:40px; height:40px; object-fit:cover; border-radius:4px;">
-              <button class="btn-delete-block" style="position:static;" (click)="removeGalleryImage(b, $index)">✕</button>
+            <div class="gallery-thumb-row">
+              <img [src]="img" alt="Imagen galería">
+              <button type="button" class="thumb-remove" (click)="removeGalleryImage(b, $index)" title="Quitar">✕</button>
             </div>
           }
         }
 
         @if (b.type === 'services' || b.type === 'reviews') {
-          <label>Título de la Sección</label>
+          <label>Título de la sección</label>
           <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
           @if (b.type === 'services') {
-            <label><input type="checkbox" [(ngModel)]="b.data.showPrices" (change)="emitChange()"> Mostrar Precios</label>
+            <label class="checkbox-label"><input type="checkbox" [(ngModel)]="b.data.showPrices" (change)="emitChange()"> Mostrar precios</label>
           }
         }
 
         @if (b.type === 'form' || b.type === 'tracker') {
-          <p class="locked-note" style="background: rgba(255, 193, 7, 0.1); color: var(--gold); padding: 10px; border-radius: 4px; font-size: 12px; margin-bottom: 16px;">
-            ⚠️ Los campos de este bloque no se pueden modificar, solo sus textos principales y su posición.
+          <p class="locked-note">
+            Los campos de este bloque no se pueden modificar, solo sus textos principales y su posición.
           </p>
           <label>Título</label>
           <input type="text" [(ngModel)]="b.data.title" (change)="emitChange()">
@@ -358,19 +407,21 @@
           <textarea [(ngModel)]="b.data.subtitle" (change)="emitChange()"></textarea>
         }
 
-        <hr style="border:none; border-top:1px solid var(--border); margin: 20px 0;">
-        <h4 style="margin-bottom: 12px;">Separación del Bloque</h4>
-        <label>Margen Superior (px)</label>
+        <div class="props-divider"></div>
+        <h4>Separación del bloque</h4>
+        <label>Margen superior (px)</label>
         <input type="number" [(ngModel)]="b.data.marginTop" (change)="emitChange()">
-        <label>Margen Inferior (px)</label>
+        <label>Margen inferior (px)</label>
         <input type="number" [(ngModel)]="b.data.marginBottom" (change)="emitChange()">
 
       </div>
     } @else {
-      <p style="color:var(--muted); font-size:13px;">Haz clic en un bloque del lienzo para editar sus propiedades.</p>
+      <div class="props-empty">
+        <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <p>Selecciona un bloque</p>
+        <span>Haz clic en cualquier bloque del lienzo para editar sus propiedades aquí.</span>
+      </div>
     }
-  </div>
+  </aside>
 
 </div>
-
-

@@ -1,3 +1,6 @@
+@if (isPreview()) {
+  <div class="live-preview-banner">Vista previa en vivo — busca, filtra y navega como en la página real</div>
+}
 <app-nav />
 
 <header class="catalog-header gestores-header">
@@ -33,55 +36,102 @@
 </div>
 
 <div class="catalog-container">
+  <button type="button" class="filters-mobile-toggle" (click)="toggleFiltersPanel()">
+    {{ filtersOpen() ? 'Ocultar filtros' : 'Mostrar filtros' }}
+    @if (activeFilterCount() > 0) {
+      <span class="filters-mobile-badge">{{ activeFilterCount() }}</span>
+    }
+  </button>
+
   <!-- Sidebar Filters -->
-  <aside class="filters">
+  <aside class="filters" [class.filters-open]="filtersOpen()">
     <div class="filters-header">
       <span class="filters-title">FILTROS</span>
       @if (hasActiveFilters) {
-        <button class="clear-filters-btn" (click)="clearFilters()">Limpiar</button>
+        <button type="button" class="clear-filters-btn" (click)="clearFilters()">Limpiar</button>
       }
     </div>
 
     <!-- Estado / Ciudad -->
-    <div class="filter-group">
-      <h4 class="filter-group-title green">
-        <span class="filter-icon">📍</span> CIUDAD / ESTADO
-      </h4>
-      <div class="filter-options">
-        @for (s of states(); track s.state) {
-          <label class="filter-label" [class.active]="isStateSelected(s.state)">
+    <div class="filter-group" [class.is-open]="stateSectionOpen()">
+      <button type="button" class="filter-group-toggle" (click)="toggleStateSection()">
+        <span class="filter-group-toggle-label green">
+          <span class="filter-icon">📍</span> CIUDAD / ESTADO
+          @if (selectedStates().size > 0) {
+            <span class="filter-section-badge">{{ selectedStates().size }}</span>
+          }
+        </span>
+        <span class="filter-chevron" [class.open]="stateSectionOpen()">▼</span>
+      </button>
+      @if (stateSectionOpen()) {
+        <div class="filter-group-body">
+          @if (states().length > FILTER_PREVIEW_LIMIT) {
             <input
-              type="checkbox"
-              class="filter-checkbox"
-              [checked]="isStateSelected(s.state)"
-              (change)="onStateToggle(s.state, $any($event.target).checked)"
+              type="search"
+              class="filter-search-input"
+              placeholder="Buscar estado o ciudad..."
+              [ngModel]="stateSearch()"
+              (ngModelChange)="onStateSearchChange($event)"
             />
-            <span class="filter-label-text">{{ s.state }}</span>
-            <span class="filter-count">{{ s.count }}</span>
-          </label>
-        }
-      </div>
+          }
+          <div class="filter-options filter-options-list">
+            @for (s of visibleStates(); track s.state) {
+              <label class="filter-label" [class.active]="isStateSelected(s.state)">
+                <input
+                  type="checkbox"
+                  class="filter-checkbox"
+                  [checked]="isStateSelected(s.state)"
+                  (change)="onStateToggle(s.state, $any($event.target).checked)"
+                />
+                <span class="filter-label-text">{{ s.state }}</span>
+                <span class="filter-count">{{ s.count }}</span>
+              </label>
+            } @empty {
+              <p class="filter-empty-hint">Ningún estado coincide con tu búsqueda.</p>
+            }
+          </div>
+          @if (hiddenStatesCount() > 0) {
+            <button type="button" class="filter-more-btn" (click)="stateShowAll.set(true)">
+              Ver {{ hiddenStatesCount() }} más
+            </button>
+          } @else if (stateShowAll() && filteredStates().length > FILTER_PREVIEW_LIMIT && !stateSearch()) {
+            <button type="button" class="filter-more-btn" (click)="stateShowAll.set(false)">
+              Ver menos
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <!-- Calificación -->
-    <div class="filter-group">
-      <h4 class="filter-group-title green">
-        <span class="filter-icon">⭐</span> CALIFICACIÓN
-      </h4>
-      <div class="filter-options">
-        <label class="filter-label" [class.active]="minRating() === 0">
-          <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(0)" [checked]="minRating() === 0" />
-          <span class="filter-label-text">Todas</span>
-        </label>
-        <label class="filter-label" [class.active]="minRating() === 4">
-          <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(4)" [checked]="minRating() === 4" />
-          <span class="filter-label-text">⭐ 4+ estrellas</span>
-        </label>
-        <label class="filter-label" [class.active]="minRating() === 5">
-          <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(5)" [checked]="minRating() === 5" />
-          <span class="filter-label-text">⭐ 5 estrellas</span>
-        </label>
-      </div>
+    <div class="filter-group" [class.is-open]="ratingSectionOpen()">
+      <button type="button" class="filter-group-toggle" (click)="toggleRatingSection()">
+        <span class="filter-group-toggle-label green">
+          <span class="filter-icon">⭐</span> CALIFICACIÓN
+          @if (minRating() > 0) {
+            <span class="filter-section-badge">1</span>
+          }
+        </span>
+        <span class="filter-chevron" [class.open]="ratingSectionOpen()">▼</span>
+      </button>
+      @if (ratingSectionOpen()) {
+        <div class="filter-group-body">
+          <div class="filter-options">
+            <label class="filter-label" [class.active]="minRating() === 0">
+              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(0)" [checked]="minRating() === 0" />
+              <span class="filter-label-text">Todas</span>
+            </label>
+            <label class="filter-label" [class.active]="minRating() === 4">
+              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(4)" [checked]="minRating() === 4" />
+              <span class="filter-label-text">⭐ 4+ estrellas</span>
+            </label>
+            <label class="filter-label" [class.active]="minRating() === 5">
+              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(5)" [checked]="minRating() === 5" />
+              <span class="filter-label-text">⭐ 5 estrellas</span>
+            </label>
+          </div>
+        </div>
+      }
     </div>
 
     <!-- Active filters chips -->
@@ -90,19 +140,19 @@
         @if (searchQuery()) {
           <span class="filter-chip">
             🔍 "{{ searchQuery() }}"
-            <button (click)="onSearch('')">✕</button>
+            <button type="button" (click)="onSearch('')">✕</button>
           </span>
         }
-        @for (state of selectedStates(); track state) {
+        @for (state of selectedStatesArray(); track state) {
           <span class="filter-chip">
             📍 {{ state }}
-            <button (click)="onStateToggle(state, false)">✕</button>
+            <button type="button" (click)="onStateToggle(state, false)">✕</button>
           </span>
         }
         @if (minRating() > 0) {
           <span class="filter-chip">
             ⭐ {{ minRating() }}+ estrellas
-            <button (click)="onRatingChange(0)">✕</button>
+            <button type="button" (click)="onRatingChange(0)">✕</button>
           </span>
         }
       </div>

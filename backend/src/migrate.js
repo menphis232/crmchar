@@ -618,6 +618,69 @@ async function migrate() {
       await conn22.end();
       console.log('Migración v26 (deal_documents) aplicada.');
     }
+
+    const v27Path = path.join(__dirname, '..', 'sql', 'migration-v27-panel-assistant.sql');
+    if (fs.existsSync(v27Path)) {
+      const v27 = fs.readFileSync(v27Path, 'utf8');
+      const conn23 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn23.query('USE tramites_vehiculares');
+      for (const stmt of v27.split(';').map(s => s.trim()).filter(Boolean)) {
+        if (stmt.includes('ADD COLUMN')) {
+          try { await conn23.query(stmt); } catch (e) {
+            if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+          }
+        } else {
+          try { await conn23.query(stmt); } catch (e) {
+            if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+          }
+        }
+      }
+      await conn23.end();
+      console.log('Migración v27 (panel assistant) aplicada.');
+    }
+
+    const v28Path = path.join(__dirname, '..', 'sql', 'migration-v28-ga-oauth.sql');
+    if (fs.existsSync(v28Path)) {
+      const v28 = fs.readFileSync(v28Path, 'utf8');
+      const conn24 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn24.query('USE tramites_vehiculares');
+      for (const stmt of v28.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn24.query(stmt); } catch (e) {
+          if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn24.end();
+      console.log('Migración v28 (GA OAuth) aplicada.');
+    }
+
+    const v29Path = path.join(__dirname, '..', 'sql', 'migration-v29-ga-credentials.sql');
+    if (fs.existsSync(v29Path)) {
+      const v29 = fs.readFileSync(v29Path, 'utf8');
+      const conn25 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn25.query('USE tramites_vehiculares');
+      for (const stmt of v29.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn25.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn25.end();
+      console.log('Migración v29 (GA credentials DB) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

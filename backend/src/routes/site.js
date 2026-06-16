@@ -11,6 +11,16 @@ function parseSettings(row) {
   return { pageKey: row.page_key, ...s, updatedAt: row.updated_at };
 }
 
+// Público: ID global de Google Analytics (gtag en todo el sitio)
+router.get('/analytics-id', async (_req, res) => {
+  try {
+    const row = await get('SELECT measurement_id FROM analytics_settings WHERE id = 1');
+    res.json({ measurementId: row?.measurement_id || null });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar Analytics' });
+  }
+});
+
 // Público: configuración visual de una página
 router.get('/:pageKey', async (req, res) => {
   try {

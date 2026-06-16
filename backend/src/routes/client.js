@@ -10,22 +10,28 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = Router();
 
+import { pipelineStagesForUser } from '../crm/stages.js';
+
 // Get all deals for the client
 router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
   try {
     const deals = await query(`
       SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, g.name as gestor_name, d.deal_type, d.tracking_code,
-             gs.required_documents
+             gs.required_documents, u.role as owner_role, u.crm_stages
       FROM crm_deals d
       LEFT JOIN gestores g ON g.user_id = d.user_id
       LEFT JOIN gestor_services gs ON gs.gestor_id = g.id AND gs.name = d.title
       JOIN contacts c ON c.id = d.contact_id
+      LEFT JOIN users u ON u.id = d.user_id
       WHERE c.email = ?
       ORDER BY d.created_at DESC
     `, [req.user.email]);
     
     deals.forEach(d => {
       try { d.required_documents = typeof d.required_documents === 'string' ? JSON.parse(d.required_documents) : (d.required_documents || ['INE', 'Tarjeta de Circulación', 'Factura de Origen']); } catch(e) { d.required_documents = ['INE', 'Tarjeta de Circulación', 'Factura de Origen']; }
+      d.pipeline_stages = pipelineStagesForUser(d.owner_role || 'gestor', d.crm_stages);
+      delete d.crm_stages;
+      delete d.owner_role;
     });
     res.json(deals);
   } catch (err) {

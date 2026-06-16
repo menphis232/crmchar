@@ -1,5 +1,11 @@
 <nav class="dash-nav">
-  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <a routerLink="/autos" class="dash-logo">
+    @if (auth.user()?.logo_url) {
+      <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+    } @else {
+      <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+    }
+  </a>
   <div class="dash-user">
     <app-notification-bell />
 
@@ -85,7 +91,8 @@
     @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
 
     <!-- ── DASHBOARD ── -->
-    @if (tab() === 'dashboard' && crmDashboard(); as crm) {
+    @if (tab() === 'dashboard' && hasPerm('dashboard')) {
+      @if (crmDashboard(); as crm) {
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-num">{{ crm.totals.active }}</div>
@@ -114,25 +121,26 @@
           <div class="stat-label">Conversión</div>
         </div>
       </div>
-
-      <!-- AI Insights -->
-      @if (isAiLoading()) {
-        <div class="dash-card" style="border: 1px solid var(--gold); background: rgba(200, 169, 74, 0.05);">
-          <h2 class="card-title" style="color: var(--gold);">🤖 Análisis IA Comercial</h2>
-          <p class="card-desc">Generando recomendaciones en base a tu rendimiento...</p>
-        </div>
-      } @else if (aiInsights().length > 0) {
-        <div class="dash-card" style="border: 1px solid var(--gold); background: rgba(200, 169, 74, 0.05);">
-          <h2 class="card-title" style="color: var(--gold);">🤖 Análisis IA Comercial</h2>
-          <p class="card-desc">Basado en tus métricas recientes, te sugerimos:</p>
-          <ul style="margin-top: 15px; padding-left: 20px; color: var(--mx-white); font-size: 14px; line-height: 1.6;">
-            @for (insight of aiInsights(); track $index) {
-              <li style="margin-bottom: 10px;">{{ insight }}</li>
-            }
-          </ul>
-        </div>
       }
 
+      <!-- AI Insights — visible aunque el dashboard CRM tarde o falle -->
+      <div class="dash-card ai-insights-card">
+        <h2 class="card-title ai-insights-title">🤖 Análisis IA Comercial</h2>
+        @if (isAiLoading()) {
+          <p class="card-desc">Generando recomendaciones prácticas para tu negocio...</p>
+        } @else if (aiInsights().length === 0) {
+          <p class="card-desc">No hay tips disponibles por ahora. Vuelve a cargar la página en unos minutos.</p>
+        } @else {
+          <p class="card-desc">Tips para mejorar tus ventas y la atención a tus clientes:</p>
+          <ul class="ai-insights-list">
+            @for (insight of aiInsights(); track $index) {
+              <li>{{ insight }}</li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (crmDashboard(); as crm) {
       @if (todayInbox(); as inbox) {
         <app-crm-today-inbox
           [inbox]="inbox"
@@ -152,6 +160,7 @@
           </div>
         }
       </div>
+      }
     }
 
     <!-- ── PIPELINE ── -->
@@ -160,14 +169,20 @@
         <h2 class="card-title">📋 Pipeline de trámites</h2>
         <p class="card-desc">Sigue cada trámite desde la solicitud hasta completado.</p>
         <div class="pipeline-filters">
-          <input [(ngModel)]="searchQuery" placeholder="🔍 Buscar contacto o trámite..." (keyup.enter)="loadDeals()">
-          <select [(ngModel)]="filterStage" (change)="loadDeals()">
-            <option value="">Todas las etapas</option>
-            @for (s of crm.stages; track s) {
-              <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
-            }
-          </select>
-          <button type="button" class="btn-copy small" (click)="loadDeals()">Buscar</button>
+          <div class="pipeline-filter-field pipeline-filter-search">
+            <label for="gestor-pipeline-search">Buscar</label>
+            <input id="gestor-pipeline-search" [(ngModel)]="searchQuery" placeholder="Contacto o trámite..." (keyup.enter)="loadDeals()">
+          </div>
+          <div class="pipeline-filter-field">
+            <label for="gestor-pipeline-stage">Etapa</label>
+            <select id="gestor-pipeline-stage" [(ngModel)]="filterStage" (change)="loadDeals()">
+              <option value="">Todas las etapas</option>
+              @for (s of crm.stages; track s) {
+                <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+              }
+            </select>
+          </div>
+          <button type="button" class="btn-copy pipeline-filter-btn" (click)="loadDeals()">Buscar</button>
         </div>
         <app-crm-kanban
           [stages]="crm.stages"
@@ -275,7 +290,7 @@
 
           <div class="form-group" style="margin-top:16px;">
             <label>ID de Google Analytics (Opcional)</label>
-            <input type="text" [(ngModel)]="googleAnalyticsId" placeholder="Ej. G-XXXXXXX" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+            <input type="text" [(ngModel)]="googleAnalyticsId" placeholder="Ej. G-XXXXXXX" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
             <p class="card-desc" style="margin-top:4px; font-size:11px;">Añade tu ID de seguimiento de GA4 para medir visitas en tu página pública.</p>
           </div>
 
@@ -285,44 +300,17 @@
             
             <div class="form-group" style="margin-bottom:12px;">
               <label>Stripe Public Key</label>
-              <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+              <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
             </div>
             <div class="form-group">
               <label>Stripe Secret Key</label>
-              <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+              <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
             </div>
           </div>
 
           <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
-            <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">🤖 Inteligencia Artificial</h3>
-            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tu asistente de IA para autocompletar respuestas a clientes en base a tus trámites.</p>
-            
-            <div class="stripe-settings" style="display: flex; flex-direction: column; gap: 15px;">
-              @for (config of aiConfigs; track $index) {
-                <div style="display: flex; gap: 15px; align-items: flex-end; background: rgba(0,0,0,0.1); padding: 15px; border-radius: 8px; border: 1px solid var(--border);">
-                  <div class="form-group" style="flex: 1; margin: 0;">
-                    <label>Proveedor de IA</label>
-                    <select [(ngModel)]="config.provider" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                      <option value="">Usar Global (Predeterminado)</option>
-                      <option value="gemini">Google Gemini</option>
-                      <option value="openai">OpenAI (ChatGPT)</option>
-                      <option value="deepseek">DeepSeek</option>
-                    </select>
-                  </div>
-                  <div class="form-group" style="flex: 2; margin: 0;">
-                    <label>API Key Propia</label>
-                    <input type="password" [(ngModel)]="config.key" placeholder="sk-key..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-                  </div>
-                  <button class="btn-delete" style="padding: 12px 16px; margin: 0;" (click)="removeAiConfig($index)">
-                    <span style="font-size: 16px;">&times;</span>
-                  </button>
-                </div>
-              }
-              <button class="btn-ghost" style="align-self: flex-start;" (click)="addAiConfig()">
-                + Añadir API Key Propia de Respaldo
-              </button>
-            </div>
-            <h4 style="color:var(--gold); font-size:12px; margin-top:16px; margin-bottom:8px;">🎨 Diseño del Chatbot</h4>
+            <h3 style="color:var(--brand-black); font-size:14px; margin-bottom:12px; font-weight:800;">🎨 Diseño del Chatbot Público</h3>
+            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Personaliza los colores del asistente virtual en tu página pública. La IA usa la configuración global del administrador.</p>
             <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
               <div class="form-group" style="flex:1; min-width: 250px;">
                 <label>Fondo de la ventana</label>
@@ -337,6 +325,41 @@
                 <app-color-picker [(value)]="chatbotTextColor"></app-color-picker>
               </div>
             </div>
+            <h4 style="color:var(--brand-black); font-size:12px; margin-top:20px; margin-bottom:8px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em;">🤖 Asistente del Panel</h4>
+            <p class="card-desc" style="margin-bottom:12px; font-size:12px;">Personaliza el botón flotante de ayuda dentro de tu panel (no afecta el chatbot público).</p>
+            <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+              <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
+              Mostrar asistente en el panel
+            </label>
+            <div class="form-row" style="margin-bottom:12px;">
+              <div class="form-group">
+                <label>Nombre del asistente</label>
+                <input [(ngModel)]="panelAssistantName" placeholder="Ej: VEGA, Ana, Mi Asistente" maxlength="50">
+              </div>
+              <div class="form-group">
+                <label>Posición en pantalla</label>
+                <select [(ngModel)]="panelAssistantPosition">
+                  <option value="bottom-right">Abajo derecha</option>
+                  <option value="bottom-left">Abajo izquierda</option>
+                  <option value="top-right">Arriba derecha</option>
+                  <option value="top-left">Arriba izquierda</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap; margin-bottom:12px;">
+              <div class="form-group" style="flex:1; min-width: 200px;">
+                <label>Fondo del chat</label>
+                <app-color-picker [(value)]="panelAssistantBgColor"></app-color-picker>
+              </div>
+              <div class="form-group" style="flex:1; min-width: 200px;">
+                <label>Color del botón</label>
+                <app-color-picker [(value)]="panelAssistantBtnColor"></app-color-picker>
+              </div>
+              <div class="form-group" style="flex:1; min-width: 200px;">
+                <label>Color de texto</label>
+                <app-color-picker [(value)]="panelAssistantTextColor"></app-color-picker>
+              </div>
+            </div>
           </div>
 
           <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
@@ -346,17 +369,17 @@
             <div class="form-row">
               <div class="form-group">
                 <label>Teléfono</label>
-                <input type="text" [(ngModel)]="gestorPhone" placeholder="Ej: +52 55 1234 5678" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                <input type="text" [(ngModel)]="gestorPhone" placeholder="Ej: +52 55 1234 5678" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
               </div>
               <div class="form-group">
                 <label>Dirección física</label>
-                <input type="text" [(ngModel)]="gestorAddress" placeholder="Calle, Núm, Colonia, Ciudad" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+                <input type="text" [(ngModel)]="gestorAddress" placeholder="Calle, Núm, Colonia, Ciudad" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
               </div>
             </div>
 
             <div class="form-group" style="margin-top:12px;">
               <label>URL Embed de Google Maps</label>
-              <input type="text" [(ngModel)]="gestorMapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
+              <input type="text" [(ngModel)]="gestorMapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
               <p class="card-desc" style="margin-top:4px; font-size:11px;">En Google Maps &rarr; Compartir &rarr; Incorporar un mapa &rarr; copia la URL del atributo <code>src</code> del iframe.</p>
             </div>
           </div>
@@ -427,20 +450,27 @@
         <h2 class="card-title">⚙️ Ajustes del CRM</h2>
         <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
         
-        <div class="stages-list" style="margin-top: 20px;">
+        <div class="crm-stages-list">
           @for (stage of crmStages; track stage.id; let i = $index) {
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-              <span style="color: var(--gold); font-weight: bold; width: 24px;">{{ i + 1 }}.</span>
-              <input type="text" [(ngModel)]="stage.label" placeholder="Nombre de la etapa" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-              
-              <button class="btn-ghost small" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">⬆️</button>
-              <button class="btn-ghost small" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">⬇️</button>
-              <button class="btn-delete small" (click)="removeCrmStage(i)" title="Eliminar etapa">❌</button>
+            <div class="crm-stage-row">
+              <span class="crm-stage-index">{{ i + 1 }}</span>
+              <input type="text" class="crm-stage-input" [(ngModel)]="stage.label" placeholder="Nombre de la etapa">
+              <div class="crm-stage-actions">
+                <button type="button" class="crm-stage-btn" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">
+                  <svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+                </button>
+                <button type="button" class="crm-stage-btn" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+                </button>
+                <button type="button" class="crm-stage-btn crm-stage-btn--delete" (click)="removeCrmStage(i)" title="Eliminar etapa">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
           }
         </div>
         
-        <div style="display:flex; gap:10px; margin-top:20px;">
+        <div class="crm-stages-footer">
           <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
           <button class="btn-copy" (click)="saveCrmStages()">Guardar Ajustes</button>
         </div>
@@ -452,25 +482,36 @@
       <div class="dash-card">
         <h2 class="card-title">🤖 Automatizaciones de Embudo</h2>
         <p class="card-desc">Haz que el CRM trabaje por ti. Configura reglas para enviar correos automáticos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
+
+        <div class="automation-guide">
+          <h5>¿Cómo crear una automatización?</h5>
+          <ol>
+            <li><strong>Nombre:</strong> ponle un título claro (ej. "Seguimiento día 3").</li>
+            <li><strong>Evento:</strong> elige si se dispara al mover a una etapa o tras X días sin movimiento.</li>
+            <li><strong>Etapa:</strong> selecciona en qué columna del embudo aplica la regla.</li>
+            <li><strong>Correo:</strong> redacta el mensaje y haz clic en las variables para personalizarlo.</li>
+            <li><strong>Crear:</strong> guarda la regla. Se enviará solo una vez por trámite.</li>
+          </ol>
+        </div>
         
-        <div class="stages-list" style="margin-top: 20px;">
+        <div class="automation-list">
           @for (auto of automations(); track auto.id) {
-            <div style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border-left: 3px solid var(--gold);">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <h4 style="color:var(--mx-white); margin:0;">{{ auto.name }}</h4>
-                <button class="btn-delete small" (click)="deleteAutomation(auto.id)">Eliminar</button>
+            <div class="automation-item">
+              <div class="automation-item-header">
+                <h4>{{ auto.name }}</h4>
+                <button type="button" class="btn-delete small" (click)="deleteAutomation(auto.id)">Eliminar</button>
               </div>
-              <p style="font-size:12px; color:var(--muted); margin:0;">
-                <strong style="color:var(--gold);">Trigger:</strong> 
-                {{ auto.trigger_event === 'stage_change' ? 'Al entrar a la etapa' : ('Tras ' + auto.trigger_delay_days + ' días en la etapa') }} 
-                <span style="color:#a78bfa;">"{{ auto.trigger_stage }}"</span>
+              <p class="automation-item-meta">
+                <strong>Trigger:</strong>
+                {{ auto.trigger_event === 'stage_change' ? 'Al entrar a la etapa' : ('Tras ' + auto.trigger_delay_days + ' días en la etapa') }}
+                <span class="automation-stage">"{{ automationStageLabel(auto.trigger_stage) }}"</span>
               </p>
-              <p style="font-size:12px; color:var(--muted); margin:0;">
-                <strong style="color:var(--gold);">Acción:</strong> Enviar Correo Automático
+              <p class="automation-item-meta">
+                <strong>Acción:</strong> Enviar correo automático al cliente
               </p>
             </div>
           } @empty {
-            <p class="empty" style="margin-bottom: 20px;">No tienes automatizaciones activas. ¡Crea la primera para vender en automático!</p>
+            <p class="automation-empty">No tienes automatizaciones activas. ¡Crea la primera para vender en automático!</p>
           }
         </div>
         
@@ -479,10 +520,10 @@
         <div class="form-row">
           <div class="form-group" style="flex:1;">
             <label>Nombre de la regla</label>
-            <input [(ngModel)]="newAutomation.name" placeholder="Ej: Pedir Reseña Google">
+            <input [(ngModel)]="newAutomation.name" placeholder="Ej: Pedir reseña en Google">
           </div>
           <div class="form-group" style="flex:1;">
-            <label>Tipo de Evento</label>
+            <label>Tipo de evento</label>
             <select [(ngModel)]="newAutomation.trigger_event">
               <option value="stage_change">Al mover trámite a esta etapa</option>
               <option value="time_in_stage">Inactividad de días en esta etapa</option>
@@ -492,9 +533,9 @@
         
         <div class="form-row">
           <div class="form-group" style="flex:1;">
-            <label>Etapa Objetivo</label>
+            <label>Etapa objetivo</label>
             <select [(ngModel)]="newAutomation.trigger_stage">
-              <option value="">-- Selecciona una etapa --</option>
+              <option value="">— Selecciona una etapa —</option>
               @for (stage of crmStages; track stage.id) {
                 <option [value]="stage.id">{{ stage.label }}</option>
               }
@@ -503,19 +544,31 @@
           @if (newAutomation.trigger_event === 'time_in_stage') {
             <div class="form-group" style="flex:1;">
               <label>Días a esperar</label>
-              <input type="number" [(ngModel)]="newAutomation.trigger_delay_days" placeholder="3">
+              <input type="number" [(ngModel)]="newAutomation.trigger_delay_days" placeholder="3" min="1">
             </div>
           }
         </div>
 
-        <div class="form-group" style="margin-top:10px;">
-          <label>Contenido del Correo</label>
-          <p class="card-desc" style="font-size:11px; margin-bottom:8px;">Puedes usar variables: <code style="color:var(--gold);">{{ '{' }}{{ '{' }}nombre{{ '}' }}{{ '}' }}</code>, <code style="color:var(--gold);">{{ '{' }}{{ '{' }}tramite{{ '}' }}{{ '}' }}</code></p>
-          <textarea [(ngModel)]="newAutomation.action_content" rows="4" placeholder="Hola {{ '{' }}{{ '{' }}nombre{{ '}' }}{{ '}' }}, tu trámite está listo..."></textarea>
+        <div class="form-group automation-email-field">
+          <label>Contenido del correo</label>
+          <p class="automation-variables-label">Haz clic para insertar una variable en el mensaje:</p>
+          <div class="automation-variable-chips">
+            @for (v of automationVariables; track v.key) {
+              <button type="button" class="automation-var-chip" (click)="insertAutomationVariable(v.key, autoContent)" title="{{ v.label }}">
+                <code>{{ '{{' + v.key + '}}' }}</code>
+                <span>{{ v.label }}</span>
+              </button>
+            }
+          </div>
+          <textarea #autoContent [(ngModel)]="newAutomation.action_content" rows="5" placeholder="Hola {{ '{{' }}nombre{{ '}}' }}, te escribimos sobre tu trámite {{ '{{' }}tramite{{ '}}' }}..."></textarea>
+          <div class="automation-preview">
+            <span class="automation-preview-label">Vista previa (ejemplo):</span>
+            <p>{{ automationPreview() }}</p>
+          </div>
         </div>
         
         <div style="margin-top:15px;">
-          <button class="btn-copy" (click)="addAutomation()">+ Crear Automatización</button>
+          <button type="button" class="btn-copy" (click)="addAutomation()">+ Crear automatización</button>
         </div>
       </div>
     }

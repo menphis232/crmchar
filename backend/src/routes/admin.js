@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import * as ga from '../services/googleAnalytics.js';
 
 const router = Router();
 
@@ -192,6 +193,95 @@ router.get('/deals/:id/messages', authRequired, requireRole('admin'), async (req
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener mensajes del trámite' });
+  }
+});
+
+// ─── GOOGLE ANALYTICS (OAuth + reportes globales) ─────────────────
+
+router.get('/analytics/config', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    res.json(await ga.getPublicConfig());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar configuración de Analytics' });
+  }
+});
+
+router.put('/analytics/config', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const { measurementId, propertyId, googleClientId, googleClientSecret } = req.body;
+    const config = await ga.updateConfig({ measurementId, propertyId, googleClientId, googleClientSecret });
+    res.json(config);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar configuración' });
+  }
+});
+
+router.get('/analytics/oauth/url', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    if (!(await ga.isConfigured())) {
+      return res.status(503).json({
+        error: 'Guarda primero el Client ID y Client Secret de Google en la configuración de Analytics.',
+      });
+    }
+    const state = ga.createOAuthState(req.user.id);
+    const url = await ga.getOAuthUrl(state);
+    res.json({ url });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al iniciar OAuth' });
+  }
+});
+
+router.get('/analytics/oauth/callback', async (req, res) => {
+  try {
+    const { code, state, error } = req.query;
+    const redirect = ga.getFrontendRedirect('/panel/admin');
+    if (error) {
+      return res.redirect(`${redirect}?analytics=error&reason=${encodeURIComponent(error)}`);
+    }
+    if (!code || !state) {
+      return res.redirect(`${redirect}?analytics=error&reason=missing_code`);
+    }
+    ga.verifyOAuthState(state);
+    await ga.handleOAuthCallback(code);
+    res.redirect(`${redirect}?analytics=connected`);
+  } catch (err) {
+    console.error('GA OAuth callback:', err);
+    const redirect = ga.getFrontendRedirect('/panel/admin');
+    res.redirect(`${redirect}?analytics=error&reason=${encodeURIComponent(err.message || 'oauth_failed')}`);
+  }
+});
+
+router.get('/analytics/properties', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    const properties = await ga.listProperties();
+    res.json(properties);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Error al listar propiedades GA' });
+  }
+});
+
+router.get('/analytics/dashboard', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(7, parseInt(req.query.days, 10) || 30));
+    const data = await ga.getDashboard(days);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Error al cargar estadísticas de Analytics' });
+  }
+});
+
+router.delete('/analytics/disconnect', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    const config = await ga.disconnect();
+    res.json(config);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al desconectar Analytics' });
   }
 });
 

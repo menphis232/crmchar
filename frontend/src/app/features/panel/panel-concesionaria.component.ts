@@ -2,6 +2,8 @@ import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { AutosService, ConcesionariaService, CrmService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { Auto, AutoStatus, ConcesionariaDashboard, CrmDashboard, CrmDeal, CrmTodayInbox, DealerReview, MessageTemplate, SiteSettings, PageBuilderConfig } from '../../models';
@@ -14,14 +16,21 @@ import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { ColorPickerComponent } from '../../shared/color-picker.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
 
+const DEFAULT_AI_TIPS = [
+  'Responde leads en menos de 2 horas con fotos del vehículo y opciones de financiamiento; la velocidad cierra ventas en concesionarias.',
+  'Programa visitas al showroom con recordatorio automático; los clientes que visitan tienen mucha más probabilidad de comprar.',
+  'Prepara una ficha comparativa (precio, kilometraje, garantía) antes de la negociación para generar confianza y acelerar el cierre.',
+];
+
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, ColorPickerComponent, AiAssistantComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -46,6 +55,8 @@ export class PanelConcesionariaComponent implements OnInit {
   panelTheme = signal<SiteSettings>({});
   message = signal('');
   newTemplate = { name: '', content: '' };
+  aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
+  isAiLoading = signal(false);
 
   // CRM Stages Settings
   crmStages: { id: string, label: string }[] = [];
@@ -62,7 +73,8 @@ export class PanelConcesionariaComponent implements OnInit {
     private themeService: ThemeService,
     private uploadService: UploadService,
     private toast: ToastService,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private http: HttpClient,
   ) {}
 
   ngOnInit() {
@@ -72,6 +84,7 @@ export class PanelConcesionariaComponent implements OnInit {
     });
     this.loadDashboard();
     this.loadCrm();
+    this.loadAiInsights();
     this.loadInventory();
 
     this.route.queryParams.subscribe(params => {
@@ -90,6 +103,12 @@ export class PanelConcesionariaComponent implements OnInit {
       this.profileAddress = (u as any).address || '';
       this.profileMapEmbedUrl = (u as any).map_embed_url || '';
       this.publicSlug = (u as any).slug || '';
+      this.panelAssistantEnabled = u.panel_assistant_enabled !== 0 && u.panel_assistant_enabled !== false;
+      this.panelAssistantName = u.panel_assistant_name || 'VEGA';
+      this.panelAssistantPosition = u.panel_assistant_position || 'bottom-right';
+      this.panelAssistantBgColor = u.panel_assistant_bg_color || '#0f172a';
+      this.panelAssistantBtnColor = u.panel_assistant_btn_color || '#4F46E5';
+      this.panelAssistantTextColor = u.panel_assistant_text_color || '#FFFFFF';
       this.crmStages = u.crm_stages ? [...u.crm_stages] : [
         { id: 'lead_nuevo', label: 'Lead Nuevo' },
         { id: 'contactado', label: 'Contactado' },
@@ -126,6 +145,45 @@ export class PanelConcesionariaComponent implements OnInit {
     this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
     this.loadDeals();
     this.crmService.getTemplates().subscribe(t => this.templates.set(t));
+    this.loadAiInsights();
+  }
+
+  loadAiInsights() {
+    const today = new Date().toDateString();
+    const cacheKey = 'crm_ai_insights_concesionaria_v2';
+    const cacheDateKey = 'crm_ai_insights_concesionaria_date_v2';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedDate = localStorage.getItem(cacheDateKey);
+
+    if (cachedDate === today && cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData) as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.aiInsights.set(parsed);
+          this.isAiLoading.set(false);
+          return;
+        }
+      } catch {
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(cacheDateKey);
+      }
+    }
+
+    this.isAiLoading.set(true);
+    this.http.get<{ insights: string[] }>(`${environment.apiUrl}/crm/ai/insights`).subscribe({
+      next: (res) => {
+        const insights = (res.insights || []).filter(Boolean);
+        const finalInsights = insights.length > 0 ? insights : DEFAULT_AI_TIPS;
+        this.aiInsights.set(finalInsights);
+        localStorage.setItem(cacheKey, JSON.stringify(finalInsights));
+        localStorage.setItem(cacheDateKey, today);
+        this.isAiLoading.set(false);
+      },
+      error: () => {
+        this.aiInsights.set(DEFAULT_AI_TIPS);
+        this.isAiLoading.set(false);
+      },
+    });
   }
 
   loadDeals() {
@@ -151,10 +209,15 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
-  onStageChange({ deal, stage }: { deal: CrmDeal; stage: string }) {
+  onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
     if (stage === 'perdido') {
-      this.selectedDealId.set(deal.id);
-      this.message.set('Indica el motivo de pérdida en el panel lateral');
+      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
+      if (fromDrag) {
+        this.message.set('Trámite movido a Perdido. Haz clic en la tarjeta para indicar el motivo de pérdida.');
+      } else {
+        this.selectedDealId.set(deal.id);
+        this.message.set('Indica el motivo de pérdida en el panel lateral');
+      }
       return;
     }
     this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
@@ -302,6 +365,13 @@ export class PanelConcesionariaComponent implements OnInit {
   publicSlug = '';
   isUploadingLogo = false;
 
+  panelAssistantEnabled = true;
+  panelAssistantName = 'VEGA';
+  panelAssistantPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right';
+  panelAssistantBgColor = '#0f172a';
+  panelAssistantBtnColor = '#4F46E5';
+  panelAssistantTextColor = '#FFFFFF';
+
   onLogoSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
@@ -329,6 +399,7 @@ export class PanelConcesionariaComponent implements OnInit {
   // CRM Stages Settings Methods
   addCrmStage() {
     this.crmStages.push({ id: `etapa_${Date.now()}`, label: 'Nueva Etapa' });
+    this.saveCrmStages();
   }
 
   removeCrmStage(index: number) {
@@ -337,6 +408,7 @@ export class PanelConcesionariaComponent implements OnInit {
       return;
     }
     this.crmStages.splice(index, 1);
+    this.saveCrmStages();
   }
 
   moveCrmStageUp(index: number) {
@@ -344,6 +416,7 @@ export class PanelConcesionariaComponent implements OnInit {
     const temp = this.crmStages[index];
     this.crmStages[index] = this.crmStages[index - 1];
     this.crmStages[index - 1] = temp;
+    this.saveCrmStages();
   }
 
   moveCrmStageDown(index: number) {
@@ -351,6 +424,7 @@ export class PanelConcesionariaComponent implements OnInit {
     const temp = this.crmStages[index];
     this.crmStages[index] = this.crmStages[index + 1];
     this.crmStages[index + 1] = temp;
+    this.saveCrmStages();
   }
 
   saveCrmStages() {
@@ -375,6 +449,12 @@ export class PanelConcesionariaComponent implements OnInit {
       phone: this.profilePhone || null,
       address: this.profileAddress || null,
       map_embed_url: this.profileMapEmbedUrl || null,
+      panel_assistant_enabled: this.panelAssistantEnabled,
+      panel_assistant_name: this.panelAssistantName,
+      panel_assistant_position: this.panelAssistantPosition,
+      panel_assistant_bg_color: this.panelAssistantBgColor,
+      panel_assistant_btn_color: this.panelAssistantBtnColor,
+      panel_assistant_text_color: this.panelAssistantTextColor,
     }).subscribe({
       next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
       error: () => {}

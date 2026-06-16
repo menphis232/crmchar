@@ -1,12 +1,19 @@
-<div class="kanban-hint">
-  💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
+<div class="kanban-hint" [class.kanban-hint-touch]="isTouchDevice()">
+  @if (isTouchDevice()) {
+    💡 Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.
+  } @else {
+    💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
+  }
 </div>
+
+<p class="kanban-scroll-hint">← Desliza para ver más etapas (incl. Perdido) →</p>
 
 <div class="kanban-board">
   @for (stage of stages(); track stage) {
     <div
       class="kanban-col"
       [class.drag-over]="dragOverStage() === stage"
+      [class.kanban-col-lost]="stage === 'perdido'"
       (dragover)="onDragOver($event, stage)"
       (dragleave)="onDragLeave($event, stage)"
       (drop)="onDrop($event, stage)"
@@ -25,15 +32,13 @@
           <div
             class="kanban-card"
             [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage !== 'completado' && stage !== 'vendido' && stage !== 'perdido'"
-            draggable="true"
+            [attr.draggable]="!isTouchDevice()"
             (dragstart)="onDragStart($event, deal)"
             (dragend)="onDragEnd()"
-            (dragover)="onDragOver($event, stage)"
-            (drop)="onDrop($event, stage)"
-            (click)="onCardClick(deal)"
-            role="button"
-            tabindex="0"
-            (keydown.enter)="onCardClick(deal)"
+            (click)="onCardClickIfDesktop(deal)"
+            [attr.role]="isTouchDevice() ? null : 'button'"
+            [attr.tabindex]="isTouchDevice() ? null : 0"
+            (keydown.enter)="onCardClickIfDesktop(deal)"
           >
             <div class="kanban-card-top">
               <strong>{{ deal.title }}</strong>
@@ -56,20 +61,31 @@
               <span class="kanban-days">🕐 {{ deal.daysInStage }}d en etapa</span>
             }
 
+            <label class="kanban-select-label">Mover a etapa</label>
             <select
               class="kanban-stage-select"
-              [value]="deal.stage"
               (click)="stopClick($event)"
               (mousedown)="stopClick($event)"
+              (touchstart)="stopClick($event)"
               (change)="onSelectStage(deal, $event)"
             >
               @for (s of stages(); track s) {
-                <option [value]="s">{{ stageLabels()[s] || s }}</option>
+                <option [value]="s" [selected]="s === deal.stage">{{ stageLabels()[s] || s }}</option>
               }
             </select>
+
+            @if (isTouchDevice()) {
+              <button type="button" class="kanban-open-btn" (click)="onCardClick(deal); $event.stopPropagation()">
+                Ver detalle
+              </button>
+            }
           </div>
         } @empty {
-          <div class="kanban-empty">Soltar aquí</div>
+          <div
+            class="kanban-empty"
+            (dragover)="onDragOver($event, stage)"
+            (drop)="onDrop($event, stage)"
+          >Soltar aquí</div>
         }
       </div>
     </div>

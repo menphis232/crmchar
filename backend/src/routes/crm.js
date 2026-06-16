@@ -139,17 +139,29 @@ router.get('/dashboard', async (req, res) => {
 });
 
 router.get('/ai/insights', async (req, res) => {
+  const gestorDefaultTips = [
+    'Configura mensajes de bienvenida en WhatsApp con saludo, lista de requisitos y tiempo estimado; el primer contacto marca la confianza del cliente.',
+    'Define un protocolo de 3 seguimientos (día 1, 3 y 7) para prospectos en espera; en trámites vehiculares muchas ventas se cierran en el segundo mensaje.',
+    'Usa una plantilla de precalificación en el primer chat (documentación, adeudos, plazo) para cotizar más rápido y dar una experiencia más profesional.',
+  ];
+  const concesionariaDefaultTips = [
+    'Responde leads en menos de 2 horas con fotos del vehículo y opciones de financiamiento; la velocidad cierra ventas en concesionarias.',
+    'Programa visitas al showroom con recordatorio automático; los clientes que visitan tienen mucha más probabilidad de comprar.',
+    'Prepara una ficha comparativa (precio, kilometraje, garantía) antes de la negociación para generar confianza y acelerar el cierre.',
+  ];
+
   try {
     const uid = req.orgId;
+    const role = req.user.role;
+    const defaultTips = role === 'concesionaria' ? concesionariaDefaultTips : gestorDefaultTips;
     let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
     if (!user || !user.ai_provider || !user.ai_api_key) {
       user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
     }
     if (!user || !user.ai_provider || !user.ai_api_key) {
-      return res.status(400).json({ error: 'El administrador debe configurar el proveedor de IA y API Key globalmente.' });
+      return res.json({ insights: defaultTips });
     }
 
-    const role = req.user.role;
     const dealType = dealTypeForRole(role);
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     const lostStage = 'perdido';
@@ -163,17 +175,32 @@ router.get('/ai/insights', async (req, res) => {
 
     const totalCount = total.c || 0;
     const conversionRate = totalCount > 0 ? Math.round(((won.c || 0) / totalCount) * 100) : 0;
-    const avgH = avgResponse.h ? Math.round(Number(avgResponse.h)) : 'N/A';
+    const avgH = avgResponse.h ? Math.round(Number(avgResponse.h)) : null;
 
-    let prompt = `Eres un experto en ventas y rendimiento comercial para gestorías vehiculares y concesionarias.
-Analiza las siguientes métricas de un usuario (${role}):
-- Total de prospectos/trámites: ${totalCount}
-- Ganados (${wonStage}): ${won.c || 0}
-- Perdidos: ${lost.c || 0}
-- Tasa de conversión: ${conversionRate}%
-- Tiempo promedio de primera respuesta: ${avgH} horas.
+    const activityLevel = totalCount === 0 ? 'inicio' : totalCount < 8 ? 'crecimiento' : 'activo';
+    const conversionLevel = conversionRate < 15 ? 'oportunidad' : conversionRate < 35 ? 'estable' : 'solido';
+    const responseLevel = avgH === null ? 'sin_datos' : avgH > 12 ? 'mejorable' : avgH > 2 ? 'aceptable' : 'rapido';
 
-Instrucciones: Devuelve EXACTAMENTE 3 puntos clave accionables (insights) para mejorar su rendimiento comercial o eficiencia operativa. Sé directo y útil. Devuelve los 3 puntos separados por un salto de línea y numerados (1. 2. 3.). Nada más.`;
+    if (totalCount === 0) {
+      return res.json({ insights: defaultTips });
+    }
+
+    let prompt = `Eres un coach de ventas motivador para gestorías vehiculares y concesionarias en México.
+
+Perfil del usuario (contexto interno, NO lo cites ni uses cifras exactas):
+- Tipo de negocio: ${role === 'gestor' ? 'gestoría vehicular' : 'concesionaria'}
+- Etapa de actividad en CRM: ${activityLevel}
+- Nivel de conversión: ${conversionLevel}
+- Velocidad de primera respuesta: ${responseLevel}
+
+REGLAS ESTRICTAS:
+- NUNCA digas "tienes pocos clientes", "no tienes ventas", "solo tienes X", "tu tasa es muy baja", "estás muy atrasado" ni nada que desanime.
+- NUNCA menciones números exactos, porcentajes ni estadísticas del usuario en tu respuesta.
+- Tono positivo, profesional y constructivo: como un mentor que quiere que crezcan en la plataforma.
+- Cada punto debe ser un TIP práctico aplicable hoy (WhatsApp, seguimiento, plantillas, precalificación, post-venta, fidelización).
+- Enfócate en buenas prácticas del sector y próximos pasos recomendados, no en lo que "falta" o "está mal".
+
+Devuelve EXACTAMENTE 3 tips accionables, numerados (1. 2. 3.), separados por salto de línea. Nada más.`;
 
     let aiConfigs = [];
     try {
@@ -253,10 +280,11 @@ Instrucciones: Devuelve EXACTAMENTE 3 puntos clave accionables (insights) para m
     if (!generatedText) throw new Error('No se pudo generar análisis con ningún proveedor.');
 
     const insights = generatedText.split('\n').map(l => l.trim()).filter(l => l.match(/^[1-3]\./)).map(l => l.replace(/^[1-3]\.\s*/, ''));
-    res.json({ insights: insights.length > 0 ? insights : generatedText.split('\n').filter(l=>l.trim()!=='') });
+    const finalInsights = insights.length > 0 ? insights : generatedText.split('\n').filter(l => l.trim() !== '');
+    res.json({ insights: finalInsights.length > 0 ? finalInsights : defaultTips });
   } catch (err) {
     console.error('Error AI Insights:', err.message);
-    res.status(500).json({ error: 'Error al generar insights con IA' });
+    res.json({ insights: defaultTips });
   }
 });
 
@@ -1106,8 +1134,8 @@ router.post('/deals/:id/checkout', async (req, res) => {
   }
 });
 
-// ─── AI INSIGHTS ───────────────────────────────────────────
-router.get('/ai/insights', async (req, res) => {
+// ─── AI INSIGHTS (legacy stats — use GET /ai/insights above for AI tips) ───
+router.get('/ai/insights/stats', async (req, res) => {
   try {
     const uid = req.orgId;
     const [totalDeals, openDeals, closedDeals, totalContacts] = await Promise.all([

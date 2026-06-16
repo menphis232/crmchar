@@ -37,6 +37,12 @@ export interface User {
   chatbot_bg_color?: string;
   chatbot_btn_color?: string;
   chatbot_text_color?: string;
+  panel_assistant_enabled?: boolean | number;
+  panel_assistant_name?: string;
+  panel_assistant_position?: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left';
+  panel_assistant_bg_color?: string;
+  panel_assistant_btn_color?: string;
+  panel_assistant_text_color?: string;
   slug?: string;
   description?: string;
   phone?: string;
@@ -152,6 +158,33 @@ export interface AdminStats {
   };
   topGestores: { name: string; rating: number; tramitesCount: number; state: string }[];
   topDealers: { name: string; autosCount: number; avgRating: number }[];
+}
+
+export interface AnalyticsConfig {
+  connected: boolean;
+  measurementId: string | null;
+  propertyId: string | null;
+  connectedEmail: string | null;
+  googleClientId?: string | null;
+  hasClientSecret?: boolean;
+  oauthConfigured?: boolean;
+  oauthRedirectUri?: string;
+}
+
+export interface GaProperty {
+  propertyId: string;
+  displayName: string;
+  accountName: string;
+}
+
+export interface AnalyticsDashboard {
+  connected: boolean;
+  needsProperty?: boolean;
+  periodDays?: number;
+  overview?: { sessions: number; activeUsers: number; screenPageViews: number };
+  devices?: { device: string; sessions: number; activeUsers: number }[];
+  topPages?: { path: string; views: number }[];
+  daily?: { date: string; sessions: number }[];
 }
 
 export interface Gestor {

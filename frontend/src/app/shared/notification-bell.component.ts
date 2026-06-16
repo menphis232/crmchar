@@ -45,29 +45,48 @@ import { io } from 'socket.io-client';
     .notification-wrapper { position: relative; display: inline-block; margin-right: 15px; }
     .notification-btn { position: relative; font-size: 1.2rem; padding: 8px; background: transparent; border: none; cursor: pointer; color: white;}
     .badge {
-      position: absolute; top: 0px; right: 0px; background: var(--gold); color: var(--bg);
+      position: absolute; top: 0px; right: 0px; background: #ffffff; color: var(--brand-black);
       font-size: 10px; font-weight: bold; border-radius: 50%; padding: 2px 6px; pointer-events: none;
     }
     .notification-dropdown {
-      position: absolute; top: 100%; right: -50px; width: 320px; background: #0b111e;
-      border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
-      z-index: 9999; margin-top: 10px; display: flex; flex-direction: column; max-height: 400px;
+      position: absolute; top: 100%; right: -50px; width: 340px;
+      background: #ffffff;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-top: 3px solid var(--brand-black);
+      border-radius: 0;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
+      z-index: 9999; margin-top: 10px; display: flex; flex-direction: column; max-height: 420px;
     }
     .nd-header {
-      display: flex; justify-content: space-between; align-items: center; padding: 12px 15px;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; padding: 14px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background: #f8f7f5;
     }
-    .nd-header h4 { margin: 0; color: var(--mx-white); font-family: var(--f-display); font-size: 16px; }
-    .btn-link { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 12px; }
-    .btn-link:hover { text-decoration: underline; }
-    .nd-body { overflow-y: auto; flex: 1; text-align: left; }
-    .nd-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; }
-    .nd-item { padding: 12px 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.2s; }
-    .nd-item:hover { background: rgba(200, 169, 74, 0.05); }
-    .nd-item.unread { border-left: 3px solid var(--gold); background: rgba(255, 255, 255, 0.02); }
-    .nd-title { font-weight: bold; font-size: 13px; color: var(--mx-white); margin-bottom: 4px; }
-    .nd-body-text { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-    .nd-date { font-size: 10px; color: #888; text-align: right; }
+    .nd-header h4 {
+      margin: 0; color: var(--brand-black); font-family: var(--f-display);
+      font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .btn-link {
+      background: none; border: none; color: var(--brand-black); cursor: pointer;
+      font-size: 11px; font-weight: 600; text-decoration: underline; opacity: 0.7;
+    }
+    .btn-link:hover { opacity: 1; }
+    .nd-body { overflow-y: auto; flex: 1; text-align: left; scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+    .nd-body::-webkit-scrollbar { width: 6px; }
+    .nd-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+    .nd-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+    .nd-item {
+      padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.06);
+      cursor: pointer; transition: background 0.2s;
+    }
+    .nd-item:hover { background: #f0ede9; }
+    .nd-item.unread {
+      border-left: 3px solid var(--brand-black);
+      background: #f8f7f5;
+    }
+    .nd-title { font-weight: 700; font-size: 13px; color: var(--brand-black); margin-bottom: 4px; }
+    .nd-body-text { font-size: 12px; color: #555; margin-bottom: 6px; line-height: 1.5; }
+    .nd-date { font-size: 10px; color: var(--muted); text-align: right; }
   `]
 })
 export class NotificationBellComponent implements OnInit {

@@ -106,7 +106,7 @@ router.post('/chat', authRequired, async (req, res) => {
     const dealsStr = deals.length > 0 ? deals.map(d => `- ID: ${d.id} | Cliente: ${d.contact_name || 'Sin contacto'} | Trámite: ${d.title} | Etapa actual: ${d.stage}`).join('\n') : '(Sin trámites activos)';
 
     // Sistema de contexto según el rol del usuario
-    let systemPrompt = context || `Eres VEGA, un asistente virtual inteligente de TrámitesVehiculares.mx.
+    let systemPrompt = context || `Eres un asistente virtual inteligente de TrámitesVehiculares.mx.
 Eres amigable, profesional y muy útil. Ayudas a gestores, concesionarias y administradores a navegar y usar la plataforma.
 Respondes SIEMPRE en español mexicano, de forma concisa y clara.
 Si no sabes algo específico del sistema, sugiere al usuario que contacte soporte.`;

@@ -1,0 +1,56 @@
+<div class="panel-preview-root">
+  <nav class="dash-nav panel-preview-nav">
+    <a class="dash-logo">
+      <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Logo" class="dash-brand-logo" />
+    </a>
+    <div class="dash-user">
+      <span class="preview-user-name">{{ isConcesionaria ? 'Concesionaria Demo' : 'Gestor Demo' }}</span>
+      <div class="avatar">GD</div>
+    </div>
+  </nav>
+
+  <div class="dash-container panel-preview-body">
+    <aside class="dash-sidebar">
+      @if (isConcesionaria) {
+        <button class="dash-link active">📊 Panel</button>
+        <button class="dash-link">🚗 Inventario</button>
+        <button class="dash-link">👤 Perfil</button>
+        <a class="dash-link">🌐 Página pública</a>
+      } @else {
+        <button class="dash-link active">📊 Panel CRM</button>
+        <button class="dash-link">📋 Embudo de Ventas</button>
+        <button class="dash-link">🛠 Servicios</button>
+        <button class="dash-link">💰 Finanzas</button>
+        <button class="dash-link">👤 Mi perfil</button>
+        <a class="dash-link">🌐 Directorio público</a>
+      }
+    </aside>
+
+    <main class="dash-main">
+      @if (theme.panelTitle) {
+        <h2 class="panel-preview-title">{{ theme.panelTitle }}</h2>
+      }
+      @if (theme.welcomeMessage) {
+        <p class="panel-welcome">{{ theme.welcomeMessage }}</p>
+      }
+      @for (block of theme.customBlocks ?? []; track $index) {
+        @if (block.visible) {
+          <div class="custom-block" [class]="block.type">{{ block.text }}</div>
+        }
+      }
+
+      <div class="stats-grid panel-preview-stats">
+        <div class="stat-box"><div class="stat-num">12</div><div class="stat-label">Activos</div></div>
+        <div class="stat-box"><div class="stat-num">3</div><div class="stat-label">Sin respuesta</div></div>
+        <div class="stat-box"><div class="stat-num">5</div><div class="stat-label">Tareas hoy</div></div>
+        <div class="stat-box"><div class="stat-num">2</div><div class="stat-label">Estancados</div></div>
+      </div>
+
+      <div class="dash-card panel-preview-card">
+        <h3 class="card-title">Vista previa del panel</h3>
+        <p class="card-desc">Los colores, fuentes, mensaje de bienvenida y bloques personalizados se actualizan en tiempo real mientras editas.</p>
+        <button type="button" class="btn-copy small">Acción de ejemplo</button>
+      </div>
+    </main>
+  </div>
+</div>

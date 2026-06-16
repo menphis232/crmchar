@@ -5,7 +5,7 @@
       <!-- ── HEADER ── -->
       <div class="deal-panel-header">
         <div style="flex:1; min-width:0;">
-          <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Trámite</p>
+          <p class="deal-panel-eyebrow">Trámite</p>
           <div style="display:flex; align-items:center; gap:10px;">
             <h3 style="margin:0;">{{ d.title }}</h3>
             @if (d.trackingCode) {
@@ -30,7 +30,7 @@
                 👤 {{ d.contact?.name }}
               </button>
             } @else {
-              <strong style="color:var(--mx-white);font-size:14px;">{{ d.contact?.name }}</strong>
+              <strong class="deal-contact-name">{{ d.contact?.name }}</strong>
             }
             @if (d.contact?.email) {
               <p>✉️ {{ d.contact?.email }}</p>
@@ -71,15 +71,15 @@
         <!-- VALOR ESTIMADO -->
         <div class="deal-section">
           <h4>Valor estimado (MXN)</h4>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <input type="number" [(ngModel)]="estimatedValue" placeholder="0" style="flex:1;min-width:100px;">
+          <div class="deal-value-row">
+            <input type="number" [(ngModel)]="estimatedValue" placeholder="0">
             <button type="button" class="btn-copy small" (click)="saveNotes()">💾 Guardar</button>
           </div>
           
-          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:13px; color:var(--muted);">Estado de Pago: 
-                <strong [style.color]="d.paymentStatus === 'paid' ? 'var(--mx-green)' : 'var(--gold)'">
+          <div class="deal-payment-box">
+            <div class="deal-payment-status">
+              <span>Estado de Pago: 
+                <strong [class.paid]="d.paymentStatus === 'paid'" [class.pending]="d.paymentStatus !== 'paid'">
                   {{ d.paymentStatus === 'paid' ? '✅ PAGADO' : '⏳ PENDIENTE' }}
                 </strong>
               </span>
@@ -91,44 +91,44 @@
             </div>
             
             @if (paymentLink()) {
-              <div style="margin-top:12px; padding:12px; background:rgba(0,0,0,0.2); border:1px solid var(--border); border-radius:8px;">
-                <p style="font-size:12px; color:var(--gold); margin-bottom:8px;">Link generado. Cópialo y envíalo al cliente:</p>
-                <div style="display:flex; gap:8px;">
-                  <input type="text" readonly [value]="paymentLink()" style="flex:1; font-size:11px; padding:6px; background:var(--bg); border:1px solid var(--border); color:var(--muted);" #linkInput>
+              <div class="deal-payment-link-box">
+                <p class="deal-payment-link-label">Link generado. Cópialo y envíalo al cliente:</p>
+                <div class="deal-payment-link-row">
+                  <input type="text" readonly [value]="paymentLink()" #linkInput>
                   <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
                 </div>
               </div>
             }
             @if (paymentError()) {
-              <p style="color:var(--mx-red); font-size:12px; margin-top:8px;">{{ paymentError() }}</p>
+              <p class="deal-payment-error">{{ paymentError() }}</p>
             }
           </div>
         </div>
 
         <!-- DOCUMENTOS DEL CLIENTE (OCR) -->
-        <div class="deal-section" style="background:rgba(99,102,241,0.05); border:1px solid rgba(99,102,241,0.3); border-radius:8px; padding:16px;">
-          <h4 style="margin-bottom:12px; color:#818cf8;">Documentos del Cliente (OCR)</h4>
+        <div class="deal-section deal-subsection deal-subsection--ocr">
+          <h4>Documentos del Cliente (OCR)</h4>
           @if (clientDocuments().length > 0) {
             <div style="display:flex; flex-direction:column; gap:8px;">
               @for (doc of clientDocuments(); track doc.id) {
-                <div style="background:var(--surface); padding:10px 12px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
-                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+                <div class="deal-doc-item">
+                  <div class="deal-doc-item-top">
                     <div>
-                      <strong style="color:var(--mx-white); font-size:13px;">{{ doc.document_type }}</strong>
-                      <div style="font-size:11px; color:var(--muted);">{{ doc.created_at | date:'short' }}</div>
+                      <strong>{{ doc.document_type }}</strong>
+                      <div class="card-desc">{{ doc.created_at | date:'short' }}</div>
                     </div>
                     <div style="display:flex; gap:8px;">
                       <a [href]="doc.file_url" target="_blank" class="btn-ghost small" style="padding:2px 8px; font-size:11px;">Ver Foto</a>
                     </div>
                   </div>
                   @if (doc.extracted_data) {
-                    <div style="margin-top:8px; padding-top:8px; border-top:1px dashed rgba(255,255,255,0.1);">
-                      <p style="font-size:11px; color:#a78bfa; margin:0 0 6px;">✨ Datos Extraídos:</p>
-                      <div style="font-size:11px; margin:0 0 8px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.2); padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.05);">
+                    <div class="deal-ocr-block">
+                      <p class="deal-ocr-label">✨ Datos Extraídos:</p>
+                      <div class="deal-ocr-data">
                         @for (item of doc.extracted_data | keyvalue; track item.key) {
-                          <div style="margin-bottom:4px; border-bottom:1px solid rgba(255,255,255,0.02); padding-bottom:4px; display:flex; justify-content:space-between; gap:8px;">
-                            <strong style="color:var(--mx-white); text-transform:capitalize;">{{ item.key }}:</strong> 
-                            <span style="color:var(--gold); text-align:right;">{{ item.value }}</span>
+                          <div class="deal-ocr-row">
+                            <strong>{{ item.key }}:</strong> 
+                            <span>{{ item.value }}</span>
                           </div>
                         }
                       </div>
@@ -152,8 +152,8 @@
         </div>
 
         <!-- DOCUMENTOS (Phase 3.2) -->
-        <div class="deal-section" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:16px;">
-          <h4 style="margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="deal-section deal-subsection">
+          <h4 class="deal-docs-header">
             Documentos Adjuntos
             <label class="btn-copy small" style="cursor:pointer; margin:0;" [class.disabled]="isUploading()">
               <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
@@ -164,14 +164,14 @@
           @if (documents().length > 0) {
             <div style="display:flex; flex-direction:column; gap:8px;">
               @for (doc of documents(); track doc.id) {
-                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:8px 12px; border-radius:4px;">
-                  <div style="display:flex; align-items:center; gap:8px; overflow:hidden;">
-                    <span style="font-size:16px;">📎</span>
-                    <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                      <a [href]="doc.file_url" target="_blank" style="color:var(--mx-green); text-decoration:none; font-size:13px; font-weight:500;">
+                <div class="deal-doc-item deal-doc-item-row">
+                  <div class="deal-doc-link-wrap">
+                    <span class="deal-doc-icon">📎</span>
+                    <div>
+                      <a [href]="doc.file_url" target="_blank" class="deal-doc-link">
                         {{ doc.file_name }}
                       </a>
-                      <div style="font-size:10px; color:var(--muted);">{{ doc.created_at | date:'short' }}</div>
+                      <div class="card-desc">{{ doc.created_at | date:'short' }}</div>
                     </div>
                   </div>
                   <button type="button" class="btn-ghost small" style="color:#ff4d4f; border-color:transparent; padding:4px;" title="Eliminar" (click)="deleteDocument(doc.id)">
@@ -295,10 +295,10 @@
         <!-- CHAT CON CLIENTE -->
         <div class="deal-section">
           <h4>Chat con Cliente</h4>
-          <div class="chat-container card" style="height: 300px; display: flex; flex-direction: column; background: var(--surface); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; overflow: hidden;">
-            <div class="chat-messages" id="gestor-chat-box" style="flex-grow: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg);">
+          <div class="chat-container deal-chat">
+            <div class="chat-messages" id="gestor-chat-box">
               @for (msg of messages; track msg.id) {
-                <div class="message" [style.align-self]="msg.sender_id === auth.user()?.id ? 'flex-end' : 'flex-start'" [style.background]="msg.sender_id === auth.user()?.id ? 'var(--gold)' : 'var(--surface)'" [style.color]="msg.sender_id === auth.user()?.id ? '#000' : 'var(--mx-white)'" style="max-width: 80%; padding: 0.5rem 1rem; border-radius: 8px;">
+                <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
                   <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
                     <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
                     <span>{{ msg.created_at | date:'shortTime' }}</span>
@@ -314,10 +314,10 @@
                 </div>
               }
             </div>
-            <div class="chat-input" style="display: flex; padding: 0.5rem; background: var(--surface); border-top: 1px solid rgba(255,255,255,0.1); gap: 0.5rem;">
+            <div class="chat-input">
               <button type="button" class="btn-ghost small" (click)="fileInput.click()">📎</button>
               <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
-              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()" style="flex-grow: 1; padding: 0.5rem; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); background: var(--bg); color: var(--mx-white);">
+              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
               <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
             </div>
           </div>

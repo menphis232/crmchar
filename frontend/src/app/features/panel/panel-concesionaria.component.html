@@ -1,5 +1,11 @@
 <nav class="dash-nav">
-  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <a routerLink="/autos" class="dash-logo">
+    @if (auth.user()?.logo_url) {
+      <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+    } @else {
+      <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+    }
+  </a>
   <div class="dash-user">
     <app-notification-bell />
 
@@ -65,7 +71,8 @@
     @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
 
     <!-- ── DASHBOARD ── -->
-    @if (tab() === 'dashboard' && dashboard(); as d) {
+    @if (tab() === 'dashboard') {
+      @if (dashboard(); as d) {
       <div class="stats-grid">
         <div class="stat-box">
           <div class="stat-num">{{ crmDashboard()?.totals?.active ?? 0 }}</div>
@@ -94,6 +101,23 @@
           <div class="stat-label">Publicados</div>
         </div>
       </div>
+      }
+
+      <div class="dash-card ai-insights-card">
+        <h2 class="card-title ai-insights-title">🤖 Análisis IA Comercial</h2>
+        @if (isAiLoading()) {
+          <p class="card-desc">Generando recomendaciones prácticas para tu concesionaria...</p>
+        } @else if (aiInsights().length === 0) {
+          <p class="card-desc">No hay tips disponibles por ahora. Vuelve a cargar la página en unos minutos.</p>
+        } @else {
+          <p class="card-desc">Tips para mejorar tus ventas y la atención a tus clientes:</p>
+          <ul class="ai-insights-list">
+            @for (insight of aiInsights(); track $index) {
+              <li>{{ insight }}</li>
+            }
+          </ul>
+        }
+      </div>
 
       @if (todayInbox(); as inbox) {
         <app-crm-today-inbox
@@ -111,14 +135,20 @@
         <h2 class="card-title">🎯 Pipeline de ventas</h2>
         <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
         <div class="pipeline-filters">
-          <input [(ngModel)]="searchQuery" placeholder="🔍 Buscar contacto o vehículo..." (keyup.enter)="loadDeals()">
-          <select [(ngModel)]="filterStage" (change)="loadDeals()">
-            <option value="">Todas las etapas</option>
-            @for (s of crm.stages; track s) {
-              <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
-            }
-          </select>
-          <button type="button" class="btn-copy small" (click)="loadDeals()">Buscar</button>
+          <div class="pipeline-filter-field pipeline-filter-search">
+            <label for="concesionaria-pipeline-search">Buscar</label>
+            <input id="concesionaria-pipeline-search" [(ngModel)]="searchQuery" placeholder="Contacto o vehículo..." (keyup.enter)="loadDeals()">
+          </div>
+          <div class="pipeline-filter-field">
+            <label for="concesionaria-pipeline-stage">Etapa</label>
+            <select id="concesionaria-pipeline-stage" [(ngModel)]="filterStage" (change)="loadDeals()">
+              <option value="">Todas las etapas</option>
+              @for (s of crm.stages; track s) {
+                <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+              }
+            </select>
+          </div>
+          <button type="button" class="btn-copy pipeline-filter-btn" (click)="loadDeals()">Buscar</button>
         </div>
         <app-crm-kanban
           [stages]="crm.stages"
@@ -307,17 +337,11 @@
 
     <!-- ── CONSTRUCTOR WEB ── -->
     @if (tab() === 'page_builder') {
-      <div class="dash-card" style="padding: 0;">
-        <div style="padding: 24px; padding-bottom: 0;">
-          <h2 class="card-title">Constructor Web</h2>
-          <p class="card-desc">Personaliza cómo se ven tus autos en la página pública.</p>
-        </div>
-        <app-page-builder
-          [config]="auth.user()?.page_builder_config || null"
-          [profile]="{ brand: 'Marca', model: 'Modelo', year: 2024, price: 350000 }"
-          (configChange)="savePageBuilder($event)"
-        />
-      </div>
+      <app-page-builder
+        [config]="auth.user()?.page_builder_config || null"
+        [profile]="{ brand: 'Marca', model: 'Modelo', year: 2024, price: 350000 }"
+        (configChange)="savePageBuilder($event)"
+      />
     }
 
     <!-- ── PERFIL ── -->
@@ -376,6 +400,43 @@
           }
         </div>
 
+        <hr class="divider">
+        <h3 class="section-sub" style="font-size:14px; margin-bottom:8px;">🤖 Asistente del Panel</h3>
+        <p class="card-desc" style="margin-bottom:12px;">Botón flotante de ayuda dentro de tu panel. Puedes ocultarlo si estorba.</p>
+        <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
+          Mostrar asistente en el panel
+        </label>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Nombre del asistente</label>
+            <input [(ngModel)]="panelAssistantName" placeholder="Ej: VEGA" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>Posición</label>
+            <select [(ngModel)]="panelAssistantPosition">
+              <option value="bottom-right">Abajo derecha</option>
+              <option value="bottom-left">Abajo izquierda</option>
+              <option value="top-right">Arriba derecha</option>
+              <option value="top-left">Arriba izquierda</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Fondo del chat</label>
+            <app-color-picker [(value)]="panelAssistantBgColor"></app-color-picker>
+          </div>
+          <div class="form-group">
+            <label>Color del botón</label>
+            <app-color-picker [(value)]="panelAssistantBtnColor"></app-color-picker>
+          </div>
+          <div class="form-group">
+            <label>Color de texto</label>
+            <app-color-picker [(value)]="panelAssistantTextColor"></app-color-picker>
+          </div>
+        </div>
+
         <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
       </div>
     }
@@ -391,20 +452,27 @@
         <h2 class="card-title">⚙️ Ajustes del CRM</h2>
         <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
         
-        <div class="stages-list" style="margin-top: 20px;">
+        <div class="crm-stages-list">
           @for (stage of crmStages; track stage.id; let i = $index) {
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px;">
-              <span style="color: var(--gold); font-weight: bold; width: 24px;">{{ i + 1 }}.</span>
-              <input type="text" [(ngModel)]="stage.label" placeholder="Nombre de la etapa" style="flex:1; padding:8px; border-radius:8px; border:1px solid var(--border); background:rgba(0,0,0,0.2); color:var(--text);">
-              
-              <button class="btn-ghost small" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">⬆️</button>
-              <button class="btn-ghost small" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">⬇️</button>
-              <button class="btn-delete small" (click)="removeCrmStage(i)" title="Eliminar etapa">❌</button>
+            <div class="crm-stage-row">
+              <span class="crm-stage-index">{{ i + 1 }}</span>
+              <input type="text" class="crm-stage-input" [(ngModel)]="stage.label" placeholder="Nombre de la etapa">
+              <div class="crm-stage-actions">
+                <button type="button" class="crm-stage-btn" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">
+                  <svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+                </button>
+                <button type="button" class="crm-stage-btn" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+                </button>
+                <button type="button" class="crm-stage-btn crm-stage-btn--delete" (click)="removeCrmStage(i)" title="Eliminar etapa">
+                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
           }
         </div>
         
-        <div style="display:flex; gap:10px; margin-top:20px;">
+        <div class="crm-stages-footer">
           <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
           <button class="btn-copy" (click)="saveCrmStages()" [disabled]="isSavingStages" style="min-width:150px;">
             {{ isSavingStages ? 'Guardando...' : 'Guardar Ajustes' }}

@@ -42,6 +42,38 @@ export class AutoDetailComponent implements OnInit {
 
   setMainImage(url: string) { this.mainImage.set(url); }
 
+  galleryImages(): string[] {
+    const a = this.auto();
+    if (!a) return [];
+    if (a.images?.length) return a.images;
+    if (a.imageUrl) return [a.imageUrl];
+    return this.mainImage() ? [this.mainImage()] : [];
+  }
+
+  currentImageIndex(): number {
+    const images = this.galleryImages();
+    const idx = images.indexOf(this.mainImage());
+    return idx >= 0 ? idx : 0;
+  }
+
+  showGalleryNav(): boolean {
+    return this.galleryImages().length > 1;
+  }
+
+  prevImage() {
+    const images = this.galleryImages();
+    if (images.length <= 1) return;
+    const idx = this.currentImageIndex();
+    this.mainImage.set(images[idx <= 0 ? images.length - 1 : idx - 1]);
+  }
+
+  nextImage() {
+    const images = this.galleryImages();
+    if (images.length <= 1) return;
+    const idx = this.currentImageIndex();
+    this.mainImage.set(images[idx >= images.length - 1 ? 0 : idx + 1]);
+  }
+
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
   }

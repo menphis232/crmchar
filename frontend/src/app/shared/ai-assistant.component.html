@@ -1,238 +1,98 @@
-<!-- ══════════════════════════════════════════════════
-     VEGA AI ASSISTANT — Clippy-Style Floating Widget
-     ══════════════════════════════════════════════════ -->
-
-<!-- ── SPOTLIGHT OVERLAY (Tour Mode) ── -->
-@if (isTourActive() && highlightActive() && highlightRect()) {
-  <div class="vega-overlay" (click)="skipTour()">
-    <div class="vega-spotlight" [style.top.px]="highlightRect()!.top" [style.left.px]="highlightRect()!.left"
-      [style.width.px]="highlightRect()!.width" [style.height.px]="highlightRect()!.height">
-    </div>
-  </div>
-}
-
-<!-- ── SPEECH BUBBLE ── -->
-@if (showSpeech() && (isTourActive() || !isChatOpen())) {
-  <div class="vega-speech" [class.typing]="isTypingSpeech()">
-    <div class="vega-speech-text">{{ speechText() }}</div>
-    @if (!isTypingSpeech() && isTourActive()) {
-      <div class="vega-speech-controls">
-        <div class="vega-step-dots">
-          @for (step of tourSteps(); track $index) {
-            <span class="dot" [class.active]="$index === currentTourStep()"></span>
-          }
-        </div>
-        <div class="vega-speech-btns">
-          @if (currentTourStep() > 0) {
-            <button class="vsb vsb-prev" (click)="prevStep()">← Atrás</button>
-          }
-          <button class="vsb vsb-skip" (click)="skipTour()">Saltar</button>
-          <button class="vsb vsb-next" (click)="nextStep()">
-            {{ currentTourStep() === totalSteps - 1 ? '¡Listo! 🎉' : 'Siguiente →' }}
-          </button>
-        </div>
-      </div>
-    }
-    @if (!isTypingSpeech() && !isTourActive() && showSpeech()) {
-      <div class="vega-speech-btns mt-2">
-        <button class="vsb vsb-next" (click)="toggleChat()">💬 Preguntarme algo</button>
-        <button class="vsb vsb-next" (click)="startTour()">🗺️ Ver tour</button>
-      </div>
-    }
-    <div class="vega-speech-tail"></div>
-  </div>
-}
-
-<!-- ── CHAT PANEL ── -->
-@if (isChatOpen()) {
-  <div class="vega-chat-panel" role="dialog" aria-label="Chat con VEGA">
-    <div class="vcp-header">
-      <span class="vcp-title">💬 VEGA — Chat</span>
-      <div class="vcp-hactions">
-        <button class="vcp-tour-btn" (click)="startTour()" title="Ver tour">🗺️</button>
-        <button class="vcp-close" (click)="toggleChat()">×</button>
+@if (isEnabled()) {
+  @if (isTourActive() && highlightActive() && highlightRect()) {
+    <div class="vega-overlay" (click)="skipTour()">
+      <div class="vega-spotlight"
+        [style.top.px]="highlightRect()!.top"
+        [style.left.px]="highlightRect()!.left"
+        [style.width.px]="highlightRect()!.width"
+        [style.height.px]="highlightRect()!.height">
       </div>
     </div>
-    <div class="vcp-body" id="vega-chat-body">
-      @for (msg of messages(); track $index) {
-        <div class="vcp-msg" [class.user]="msg.role === 'user'" [class.assistant]="msg.role === 'assistant'">
-          <div class="vcp-bubble" [innerHTML]="formatMessage(msg.content)"></div>
-          <span class="vcp-time">{{ msg.timestamp | date:'HH:mm' }}</span>
-        </div>
-      }
-      @if (isLoading()) {
-        <div class="vcp-msg assistant">
-          <div class="vcp-bubble typing-dots">
-            <span></span><span></span><span></span>
-          </div>
-        </div>
-      }
-      @if (messages().length === 0 && !isLoading()) {
-        <div class="vcp-quick-asks">
-          <p class="vcp-hint">¿Qué necesitas?</p>
-          <button (click)="quickAsk('¿Cómo agrego un nuevo trámite o lead?')">¿Cómo agrego un trámite?</button>
-          <button (click)="quickAsk('¿Cómo configuro mis servicios?')">Configurar servicios</button>
-          <button (click)="quickAsk('¿Cómo exporto mis finanzas?')">Exportar finanzas</button>
-          <button (click)="quickAsk('¿Qué hace la sección de automatizaciones?')">Automatizaciones</button>
-        </div>
-      }
-    </div>
-    <div class="vcp-input-row">
-      <textarea class="vcp-input" [(ngModel)]="inputValue" (keydown)="onKeydown($event)"
-        placeholder="Escribe tu pregunta..." rows="1" [disabled]="isLoading()"></textarea>
-      <button class="vcp-send" (click)="sendMessage()" [disabled]="!inputValue.trim() || isLoading()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
-    </div>
-  </div>
-}
-
-<!-- ══════════════════════════════════════════
-     VEGA CHARACTER — The Clippy-Style Robot
-     ══════════════════════════════════════════ -->
-<div class="vega-character"
-  [class]="'mood-' + avatarMood() + ' gesture-' + currentGesture()"
-  (click)="isTourActive() ? nextStep() : toggleChat()"
-  role="button"
-  [attr.aria-label]="isTourActive() ? 'Siguiente paso del tour' : 'Abrir chat VEGA'"
-  tabindex="0"
-  (keydown.enter)="isTourActive() ? nextStep() : toggleChat()">
-
-  <!-- Pulse rings (only when idle and first load) -->
-  @if (showPulse()) {
-    <div class="vega-pulse r1"></div>
-    <div class="vega-pulse r2"></div>
   }
 
-  <!-- The robot SVG -->
-  <svg class="vega-bot-svg" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="bodyGrad" cx="38%" cy="30%" r="70%">
-        <stop offset="0%" stop-color="#1e3060"/>
-        <stop offset="100%" stop-color="#0a1020"/>
-      </radialGradient>
-      <radialGradient id="faceGrad" cx="40%" cy="30%" r="65%">
-        <stop offset="0%" stop-color="#172448"/>
-        <stop offset="100%" stop-color="#08101e"/>
-      </radialGradient>
-      <radialGradient id="eyeGlowL" cx="30%" cy="30%">
-        <stop offset="0%" stop-color="#ffd85a"/>
-        <stop offset="60%" stop-color="#c8a94a"/>
-        <stop offset="100%" stop-color="#7a5f20"/>
-      </radialGradient>
-      <radialGradient id="eyeGlowR" cx="30%" cy="30%">
-        <stop offset="0%" stop-color="#ffd85a"/>
-        <stop offset="60%" stop-color="#c8a94a"/>
-        <stop offset="100%" stop-color="#7a5f20"/>
-      </radialGradient>
-      <filter id="glow">
-        <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-      <filter id="eyeglow">
-        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-        <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-      </filter>
-    </defs>
+  <div class="vega-widget" [class]="positionClass()" [class.open]="isChatOpen() || isTourActive()">
+    @if (isChatOpen() || isTourActive()) {
+      <div class="vega-panel" [style.backgroundColor]="bgColor()">
+        <div class="vega-header"
+          [style.backgroundColor]="btnColor()"
+          [style.color]="textColor()">
+          <div>
+            <h4>🤖 {{ assistantName() }}</h4>
+            <p>Te ayudo a usar tu panel.</p>
+          </div>
+          <div class="vega-header-actions">
+            <button type="button" class="vega-icon-btn" (click)="startTour()" title="Ver tour">🗺️</button>
+            <button type="button" class="vega-icon-btn" (click)="closePanel()" title="Cerrar">✕</button>
+          </div>
+        </div>
 
-    <!-- ── Body / Torso ── -->
-    <rect x="30" y="88" width="60" height="42" rx="12" fill="url(#bodyGrad)"
-      stroke="rgba(200,169,74,0.35)" stroke-width="1.5"/>
-    <!-- Chest accent bar -->
-    <rect x="40" y="98" width="40" height="4" rx="2" fill="rgba(200,169,74,0.25)"/>
-    <!-- Chest lights -->
-    <circle cx="46" cy="110" r="4" fill="#006847" opacity="0.9" class="chest-light-l"/>
-    <circle cx="60" cy="110" r="4" fill="#c8a94a" opacity="0.7" class="chest-light-c"/>
-    <circle cx="74" cy="110" r="4" fill="#CE1126" opacity="0.5" class="chest-light-r"/>
+        @if (isTourActive() && showSpeech()) {
+          <div class="vega-tour-banner">
+            <p>{{ speechText() }}</p>
+            @if (!isTypingSpeech()) {
+              <div class="vega-tour-controls">
+                <div class="vega-step-dots">
+                  @for (step of tourSteps(); track $index) {
+                    <span class="dot" [class.active]="$index === currentTourStep()"></span>
+                  }
+                </div>
+                <div class="vega-tour-btns">
+                  @if (currentTourStep() > 0) {
+                    <button type="button" class="vtb vtb-prev" (click)="prevStep()">← Atrás</button>
+                  }
+                  <button type="button" class="vtb vtb-skip" (click)="skipTour()">Saltar</button>
+                  <button type="button" class="vtb vtb-next" (click)="nextStep()">
+                    {{ currentTourStep() === totalSteps - 1 ? '¡Listo!' : 'Siguiente →' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
 
-    <!-- ── Arms ── -->
-    <!-- Left arm -->
-    <g class="vega-arm-left">
-      <rect x="14" y="90" width="16" height="9" rx="4.5" fill="url(#bodyGrad)"
-        stroke="rgba(200,169,74,0.3)" stroke-width="1.2"/>
-      <rect x="10" y="94" width="12" height="8" rx="4" fill="url(#bodyGrad)"
-        stroke="rgba(200,169,74,0.25)" stroke-width="1"/>
-    </g>
-    <!-- Right arm -->
-    <g class="vega-arm-right">
-      <rect x="90" y="90" width="16" height="9" rx="4.5" fill="url(#bodyGrad)"
-        stroke="rgba(200,169,74,0.3)" stroke-width="1.2"/>
-      <rect x="98" y="94" width="12" height="8" rx="4" fill="url(#bodyGrad)"
-        stroke="rgba(200,169,74,0.25)" stroke-width="1"/>
-    </g>
+        <div class="vega-messages" id="vega-chat-body">
+          @for (msg of messages(); track $index) {
+            <div class="vega-msg" [class.user]="msg.role === 'user'" [class.assistant]="msg.role === 'assistant'">
+              <div class="vega-bubble" [innerHTML]="formatMessage(msg.content)"></div>
+              <span class="vega-time">{{ msg.timestamp | date:'HH:mm' }}</span>
+            </div>
+          }
+          @if (isLoading()) {
+            <div class="vega-msg assistant">
+              <div class="vega-bubble typing-dots"><span></span><span></span><span></span></div>
+            </div>
+          }
+          @if (messages().length === 0 && !isLoading() && !isTourActive()) {
+            <div class="vega-quick-asks">
+              <p class="vega-hint">¿Qué necesitas?</p>
+              @for (q of quickQuestions(); track q) {
+                <button type="button" (click)="quickAsk(q)">{{ q }}</button>
+              }
+            </div>
+          }
+        </div>
 
-    <!-- ── Neck ── -->
-    <rect x="50" y="80" width="20" height="10" rx="3" fill="url(#bodyGrad)"
-      stroke="rgba(200,169,74,0.2)" stroke-width="1"/>
+        <div class="vega-input-row">
+          <input type="text" [(ngModel)]="inputValue"
+            placeholder="Escribe tu pregunta..."
+            (keyup.enter)="sendMessage()"
+            [disabled]="isLoading() || isTourActive()">
+          <button type="button" (click)="sendMessage()"
+            [disabled]="!inputValue.trim() || isLoading() || isTourActive()"
+            [style.color]="btnColor()">➤</button>
+        </div>
+      </div>
+    }
 
-    <!-- ── Head ── -->
-    <rect x="20" y="22" width="80" height="60" rx="18" fill="url(#faceGrad)"
-      stroke="rgba(200,169,74,0.4)" stroke-width="2"/>
-    <!-- Head highlight -->
-    <ellipse cx="48" cy="30" rx="22" ry="8" fill="rgba(255,255,255,0.04)"/>
-
-    <!-- ── Antenna ── -->
-    <line x1="60" y1="5" x2="60" y2="22" stroke="url(#eyeGlowL)" stroke-width="3" stroke-linecap="round"/>
-    <circle cx="60" cy="4" r="5" fill="url(#eyeGlowL)" filter="url(#glow)" class="vega-antenna"/>
-
-    <!-- ── Ear studs ── -->
-    <rect x="17" y="40" width="5" height="18" rx="2.5" fill="url(#bodyGrad)" stroke="rgba(200,169,74,0.4)" stroke-width="1"/>
-    <rect x="98" y="40" width="5" height="18" rx="2.5" fill="url(#bodyGrad)" stroke="rgba(200,169,74,0.4)" stroke-width="1"/>
-    <!-- Ear accent dots -->
-    <circle cx="19.5" cy="49" r="2" fill="#c8a94a" opacity="0.6"/>
-    <circle cx="100.5" cy="49" r="2" fill="#c8a94a" opacity="0.6"/>
-
-    <!-- ── Eyes ── -->
-    <!-- Left eye socket -->
-    <rect x="30" y="36" width="24" height="20" rx="7" fill="#06080f"/>
-    <!-- Right eye socket -->
-    <rect x="66" y="36" width="24" height="20" rx="7" fill="#06080f"/>
-
-    <!-- Left eye glow -->
-    <rect x="32" y="38" width="20" height="16" rx="5.5" fill="url(#eyeGlowL)" filter="url(#eyeglow)" class="vega-eye-l"/>
-    <!-- Right eye glow -->
-    <rect x="68" y="38" width="20" height="16" rx="5.5" fill="url(#eyeGlowR)" filter="url(#eyeglow)" class="vega-eye-r"/>
-
-    <!-- Eye shine -->
-    <ellipse cx="38" cy="41" rx="4" ry="3" fill="rgba(255,255,255,0.5)"/>
-    <ellipse cx="74" cy="41" rx="4" ry="3" fill="rgba(255,255,255,0.5)"/>
-
-    <!-- Eye blink bars (animate class) -->
-    <rect class="vega-blink-l" x="30" y="36" width="24" height="20" rx="7" fill="url(#faceGrad)" opacity="0"/>
-    <rect class="vega-blink-r" x="66" y="36" width="24" height="20" rx="7" fill="url(#faceGrad)" opacity="0"/>
-
-    <!-- ── Mouth ── -->
-    <g class="vega-mouth">
-      <!-- Happy smile (default) -->
-      <path class="mouth-smile" d="M 40 68 Q 60 80 80 68" stroke="rgba(200,169,74,0.8)" stroke-width="3"
-        fill="none" stroke-linecap="round"/>
-      <!-- Thinking flat -->
-      <path class="mouth-flat" d="M 43 72 L 77 72" stroke="rgba(200,169,74,0.5)" stroke-width="2.5"
-        fill="none" stroke-linecap="round" opacity="0"/>
-      <!-- Excited open -->
-      <ellipse class="mouth-open" cx="60" cy="72" rx="10" ry="7" fill="#06080f"
-        stroke="rgba(200,169,74,0.6)" stroke-width="1.5" opacity="0"/>
-    </g>
-
-    <!-- ── Eyebrows ── -->
-    <g class="vega-brows">
-      <path class="brow-l" d="M 31 34 Q 42 30 53 34" stroke="rgba(200,169,74,0.7)" stroke-width="2.5"
-        fill="none" stroke-linecap="round"/>
-      <path class="brow-r" d="M 67 34 Q 78 30 89 34" stroke="rgba(200,169,74,0.7)" stroke-width="2.5"
-        fill="none" stroke-linecap="round"/>
-    </g>
-
-    <!-- ── Feet / Base ── -->
-    <rect x="36" y="127" width="20" height="10" rx="5" fill="url(#bodyGrad)"
-      stroke="rgba(200,169,74,0.25)" stroke-width="1"/>
-    <rect x="64" y="127" width="20" height="10" rx="5" fill="url(#bodyGrad)"
-      stroke="rgba(200,169,74,0.25)" stroke-width="1"/>
-
-  </svg>
-
-  <!-- Label badge -->
-  <div class="vega-name-badge">VEGA</div>
-
-</div>
+    <button type="button" class="vega-toggle"
+      (click)="toggleChat()"
+      [style.background]="btnColor()"
+      [style.color]="textColor()">
+      @if (isChatOpen() || isTourActive()) {
+        ✕
+      } @else {
+        💬 {{ assistantName() }}
+      }
+    </button>
+  </div>
+}

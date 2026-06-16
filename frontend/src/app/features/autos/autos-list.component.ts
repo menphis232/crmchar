@@ -1,9 +1,10 @@
 import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { AutosService, SiteService, ThemeService } from '../../core/api.service';
+import { PreviewThemeService } from '../../core/preview-theme.service';
 import { Auto, MakeFilter, SiteSettings } from '../../models';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
@@ -21,12 +22,25 @@ export class AutosListComponent implements OnInit, OnDestroy {
   loading = signal(true);
   error = signal('');
   theme = signal<SiteSettings>({});
+  isPreview = signal(false);
+
+  private readonly previewPageKey = 'autos';
+  private unsubscribePreview?: () => void;
 
   // Filters
   searchQuery = signal('');
   selectedMakes = signal<Set<string>>(new Set());
   priceRange = signal('');
   selectedCities = signal<Set<string>>(new Set());
+  filtersOpen = signal(false);
+  makeSectionOpen = signal(false);
+  citySectionOpen = signal(false);
+  priceSectionOpen = signal(true);
+  makeSearch = signal('');
+  citySearch = signal('');
+  makeShowAll = signal(false);
+  cityShowAll = signal(false);
+  readonly FILTER_PREVIEW_LIMIT = 8;
 
   // Pagination
   readonly PAGE_SIZE = 9;
@@ -79,17 +93,82 @@ export class AutosListComponent implements OnInit, OnDestroy {
     Array.from({ length: this.totalPages() }, (_, i) => i + 1)
   );
 
+  selectedMakesArray = computed(() => [...this.selectedMakes()]);
+  selectedCitiesArray = computed(() => [...this.selectedCities()]);
+
+  activeFilterCount = computed(() =>
+    this.selectedMakes().size + this.selectedCities().size + (this.priceRange() ? 1 : 0)
+  );
+
+  filteredMakes = computed(() => {
+    const q = this.makeSearch().toLowerCase().trim();
+    const list = this.makes();
+    if (!q) return list;
+    return list.filter(m => m.make.toLowerCase().includes(q));
+  });
+
+  filteredCities = computed(() => {
+    const q = this.citySearch().toLowerCase().trim();
+    const list = this.availableCities();
+    if (!q) return list;
+    return list.filter(c => c.toLowerCase().includes(q));
+  });
+
+  visibleMakes = computed(() => {
+    const list = this.filteredMakes();
+    if (this.makeShowAll() || this.makeSearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
+      return list;
+    }
+    const selected = this.selectedMakes();
+    const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
+    const extras = list.filter(m => selected.has(m.make) && !preview.some(p => p.make === m.make));
+    return [...preview, ...extras];
+  });
+
+  visibleCities = computed(() => {
+    const list = this.filteredCities();
+    if (this.cityShowAll() || this.citySearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
+      return list;
+    }
+    const selected = this.selectedCities();
+    const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
+    const extras = list.filter(c => selected.has(c) && !preview.includes(c));
+    return [...preview, ...extras];
+  });
+
+  hiddenMakesCount = computed(() =>
+    Math.max(0, this.filteredMakes().length - this.visibleMakes().length)
+  );
+
+  hiddenCitiesCount = computed(() =>
+    Math.max(0, this.filteredCities().length - this.visibleCities().length)
+  );
+
   constructor(
     private autosService: AutosService,
     private siteService: SiteService,
     private themeService: ThemeService,
+    private route: ActivatedRoute,
+    private previewTheme: PreviewThemeService,
   ) {}
 
   ngOnInit() {
-    this.siteService.get('autos').subscribe(t => {
-      this.theme.set(t);
-      this.themeService.apply(t);
-    });
+    const previewMode = this.route.snapshot.queryParamMap.get('preview') === '1';
+    if (previewMode) {
+      this.isPreview.set(true);
+      this.applyPreviewTheme();
+      this.unsubscribePreview = this.previewTheme.onPreviewChange((key, t) => {
+        if (key === this.previewPageKey) {
+          this.theme.set(t);
+          this.themeService.apply(t);
+        }
+      });
+    } else {
+      this.siteService.get('autos').subscribe(t => {
+        this.theme.set(t);
+        this.themeService.apply(t);
+      });
+    }
     this.autosService.getMakes().subscribe(m => this.makes.set(m));
     this.loadAutos();
 
@@ -104,8 +183,16 @@ export class AutosListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.unsubscribePreview?.();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private applyPreviewTheme() {
+    const t = this.previewTheme.getPreview(this.previewPageKey);
+    if (!t) return;
+    this.theme.set(t);
+    this.themeService.apply(t);
   }
 
   loadAutos() {
@@ -142,7 +229,37 @@ export class AutosListComponent implements OnInit, OnDestroy {
     this.selectedMakes.set(new Set());
     this.selectedCities.set(new Set());
     this.priceRange.set('');
+    this.makeSearch.set('');
+    this.citySearch.set('');
+    this.makeShowAll.set(false);
+    this.cityShowAll.set(false);
     this.currentPage.set(1);
+  }
+
+  toggleFiltersPanel() {
+    this.filtersOpen.update(v => !v);
+  }
+
+  toggleMakeSection() {
+    this.makeSectionOpen.update(v => !v);
+  }
+
+  toggleCitySection() {
+    this.citySectionOpen.update(v => !v);
+  }
+
+  togglePriceSection() {
+    this.priceSectionOpen.update(v => !v);
+  }
+
+  onMakeSearchChange(q: string) {
+    this.makeSearch.set(q);
+    this.makeShowAll.set(!!q.trim());
+  }
+
+  onCitySearchChange(q: string) {
+    this.citySearch.set(q);
+    this.cityShowAll.set(!!q.trim());
   }
 
   goToPage(page: number) {

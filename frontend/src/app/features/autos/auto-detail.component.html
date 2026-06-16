@@ -39,11 +39,22 @@
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'gallery') {
                     <div class="gallery">
-                      <img [src]="mainImage() || a.images?.[0]" class="gallery-main" style="width:100%; max-height:400px; object-fit:cover; border-radius:8px;" alt="Vehículo">
-                      @if (a.images?.length) {
-                        <div class="gallery-thumbs" style="display:flex; gap:10px; margin-top:10px; overflow-x:auto;">
-                          @for (img of a.images; track img) {
-                            <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" style="height:80px; width:120px; object-fit:cover; border-radius:4px; cursor:pointer;" alt="Miniatura">
+                      <div class="gallery-viewer">
+                        <img [src]="mainImage() || a.images?.[0]" class="gallery-main" alt="Vehículo">
+                        @if (showGalleryNav()) {
+                          <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevImage()" aria-label="Imagen anterior">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                          </button>
+                          <button type="button" class="gallery-nav gallery-nav-next" (click)="nextImage()" aria-label="Siguiente imagen">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                          </button>
+                          <span class="gallery-counter">{{ currentImageIndex() + 1 }} / {{ galleryImages().length }}</span>
+                        }
+                      </div>
+                      @if (galleryImages().length) {
+                        <div class="gallery-thumbs">
+                          @for (img of galleryImages(); track img) {
+                            <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" alt="Miniatura">
                           }
                         </div>
                       }
@@ -125,10 +136,21 @@
       <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
       <div class="detail-container">
         <div class="gallery">
-          <img [src]="mainImage()" class="gallery-main" alt="Vehículo">
-          @if (a.images?.length) {
+          <div class="gallery-viewer">
+            <img [src]="mainImage()" class="gallery-main" alt="Vehículo">
+            @if (showGalleryNav()) {
+              <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevImage()" aria-label="Imagen anterior">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <button type="button" class="gallery-nav gallery-nav-next" (click)="nextImage()" aria-label="Siguiente imagen">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+              <span class="gallery-counter">{{ currentImageIndex() + 1 }} / {{ galleryImages().length }}</span>
+            }
+          </div>
+          @if (galleryImages().length) {
             <div class="gallery-thumbs">
-              @for (img of a.images; track img) {
+              @for (img of galleryImages(); track img) {
                 <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" alt="Miniatura">
               }
             </div>

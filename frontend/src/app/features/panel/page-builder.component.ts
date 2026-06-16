@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from '@angular/cdk/drag-drop';
 import { PageBlock, PageBuilderConfig } from '../../models';
 import { UploadService } from '../../core/api.service';
+import { PAGE_BUILDER_FONTS } from '../../shared/theme-fonts';
 
 @Component({
   selector: 'app-page-builder',
@@ -47,6 +48,19 @@ export class PageBuilderComponent implements OnInit {
     '#00d084', '#0693e3', '#eb144c', '#f78da7', '#9900ef', 
     '#ff6900', '#fcb900', '#7bd148', '#abb8c3', '#1a1d24'
   ];
+
+  readonly blockCatalog: Record<string, { label: string; desc: string }> = {
+    hero: { label: 'Banner', desc: 'Portada con imagen y botón' },
+    stats: { label: 'Estadísticas', desc: 'Números y logros' },
+    text: { label: 'Texto', desc: 'Descripción o párrafo' },
+    gallery: { label: 'Galería', desc: 'Grid de imágenes' },
+    services: { label: 'Servicios', desc: 'Lista de tarifas' },
+    reviews: { label: 'Reseñas', desc: 'Opiniones destacadas' },
+    form: { label: 'Formulario', desc: 'Cotización / contacto' },
+    tracker: { label: 'Rastreador', desc: 'Seguimiento de trámite' },
+  };
+
+  readonly builderFonts = PAGE_BUILDER_FONTS;
 
   ngOnInit() {
     if (this.config && this.config.blocks?.length > 0) {

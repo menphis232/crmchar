@@ -1,9 +1,10 @@
 import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { GestoresService, SiteService, ThemeService } from '../../core/api.service';
+import { PreviewThemeService } from '../../core/preview-theme.service';
 import { Gestor, StateFilter, SiteSettings } from '../../models';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
@@ -20,11 +21,21 @@ export class GestoresListComponent implements OnInit, OnDestroy {
   states = signal<StateFilter[]>([]);
   loading = signal(true);
   theme = signal<SiteSettings>({});
+  isPreview = signal(false);
+
+  private readonly previewPageKey = 'gestores';
+  private unsubscribePreview?: () => void;
 
   // Filters
   searchQuery = signal('');
   selectedStates = signal<Set<string>>(new Set());
   minRating = signal(0);
+  filtersOpen = signal(false);
+  stateSectionOpen = signal(false);
+  ratingSectionOpen = signal(true);
+  stateSearch = signal('');
+  stateShowAll = signal(false);
+  readonly FILTER_PREVIEW_LIMIT = 8;
 
   // Pagination
   readonly PAGE_SIZE = 9;
@@ -63,17 +74,59 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     Array.from({ length: this.totalPages() }, (_, i) => i + 1)
   );
 
+  selectedStatesArray = computed(() => [...this.selectedStates()]);
+
+  activeFilterCount = computed(() =>
+    this.selectedStates().size + (this.minRating() > 0 ? 1 : 0)
+  );
+
+  filteredStates = computed(() => {
+    const q = this.stateSearch().toLowerCase().trim();
+    const list = this.states();
+    if (!q) return list;
+    return list.filter(s => s.state.toLowerCase().includes(q));
+  });
+
+  visibleStates = computed(() => {
+    const list = this.filteredStates();
+    if (this.stateShowAll() || this.stateSearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
+      return list;
+    }
+    const selected = this.selectedStates();
+    const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
+    const extras = list.filter(s => selected.has(s.state) && !preview.some(p => p.state === s.state));
+    return [...preview, ...extras];
+  });
+
+  hiddenStatesCount = computed(() =>
+    Math.max(0, this.filteredStates().length - this.visibleStates().length)
+  );
+
   constructor(
     private gestoresService: GestoresService,
     private siteService: SiteService,
     private themeService: ThemeService,
+    private route: ActivatedRoute,
+    private previewTheme: PreviewThemeService,
   ) {}
 
   ngOnInit() {
-    this.siteService.get('gestores').subscribe(t => {
-      this.theme.set(t);
-      this.themeService.apply(t);
-    });
+    const previewMode = this.route.snapshot.queryParamMap.get('preview') === '1';
+    if (previewMode) {
+      this.isPreview.set(true);
+      this.applyPreviewTheme();
+      this.unsubscribePreview = this.previewTheme.onPreviewChange((key, t) => {
+        if (key === this.previewPageKey) {
+          this.theme.set(t);
+          this.themeService.apply(t);
+        }
+      });
+    } else {
+      this.siteService.get('gestores').subscribe(t => {
+        this.theme.set(t);
+        this.themeService.apply(t);
+      });
+    }
     this.gestoresService.getStates().subscribe(s => this.states.set(s));
     this.loadGestores();
 
@@ -89,8 +142,16 @@ export class GestoresListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.unsubscribePreview?.();
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private applyPreviewTheme() {
+    const t = this.previewTheme.getPreview(this.previewPageKey);
+    if (!t) return;
+    this.theme.set(t);
+    this.themeService.apply(t);
   }
 
   loadGestores() {
@@ -126,7 +187,26 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedStates.set(new Set());
     this.minRating.set(0);
+    this.stateSearch.set('');
+    this.stateShowAll.set(false);
     this.currentPage.set(1);
+  }
+
+  toggleFiltersPanel() {
+    this.filtersOpen.update(v => !v);
+  }
+
+  toggleStateSection() {
+    this.stateSectionOpen.update(v => !v);
+  }
+
+  toggleRatingSection() {
+    this.ratingSectionOpen.update(v => !v);
+  }
+
+  onStateSearchChange(q: string) {
+    this.stateSearch.set(q);
+    this.stateShowAll.set(!!q.trim());
   }
 
   goToPage(page: number) {

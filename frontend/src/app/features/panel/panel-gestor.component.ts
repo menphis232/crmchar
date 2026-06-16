@@ -22,6 +22,18 @@ import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm' | 'automatizaciones';
 
+const DEFAULT_AI_TIPS = [
+  'Configura mensajes de bienvenida en WhatsApp con saludo, lista de requisitos y tiempo estimado; el primer contacto marca la confianza del cliente.',
+  'Define un protocolo de 3 seguimientos (día 1, 3 y 7) para prospectos en espera; en trámites vehiculares muchas ventas se cierran en el segundo mensaje.',
+  'Usa una plantilla de precalificación en el primer chat (documentación, adeudos, plazo) para cotizar más rápido y dar una experiencia más profesional.',
+];
+
+const AUTOMATION_VARIABLES = [
+  { key: 'nombre', label: 'Nombre del cliente', example: 'María López' },
+  { key: 'tramite', label: 'Título del trámite', example: 'Baja de placas' },
+  { key: 'gestor', label: 'Tu nombre', example: 'Gestoría Pérez' },
+] as const;
+
 @Component({
   selector: 'app-panel-gestor',
   standalone: true,
@@ -54,16 +66,23 @@ export class PanelGestorComponent implements OnInit {
   chatbotBgColor = '#000000';
   chatbotBtnColor = '#4F46E5';
   chatbotTextColor = '#FFFFFF';
+  panelAssistantEnabled = true;
+  panelAssistantName = 'VEGA';
+  panelAssistantPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right';
+  panelAssistantBgColor = '#0f172a';
+  panelAssistantBtnColor = '#4F46E5';
+  panelAssistantTextColor = '#FFFFFF';
   gestorPhone = '';
   gestorAddress = '';
   gestorMapEmbedUrl = '';
-  aiInsights = signal<string[]>([]);
+  aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   isAiLoading = signal(false);
   message = signal('');
   newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
   newTemplate = { name: '', content: '' };
   automations = signal<any[]>([]);
   newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
+  readonly automationVariables = AUTOMATION_VARIABLES;
   isMobileMenuOpen = signal(false);
 
   // CRM Stages Settings
@@ -95,6 +114,7 @@ export class PanelGestorComponent implements OnInit {
     });
     this.loadProfile();
     this.loadCrm();
+    this.loadAiInsights();
 
     this.route.queryParams.subscribe(params => {
       if (params['deal']) {
@@ -163,6 +183,12 @@ export class PanelGestorComponent implements OnInit {
       this.chatbotBgColor = res.user.chatbot_bg_color || '#000000';
       this.chatbotBtnColor = res.user.chatbot_btn_color || '#4F46E5';
       this.chatbotTextColor = res.user.chatbot_text_color || '#FFFFFF';
+      this.panelAssistantEnabled = res.user.panel_assistant_enabled !== 0 && res.user.panel_assistant_enabled !== false;
+      this.panelAssistantName = res.user.panel_assistant_name || 'VEGA';
+      this.panelAssistantPosition = res.user.panel_assistant_position || 'bottom-right';
+      this.panelAssistantBgColor = res.user.panel_assistant_bg_color || '#0f172a';
+      this.panelAssistantBtnColor = res.user.panel_assistant_btn_color || '#4F46E5';
+      this.panelAssistantTextColor = res.user.panel_assistant_text_color || '#FFFFFF';
       this.crmStages = res.user.crm_stages ? [...res.user.crm_stages] : [
         { id: 'nuevo', label: 'Nuevo' },
         { id: 'contactado', label: 'Contactado' },
@@ -184,30 +210,39 @@ export class PanelGestorComponent implements OnInit {
 
   loadAiInsights() {
     const today = new Date().toDateString();
-    const cachedData = localStorage.getItem('crm_ai_insights');
-    const cachedDate = localStorage.getItem('crm_ai_insights_date');
+    const cacheKey = 'crm_ai_insights_v2';
+    const cacheDateKey = 'crm_ai_insights_date_v2';
+    const cachedData = localStorage.getItem(cacheKey);
+    const cachedDate = localStorage.getItem(cacheDateKey);
 
     if (cachedDate === today && cachedData) {
       try {
-        this.aiInsights.set(JSON.parse(cachedData));
-        return;
-      } catch (e) {
-        // Fallback to fetch if parse fails
+        const parsed = JSON.parse(cachedData) as string[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          this.aiInsights.set(parsed);
+          this.isAiLoading.set(false);
+          return;
+        }
+      } catch {
+        localStorage.removeItem(cacheKey);
+        localStorage.removeItem(cacheDateKey);
       }
     }
 
     this.isAiLoading.set(true);
-    this.http.get<{insights: string[]}>(`${environment.apiUrl}/crm/ai/insights`).subscribe({
+    this.http.get<{ insights: string[] }>(`${environment.apiUrl}/crm/ai/insights`).subscribe({
       next: (res) => {
-        const insights = res.insights || [];
-        this.aiInsights.set(insights);
-        localStorage.setItem('crm_ai_insights', JSON.stringify(insights));
-        localStorage.setItem('crm_ai_insights_date', today);
+        const insights = (res.insights || []).filter(Boolean);
+        const finalInsights = insights.length > 0 ? insights : DEFAULT_AI_TIPS;
+        this.aiInsights.set(finalInsights);
+        localStorage.setItem(cacheKey, JSON.stringify(finalInsights));
+        localStorage.setItem(cacheDateKey, today);
         this.isAiLoading.set(false);
       },
       error: () => {
+        this.aiInsights.set(DEFAULT_AI_TIPS);
         this.isAiLoading.set(false);
-      }
+      },
     });
   }
 
@@ -222,10 +257,15 @@ export class PanelGestorComponent implements OnInit {
     this.crmService.getTemplates().subscribe(t => this.templates.set(t));
   }
 
-  onStageChange({ deal, stage }: { deal: CrmDeal; stage: string }) {
+  onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
     if (stage === 'perdido') {
-      this.selectedDealId.set(deal.id);
-      this.message.set('Indica el motivo de pérdida en el panel lateral');
+      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
+      if (fromDrag) {
+        this.message.set('Trámite movido a Perdido. Haz clic en la tarjeta para indicar el motivo de pérdida.');
+      } else {
+        this.selectedDealId.set(deal.id);
+        this.message.set('Indica el motivo de pérdida en el panel lateral');
+      }
       return;
     }
     this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
@@ -297,20 +337,21 @@ export class PanelGestorComponent implements OnInit {
       next: p => {
         this.profile.set({ ...this.profile()!, ...p });
 
-          const validConfigs = this.aiConfigs.filter(c => c.key.trim() !== '');
-          const firstProvider = validConfigs.length > 0 ? validConfigs[0].provider : '';
-
           this.auth.updateMe({
             name: this.profile()?.name,
             logo_url: this.profileLogoUrl,
             google_analytics_id: this.googleAnalyticsId,
             stripe_secret_key: this.stripeSecretKey,
             stripe_public_key: this.stripePublicKey,
-            ai_provider: firstProvider,
-            ai_api_key: JSON.stringify(validConfigs),
             chatbot_bg_color: this.chatbotBgColor,
             chatbot_btn_color: this.chatbotBtnColor,
             chatbot_text_color: this.chatbotTextColor,
+            panel_assistant_enabled: this.panelAssistantEnabled,
+            panel_assistant_name: this.panelAssistantName,
+            panel_assistant_position: this.panelAssistantPosition,
+            panel_assistant_bg_color: this.panelAssistantBgColor,
+            panel_assistant_btn_color: this.panelAssistantBtnColor,
+            panel_assistant_text_color: this.panelAssistantTextColor,
         }).subscribe(() => {
           this.editBio.set(false);
           this.message.set('Perfil actualizado exitosamente');
@@ -428,5 +469,35 @@ export class PanelGestorComponent implements OnInit {
   deleteAutomation(id: string) {
     if (!confirm('¿Eliminar esta automatización?')) return;
     this.http.delete(`${environment.apiUrl}/crm/automations/${id}`).subscribe(() => this.loadAutomations());
+  }
+
+  insertAutomationVariable(key: string, textarea: HTMLTextAreaElement) {
+    const token = `{{${key}}}`;
+    const current = this.newAutomation.action_content || '';
+    const start = textarea.selectionStart ?? current.length;
+    const end = textarea.selectionEnd ?? current.length;
+    this.newAutomation.action_content = current.slice(0, start) + token + current.slice(end);
+    setTimeout(() => {
+      textarea.focus();
+      const pos = start + token.length;
+      textarea.setSelectionRange(pos, pos);
+    });
+  }
+
+  automationStageLabel(stageId: string): string {
+    const fromStages = this.crmStages.find(s => s.id === stageId)?.label;
+    if (fromStages) return fromStages;
+    const fromDashboard = this.crmDashboard()?.stageLabels?.[stageId];
+    if (fromDashboard) return fromDashboard;
+    return stageId;
+  }
+
+  automationPreview(): string {
+    const raw = this.newAutomation.action_content || '';
+    if (!raw.trim()) return 'Escribe un mensaje y verás aquí cómo lo recibirá tu cliente.';
+    return AUTOMATION_VARIABLES.reduce(
+      (text, v) => text.replace(new RegExp(`\\{\\{${v.key}\\}\\}`, 'g'), v.example),
+      raw,
+    );
   }
 }

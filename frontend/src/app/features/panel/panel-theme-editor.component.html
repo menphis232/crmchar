@@ -1,67 +1,86 @@
-<div class="dash-card theme-editor">
-  <h2 class="card-title">{{ title }}</h2>
-  <p class="card-desc">Personalización estilo WordPress: colores, fuentes, textos y bloques.</p>
-  @if (saved()) { <p class="success-msg">{{ saved() }}</p> }
+<div class="theme-editor-layout">
+  <div class="theme-editor-form dash-card theme-editor">
+    <h2 class="card-title">{{ title }}</h2>
+    <p class="card-desc">Personalización estilo WordPress: colores, fuentes, textos y bloques.</p>
+    @if (saved()) { <p class="success-msg">{{ saved() }}</p> }
 
-  @if (theme(); as t) {
-    @if (isPanel) {
-      <div class="form-group"><label>Título del panel</label><input [ngModel]="t.panelTitle" (ngModelChange)="update('panelTitle', $event)"></div>
-      <div class="form-group"><label>Mensaje de bienvenida</label><input [ngModel]="t.welcomeMessage" (ngModelChange)="update('welcomeMessage', $event)"></div>
-    } @else {
-      <div class="form-group"><label>Título</label><input [ngModel]="t.pageTitle" (ngModelChange)="update('pageTitle', $event)"></div>
-      <div class="form-group"><label>Subtítulo</label><input [ngModel]="t.pageSubtitle" (ngModelChange)="update('pageSubtitle', $event)"></div>
-    }
-    <div class="form-row" style="flex-wrap: wrap;">
-      <div class="form-group"><label>Color principal</label><app-color-picker [value]="t.primaryColor || '#000000'" (valueChange)="update('primaryColor', $event)"></app-color-picker></div>
-      <div class="form-group"><label>Color acento</label><app-color-picker [value]="t.accentColor || '#000000'" (valueChange)="update('accentColor', $event)"></app-color-picker></div>
-      <div class="form-group"><label>Fondo</label><app-color-picker [value]="t.backgroundColor || '#000000'" (valueChange)="update('backgroundColor', $event)"></app-color-picker></div>
-    </div>
-    @if (isPanel) {
+    @if (theme(); as t) {
+      @if (isPanel) {
+        <div class="form-group"><label>Título del panel</label><input [ngModel]="t.panelTitle" (ngModelChange)="update('panelTitle', $event)"></div>
+        <div class="form-group"><label>Mensaje de bienvenida</label><input [ngModel]="t.welcomeMessage" (ngModelChange)="update('welcomeMessage', $event)"></div>
+      } @else {
+        <div class="form-group"><label>Título</label><input [ngModel]="t.pageTitle" (ngModelChange)="update('pageTitle', $event)"></div>
+        <div class="form-group"><label>Subtítulo</label><input [ngModel]="t.pageSubtitle" (ngModelChange)="update('pageSubtitle', $event)"></div>
+      }
+      <div class="form-row" style="flex-wrap: wrap;">
+        <div class="form-group"><label>Color principal</label><app-color-picker [value]="t.primaryColor || '#000000'" (valueChange)="update('primaryColor', $event)"></app-color-picker></div>
+        <div class="form-group"><label>Color acento</label><app-color-picker [value]="t.accentColor || '#000000'" (valueChange)="update('accentColor', $event)"></app-color-picker></div>
+        <div class="form-group"><label>Fondo</label><app-color-picker [value]="t.backgroundColor || '#000000'" (valueChange)="update('backgroundColor', $event)"></app-color-picker></div>
+      </div>
+      @if (isPanel) {
+        <div class="form-row">
+          <div class="form-group color-field" style="flex:1;">
+            <label>Fondo sidebar</label>
+            <app-color-picker [value]="sidebarHex()" (valueChange)="setSidebarColor($event)"></app-color-picker>
+            <label class="opacity-label">Transparencia: {{ sidebarOpacity() }}%</label>
+            <input type="range" min="0" max="100" [ngModel]="sidebarOpacity()" (ngModelChange)="setSidebarOpacity(+$event)">
+          </div>
+          <div class="form-group color-field" style="flex:1;">
+            <label>Fondo tarjetas</label>
+            <app-color-picker [value]="cardHex()" (valueChange)="setCardColor($event)"></app-color-picker>
+            <label class="opacity-label">Transparencia: {{ cardOpacity() }}%</label>
+            <input type="range" min="0" max="100" [ngModel]="cardOpacity()" (ngModelChange)="setCardOpacity(+$event)">
+          </div>
+        </div>
+      }
       <div class="form-row">
-        <div class="form-group color-field" style="flex:1;">
-          <label>Fondo sidebar</label>
-          <app-color-picker [value]="sidebarHex()" (valueChange)="setSidebarColor($event)"></app-color-picker>
-          <label class="opacity-label">Transparencia: {{ sidebarOpacity() }}%</label>
-          <input type="range" min="0" max="100" [ngModel]="sidebarOpacity()" (ngModelChange)="setSidebarOpacity(+$event)">
+        <div class="form-group"><label>Fuente cuerpo</label>
+          <select [ngModel]="t.fontFamily" (ngModelChange)="update('fontFamily', $event)">
+            @for (f of bodyFonts; track f.value) {
+              <option [value]="f.value">{{ f.label }}</option>
+            }
+          </select>
         </div>
-        <div class="form-group color-field" style="flex:1;">
-          <label>Fondo tarjetas</label>
-          <app-color-picker [value]="cardHex()" (valueChange)="setCardColor($event)"></app-color-picker>
-          <label class="opacity-label">Transparencia: {{ cardOpacity() }}%</label>
-          <input type="range" min="0" max="100" [ngModel]="cardOpacity()" (ngModelChange)="setCardOpacity(+$event)">
+        <div class="form-group"><label>Fuente títulos</label>
+          <select [ngModel]="t.displayFont" (ngModelChange)="update('displayFont', $event)">
+            @for (f of displayFonts; track f.value) {
+              <option [value]="f.value">{{ f.label }}</option>
+            }
+          </select>
         </div>
+        <div class="form-group"><label>Tamaño título (px)</label><input type="number" [ngModel]="t.titleSize" (ngModelChange)="update('titleSize', $event)"></div>
       </div>
-    }
-    <div class="form-row">
-      <div class="form-group"><label>Fuente cuerpo</label>
-        <select [ngModel]="t.fontFamily" (ngModelChange)="update('fontFamily', $event)">
-          <option value="Inter, sans-serif">Inter</option>
-          <option value="Roboto, sans-serif">Roboto</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Fuente títulos</label>
-        <select [ngModel]="t.displayFont" (ngModelChange)="update('displayFont', $event)">
-          <option value="Montserrat, sans-serif">Montserrat</option>
-          <option value="Oswald, sans-serif">Oswald</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Tamaño título (px)</label><input type="number" [ngModel]="t.titleSize" (ngModelChange)="update('titleSize', $event)"></div>
-    </div>
 
-    <h3 class="section-sub">Bloques personalizados</h3>
-    @for (block of t.customBlocks; track $index; let i = $index) {
-      <div class="block-editor">
-        <select [ngModel]="block.type" (ngModelChange)="updateBlock(i, 'type', $event)">
-          <option value="banner">Banner</option>
-          <option value="notice">Aviso</option>
-          <option value="html">Texto libre</option>
-        </select>
-        <input [ngModel]="block.text" (ngModelChange)="updateBlock(i, 'text', $event)">
-        <label class="inline-check"><input type="checkbox" [ngModel]="block.visible" (ngModelChange)="updateBlock(i, 'visible', $event)"> Visible</label>
-        <button type="button" class="btn-delete small" (click)="removeBlock(i)">✕</button>
+      <h3 class="section-sub">Bloques personalizados</h3>
+      @for (block of t.customBlocks; track $index; let i = $index) {
+        <div class="block-editor">
+          <select [ngModel]="block.type" (ngModelChange)="updateBlock(i, 'type', $event)">
+            <option value="banner">Banner</option>
+            <option value="notice">Aviso</option>
+            <option value="html">Texto libre</option>
+          </select>
+          <input [ngModel]="block.text" (ngModelChange)="updateBlock(i, 'text', $event)">
+          <label class="inline-check"><input type="checkbox" [ngModel]="block.visible" (ngModelChange)="updateBlock(i, 'visible', $event)"> Visible</label>
+          <button type="button" class="btn-delete small" (click)="removeBlock(i)">✕</button>
+        </div>
+      }
+      <button type="button" class="btn-ghost" (click)="addBlock()">+ Agregar bloque</button>
+      <button type="button" class="btn-copy full" (click)="save()">GUARDAR CAMBIOS</button>
+    }
+  </div>
+
+  <div class="theme-editor-preview">
+    <div class="preview-label">Vista previa en vivo</div>
+    @if (themeLoaded()) {
+      @if (isPanel) {
+        <app-panel-live-preview [theme]="liveTheme()" [pageKey]="pageKey" />
+      } @else {
+        <iframe [src]="previewUrl()" class="theme-preview-iframe" title="Vista previa de {{ title }}"></iframe>
+      }
+    } @else {
+      <div class="dash-card" style="min-height: 320px; display:flex; align-items:center; justify-content:center;">
+        <p class="card-desc">Cargando vista previa...</p>
       </div>
     }
-    <button type="button" class="btn-ghost" (click)="addBlock()">+ Agregar bloque</button>
-    <button type="button" class="btn-copy full" (click)="save()">GUARDAR CAMBIOS</button>
-  }
+  </div>
 </div>

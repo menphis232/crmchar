@@ -1,13 +1,14 @@
 import { Component, OnInit, signal, effect } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { AdminService } from '../../core/api.service';
-import { AdminStats, ManagedUser } from '../../models';
+import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty } from '../../models';
 import { PanelThemeEditorComponent } from './panel-theme-editor.component';
-import { DatePipe, CurrencyPipe } from '@angular/common';
+import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { ColorPickerComponent } from '../../shared/color-picker.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
@@ -15,7 +16,7 @@ type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-ge
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, ColorPickerComponent, AiAssistantComponent],
   templateUrl: './panel-admin.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -52,7 +53,34 @@ export class PanelAdminComponent implements OnInit {
   aiMsg = signal('');
   aiSaving = signal(false);
 
-  constructor(public auth: AuthService, private adminService: AdminService) {
+  panelAssistantEnabled = true;
+  panelAssistantName = 'VEGA';
+  panelAssistantPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right';
+  panelAssistantBgColor = '#0f172a';
+  panelAssistantBtnColor = '#4F46E5';
+  panelAssistantTextColor = '#FFFFFF';
+  panelAssistantMsg = signal('');
+  panelAssistantSaving = signal(false);
+
+  analyticsConfig = signal<(AnalyticsConfig & { oauthConfigured?: boolean }) | null>(null);
+  analyticsDashboard = signal<AnalyticsDashboard | null>(null);
+  gaProperties = signal<GaProperty[]>([]);
+  gaMeasurementId = '';
+  gaPropertyId = '';
+  gaGoogleClientId = '';
+  gaGoogleClientSecret = '';
+  gaDays = 30;
+  gaLoading = signal(false);
+  gaConnecting = signal(false);
+  gaConfigLoading = signal(true);
+  gaMsg = signal('');
+
+  constructor(
+    public auth: AuthService,
+    private adminService: AdminService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {
     effect(() => {
       const me = this.auth.user();
       if (me) {
@@ -79,6 +107,13 @@ export class PanelAdminComponent implements OnInit {
         if (this.aiConfigs.length === 0) {
           this.aiConfigs = [{ provider: '', key: '' }];
         }
+
+        this.panelAssistantEnabled = me.panel_assistant_enabled !== 0 && me.panel_assistant_enabled !== false;
+        this.panelAssistantName = me.panel_assistant_name || 'VEGA';
+        this.panelAssistantPosition = me.panel_assistant_position || 'bottom-right';
+        this.panelAssistantBgColor = me.panel_assistant_bg_color || '#0f172a';
+        this.panelAssistantBtnColor = me.panel_assistant_btn_color || '#4F46E5';
+        this.panelAssistantTextColor = me.panel_assistant_text_color || '#FFFFFF';
       }
     });
   }
@@ -89,9 +124,146 @@ export class PanelAdminComponent implements OnInit {
     });
     this.loadStats();
     this.loadUsers();
+    this.loadAnalytics();
+
+    this.route.queryParamMap.subscribe(params => {
+      const analytics = params.get('analytics');
+      if (!analytics) return;
+      if (analytics === 'connected') {
+        this.gaMsg.set('Cuenta de Google Analytics conectada correctamente.');
+        this.loadAnalytics();
+        this.loadGaProperties();
+      } else if (analytics === 'error') {
+        this.gaMsg.set(`Error al conectar: ${params.get('reason') || 'desconocido'}`);
+      }
+      this.router.navigate([], { queryParams: {}, replaceUrl: true });
+    });
   }
 
   loadStats() { this.adminService.getStats().subscribe(s => this.stats.set(s)); }
+
+  loadAnalytics() {
+    this.gaConfigLoading.set(true);
+    this.adminService.getAnalyticsConfig().subscribe({
+      next: (cfg) => {
+        this.analyticsConfig.set(cfg);
+        this.gaMeasurementId = cfg.measurementId || '';
+        this.gaPropertyId = cfg.propertyId || '';
+        this.gaGoogleClientId = cfg.googleClientId || '';
+        this.gaGoogleClientSecret = '';
+        this.gaConfigLoading.set(false);
+        if (cfg.connected) this.loadGaProperties();
+        if (cfg.connected && cfg.propertyId) this.loadAnalyticsDashboard();
+      },
+      error: (e) => {
+        this.gaConfigLoading.set(false);
+        this.analyticsConfig.set({
+          connected: false,
+          measurementId: null,
+          propertyId: null,
+          connectedEmail: null,
+          googleClientId: null,
+          hasClientSecret: false,
+          oauthConfigured: false,
+        });
+        this.gaMsg.set(e.error?.error || 'No se pudo cargar la configuración de Analytics. Verifica que el backend esté corriendo.');
+      },
+    });
+  }
+
+  loadGaProperties() {
+    this.adminService.getAnalyticsProperties().subscribe({
+      next: (props) => this.gaProperties.set(props),
+      error: (e) => this.gaMsg.set(e.error?.error || 'No se pudieron cargar las propiedades GA'),
+    });
+  }
+
+  loadAnalyticsDashboard() {
+    this.gaLoading.set(true);
+    this.adminService.getAnalyticsDashboard(this.gaDays).subscribe({
+      next: (d) => { this.analyticsDashboard.set(d); this.gaLoading.set(false); },
+      error: (e) => { this.gaMsg.set(e.error?.error || 'Error al cargar tráfico'); this.gaLoading.set(false); },
+    });
+  }
+
+  connectGoogleAnalytics() {
+    const cfg = this.analyticsConfig();
+    if (!cfg?.oauthConfigured) {
+      this.gaMsg.set('Guarda primero el Client ID y Client Secret de Google (abajo) y luego haz clic en Conectar.');
+      return;
+    }
+    this.gaConnecting.set(true);
+    this.gaMsg.set('Redirigiendo a Google...');
+    this.adminService.getAnalyticsOAuthUrl().subscribe({
+      next: (res) => {
+        if (res?.url) {
+          window.location.href = res.url;
+        } else {
+          this.gaConnecting.set(false);
+          this.gaMsg.set('No se recibió la URL de autorización.');
+        }
+      },
+      error: (e) => {
+        this.gaConnecting.set(false);
+        this.gaMsg.set(e.error?.error || 'OAuth no configurado en el servidor');
+      },
+    });
+  }
+
+  saveAnalyticsSettings() {
+    this.adminService.saveAnalyticsConfig({
+      measurementId: this.gaMeasurementId.trim(),
+      propertyId: this.gaPropertyId,
+      googleClientId: this.gaGoogleClientId.trim(),
+      googleClientSecret: this.gaGoogleClientSecret.trim() || undefined,
+    }).subscribe({
+      next: (cfg) => {
+        this.analyticsConfig.set(cfg);
+        this.gaGoogleClientSecret = '';
+        this.gaMsg.set('Configuración guardada correctamente.');
+        if (cfg.connected && cfg.propertyId) this.loadAnalyticsDashboard();
+      },
+      error: (e) => this.gaMsg.set(e.error?.error || 'Error al guardar'),
+    });
+  }
+
+  saveOAuthCredentials() {
+    if (!this.gaGoogleClientId.trim()) {
+      this.gaMsg.set('Ingresa el Client ID de Google.');
+      return;
+    }
+    if (!this.gaGoogleClientSecret.trim() && !this.analyticsConfig()?.hasClientSecret) {
+      this.gaMsg.set('Ingresa el Client Secret de Google.');
+      return;
+    }
+    this.saveAnalyticsSettings();
+  }
+
+  disconnectGoogleAnalytics() {
+    if (!confirm('¿Desconectar Google Analytics? Tendrás que volver a autorizar.')) return;
+    this.adminService.disconnectAnalytics().subscribe({
+      next: (cfg) => {
+        this.analyticsConfig.set(cfg);
+        this.analyticsDashboard.set(null);
+        this.gaProperties.set([]);
+        this.gaMsg.set('Analytics desconectado.');
+      },
+      error: (e) => this.gaMsg.set(e.error?.error || 'Error al desconectar'),
+    });
+  }
+
+  deviceLabel(device: string): string {
+    const map: Record<string, string> = {
+      mobile: 'Móvil',
+      desktop: 'Escritorio',
+      tablet: 'Tablet',
+    };
+    return map[device.toLowerCase()] || device;
+  }
+
+  maxDailySessions(daily: { sessions: number }[] = []): number {
+    return Math.max(...daily.map(d => d.sessions), 1);
+  }
 
   loadUsers() {
     const f = this.userFilter();
@@ -208,6 +380,28 @@ export class PanelAdminComponent implements OnInit {
       error: (e) => {
         this.aiMsg.set(e.error?.error || 'Error al guardar configuración de IA');
         this.aiSaving.set(false);
+      }
+    });
+  }
+
+  savePanelAssistant() {
+    this.panelAssistantSaving.set(true);
+    this.adminService.updateMyProfile({
+      panel_assistant_enabled: this.panelAssistantEnabled,
+      panel_assistant_name: this.panelAssistantName,
+      panel_assistant_position: this.panelAssistantPosition,
+      panel_assistant_bg_color: this.panelAssistantBgColor,
+      panel_assistant_btn_color: this.panelAssistantBtnColor,
+      panel_assistant_text_color: this.panelAssistantTextColor,
+    }).subscribe({
+      next: (res) => {
+        this.auth.user.set(res.user);
+        this.panelAssistantMsg.set('Asistente del panel guardado.');
+        this.panelAssistantSaving.set(false);
+      },
+      error: (e) => {
+        this.panelAssistantMsg.set(e.error?.error || 'Error al guardar asistente');
+        this.panelAssistantSaving.set(false);
       }
     });
   }

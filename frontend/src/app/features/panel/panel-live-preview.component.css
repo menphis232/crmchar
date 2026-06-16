@@ -1,0 +1,59 @@
+:host {
+  display: block;
+  min-height: 520px;
+}
+
+.panel-preview-root {
+  --mx-white: #1a1a1a;
+  --muted: #6b7280;
+  --border: rgba(0, 0, 0, 0.08);
+  --surface-2: #f5f3f0;
+  --gold-dim: rgba(200, 169, 74, 0.12);
+  background: var(--panel-bg, var(--bg, #f5f3f0));
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  font-family: var(--f-body, Inter, sans-serif);
+  min-height: 520px;
+}
+
+.panel-preview-nav {
+  pointer-events: none;
+}
+
+.panel-preview-body {
+  min-height: 460px;
+}
+
+.panel-preview-title {
+  font-family: var(--f-display, Montserrat, sans-serif);
+  font-size: var(--page-title-size, 22px);
+  margin: 0 0 8px;
+  color: var(--mx-white);
+}
+
+.panel-preview-stats {
+  margin-bottom: 16px;
+}
+
+.panel-preview-card {
+  pointer-events: none;
+}
+
+.preview-user-name {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.panel-preview-root .dash-sidebar {
+  background: var(--panel-sidebar-bg, #fff);
+}
+
+.panel-preview-root .dash-card,
+.panel-preview-root .stat-box {
+  background: var(--panel-card-bg, #fff);
+}
+
+.panel-preview-root .dash-link.active {
+  border-left-color: var(--panel-accent, var(--gold, #c8a94a));
+}

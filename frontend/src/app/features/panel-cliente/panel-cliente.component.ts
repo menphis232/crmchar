@@ -1,8 +1,8 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe, TitleCasePipe } from '@angular/common';
+import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { io, Socket } from 'socket.io-client';
@@ -11,9 +11,9 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-panel-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, CurrencyPipe],
+  imports: [CommonModule, FormsModule, DatePipe, CurrencyPipe, RouterLink],
   templateUrl: './panel-cliente.component.html',
-  styleUrls: ['./panel-cliente.component.css']
+  styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css']
 })
 export class PanelClienteComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
@@ -23,6 +23,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   zone = inject(NgZone);
 
   activeTab = signal<'dashboard' | 'tramites' | 'ajustes'>('dashboard');
+  isMobileMenuOpen = signal(false);
   dealTab = signal<'chat' | 'docs'>('chat');
   deals = signal<any[]>([]);
   selectedDeal = signal<any>(null);
@@ -39,8 +40,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   // Stats computed from deals
   totalDeals = computed(() => this.deals().length);
-  activeDeals = computed(() => this.deals().filter(d => d.stage !== 'completado' && d.stage !== 'perdido').length);
-  completedDeals = computed(() => this.deals().filter(d => d.stage === 'completado').length);
+  activeDeals = computed(() => this.deals().filter(d => !this.isTerminalStage(d)).length);
+  completedDeals = computed(() => this.deals().filter(d => {
+    const stages = this.pipelineStages(d);
+    const idx = this.stageIndex(d);
+    const last = stages[stages.length - 1];
+    return d.stage === 'completado' || d.stage === 'vendido' || (last && d.stage === last.id && last.id !== 'perdido');
+  }).length);
 
   // Ajustes
   currentPassword = '';
@@ -62,8 +68,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.socket.on('receive_message', (msg: any) => {
       this.zone.run(() => {
         const deal = this.selectedDeal();
-        if (deal && msg.dealId === deal.id) {
-          this.messages.update(msgs => [...msgs, msg]);
+        const msgDealId = msg.dealId || msg.deal_id;
+        if (deal && msgDealId === deal.id) {
+          this.messages.update(msgs => {
+            if (msgs.some(m => m.id === msg.id)) return msgs;
+            return [...msgs, msg];
+          });
           this.scrollToBottom();
         }
       });
@@ -234,37 +244,57 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  stageLabel(stage: string): string {
-    const labels: Record<string, string> = {
-      nuevo: 'Recibido',
-      contactado: 'En Revisión',
-      en_tramite: 'En Trámite',
-      completado: 'Completado',
-      perdido: 'Cancelado'
-    };
-    return labels[stage] || stage;
+  pipelineStages(deal: any): { id: string; label: string }[] {
+    if (deal?.pipeline_stages?.length) return deal.pipeline_stages;
+    return [
+      { id: 'nuevo', label: 'Nuevo' },
+      { id: 'contactado', label: 'Contactado' },
+      { id: 'en_tramite', label: 'En trámite' },
+      { id: 'documentacion', label: 'Documentación' },
+      { id: 'completado', label: 'Completado' },
+      { id: 'perdido', label: 'Perdido' },
+    ];
   }
 
-  stageClass(stage: string): string {
-    const classes: Record<string, string> = {
-      nuevo: 'badge-new',
-      contactado: 'badge-review',
-      en_tramite: 'badge-progress',
-      completado: 'badge-done',
-      perdido: 'badge-lost'
-    };
-    return classes[stage] || '';
+  stageIndex(deal: any): number {
+    if (!deal?.stage) return 0;
+    const idx = this.pipelineStages(deal).findIndex(s => s.id === deal.stage);
+    return idx >= 0 ? idx : 0;
   }
 
-  stageProgress(stage: string): number {
-    const map: Record<string, number> = {
-      nuevo: 15,
-      contactado: 35,
-      en_tramite: 65,
-      completado: 100,
-      perdido: 0
-    };
-    return map[stage] || 0;
+  isTerminalStage(deal: any): boolean {
+    const id = deal?.stage;
+    if (id === 'perdido') return true;
+    const stages = this.pipelineStages(deal);
+    const last = stages[stages.length - 1];
+    return id === 'completado' || id === 'vendido' || (!!last && id === last.id);
+  }
+
+  stageLabel(deal: any): string {
+    const match = this.pipelineStages(deal).find(s => s.id === deal?.stage);
+    return match?.label || deal?.stage || '—';
+  }
+
+  stageClass(deal: any): string {
+    const id = deal?.stage || '';
+    if (id === 'perdido') return 'badge-lost';
+    const stages = this.pipelineStages(deal);
+    const idx = this.stageIndex(deal);
+    if (idx === stages.length - 1) return 'badge-done';
+    if (idx === 0) return 'badge-new';
+    return 'badge-progress';
+  }
+
+  stageProgress(deal: any): number {
+    const stages = this.pipelineStages(deal);
+    if (!stages.length || deal?.stage === 'perdido') return 0;
+    const idx = this.stageIndex(deal);
+    return Math.round(((idx + 1) / stages.length) * 100);
+  }
+
+  initials(name?: string) {
+    if (!name) return 'CL';
+    return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
   }
 
   logout() {

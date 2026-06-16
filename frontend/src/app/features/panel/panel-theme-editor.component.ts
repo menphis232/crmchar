@@ -1,8 +1,12 @@
-import { Component, Input, OnInit, signal } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import { AdminService } from '../../core/api.service';
+import { PreviewThemeService } from '../../core/preview-theme.service';
 import { CustomBlock, SiteSettings } from '../../models';
 import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { PanelLivePreviewComponent } from './panel-live-preview.component';
+import { THEME_BODY_FONTS, THEME_DISPLAY_FONTS } from '../../shared/theme-fonts';
 
 function hexToRgb(hex: string) {
   const h = hex.replace('#', '');
@@ -34,11 +38,11 @@ function parseColorValue(value: string | undefined, fallbackHex: string) {
 @Component({
   selector: 'app-panel-theme-editor',
   standalone: true,
-  imports: [FormsModule, ColorPickerComponent],
+  imports: [FormsModule, ColorPickerComponent, PanelLivePreviewComponent],
   templateUrl: './panel-theme-editor.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-theme-editor.component.css', './panel-dashboard.css'],
 })
-export class PanelThemeEditorComponent implements OnInit {
+export class PanelThemeEditorComponent implements OnInit, OnDestroy {
   @Input({ required: true }) pageKey!: string;
   @Input({ required: true }) title!: string;
   @Input() isPanel = false;
@@ -49,8 +53,36 @@ export class PanelThemeEditorComponent implements OnInit {
   sidebarOpacity = signal(4);
   cardHex = signal('#ffffff');
   cardOpacity = signal(4);
+  themeLoaded = signal(false);
 
-  constructor(private adminService: AdminService) {}
+  readonly bodyFonts = THEME_BODY_FONTS;
+  readonly displayFonts = THEME_DISPLAY_FONTS;
+
+  liveTheme = computed(() => {
+    const t = this.theme();
+    return {
+      ...t,
+      pageKey: this.pageKey,
+      sidebarBg: toCssColor(this.sidebarHex(), this.sidebarOpacity()),
+      cardBg: toCssColor(this.cardHex(), this.cardOpacity()),
+    };
+  });
+
+  previewUrl = computed(() => {
+    const path = this.pageKey === 'gestores' ? '/gestores' : '/autos';
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`${path}?preview=1`);
+  });
+
+  constructor(
+    private adminService: AdminService,
+    private previewTheme: PreviewThemeService,
+    private sanitizer: DomSanitizer,
+  ) {
+    effect(() => {
+      if (!this.themeLoaded()) return;
+      this.previewTheme.setPreview(this.pageKey, this.liveTheme());
+    });
+  }
 
   ngOnInit() {
     this.adminService.getAllSiteSettings().subscribe(list => {
@@ -62,7 +94,12 @@ export class PanelThemeEditorComponent implements OnInit {
       this.cardHex.set(cb.hex);
       this.cardOpacity.set(cb.opacity);
       this.theme.set({ ...found, customBlocks: found.customBlocks || [] });
+      this.themeLoaded.set(true);
     });
+  }
+
+  ngOnDestroy() {
+    this.previewTheme.clearPreview(this.pageKey);
   }
 
   update(field: keyof SiteSettings, value: string) {

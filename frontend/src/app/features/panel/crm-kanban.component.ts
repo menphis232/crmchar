@@ -1,5 +1,5 @@
-import { Component, input, output, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Component, input, output, signal, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser, DecimalPipe } from '@angular/common';
 import { CrmDeal } from '../../models';
 
 @Component({
@@ -16,11 +16,22 @@ export class CrmKanbanComponent {
   showValue = input(false);
 
   dealSelect = output<CrmDeal>();
-  stageChange = output<{ deal: CrmDeal; stage: string }>();
+  stageChange = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
 
   dragOverStage = signal<string | null>(null);
+  isTouchDevice = signal(false);
+  private platformId = inject(PLATFORM_ID);
   private draggedDealId: string | null = null;
   private didDrag = false;
+  private suppressClickUntil = 0;
+
+  constructor() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.isTouchDevice.set(
+        'ontouchstart' in window || navigator.maxTouchPoints > 0
+      );
+    }
+  }
 
   dealsInStage(stage: string) {
     return this.deals().filter(d => d.stage === stage);
@@ -28,6 +39,7 @@ export class CrmKanbanComponent {
 
   onDragStart(event: DragEvent, deal: CrmDeal) {
     this.didDrag = true;
+    this.suppressClickUntil = Date.now() + 600;
     this.draggedDealId = deal.id;
     const dt = event.dataTransfer;
     if (!dt) return;
@@ -35,14 +47,16 @@ export class CrmKanbanComponent {
     dt.setData('text/plain', deal.id);
     dt.setData('application/x-deal-id', deal.id);
     if (event.target instanceof HTMLElement) {
-      dt.setDragImage(event.target, 10, 10);
+      const card = event.target.closest('.kanban-card') as HTMLElement || event.target;
+      dt.setDragImage(card, 12, 12);
     }
   }
 
   onDragEnd() {
     this.draggedDealId = null;
     this.dragOverStage.set(null);
-    setTimeout(() => { this.didDrag = false; }, 200);
+    this.suppressClickUntil = Date.now() + 600;
+    setTimeout(() => { this.didDrag = false; }, 600);
   }
 
   onDragOver(event: DragEvent, stage: string) {
@@ -64,31 +78,41 @@ export class CrmKanbanComponent {
     event.stopPropagation();
     this.dragOverStage.set(null);
     this.didDrag = true;
+    this.suppressClickUntil = Date.now() + 600;
 
     const dealId =
       this.draggedDealId ||
       event.dataTransfer?.getData('application/x-deal-id') ||
       event.dataTransfer?.getData('text/plain');
 
+    this.draggedDealId = null;
+
     if (!dealId) return;
 
     const deal = this.deals().find(d => d.id === dealId);
     if (deal && deal.stage !== stage) {
-      this.stageChange.emit({ deal, stage });
+      this.stageChange.emit({ deal, stage, fromDrag: true });
     }
-    this.draggedDealId = null;
   }
 
   onCardClick(deal: CrmDeal) {
-    if (!this.didDrag) this.dealSelect.emit(deal);
+    if (this.didDrag || Date.now() < this.suppressClickUntil) return;
+    this.dealSelect.emit(deal);
+  }
+
+  onCardClickIfDesktop(deal: CrmDeal) {
+    if (!this.isTouchDevice()) this.onCardClick(deal);
   }
 
   onSelectStage(deal: CrmDeal, event: Event) {
     event.stopPropagation();
+    if (!(event as InputEvent).isTrusted) return;
     const select = event.target as HTMLSelectElement;
     const stage = select.value;
-    if (stage && stage !== deal.stage) {
-      this.stageChange.emit({ deal, stage });
+    if (stage && stage !== deal.stage && this.stages().includes(stage)) {
+      this.stageChange.emit({ deal, stage, fromDrag: false });
+    } else if (stage && stage !== deal.stage) {
+      select.value = deal.stage;
     }
   }
 

@@ -32,6 +32,20 @@ export function stagesForRole(role, userStagesJson = null) {
   return role === 'gestor' ? TRAMITE_STAGES : VENTA_STAGES;
 }
 
+export function pipelineStagesForUser(role, userStagesJson = null) {
+  if (userStagesJson) {
+    try {
+      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
+      if (Array.isArray(stages) && stages.length > 0) {
+        return stages.map(s => ({ id: s.id, label: s.label || s.id }));
+      }
+    } catch (e) { /* fall through to defaults */ }
+  }
+  const ids = role === 'gestor' ? TRAMITE_STAGES : VENTA_STAGES;
+  const labels = role === 'gestor' ? TRAMITE_STAGE_LABELS : VENTA_STAGE_LABELS;
+  return ids.map(id => ({ id, label: labels[id] || id }));
+}
+
 export function stageLabelsForUser(role, userStagesJson = null) {
   if (userStagesJson) {
     try {

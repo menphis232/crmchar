@@ -305,7 +305,7 @@
       </button>
       
       @if (chatOpen) {
-        <div class="chatbot-panel" [style.backgroundColor]="gestor()?.chatbot_bg_color || '#000000'">
+        <div class="chatbot-panel" [style.backgroundColor]="gestor()?.chatbot_bg_color || '#0f172a'">
           <div class="chatbot-header" 
                [style.backgroundColor]="gestor()?.chatbot_btn_color || '#4F46E5'"
                [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
@@ -314,7 +314,7 @@
           </div>
           <div class="chatbot-messages" id="chatbot-messages">
             @for (msg of chatHistory; track $index) {
-              <div class="chat-msg" [class.user]="msg.role === 'user'">
+              <div class="chat-msg" [class.user]="msg.role === 'user'" [class.model]="msg.role === 'model'">
                 {{ msg.content }}
               </div>
             }

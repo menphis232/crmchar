@@ -56,8 +56,10 @@ export class CrmDealPanelComponent {
     this.socket.on('receive_message', (msg: any) => {
       this.zone.run(() => {
         if (this.deal() && msg.dealId === this.deal()!.id) {
-          this.messages.push(msg);
-          this.scrollToBottom();
+          if (!this.messages.some(m => m.id === msg.id)) {
+            this.messages.push(msg);
+            this.scrollToBottom();
+          }
         }
       });
     });

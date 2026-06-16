@@ -1,5 +1,36 @@
 import nodemailer from 'nodemailer';
-import { get } from '../db.js'; // Need to import DB to query the logo
+import { get } from '../db.js';
+
+/** Logo oficial de Trámites Vehiculares de México (correos globales y fallback) */
+export const GLOBAL_EMAIL_LOGO_URL =
+  process.env.GLOBAL_EMAIL_LOGO_URL
+  || 'https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png';
+
+const API_PUBLIC_BASE = (process.env.API_PUBLIC_URL || process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+function toAbsoluteUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  const path = url.startsWith('/') ? url : `/${url}`;
+  return `${API_PUBLIC_BASE}${path}`;
+}
+
+function buildLogoHtml(logoUrl) {
+  const src = toAbsoluteUrl(logoUrl) || GLOBAL_EMAIL_LOGO_URL;
+  return `
+    <div style="display:inline-block; background:#ffffff; padding:14px 24px; border-radius:10px;">
+      <img src="${src}" alt="Trámites Vehiculares de México" style="max-height:52px; max-width:220px; display:block; margin:0 auto;">
+    </div>`;
+}
+
+/** userId = gestor/concesionaria que envía al cliente; sin userId = correo global de la plataforma */
+export async function resolveEmailLogo(userId = null) {
+  if (userId) {
+    const user = await get('SELECT logo_url FROM users WHERE id = ?', [userId]);
+    if (user?.logo_url) return user.logo_url;
+  }
+  return GLOBAL_EMAIL_LOGO_URL;
+}
 
 export async function createTransporter() {
   if (process.env.SMTP_HOST && process.env.SMTP_USER) {
@@ -14,34 +45,20 @@ export async function createTransporter() {
     });
   }
 
-  // Fallback to Mailtrap for testing
   return nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
+    host: 'sandbox.smtp.mailtrap.io',
     port: 2525,
     auth: {
-      user: "0e03374eb334f8",
-      pass: "9edf41cb2254e7"
-    }
+      user: '0e03374eb334f8',
+      pass: '9edf41cb2254e7',
+    },
   });
 }
 
 export async function sendEmail(to, subject, text, html, userId = null) {
   try {
-    let logoUrl = null;
-
-    if (userId) {
-      const user = await get('SELECT logo_url FROM users WHERE id = ?', [userId]);
-      if (user && user.logo_url) logoUrl = user.logo_url;
-    }
-
-    if (!logoUrl) {
-      const admin = await get("SELECT logo_url FROM users WHERE role = 'admin' AND logo_url IS NOT NULL LIMIT 1");
-      if (admin && admin.logo_url) logoUrl = admin.logo_url;
-    }
-
-    const headerLogo = logoUrl
-      ? `<img src="${logoUrl.startsWith('http') ? logoUrl : 'http://localhost:3001' + logoUrl}" alt="Logo" style="max-height: 50px; border-radius: 4px;">`
-      : `<h1 style="color: #c8a94a; margin: 0; font-size: 24px; letter-spacing: 1px;">TRÁMITES<span style="color: #fff;">VEHICULARES</span>.mx</h1>`;
+    const logoUrl = await resolveEmailLogo(userId);
+    const headerLogo = buildLogoHtml(logoUrl);
 
     const bodyHtml = html || `<p style="color: #a0aec0; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${text}</p>`;
 
@@ -54,26 +71,26 @@ export async function sendEmail(to, subject, text, html, userId = null) {
       ${bodyHtml}
 
       <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 30px 0;">
-      <p style="color: #718096; font-size: 12px; text-align: center; margin: 10px 0 0 0;">&copy; ${new Date().getFullYear()} Trámites Vehiculares. Todos los derechos reservados.</p>
+      <p style="color: #718096; font-size: 12px; text-align: center; margin: 10px 0 0 0;">&copy; ${new Date().getFullYear()} Trámites Vehiculares de México. Todos los derechos reservados.</p>
     </div>
     `;
 
     const transporter = await createTransporter();
     const info = await transporter.sendMail({
-      from: '"Trámites Vehiculares" <noreply@tramitesvehiculares.com>',
+      from: '"Trámites Vehiculares de México" <noreply@tramitesvehiculares.com>',
       to,
       subject,
       text,
       html: finalHtml,
     });
 
-    console.log("Message sent: %s", info.messageId);
+    console.log('Message sent: %s', info.messageId);
     if (!process.env.SMTP_HOST) {
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
     }
     return info;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error sending email:', error);
     throw error;
   }
 }

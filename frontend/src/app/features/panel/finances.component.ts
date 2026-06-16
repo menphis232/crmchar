@@ -382,8 +382,8 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
     .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; }
     .date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .date-inputs label { font-size: 12px; color: var(--muted); }
-    .date-inputs input { background: rgba(0,0,0,.25); border: 1px solid var(--border); padding: 7px 10px; border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
-    .date-inputs input:focus { border-color: var(--gold); }
+    .date-inputs input { background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; }
+    .date-inputs input:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
     .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .quick-btns button { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all .2s; }
     .quick-btns button:hover, .quick-btns button.active { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 700; }
@@ -488,8 +488,8 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
     .emoji-grid { position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,.5); min-width: 200px; }
     .emoji-opt { background: transparent; border: none; font-size: 20px; width: 32px; height: 32px; cursor: pointer; border-radius: 6px; transition: background .15s; }
     .emoji-opt:hover { background: rgba(255,255,255,.1); }
-    .custom-name-input { flex: 1; min-width: 160px; background: rgba(0,0,0,.25); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; color: var(--text); font-size: 13px; outline: none; }
-    .custom-name-input:focus { border-color: var(--gold); }
+    .custom-name-input { flex: 1; min-width: 160px; background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; }
+    .custom-name-input:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
     .btn-add-method { background: rgba(200,169,74,.15); border: 1px solid rgba(200,169,74,.4); color: var(--gold); padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .2s; }
     .btn-add-method:hover { background: rgba(200,169,74,.25); }
     .btn-add-method:disabled { opacity: .4; cursor: not-allowed; }
@@ -511,17 +511,17 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
     .modal-fields { display: flex; flex-direction: column; gap: 14px; padding: 16px 24px; }
     .field-row { display: flex; flex-direction: column; gap: 6px; }
     .field-row label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-    .field-row input, .field-row select { background: rgba(0,0,0,.25); border: 1px solid var(--border); padding: 10px 12px; border-radius: 8px; color: var(--text); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
-    .field-row input:focus, .field-row select:focus { border-color: var(--gold); }
-    .input-money { display: flex; align-items: center; background: rgba(0,0,0,.25); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-    .input-money span { padding: 0 12px; color: var(--gold); font-weight: 700; font-size: 16px; border-right: 1px solid var(--border); }
-    .input-money input { border: none; background: transparent; flex: 1; }
+    .field-row input, .field-row select { background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
+    .field-row input:focus, .field-row select:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
+    .input-money { display: flex; align-items: center; background: #ffffff; border: 1px solid rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
+    .input-money span { padding: 0 12px; color: var(--brand-black); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(0,0,0,.12); background: #f5f3f0; }
+    .input-money input { border: none; background: transparent; flex: 1; color: var(--brand-black); }
 
     /* Styled select for payment method */
     .select-wrap { position: relative; }
-    .method-select { appearance: none; -webkit-appearance: none; background: rgba(0,0,0,.3); border: 1px solid var(--border); padding: 11px 40px 11px 14px; border-radius: 8px; color: var(--text); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; cursor: pointer; transition: border-color .2s; }
-    .method-select:focus { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(200,169,74,.15); }
-    .method-select option { background: #1a1a1a; color: var(--text); padding: 6px; }
+    .method-select { appearance: none; -webkit-appearance: none; background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 11px 40px 11px 14px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; cursor: pointer; transition: border-color .2s; }
+    .method-select:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
+    .method-select option { background: #ffffff; color: var(--brand-black); padding: 6px; }
     .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 14px; }
     .no-methods-hint { background: rgba(200,169,74,.08); border: 1px dashed rgba(200,169,74,.3); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
     .no-methods-hint strong { color: var(--gold); }

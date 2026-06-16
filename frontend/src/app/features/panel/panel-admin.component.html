@@ -1,5 +1,7 @@
 <nav class="dash-nav">
-  <a routerLink="/autos" class="dash-logo">TRÁMITES<span>VEHICULARES</span>.mx</a>
+  <a routerLink="/autos" class="dash-logo">
+    <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+  </a>
   <div class="dash-user">
     <app-notification-bell />
 
@@ -36,7 +38,7 @@
       </button>
     </div>
 
-    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats'); isMobileMenuOpen.set(false)">📊 Estadísticas</button>
+    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats'); loadAnalytics(); isMobileMenuOpen.set(false)">📊 Estadísticas</button>
     <button class="dash-link" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers(); isMobileMenuOpen.set(false)">👥 Usuarios</button>
     <button class="dash-link" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">🎨 Página Autos</button>
     <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme'); isMobileMenuOpen.set(false)">🎨 Página Gestores</button>
@@ -48,12 +50,158 @@
   <main class="dash-main">
     @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
 
-    @if (tab() === 'stats' && stats(); as s) {
-      <div class="stats-grid">
-        <div class="stat-box"><div class="stat-num">{{ s.totals.gestores }}</div><div class="stat-label">GESTORES</div></div>
-        <div class="stat-box"><div class="stat-num">{{ s.totals.concesionarias }}</div><div class="stat-label">CONCESIONARIAS</div></div>
-        <div class="stat-box"><div class="stat-num">{{ s.totals.autosPublished }}</div><div class="stat-label">AUTOS</div></div>
-        <div class="stat-box"><div class="stat-num">{{ s.totals.inquiries }}</div><div class="stat-label">PREGUNTAS</div></div>
+    @if (tab() === 'stats') {
+      @if (stats(); as s) {
+        <div class="dash-card">
+          <h2 class="card-title">📊 Resumen de la plataforma</h2>
+          <p class="card-desc">Usuarios, inventario y actividad interna del sistema.</p>
+          <div class="stats-grid">
+            <div class="stat-box"><div class="stat-num">{{ s.totals.gestores }}</div><div class="stat-label">GESTORES</div></div>
+            <div class="stat-box"><div class="stat-num">{{ s.totals.concesionarias }}</div><div class="stat-label">CONCESIONARIAS</div></div>
+            <div class="stat-box"><div class="stat-num">{{ s.totals.autosPublished }}</div><div class="stat-label">AUTOS</div></div>
+            <div class="stat-box"><div class="stat-num">{{ s.totals.inquiries }}</div><div class="stat-label">PREGUNTAS</div></div>
+          </div>
+        </div>
+      }
+
+      <div class="dash-card ga-admin-card">
+        <h2 class="card-title">🌐 Tráfico del sitio (Google Analytics)</h2>
+        <p class="card-desc">Conecta tu cuenta de Google Analytics para ver visitas, dispositivos y páginas más vistas. El ID de medición se usa en todo el sitio público.</p>
+
+        @if (gaMsg()) {
+          <p class="ga-admin-msg">{{ gaMsg() }}</p>
+        }
+
+        @if (gaConfigLoading()) {
+          <p class="card-desc">Cargando configuración de Analytics...</p>
+        } @else {
+          @if (analyticsConfig(); as cfg) {
+          <div class="ga-admin-status" [class.connected]="cfg.connected">
+            @if (cfg.connected) {
+              <span>✅ Conectado{{ cfg.connectedEmail ? ' como ' + cfg.connectedEmail : '' }}</span>
+              <button type="button" class="btn-ghost small" (click)="disconnectGoogleAnalytics()">Desconectar</button>
+            } @else {
+              <span>⚠️ Sin conexión OAuth — autoriza tu cuenta de Google para leer estadísticas.</span>
+            }
+          </div>
+
+          @if (!cfg.connected) {
+            <div class="ga-oauth-form">
+              <h4 class="ga-section-title">Credenciales OAuth de Google</h4>
+              <p class="card-desc">Pégalas aquí desde Google Cloud Console. Se guardan en la base de datos — no necesitas editar archivos del servidor.</p>
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>Client ID</label>
+                  <input [(ngModel)]="gaGoogleClientId" placeholder="123456789-abc.apps.googleusercontent.com">
+                </div>
+                <div class="form-group" style="flex:1;">
+                  <label>Client Secret</label>
+                  <input type="password" [(ngModel)]="gaGoogleClientSecret"
+                         [placeholder]="cfg.hasClientSecret ? '•••••••• (dejar vacío para no cambiar)' : 'GOCSPX-...'">
+                </div>
+              </div>
+              <button type="button" class="btn-copy" (click)="saveOAuthCredentials()">Guardar credenciales</button>
+
+              <div class="ga-setup-box">
+                <strong>¿Dónde las consigo?</strong>
+                <ol>
+                  <li>Entra a <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console → Credenciales</a></li>
+                  <li>Crea un <strong>ID de cliente OAuth</strong> (tipo Aplicación web)</li>
+                  <li>En URI de redirección autorizada, pega exactamente:<br><code>{{ cfg.oauthRedirectUri }}</code></li>
+                  <li>Habilita <em>Google Analytics Data API</em> y <em>Google Analytics Admin API</em></li>
+                  <li>Copia el Client ID y Client Secret, pégalos arriba y guarda</li>
+                </ol>
+              </div>
+            </div>
+
+            <button type="button" class="btn-copy" (click)="connectGoogleAnalytics()" [disabled]="gaConnecting()">
+              {{ gaConnecting() ? 'Conectando...' : 'Conectar con Google Analytics' }}
+            </button>
+          } @else {
+            <div class="ga-admin-config">
+              <div class="form-row">
+                <div class="form-group" style="flex:1;">
+                  <label>ID de medición global (G-XXXXXXXX)</label>
+                  <input [(ngModel)]="gaMeasurementId" placeholder="Ej. G-ABC123XYZ">
+                  <small>Se inyecta en todas las páginas públicas para registrar visitas.</small>
+                </div>
+                <div class="form-group" style="flex:1;">
+                  <label>Propiedad GA4</label>
+                  <select [(ngModel)]="gaPropertyId">
+                    <option value="">— Selecciona propiedad —</option>
+                    @for (p of gaProperties(); track p.propertyId) {
+                      <option [value]="p.propertyId">{{ p.displayName }} ({{ p.accountName }})</option>
+                    }
+                  </select>
+                  <button type="button" class="btn-ghost small" style="margin-top:8px;" (click)="loadGaProperties()">Actualizar lista</button>
+                </div>
+              </div>
+              <button type="button" class="btn-copy" (click)="saveAnalyticsSettings()">Guardar configuración GA</button>
+            </div>
+
+            @if (cfg.propertyId) {
+              <div class="ga-admin-toolbar">
+                <label>Período:</label>
+                <select [(ngModel)]="gaDays" (change)="loadAnalyticsDashboard()">
+                  <option [value]="7">Últimos 7 días</option>
+                  <option [value]="30">Últimos 30 días</option>
+                  <option [value]="90">Últimos 90 días</option>
+                </select>
+                <button type="button" class="btn-ghost small" (click)="loadAnalyticsDashboard()" [disabled]="gaLoading()">
+                  {{ gaLoading() ? 'Cargando...' : 'Actualizar' }}
+                </button>
+              </div>
+
+              @if (analyticsDashboard(); as ga) {
+                @if (ga.connected && ga.overview) {
+                  <div class="stats-grid ga-metrics">
+                    <div class="stat-box"><div class="stat-num">{{ ga.overview.sessions | number }}</div><div class="stat-label">SESIONES</div></div>
+                    <div class="stat-box"><div class="stat-num">{{ ga.overview.activeUsers | number }}</div><div class="stat-label">USUARIOS</div></div>
+                    <div class="stat-box"><div class="stat-num">{{ ga.overview.screenPageViews | number }}</div><div class="stat-label">PÁGINAS VISTAS</div></div>
+                  </div>
+
+                  @if (ga.devices?.length) {
+                    <h4 class="ga-section-title">Dispositivos</h4>
+                    <div class="ga-device-grid">
+                      @for (d of ga.devices; track d.device) {
+                        <div class="ga-device-card">
+                          <span class="ga-device-name">{{ deviceLabel(d.device) }}</span>
+                          <strong>{{ d.sessions | number }}</strong>
+                          <small>sesiones · {{ d.activeUsers | number }} usuarios</small>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (ga.topPages?.length) {
+                    <h4 class="ga-section-title">Páginas más visitadas</h4>
+                    <div class="ga-pages-list">
+                      @for (p of ga.topPages; track p.path) {
+                        <div class="ga-page-row">
+                          <code>{{ p.path }}</code>
+                          <span>{{ p.views | number }} vistas</span>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  @if (ga.daily?.length) {
+                    <h4 class="ga-section-title">Sesiones por día</h4>
+                    <div class="ga-daily-chart">
+                      @for (d of ga.daily; track d.date) {
+                        <div class="ga-daily-bar" [title]="d.date + ': ' + d.sessions + ' sesiones'">
+                          <div class="ga-daily-fill" [style.height.%]="(d.sessions / maxDailySessions(ga.daily!) * 100)"></div>
+                          <span>{{ d.date }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+              }
+            }
+          }
+          }
+        }
       </div>
     }
 
@@ -153,8 +301,50 @@
           </button>
         </div>
         @if (aiMsg()) { <p class="success-msg banner-msg" style="margin-top: 16px;">{{ aiMsg() }}</p> }
-        <button class="btn-copy full" [disabled]="aiSaving()" style="margin-top: 20px; margin-bottom: 40px;" (click)="saveAiConfig()">
+        <button class="btn-copy full" [disabled]="aiSaving()" style="margin-top: 20px;" (click)="saveAiConfig()">
           {{ aiSaving() ? 'Guardando...' : '💾 GUARDAR API KEY DE IA' }}
+        </button>
+
+        <hr class="divider" style="margin: 28px 0;">
+
+        <h2 class="card-title">🤖 Asistente del Panel</h2>
+        <p class="card-desc">Personaliza el botón flotante de ayuda en tu panel de administración.</p>
+        <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
+          Mostrar asistente en el panel
+        </label>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Nombre del asistente</label>
+            <input [(ngModel)]="panelAssistantName" placeholder="Ej: VEGA" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>Posición</label>
+            <select [(ngModel)]="panelAssistantPosition">
+              <option value="bottom-right">Abajo derecha</option>
+              <option value="bottom-left">Abajo izquierda</option>
+              <option value="top-right">Arriba derecha</option>
+              <option value="top-left">Arriba izquierda</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:16px;">
+          <div class="form-group">
+            <label>Fondo del chat</label>
+            <app-color-picker [(value)]="panelAssistantBgColor"></app-color-picker>
+          </div>
+          <div class="form-group">
+            <label>Color del botón</label>
+            <app-color-picker [(value)]="panelAssistantBtnColor"></app-color-picker>
+          </div>
+          <div class="form-group">
+            <label>Color de texto</label>
+            <app-color-picker [(value)]="panelAssistantTextColor"></app-color-picker>
+          </div>
+        </div>
+        @if (panelAssistantMsg()) { <p class="success-msg banner-msg" style="margin-bottom: 12px;">{{ panelAssistantMsg() }}</p> }
+        <button class="btn-copy full" [disabled]="panelAssistantSaving()" style="margin-bottom: 40px;" (click)="savePanelAssistant()">
+          {{ panelAssistantSaving() ? 'Guardando...' : '💾 GUARDAR ASISTENTE' }}
         </button>
 
         <hr class="divider">
@@ -235,7 +425,7 @@
             <!-- Chat viewer -->
             <div style="flex: 1; display: flex; flex-direction: column; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; min-width: 0;">
               @if (chatDeal(); as cDeal) {
-                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); flex-shrink: 0;">
+                <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); background: #f8f7f5; flex-shrink: 0;">
                   <h4 style="margin: 0; font-family: var(--f-display); font-size: 15px; color: var(--mx-white);">{{ cDeal.title }}</h4>
                   <p style="margin: 4px 0 0; font-size: 12px; color: var(--muted);">{{ cDeal.clientName }} • {{ cDeal.clientEmail }}</p>
                 </div>

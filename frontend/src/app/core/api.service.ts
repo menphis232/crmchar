@@ -214,6 +214,24 @@ export class AdminService {
 
   getAllSiteSettings() { return this.http.get<SiteSettings[]>(`${this.base}/site`); }
   saveSiteSettings(pageKey: string, settings: SiteSettings) { return this.http.put<SiteSettings>(`${this.base}/site/${pageKey}`, settings); }
+
+  getAnalyticsConfig() { return this.http.get<import('../models').AnalyticsConfig & { oauthConfigured: boolean }>(`${this.base}/analytics/config`); }
+  saveAnalyticsConfig(data: {
+    measurementId?: string;
+    propertyId?: string;
+    googleClientId?: string;
+    googleClientSecret?: string;
+  }) {
+    return this.http.put<import('../models').AnalyticsConfig>(`${this.base}/analytics/config`, data);
+  }
+  getAnalyticsOAuthUrl() { return this.http.get<{ url: string }>(`${this.base}/analytics/oauth/url`); }
+  getAnalyticsProperties() { return this.http.get<import('../models').GaProperty[]>(`${this.base}/analytics/properties`); }
+  getAnalyticsDashboard(days = 30) {
+    return this.http.get<import('../models').AnalyticsDashboard>(`${this.base}/analytics/dashboard`, {
+      params: new HttpParams().set('days', String(days)),
+    });
+  }
+  disconnectAnalytics() { return this.http.delete<import('../models').AnalyticsConfig>(`${this.base}/analytics/disconnect`); }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -255,11 +273,33 @@ export class ThemeService {
 
   applyPanel(settings: SiteSettings) {
     this.apply(settings);
-    const root = document.documentElement;
-    if (settings.sidebarBg) root.style.setProperty('--panel-sidebar-bg', settings.sidebarBg);
-    if (settings.cardBg) root.style.setProperty('--panel-card-bg', settings.cardBg);
-    if (settings.primaryColor) root.style.setProperty('--panel-accent', settings.primaryColor);
-    if (settings.backgroundColor) root.style.setProperty('--panel-bg', settings.backgroundColor);
+    this.applyPanelToElement(document.documentElement, settings);
+  }
+
+  applyToElement(el: HTMLElement, settings: SiteSettings, panel = false) {
+    this.applyToElementBase(el, settings);
+    if (panel) this.applyPanelToElement(el, settings);
+  }
+
+  private applyToElementBase(el: HTMLElement, settings: SiteSettings) {
+    if (settings.primaryColor) el.style.setProperty('--gold', settings.primaryColor);
+    if (settings.accentColor) el.style.setProperty('--mx-green', settings.accentColor);
+    if (settings.backgroundColor) el.style.setProperty('--bg', settings.backgroundColor);
+    if (settings.fontFamily) {
+      el.style.setProperty('--f-body', settings.fontFamily);
+      el.style.setProperty('--f-ui', settings.fontFamily);
+    }
+    if (settings.displayFont) el.style.setProperty('--f-display', settings.displayFont);
+    if (settings.titleSize) el.style.setProperty('--page-title-size', `${settings.titleSize}px`);
+    if (settings.subtitleSize) el.style.setProperty('--page-subtitle-size', `${settings.subtitleSize}px`);
+    if (settings.cardRadius) el.style.setProperty('--card-radius', `${settings.cardRadius}px`);
+  }
+
+  private applyPanelToElement(el: HTMLElement, settings: SiteSettings) {
+    if (settings.sidebarBg) el.style.setProperty('--panel-sidebar-bg', settings.sidebarBg);
+    if (settings.cardBg) el.style.setProperty('--panel-card-bg', settings.cardBg);
+    if (settings.primaryColor) el.style.setProperty('--panel-accent', settings.primaryColor);
+    if (settings.backgroundColor) el.style.setProperty('--panel-bg', settings.backgroundColor);
   }
 }
 
