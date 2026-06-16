@@ -11,8 +11,8 @@ INSERT IGNORE INTO site_settings (page_key, settings) VALUES
   'backgroundColor', '#060b14',
   'sidebarBg', 'rgba(255,255,255,0.04)',
   'cardBg', 'rgba(255,255,255,0.04)',
-  'fontFamily', 'Inter, sans-serif',
-  'displayFont', 'Montserrat, sans-serif',
+  'fontFamily', 'League Spartan, sans-serif',
+  'displayFont', 'League Spartan, sans-serif',
   'titleSize', '24',
   'cardRadius', '12',
   'customBlocks', JSON_ARRAY(
@@ -27,8 +27,8 @@ INSERT IGNORE INTO site_settings (page_key, settings) VALUES
   'backgroundColor', '#060b14',
   'sidebarBg', 'rgba(255,255,255,0.04)',
   'cardBg', 'rgba(255,255,255,0.04)',
-  'fontFamily', 'Inter, sans-serif',
-  'displayFont', 'Montserrat, sans-serif',
+  'fontFamily', 'League Spartan, sans-serif',
+  'displayFont', 'League Spartan, sans-serif',
   'titleSize', '24',
   'cardRadius', '12',
   'customBlocks', JSON_ARRAY(

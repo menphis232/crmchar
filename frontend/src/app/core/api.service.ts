@@ -6,6 +6,7 @@ import {
   CrmContact, CrmContact360, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter, FinTransaction, FinDashboard
 } from '../models';
+import { resolveThemeFont } from '../shared/theme-fonts';
 
 @Injectable({ providedIn: 'root' })
 export class GestoresService {
@@ -282,11 +283,11 @@ export class ThemeService {
     if (settings.primaryColor) root.style.setProperty('--gold', settings.primaryColor);
     if (settings.accentColor) root.style.setProperty('--mx-green', settings.accentColor);
     if (settings.backgroundColor) root.style.setProperty('--bg', settings.backgroundColor);
-    if (settings.fontFamily) {
-      root.style.setProperty('--f-body', settings.fontFamily);
-      root.style.setProperty('--f-ui', settings.fontFamily);
-    }
-    if (settings.displayFont) root.style.setProperty('--f-display', settings.displayFont);
+    const bodyFont = resolveThemeFont(settings.fontFamily);
+    const displayFont = resolveThemeFont(settings.displayFont);
+    root.style.setProperty('--f-body', bodyFont);
+    root.style.setProperty('--f-ui', bodyFont);
+    root.style.setProperty('--f-display', displayFont);
     if (settings.titleSize) root.style.setProperty('--page-title-size', `${settings.titleSize}px`);
     if (settings.subtitleSize) root.style.setProperty('--page-subtitle-size', `${settings.subtitleSize}px`);
     if (settings.cardRadius) root.style.setProperty('--card-radius', `${settings.cardRadius}px`);
@@ -306,11 +307,11 @@ export class ThemeService {
     if (settings.primaryColor) el.style.setProperty('--gold', settings.primaryColor);
     if (settings.accentColor) el.style.setProperty('--mx-green', settings.accentColor);
     if (settings.backgroundColor) el.style.setProperty('--bg', settings.backgroundColor);
-    if (settings.fontFamily) {
-      el.style.setProperty('--f-body', settings.fontFamily);
-      el.style.setProperty('--f-ui', settings.fontFamily);
-    }
-    if (settings.displayFont) el.style.setProperty('--f-display', settings.displayFont);
+    const bodyFont = resolveThemeFont(settings.fontFamily);
+    const displayFont = resolveThemeFont(settings.displayFont);
+    el.style.setProperty('--f-body', bodyFont);
+    el.style.setProperty('--f-ui', bodyFont);
+    el.style.setProperty('--f-display', displayFont);
     if (settings.titleSize) el.style.setProperty('--page-title-size', `${settings.titleSize}px`);
     if (settings.subtitleSize) el.style.setProperty('--page-subtitle-size', `${settings.subtitleSize}px`);
     if (settings.cardRadius) el.style.setProperty('--card-radius', `${settings.cardRadius}px`);

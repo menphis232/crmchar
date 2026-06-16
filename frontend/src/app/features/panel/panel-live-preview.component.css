@@ -13,7 +13,7 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid var(--border);
-  font-family: var(--f-body, Inter, sans-serif);
+  font-family: var(--f-body, 'League Spartan', sans-serif);
   min-height: 520px;
 }
 
@@ -26,7 +26,7 @@
 }
 
 .panel-preview-title {
-  font-family: var(--f-display, Montserrat, sans-serif);
+  font-family: var(--f-display, 'League Spartan', sans-serif);
   font-size: var(--page-title-size, 22px);
   margin: 0 0 8px;
   color: var(--mx-white);

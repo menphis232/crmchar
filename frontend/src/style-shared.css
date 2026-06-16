@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@100..900&display=swap');
 
 /* =====================================================
    TRAMITES VEHICULARES DE MEXICO — Design System
    Palette: Black header · Cream body · White cards
-   Font: Montserrat (all weights)
+   Font: League Spartan (Spartan)
 ===================================================== */
 :root {
   /* Official brand colors */
@@ -31,10 +31,10 @@
   --gold-dim:      rgba(186,201,207,0.10);
   --mx-green:      #2b8a3e;
 
-  /* Typography — Montserrat only, like the site */
-  --f-display: 'Montserrat', sans-serif;
-  --f-ui:      'Montserrat', sans-serif;
-  --f-body:    'Montserrat', sans-serif;
+  /* Typography — League Spartan (Spartan) */
+  --f-display: 'League Spartan', sans-serif;
+  --f-ui:      'League Spartan', sans-serif;
+  --f-body:    'League Spartan', sans-serif;
 
   --nav-h:      72px;
   --radius:     0px;          /* Square corners = minimal/clean */
@@ -86,7 +86,7 @@ img { max-width: 100%; display: block; }
 .nav-actions { display: flex; gap: 12px; align-items: center; margin-left: auto; }
 
 /* =====================================================
-   BUTTONS — Montserrat · Uppercase · Square · Black
+   BUTTONS — League Spartan · Uppercase · Square · Black
    (Mirrors the CTA buttons on tramitesvehicularesdemexico.com)
 ===================================================== */
 .btn-primary {
@@ -229,7 +229,7 @@ img { max-width: 100%; display: block; }
   z-index: 1200;
   padding: 10px 16px;
   text-align: center;
-  font-family: var(--f-ui, Montserrat, sans-serif);
+  font-family: var(--f-ui, 'League Spartan', sans-serif);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;

@@ -47,8 +47,8 @@ INSERT IGNORE INTO site_settings (page_key, settings) VALUES
   'primaryColor', '#c8a94a',
   'accentColor', '#006847',
   'backgroundColor', '#060b14',
-  'fontFamily', 'Inter, sans-serif',
-  'displayFont', 'Montserrat, sans-serif',
+  'fontFamily', 'League Spartan, sans-serif',
+  'displayFont', 'League Spartan, sans-serif',
   'titleSize', '48',
   'subtitleSize', '16',
   'cardRadius', '12'
@@ -59,8 +59,8 @@ INSERT IGNORE INTO site_settings (page_key, settings) VALUES
   'primaryColor', '#006847',
   'accentColor', '#c8a94a',
   'backgroundColor', '#060b14',
-  'fontFamily', 'Inter, sans-serif',
-  'displayFont', 'Montserrat, sans-serif',
+  'fontFamily', 'League Spartan, sans-serif',
+  'displayFont', 'League Spartan, sans-serif',
   'titleSize', '48',
   'subtitleSize', '16',
   'cardRadius', '12'

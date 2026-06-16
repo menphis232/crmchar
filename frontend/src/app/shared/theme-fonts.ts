@@ -3,8 +3,20 @@ export interface ThemeFontOption {
   label: string;
 }
 
+/** Fuente corporativa global */
+export const SPARTAN_FONT = "'League Spartan', sans-serif";
+
+/** Convierte valores legacy (Inter/Montserrat) a Spartan; respeta otras fuentes elegidas en el editor. */
+export function resolveThemeFont(value?: string): string {
+  if (!value?.trim()) return SPARTAN_FONT;
+  const norm = value.toLowerCase();
+  if (norm.includes('inter') || norm.includes('montserrat')) return SPARTAN_FONT;
+  return value;
+}
+
 /** Fuentes para texto / cuerpo (panel admin → editor de temas) */
 export const THEME_BODY_FONTS: ThemeFontOption[] = [
+  { value: "'League Spartan', sans-serif", label: 'Spartan' },
   { value: 'Inter, sans-serif', label: 'Inter' },
   { value: 'Roboto, sans-serif', label: 'Roboto' },
   { value: 'Open Sans, sans-serif', label: 'Open Sans' },
@@ -20,6 +32,7 @@ export const THEME_BODY_FONTS: ThemeFontOption[] = [
 
 /** Fuentes para títulos / encabezados */
 export const THEME_DISPLAY_FONTS: ThemeFontOption[] = [
+  { value: "'League Spartan', sans-serif", label: 'Spartan' },
   { value: 'Montserrat, sans-serif', label: 'Montserrat' },
   { value: 'Oswald, sans-serif', label: 'Oswald' },
   { value: 'Playfair Display, serif', label: 'Playfair Display' },

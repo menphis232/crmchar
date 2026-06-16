@@ -34,7 +34,7 @@ export class PageBuilderComponent implements OnInit {
 
   theme = signal<{primaryColor?: string, fontFamily?: string, buttonTextColor?: string}>({ 
     primaryColor: '#00d084', 
-    fontFamily: 'Inter',
+    fontFamily: 'League Spartan',
     buttonTextColor: '#1a1d24'
   });
   
@@ -69,7 +69,7 @@ export class PageBuilderComponent implements OnInit {
       if (this.config.theme) {
         this.theme.set({ 
           primaryColor: this.config.theme.primaryColor || '#00d084', 
-          fontFamily: this.config.theme.fontFamily || 'Inter',
+          fontFamily: this.config.theme.fontFamily || 'League Spartan',
           buttonTextColor: this.config.theme.buttonTextColor || '#1a1d24'
         });
       }

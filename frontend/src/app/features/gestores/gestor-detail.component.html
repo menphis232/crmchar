@@ -6,7 +6,7 @@
   @if (gestor(); as g) {
     @if (g.page_builder_config; as config) {
       @if (config.blocks?.length) {
-        <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'Inter'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
+        <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'League Spartan'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
           
           <!-- MAIN REGION (Contains everything not sidebar) -->
           @for (b of config.blocks; track b.id) {
