@@ -32,8 +32,13 @@ echo ''; ^
 echo '=== [4/5] Reiniciando backend ==='; ^
 docker-compose restart tramites-backend 2>/dev/null || docker compose restart tramites-backend 2>/dev/null || docker restart tramites-backend; ^
 echo ''; ^
-echo '=== [5/5] Migracion de finanzas ==='; ^
-docker exec tramites-backend node apply-v23.js 2>/dev/null || echo 'Migracion ya aplicada o no necesaria'; ^
+echo '=== [5/6] Migraciones ==='; ^
+docker exec tramites-backend node apply-v23.js 2>/dev/null || echo 'v23 ok'; ^
+docker exec tramites-backend node apply-v28-analytics.js 2>/dev/null || echo 'v28 ok'; ^
+echo ''; ^
+echo '=== [6/6] Rebuild y restart ==='; ^
+docker compose build backend frontend 2>/dev/null || docker-compose build backend frontend; ^
+docker compose up -d backend frontend 2>/dev/null || docker-compose up -d backend frontend; ^
 echo ''; ^
 docker ps --format 'table {{.Names}}\t{{.Status}}'; ^
 echo ''; ^

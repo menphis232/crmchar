@@ -17,6 +17,10 @@ router.get('/analytics-id', async (_req, res) => {
     const row = await get('SELECT measurement_id FROM analytics_settings WHERE id = 1');
     res.json({ measurementId: row?.measurement_id || null });
   } catch (err) {
+    if (err.code === 'ER_NO_SUCH_TABLE') {
+      return res.json({ measurementId: null });
+    }
+    console.error('GET /site/analytics-id:', err.message);
     res.status(500).json({ error: 'Error al cargar Analytics' });
   }
 });
