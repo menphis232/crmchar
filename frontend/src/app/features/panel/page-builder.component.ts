@@ -5,11 +5,13 @@ import { CdkDragDrop, DragDropModule, moveItemInArray, transferArrayItem } from 
 import { PageBlock, PageBuilderConfig } from '../../models';
 import { UploadService } from '../../core/api.service';
 import { PAGE_BUILDER_FONTS } from '../../shared/theme-fonts';
+import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
+import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 
 @Component({
   selector: 'app-page-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, PanelColorPaletteComponent],
   templateUrl: './page-builder.component.html',
   styleUrl: './page-builder.component.css'
 })
@@ -44,10 +46,27 @@ export class PageBuilderComponent implements OnInit {
   mainBlocks = signal<PageBlock[]>([]);
   sidebarBlocks = signal<PageBlock[]>([]);
 
-  presetColors = [
-    '#00d084', '#0693e3', '#eb144c', '#f78da7', '#9900ef', 
-    '#ff6900', '#fcb900', '#7bd148', '#abb8c3', '#1a1d24'
+  readonly builderColorFields: ColorPaletteFieldDef[] = [
+    { key: 'primary', label: 'Color principal' },
+    { key: 'buttonText', label: 'Texto de botones' },
   ];
+
+  get builderColors(): Record<string, string> {
+    const t = this.theme();
+    return {
+      primary: t.primaryColor || '#00d084',
+      buttonText: t.buttonTextColor || '#1a1d24',
+    };
+  }
+
+  applyBuilderColors(map: Record<string, string>) {
+    this.theme.update(t => ({
+      ...t,
+      primaryColor: map['primary'] ?? t.primaryColor,
+      buttonTextColor: map['buttonText'] ?? t.buttonTextColor,
+    }));
+    this.emitChange();
+  }
 
   readonly blockCatalog: Record<string, { label: string; desc: string }> = {
     hero: { label: 'Banner', desc: 'Portada con imagen y botón' },

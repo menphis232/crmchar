@@ -16,7 +16,8 @@ import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
-import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
+import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
@@ -41,7 +42,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, ColorPickerComponent, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -492,6 +493,30 @@ export class PanelConcesionariaComponent implements OnInit {
   panelAssistantBgColor = '#0f172a';
   panelAssistantBtnColor = '#4F46E5';
   panelAssistantTextColor = '#FFFFFF';
+
+  readonly assistantColorFields: ColorPaletteFieldDef[] = [
+    { key: 'bg', label: 'Fondo del chat' },
+    { key: 'btn', label: 'Color del botón' },
+    { key: 'text', label: 'Color de texto' },
+  ];
+
+  get assistantColors(): Record<string, string> {
+    return {
+      bg: this.panelAssistantBgColor,
+      btn: this.panelAssistantBtnColor,
+      text: this.panelAssistantTextColor,
+    };
+  }
+
+  applyAssistantColors(map: Record<string, string>) {
+    if (map['bg']) this.panelAssistantBgColor = map['bg'];
+    if (map['btn']) this.panelAssistantBtnColor = map['btn'];
+    if (map['text']) this.panelAssistantTextColor = map['text'];
+  }
+
+  saveAssistantColors() {
+    this.saveProfile();
+  }
 
   onLogoSelected(event: any) {
     const file = event.target.files[0];

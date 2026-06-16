@@ -8,7 +8,8 @@ import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
-import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
+import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
@@ -16,7 +17,7 @@ type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-ge
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, ColorPickerComponent, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent],
   templateUrl: './panel-admin.component.html',
   styleUrl: './panel-dashboard.css',
 })
@@ -61,6 +62,26 @@ export class PanelAdminComponent implements OnInit {
   panelAssistantTextColor = '#FFFFFF';
   panelAssistantMsg = signal('');
   panelAssistantSaving = signal(false);
+
+  readonly assistantColorFields: ColorPaletteFieldDef[] = [
+    { key: 'bg', label: 'Fondo del chat' },
+    { key: 'btn', label: 'Color del botón' },
+    { key: 'text', label: 'Color de texto' },
+  ];
+
+  get assistantColors(): Record<string, string> {
+    return {
+      bg: this.panelAssistantBgColor,
+      btn: this.panelAssistantBtnColor,
+      text: this.panelAssistantTextColor,
+    };
+  }
+
+  applyAssistantColors(map: Record<string, string>) {
+    if (map['bg']) this.panelAssistantBgColor = map['bg'];
+    if (map['btn']) this.panelAssistantBtnColor = map['btn'];
+    if (map['text']) this.panelAssistantTextColor = map['text'];
+  }
 
   analyticsConfig = signal<(AnalyticsConfig & { oauthConfigured?: boolean }) | null>(null);
   analyticsDashboard = signal<AnalyticsDashboard | null>(null);

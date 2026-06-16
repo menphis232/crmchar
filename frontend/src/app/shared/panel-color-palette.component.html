@@ -1,0 +1,45 @@
+<div class="color-palette-panel">
+  @if (hint) {
+    <p class="palette-hint">{{ hint }}</p>
+  }
+
+  <div class="color-fields">
+    @for (field of fields; track field.key) {
+      <button
+        type="button"
+        class="color-field-btn"
+        [class.active]="activeKey === field.key"
+        (click)="selectField(field.key)"
+      >
+        <span class="color-field-swatch" [style.background]="colors[field.key] || '#000000'"></span>
+        <span class="color-field-label">{{ field.label }}</span>
+        <span class="color-field-hex">{{ colors[field.key] || '#000000' }}</span>
+      </button>
+    }
+  </div>
+
+  <div class="palette-row">
+    @for (c of palette; track c) {
+      <button
+        type="button"
+        class="color-swatch"
+        [class.active]="activeValue.toLowerCase() === c.toLowerCase()"
+        [style.background]="c"
+        (click)="pickColor(c)"
+        [title]="c"
+      ></button>
+    }
+  </div>
+
+  <div class="custom-hex">
+    <label>Personalizado</label>
+    <input type="color" [ngModel]="activeValue" (ngModelChange)="pickColor($event)">
+    <input
+      type="text"
+      [ngModel]="activeValue"
+      (ngModelChange)="onHexInput($event)"
+      placeholder="#000000"
+      maxlength="7"
+    >
+  </div>
+</div>

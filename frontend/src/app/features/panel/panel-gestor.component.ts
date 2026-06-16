@@ -17,7 +17,8 @@ import { CrmTeamComponent } from './crm-team.component';
 import { FinancesComponent } from './finances.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
-import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
+import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 
 type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm' | 'automatizaciones';
@@ -48,7 +49,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, ColorPickerComponent, AiAssistantComponent
+    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrl: './panel-dashboard.css',
@@ -391,6 +392,49 @@ export class PanelGestorComponent implements OnInit {
     this.auth.updateMe({ page_builder_config: config }).subscribe(() => {
       this.message.set('Diseño de página guardado exitosamente');
       setTimeout(() => this.message.set(''), 3000);
+    });
+  }
+
+  readonly designColorFields: ColorPaletteFieldDef[] = [
+    { key: 'chatbotBg', label: 'Chatbot · Fondo' },
+    { key: 'chatbotBtn', label: 'Chatbot · Botones' },
+    { key: 'chatbotText', label: 'Chatbot · Texto' },
+    { key: 'assistantBg', label: 'Asistente · Fondo' },
+    { key: 'assistantBtn', label: 'Asistente · Botón' },
+    { key: 'assistantText', label: 'Asistente · Texto' },
+  ];
+
+  get designColors(): Record<string, string> {
+    return {
+      chatbotBg: this.chatbotBgColor,
+      chatbotBtn: this.chatbotBtnColor,
+      chatbotText: this.chatbotTextColor,
+      assistantBg: this.panelAssistantBgColor,
+      assistantBtn: this.panelAssistantBtnColor,
+      assistantText: this.panelAssistantTextColor,
+    };
+  }
+
+  applyDesignColors(map: Record<string, string>) {
+    if (map['chatbotBg']) this.chatbotBgColor = map['chatbotBg'];
+    if (map['chatbotBtn']) this.chatbotBtnColor = map['chatbotBtn'];
+    if (map['chatbotText']) this.chatbotTextColor = map['chatbotText'];
+    if (map['assistantBg']) this.panelAssistantBgColor = map['assistantBg'];
+    if (map['assistantBtn']) this.panelAssistantBtnColor = map['assistantBtn'];
+    if (map['assistantText']) this.panelAssistantTextColor = map['assistantText'];
+  }
+
+  saveDesignColors() {
+    this.auth.updateMe({
+      chatbot_bg_color: this.chatbotBgColor,
+      chatbot_btn_color: this.chatbotBtnColor,
+      chatbot_text_color: this.chatbotTextColor,
+      panel_assistant_bg_color: this.panelAssistantBgColor,
+      panel_assistant_btn_color: this.panelAssistantBtnColor,
+      panel_assistant_text_color: this.panelAssistantTextColor,
+    }).subscribe({
+      next: () => this.message.set('Colores guardados'),
+      error: () => this.message.set('Error al guardar colores'),
     });
   }
 

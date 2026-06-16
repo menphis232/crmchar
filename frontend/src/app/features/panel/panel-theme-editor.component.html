@@ -12,24 +12,22 @@
         <div class="form-group"><label>Título</label><input [ngModel]="t.pageTitle" (ngModelChange)="update('pageTitle', $event)"></div>
         <div class="form-group"><label>Subtítulo</label><input [ngModel]="t.pageSubtitle" (ngModelChange)="update('pageSubtitle', $event)"></div>
       }
-      <div class="form-row" style="flex-wrap: wrap;">
-        <div class="form-group"><label>Color principal</label><app-color-picker [value]="t.primaryColor || '#000000'" (valueChange)="update('primaryColor', $event)"></app-color-picker></div>
-        <div class="form-group"><label>Color acento</label><app-color-picker [value]="t.accentColor || '#000000'" (valueChange)="update('accentColor', $event)"></app-color-picker></div>
-        <div class="form-group"><label>Fondo</label><app-color-picker [value]="t.backgroundColor || '#000000'" (valueChange)="update('backgroundColor', $event)"></app-color-picker></div>
-      </div>
+      <app-panel-color-palette
+        [fields]="themeColorFieldDefs"
+        [colors]="themeEditorColors"
+        hint="Elige qué color editar y selecciona en la paleta. Se guarda automáticamente."
+        (colorsChange)="applyThemeColors($event)"
+        (colorPicked)="saveThemeColor()"
+      ></app-panel-color-palette>
       @if (isPanel) {
         <div class="form-row">
           <div class="form-group color-field" style="flex:1;">
-            <label>Fondo sidebar</label>
-            <app-color-picker [value]="sidebarHex()" (valueChange)="setSidebarColor($event)"></app-color-picker>
-            <label class="opacity-label">Transparencia: {{ sidebarOpacity() }}%</label>
-            <input type="range" min="0" max="100" [ngModel]="sidebarOpacity()" (ngModelChange)="setSidebarOpacity(+$event)">
+            <label class="opacity-label">Transparencia sidebar: {{ sidebarOpacity() }}%</label>
+            <input type="range" min="0" max="100" [ngModel]="sidebarOpacity()" (ngModelChange)="setSidebarOpacity(+$event); save()">
           </div>
           <div class="form-group color-field" style="flex:1;">
-            <label>Fondo tarjetas</label>
-            <app-color-picker [value]="cardHex()" (valueChange)="setCardColor($event)"></app-color-picker>
-            <label class="opacity-label">Transparencia: {{ cardOpacity() }}%</label>
-            <input type="range" min="0" max="100" [ngModel]="cardOpacity()" (ngModelChange)="setCardOpacity(+$event)">
+            <label class="opacity-label">Transparencia tarjetas: {{ cardOpacity() }}%</label>
+            <input type="range" min="0" max="100" [ngModel]="cardOpacity()" (ngModelChange)="setCardOpacity(+$event); save()">
           </div>
         </div>
       }

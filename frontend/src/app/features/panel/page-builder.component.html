@@ -57,33 +57,13 @@
     <div class="theme-section">
       <h3>Diseño general</h3>
 
-      <label class="sidebar-label">Color principal</label>
-      <div class="color-swatches">
-        @for (c of presetColors; track c) {
-          <button type="button" class="color-swatch" [style.background]="c"
-                  [class.active]="theme().primaryColor === c"
-                  (click)="theme().primaryColor = c; emitChange()"
-                  [attr.aria-label]="'Color ' + c"></button>
-        }
-      </div>
-      <div class="color-picker-row">
-        <input type="color" [(ngModel)]="theme().primaryColor" (change)="emitChange()">
-        <span>Color personalizado</span>
-      </div>
-
-      <label class="sidebar-label">Texto de botones</label>
-      <div class="color-swatches">
-        @for (c of presetColors; track c) {
-          <button type="button" class="color-swatch" [style.background]="c"
-                  [class.active]="theme().buttonTextColor === c"
-                  (click)="theme().buttonTextColor = c; emitChange()"
-                  [attr.aria-label]="'Color ' + c"></button>
-        }
-      </div>
-      <div class="color-picker-row">
-        <input type="color" [(ngModel)]="theme().buttonTextColor" (change)="emitChange()">
-        <span>Color personalizado</span>
-      </div>
+      <app-panel-color-palette
+        [fields]="builderColorFields"
+        [colors]="builderColors"
+        hint="Elige el color a editar y selecciona en la paleta."
+        (colorsChange)="applyBuilderColors($event)"
+        (colorPicked)="emitChange()"
+      ></app-panel-color-palette>
 
       <label class="sidebar-label">Fuente</label>
       <select class="sidebar-select" [(ngModel)]="theme().fontFamily" (change)="emitChange()">

@@ -4,7 +4,8 @@ import { DomSanitizer } from '@angular/platform-browser';
 import { AdminService } from '../../core/api.service';
 import { PreviewThemeService } from '../../core/preview-theme.service';
 import { CustomBlock, SiteSettings } from '../../models';
-import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
+import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { PanelLivePreviewComponent } from './panel-live-preview.component';
 import { THEME_BODY_FONTS, THEME_DISPLAY_FONTS } from '../../shared/theme-fonts';
 
@@ -38,7 +39,7 @@ function parseColorValue(value: string | undefined, fallbackHex: string) {
 @Component({
   selector: 'app-panel-theme-editor',
   standalone: true,
-  imports: [FormsModule, ColorPickerComponent, PanelLivePreviewComponent],
+  imports: [FormsModule, PanelColorPaletteComponent, PanelLivePreviewComponent],
   templateUrl: './panel-theme-editor.component.html',
   styleUrls: ['./panel-theme-editor.component.css', './panel-dashboard.css'],
 })
@@ -124,6 +125,48 @@ export class PanelThemeEditorComponent implements OnInit, OnDestroy {
   setCardOpacity(opacity: number) {
     this.cardOpacity.set(opacity);
     this.update('cardBg', toCssColor(this.cardHex(), opacity));
+  }
+
+  get themeColorFieldDefs(): ColorPaletteFieldDef[] {
+    const base: ColorPaletteFieldDef[] = [
+      { key: 'primaryColor', label: 'Color principal' },
+      { key: 'accentColor', label: 'Color acento' },
+      { key: 'backgroundColor', label: 'Fondo' },
+    ];
+    if (this.isPanel) {
+      return [
+        ...base,
+        { key: 'sidebarBg', label: 'Fondo sidebar' },
+        { key: 'cardBg', label: 'Fondo tarjetas' },
+      ];
+    }
+    return base;
+  }
+
+  get themeEditorColors(): Record<string, string> {
+    const t = this.theme();
+    const colors: Record<string, string> = {
+      primaryColor: t.primaryColor || '#000000',
+      accentColor: t.accentColor || '#000000',
+      backgroundColor: t.backgroundColor || '#000000',
+    };
+    if (this.isPanel) {
+      colors['sidebarBg'] = this.sidebarHex();
+      colors['cardBg'] = this.cardHex();
+    }
+    return colors;
+  }
+
+  applyThemeColors(map: Record<string, string>) {
+    if (map['primaryColor']) this.update('primaryColor', map['primaryColor']);
+    if (map['accentColor']) this.update('accentColor', map['accentColor']);
+    if (map['backgroundColor']) this.update('backgroundColor', map['backgroundColor']);
+    if (map['sidebarBg']) this.setSidebarColor(map['sidebarBg']);
+    if (map['cardBg']) this.setCardColor(map['cardBg']);
+  }
+
+  saveThemeColor() {
+    this.save();
   }
 
   addBlock() {
