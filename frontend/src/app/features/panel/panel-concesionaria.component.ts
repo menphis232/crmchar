@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { AutosService, ConcesionariaService, CrmService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { Auto, AutoStatus, ConcesionariaDashboard, CrmDashboard, CrmDeal, CrmTodayInbox, DealerReview, MessageTemplate, SiteSettings, PageBuilderConfig } from '../../models';
+import { Auto, AutoStatus, AutoPrivateDocument, ConcesionariaDashboard, CrmDashboard, CrmDeal, CrmTodayInbox, DealerReview, MessageTemplate, SiteSettings, PageBuilderConfig } from '../../models';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -26,6 +26,17 @@ const DEFAULT_AI_TIPS = [
   'Programa visitas al showroom con recordatorio automático; los clientes que visitan tienen mucha más probabilidad de comprar.',
   'Prepara una ficha comparativa (precio, kilometraje, garantía) antes de la negociación para generar confianza y acelerar el cierre.',
 ];
+
+const AUTO_DOC_LABELS = [
+  'Factura de origen',
+  'Tarjeta de circulación',
+  'Tenencia / refrendo',
+  'Verificación vehicular',
+  'Póliza de seguro',
+  'Revisión mecánica',
+  'Comprobante de propiedad',
+  'Otro',
+] as const;
 
 @Component({
   selector: 'app-panel-concesionaria',
@@ -63,6 +74,12 @@ export class PanelConcesionariaComponent implements OnInit {
   isSavingStages = false;
 
   form: Partial<Auto> & { status?: AutoStatus } = this.emptyForm();
+
+  readonly autoDocLabels = AUTO_DOC_LABELS;
+  privateDocuments = signal<AutoPrivateDocument[]>([]);
+  newDocLabel = AUTO_DOC_LABELS[0];
+  newDocNotes = '';
+  isUploadingPrivateDoc = false;
 
   constructor(
     public auth: AuthService,
@@ -123,7 +140,8 @@ export class PanelConcesionariaComponent implements OnInit {
   emptyForm() {
     return {
       make: '', model: '', year: new Date().getFullYear(), price: 0, mileage: 0,
-      transmission: 'Automático', location: '', description: '', imageUrl: '', images: [], status: 'draft' as AutoStatus,
+      transmission: 'Automático', location: '', description: '', imageUrl: '', images: [],
+      videoUrl: '', status: 'draft' as AutoStatus,
     };
   }
 
@@ -244,17 +262,24 @@ export class PanelConcesionariaComponent implements OnInit {
   startNew() {
     this.form = this.emptyForm();
     this.editing.set(null);
+    this.privateDocuments.set([]);
+    this.newDocLabel = AUTO_DOC_LABELS[0];
+    this.newDocNotes = '';
     this.tab.set('edit');
   }
 
   startEdit(car: Auto) {
     this.editing.set(car);
     this.form = { ...car, status: car.status || 'draft', images: car.images || [] };
+    this.newDocLabel = AUTO_DOC_LABELS[0];
+    this.newDocNotes = '';
+    this.loadPrivateDocuments(car.id);
     this.tab.set('edit');
   }
 
   // --- CAR GALLERY LOGIC ---
   isUploadingCarImages = false;
+  isUploadingVideo = false;
 
   onCarImagesSelected(event: any) {
     const files = Array.from(event.target.files) as File[];
@@ -296,6 +321,92 @@ export class PanelConcesionariaComponent implements OnInit {
     this.form.images.splice(index, 1);
     this.form.imageUrl = this.form.images.length > 0 ? this.form.images[0] : '';
   }
+
+  onVideoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.isUploadingVideo = true;
+    this.uploadService.uploadVideo(file).subscribe({
+      next: (res) => {
+        this.form.videoUrl = res.url;
+        this.isUploadingVideo = false;
+        this.toast.success('Video subido correctamente', 'Video del vehículo');
+        input.value = '';
+      },
+      error: (e) => {
+        this.isUploadingVideo = false;
+        this.toast.error(e.error?.error || 'Error al subir video', 'Error');
+        input.value = '';
+      },
+    });
+  }
+
+  removeVideo() {
+    this.form.videoUrl = '';
+  }
+
+  loadPrivateDocuments(autoId: string) {
+    this.autosService.getPrivateDocuments(autoId).subscribe({
+      next: docs => this.privateDocuments.set(docs),
+      error: () => this.privateDocuments.set([]),
+    });
+  }
+
+  onPrivateDocSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.editing()?.id) return;
+
+    this.isUploadingPrivateDoc = true;
+    this.uploadService.uploadDocument(file).subscribe({
+      next: (uploaded) => {
+        this.autosService.addPrivateDocument(this.editing()!.id, {
+          label: this.newDocLabel,
+          fileUrl: uploaded.url,
+          fileName: uploaded.fileName || file.name,
+          notes: this.newDocNotes.trim() || undefined,
+        }).subscribe({
+          next: (doc) => {
+            this.privateDocuments.update(list => [doc, ...list]);
+            this.newDocNotes = '';
+            this.isUploadingPrivateDoc = false;
+            this.toast.success('Documento guardado (solo visible en tu panel)', 'Documentación privada');
+            input.value = '';
+          },
+          error: (e) => {
+            this.isUploadingPrivateDoc = false;
+            this.toast.error(e.error?.error || 'Error al registrar documento', 'Error');
+            input.value = '';
+          },
+        });
+      },
+      error: (e) => {
+        this.isUploadingPrivateDoc = false;
+        this.toast.error(e.error?.error || 'Error al subir archivo', 'Error');
+        input.value = '';
+      },
+    });
+  }
+
+  deletePrivateDocument(doc: AutoPrivateDocument) {
+    if (!this.editing()?.id || !confirm('¿Eliminar este documento?')) return;
+    this.autosService.deletePrivateDocument(this.editing()!.id, doc.id).subscribe({
+      next: () => {
+        this.privateDocuments.update(list => list.filter(d => d.id !== doc.id));
+        this.toast.success('Documento eliminado');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'Error al eliminar', 'Error'),
+    });
+  }
+
+  privateDocIcon(fileName?: string | null): string {
+    const name = (fileName || '').toLowerCase();
+    if (name.endsWith('.pdf')) return '📄';
+    if (/\.(jpg|jpeg|png|webp|gif)$/.test(name)) return '🖼️';
+    return '📎';
+  }
   // -------------------------
 
   saveCar(asDraft = false) {
@@ -307,13 +418,23 @@ export class PanelConcesionariaComponent implements OnInit {
       : this.autosService.create(payload);
 
     obs.subscribe({
-      next: () => {
+      next: (saved) => {
+        const wasNew = !this.editing();
         this.toast.success(asDraft ? 'Borrador guardado' : 'Vehículo guardado', '¡Éxito!');
-        this.form = this.emptyForm();
-        this.editing.set(null);
+        this.editing.set(saved);
+        this.form = { ...saved, status: saved.status || 'draft', images: saved.images || [] };
+        this.loadPrivateDocuments(saved.id);
         this.loadInventory();
         this.loadDashboard();
-        this.tab.set('inventory');
+        if (wasNew) {
+          this.tab.set('edit');
+          this.toast.info('Puedes subir la documentación privada del vehículo abajo.', 'Documentación interna');
+        } else {
+          this.tab.set('inventory');
+          this.editing.set(null);
+          this.form = this.emptyForm();
+          this.privateDocuments.set([]);
+        }
       },
       error: (e) => this.toast.error(e.error?.error || 'Error al guardar', 'Error'),
     });

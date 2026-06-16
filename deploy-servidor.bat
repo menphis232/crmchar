@@ -36,6 +36,8 @@ echo '=== [5/6] Migraciones ==='; ^
 docker exec tramites-backend node apply-v23.js 2>/dev/null || echo 'v23 ok'; ^
 docker exec tramites-backend node apply-v27-panel-assistant.js 2>/dev/null || echo 'v27 ok'; ^
 docker exec tramites-backend node apply-v28-analytics.js 2>/dev/null || echo 'v28 ok'; ^
+docker exec tramites-backend node apply-v30-auto-docs.js 2>/dev/null || echo 'v30 ok'; ^
+docker exec tramites-backend node apply-v31-auto-video.js 2>/dev/null || echo 'v31 ok'; ^
 echo ''; ^
 echo '=== [6/6] Rebuild y restart ==='; ^
 docker compose build backend frontend 2>/dev/null || docker-compose build backend frontend; ^

@@ -66,12 +66,23 @@ export interface Auto {
   description?: string;
   imageUrl?: string;
   images?: string[];
+  videoUrl?: string | null;
   dealerName?: string;
   dealerSlug?: string;
   status?: AutoStatus;
   active?: boolean;
   google_analytics_id?: string;
   page_builder_config?: PageBuilderConfig;
+  createdAt?: string;
+}
+
+export interface AutoPrivateDocument {
+  id: string;
+  autoId: string;
+  label: string;
+  fileUrl: string;
+  fileName?: string | null;
+  notes?: string | null;
   createdAt?: string;
 }
 

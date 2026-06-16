@@ -1,10 +1,12 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavComponent } from '../../shared/nav.component';
 import { AutosService, ConcesionariaService } from '../../core/api.service';
 import { Auto } from '../../models';
+import { buildAutoGalleryItems } from '../../shared/auto-video.util';
 
 @Component({
   selector: 'app-auto-detail',
@@ -14,13 +16,22 @@ import { Auto } from '../../models';
   styleUrl: './auto-detail.component.css',
 })
 export class AutoDetailComponent implements OnInit {
+  private sanitizer = inject(DomSanitizer);
+
   auto = signal<Auto | null>(null);
-  mainImage = signal('');
+  activeGalleryIndex = signal(0);
   loading = signal(true);
   inquirySent = signal(false);
   inquiryError = signal('');
 
   inquiry = { clientName: '', clientEmail: '', clientPhone: '', message: '' };
+
+  galleryItems = computed(() => {
+    const a = this.auto();
+    return a ? buildAutoGalleryItems(a) : [];
+  });
+
+  currentGalleryItem = computed(() => this.galleryItems()[this.activeGalleryIndex()] ?? null);
 
   constructor(
     private route: ActivatedRoute,
@@ -33,45 +44,38 @@ export class AutoDetailComponent implements OnInit {
     this.autosService.getById(id).subscribe({
       next: data => {
         this.auto.set(data);
-        this.mainImage.set(data.imageUrl || data.images?.[0] || '');
+        this.activeGalleryIndex.set(0);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
   }
 
-  setMainImage(url: string) { this.mainImage.set(url); }
-
-  galleryImages(): string[] {
-    const a = this.auto();
-    if (!a) return [];
-    if (a.images?.length) return a.images;
-    if (a.imageUrl) return [a.imageUrl];
-    return this.mainImage() ? [this.mainImage()] : [];
+  setGalleryIndex(index: number) {
+    this.activeGalleryIndex.set(index);
   }
 
-  currentImageIndex(): number {
-    const images = this.galleryImages();
-    const idx = images.indexOf(this.mainImage());
-    return idx >= 0 ? idx : 0;
+  safeEmbedUrl(embedUrl: string | null | undefined): SafeResourceUrl | null {
+    if (!embedUrl) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
   }
 
   showGalleryNav(): boolean {
-    return this.galleryImages().length > 1;
+    return this.galleryItems().length > 1;
   }
 
-  prevImage() {
-    const images = this.galleryImages();
-    if (images.length <= 1) return;
-    const idx = this.currentImageIndex();
-    this.mainImage.set(images[idx <= 0 ? images.length - 1 : idx - 1]);
+  prevGalleryItem() {
+    const items = this.galleryItems();
+    if (items.length <= 1) return;
+    const idx = this.activeGalleryIndex();
+    this.activeGalleryIndex.set(idx <= 0 ? items.length - 1 : idx - 1);
   }
 
-  nextImage() {
-    const images = this.galleryImages();
-    if (images.length <= 1) return;
-    const idx = this.currentImageIndex();
-    this.mainImage.set(images[idx >= images.length - 1 ? 0 : idx + 1]);
+  nextGalleryItem() {
+    const items = this.galleryItems();
+    if (items.length <= 1) return;
+    const idx = this.activeGalleryIndex();
+    this.activeGalleryIndex.set(idx >= items.length - 1 ? 0 : idx + 1);
   }
 
   formatPrice(price: number) {

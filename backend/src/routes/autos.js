@@ -28,6 +28,7 @@ function autoRow(row) {
     description: row.description,
     imageUrl: row.image_url,
     images: parseImages(row.images),
+    videoUrl: row.video_url || null,
     dealerName: row.dealer_name,
     dealerSlug: row.dealer_slug || null,
     status: row.status || 'published',
@@ -44,6 +45,23 @@ function autoRow(row) {
   };
 }
 
+
+function privateDocRow(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    autoId: row.auto_id,
+    label: row.label,
+    fileUrl: row.file_url,
+    fileName: row.file_name || null,
+    notes: row.notes || null,
+    createdAt: row.created_at,
+  };
+}
+
+async function assertAutoOwner(autoId, userId) {
+  return get('SELECT id FROM autos WHERE id = ? AND user_id = ?', [autoId, userId]);
+}
 
 router.get('/', async (req, res) => {
   try {
@@ -101,10 +119,69 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Documentación privada del vehículo (solo panel concesionaria, no pública)
+router.get('/:id/private-documents', authRequired, requireRole('concesionaria'), async (req, res) => {
+  try {
+    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
+
+    const rows = await query(
+      'SELECT * FROM auto_private_documents WHERE auto_id = ? AND user_id = ? ORDER BY created_at DESC',
+      [req.params.id, req.user.id],
+    );
+    res.json(rows.map(privateDocRow));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar documentación' });
+  }
+});
+
+router.post('/:id/private-documents', authRequired, requireRole('concesionaria'), async (req, res) => {
+  try {
+    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
+
+    const { label, fileUrl, fileName, notes } = req.body;
+    if (!label?.trim() || !fileUrl?.trim()) {
+      return res.status(400).json({ error: 'Tipo de documento y archivo requeridos' });
+    }
+
+    const id = uuid();
+    await run(
+      `INSERT INTO auto_private_documents (id, auto_id, user_id, label, file_url, file_name, notes)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, req.params.id, req.user.id, label.trim(), fileUrl.trim(), fileName || null, notes?.trim() || null],
+    );
+
+    const row = await get('SELECT * FROM auto_private_documents WHERE id = ?', [id]);
+    res.status(201).json(privateDocRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar documento' });
+  }
+});
+
+router.delete('/:id/private-documents/:docId', authRequired, requireRole('concesionaria'), async (req, res) => {
+  try {
+    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
+
+    const result = await run(
+      'DELETE FROM auto_private_documents WHERE id = ? AND auto_id = ? AND user_id = ?',
+      [req.params.docId, req.params.id, req.user.id],
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: 'Documento no encontrado' });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar documento' });
+  }
+});
+
 
 router.post('/', authRequired, requireRole('concesionaria'), async (req, res) => {
   try {
-    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, dealerName, status } = req.body;
+    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl } = req.body;
     if (!make || !model || !year || price == null || mileage == null) {
       return res.status(400).json({ error: 'Campos obligatorios incompletos' });
     }
@@ -115,12 +192,12 @@ router.post('/', authRequired, requireRole('concesionaria'), async (req, res) =>
     const carStatus = ['draft', 'published', 'baja'].includes(status) ? status : 'published';
 
     await run(`
-      INSERT INTO autos (id, user_id, make, model, year, price, mileage, transmission, location, description, image_url, images, dealer_name, status, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO autos (id, user_id, make, model, year, price, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.user.id, make, model, year, price, mileage,
       transmission || 'Automático', location || null, description || null,
-      mainImage, JSON.stringify(imgs), dealerName || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
+      mainImage, JSON.stringify(imgs), videoUrl?.trim() || null, dealerName || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
     ]);
 
     const row = await get('SELECT * FROM autos WHERE id = ?', [id]);
@@ -136,9 +213,10 @@ router.put('/:id', authRequired, requireRole('concesionaria'), async (req, res) 
     const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     if (!existing) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
-    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, status } = req.body;
+    const { make, model, year, price, mileage, transmission, location, description, imageUrl, images, status, videoUrl } = req.body;
     const imgs = images ? JSON.stringify(images) : (typeof existing.images === 'string' ? existing.images : JSON.stringify(existing.images || []));
     const newStatus = status ?? existing.status ?? 'published';
+    const newVideoUrl = videoUrl !== undefined ? (videoUrl?.trim() || null) : existing.video_url;
 
     await run(`
       UPDATE autos SET
@@ -146,11 +224,11 @@ router.put('/:id', authRequired, requireRole('concesionaria'), async (req, res) 
         price = COALESCE(?, price), mileage = COALESCE(?, mileage),
         transmission = COALESCE(?, transmission), location = COALESCE(?, location),
         description = COALESCE(?, description), image_url = COALESCE(?, image_url),
-        images = ?, status = ?, active = ?
+        images = ?, video_url = ?, status = ?, active = ?
       WHERE id = ? AND user_id = ?
     `, [
       make, model, year, price, mileage, transmission, location, description, imageUrl, imgs,
-      newStatus, newStatus === 'published' ? 1 : 0,
+      newVideoUrl, newStatus, newStatus === 'published' ? 1 : 0,
       req.params.id, req.user.id,
     ]);
 

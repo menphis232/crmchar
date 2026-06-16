@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
-  AdminStats, Auto, AutoInquiry, AutoStatus, ConcesionariaDashboard, DealerProfile,
+  AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
   CrmContact, CrmContact360, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter, FinTransaction, FinDashboard
 } from '../models';
@@ -143,6 +143,15 @@ export class AutosService {
   update(id: string, data: Partial<Auto> & { status?: AutoStatus }) { return this.http.put<Auto>(`${this.base}/${id}`, data); }
   setStatus(id: string, status: AutoStatus) { return this.http.patch<Auto>(`${this.base}/${id}/status`, { status }); }
   delete(id: string) { return this.http.delete(`${this.base}/${id}`); }
+  getPrivateDocuments(autoId: string) {
+    return this.http.get<AutoPrivateDocument[]>(`${this.base}/${autoId}/private-documents`);
+  }
+  addPrivateDocument(autoId: string, data: { label: string; fileUrl: string; fileName?: string; notes?: string }) {
+    return this.http.post<AutoPrivateDocument>(`${this.base}/${autoId}/private-documents`, data);
+  }
+  deletePrivateDocument(autoId: string, docId: string) {
+    return this.http.delete(`${this.base}/${autoId}/private-documents/${docId}`);
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -251,6 +260,18 @@ export class UploadService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string }>(this.base, formData);
+  }
+
+  uploadDocument(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string; fileName: string }>(`${this.base}/document`, formData);
+  }
+
+  uploadVideo(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ url: string; fileName: string }>(`${this.base}/video`, formData);
   }
 }
 

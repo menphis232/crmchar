@@ -40,21 +40,42 @@
                   @if (b.type === 'gallery') {
                     <div class="gallery">
                       <div class="gallery-viewer">
-                        <img [src]="mainImage() || a.images?.[0]" class="gallery-main" alt="Vehículo">
+                        @if (currentGalleryItem(); as item) {
+                          @if (item.type === 'video') {
+                            @if (item.embedUrl) {
+                              <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                            } @else {
+                              <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
+                            }
+                          } @else {
+                            <img [src]="item.url" class="gallery-main" alt="Vehículo">
+                          }
+                        }
                         @if (showGalleryNav()) {
-                          <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevImage()" aria-label="Imagen anterior">
+                          <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
                           </button>
-                          <button type="button" class="gallery-nav gallery-nav-next" (click)="nextImage()" aria-label="Siguiente imagen">
+                          <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
                           </button>
-                          <span class="gallery-counter">{{ currentImageIndex() + 1 }} / {{ galleryImages().length }}</span>
+                          <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
                         }
                       </div>
-                      @if (galleryImages().length) {
+                      @if (galleryItems().length) {
                         <div class="gallery-thumbs">
-                          @for (img of galleryImages(); track img) {
-                            <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" alt="Miniatura">
+                          @for (item of galleryItems(); track $index) {
+                            @if (item.type === 'video') {
+                              <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
+                                @if (item.poster) {
+                                  <img [src]="item.poster" alt="Video del vehículo">
+                                } @else {
+                                  <span class="gallery-thumb-video-bg"></span>
+                                }
+                                <span class="gallery-thumb-play" aria-hidden="true">▶</span>
+                              </button>
+                            } @else {
+                              <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                            }
                           }
                         </div>
                       }
@@ -137,21 +158,42 @@
       <div class="detail-container">
         <div class="gallery">
           <div class="gallery-viewer">
-            <img [src]="mainImage()" class="gallery-main" alt="Vehículo">
+            @if (currentGalleryItem(); as item) {
+              @if (item.type === 'video') {
+                @if (item.embedUrl) {
+                  <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                } @else {
+                  <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
+                }
+              } @else {
+                <img [src]="item.url" class="gallery-main" alt="Vehículo">
+              }
+            }
             @if (showGalleryNav()) {
-              <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevImage()" aria-label="Imagen anterior">
+              <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
               </button>
-              <button type="button" class="gallery-nav gallery-nav-next" (click)="nextImage()" aria-label="Siguiente imagen">
+              <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
               </button>
-              <span class="gallery-counter">{{ currentImageIndex() + 1 }} / {{ galleryImages().length }}</span>
+              <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
             }
           </div>
-          @if (galleryImages().length) {
+          @if (galleryItems().length) {
             <div class="gallery-thumbs">
-              @for (img of galleryImages(); track img) {
-                <img [src]="img" [class.active]="mainImage() === img" (click)="setMainImage(img)" alt="Miniatura">
+              @for (item of galleryItems(); track $index) {
+                @if (item.type === 'video') {
+                  <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
+                    @if (item.poster) {
+                      <img [src]="item.poster" alt="Video del vehículo">
+                    } @else {
+                      <span class="gallery-thumb-video-bg"></span>
+                    }
+                    <span class="gallery-thumb-play" aria-hidden="true">▶</span>
+                  </button>
+                } @else {
+                  <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                }
               }
             </div>
           }

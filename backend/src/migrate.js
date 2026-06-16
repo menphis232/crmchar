@@ -681,6 +681,44 @@ async function migrate() {
       await conn25.end();
       console.log('Migración v29 (GA credentials DB) aplicada.');
     }
+
+    const v30Path = path.join(__dirname, '..', 'sql', 'migration-v30-auto-private-docs.sql');
+    if (fs.existsSync(v30Path)) {
+      const v30 = fs.readFileSync(v30Path, 'utf8');
+      const conn26 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn26.query('USE tramites_vehiculares');
+      for (const stmt of v30.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn26.query(stmt); } catch (e) {
+          if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn26.end();
+      console.log('Migración v30 (auto private docs) aplicada.');
+    }
+
+    const v31Path = path.join(__dirname, '..', 'sql', 'migration-v31-auto-video.sql');
+    if (fs.existsSync(v31Path)) {
+      const v31 = fs.readFileSync(v31Path, 'utf8');
+      const conn27 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn27.query('USE tramites_vehiculares');
+      for (const stmt of v31.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn27.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn27.end();
+      console.log('Migración v31 (auto video) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

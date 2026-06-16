@@ -269,9 +269,77 @@
           }
         </div>
         <div class="form-group" style="margin-bottom:16px;">
+          <label>Video del vehículo (opcional)</label>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se muestra en la galería del detalle público (primera diapositiva). YouTube, Vimeo o archivo MP4/WebM.</p>
+          <input [(ngModel)]="form.videoUrl" placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+            <input type="file" accept="video/mp4,video/webm,video/quicktime" (change)="onVideoSelected($event)" #carVideoInput style="display:none">
+            <button type="button" class="btn-ghost small" (click)="carVideoInput.click()" [disabled]="isUploadingVideo">
+              {{ isUploadingVideo ? 'Subiendo video...' : '📹 Subir video' }}
+            </button>
+            @if (form.videoUrl) {
+              <button type="button" class="btn-delete small" (click)="removeVideo()">Quitar video</button>
+            }
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
           <label>Descripción</label>
           <textarea [(ngModel)]="form.description" rows="4" placeholder="Describe el vehículo..."></textarea>
         </div>
+
+        <div class="auto-private-docs">
+          <div class="auto-private-docs-header">
+            <h4 class="section-sub">📁 Documentación del vehículo (uso interno)</h4>
+            <span class="auto-private-docs-badge">No visible en la ficha pública</span>
+          </div>
+          <p class="card-desc">Sube facturas, tarjeta de circulación, tenencias, pólizas u otros archivos. Solo tú y tu equipo los ven en el panel.</p>
+
+          @if (editing()?.id) {
+            <div class="form-row" style="align-items:flex-end;">
+              <div class="form-group" style="flex:1;">
+                <label>Tipo de documento</label>
+                <select [(ngModel)]="newDocLabel">
+                  @for (lbl of autoDocLabels; track lbl) {
+                    <option [value]="lbl">{{ lbl }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>Notas (opcional)</label>
+                <input [(ngModel)]="newDocNotes" placeholder="Ej: Vigencia 2026">
+              </div>
+              <div class="form-group">
+                <label>Archivo</label>
+                <input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx" (change)="onPrivateDocSelected($event)" #privateDocInput style="display:none">
+                <button type="button" class="btn-ghost small" (click)="privateDocInput.click()" [disabled]="isUploadingPrivateDoc">
+                  {{ isUploadingPrivateDoc ? 'Subiendo...' : '+ Subir documento' }}
+                </button>
+              </div>
+            </div>
+
+            @if (privateDocuments().length) {
+              <ul class="auto-private-docs-list">
+                @for (doc of privateDocuments(); track doc.id) {
+                  <li class="auto-private-doc-item">
+                    <span class="auto-private-doc-icon">{{ privateDocIcon(doc.fileName) }}</span>
+                    <div class="auto-private-doc-meta">
+                      <strong>{{ doc.label }}</strong>
+                      <span>{{ doc.fileName || 'Archivo' }}</span>
+                      @if (doc.notes) { <em>{{ doc.notes }}</em> }
+                    </div>
+                    <a class="btn-ghost small" [href]="doc.fileUrl" target="_blank" rel="noopener">Ver</a>
+                    <button type="button" class="btn-delete small" (click)="deletePrivateDocument(doc)">Eliminar</button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="card-desc auto-private-docs-empty">Aún no hay documentos para este vehículo.</p>
+            }
+          } @else {
+            <p class="card-desc auto-private-docs-empty">Guarda el vehículo primero (como borrador o publicado) para poder subir documentación.</p>
+          }
+        </div>
+
         <div class="action-row">
           <button class="btn-copy" (click)="saveCar(false)">🌐 Publicar</button>
           <button class="btn-ghost" (click)="saveCar(true)">💾 Guardar borrador</button>
