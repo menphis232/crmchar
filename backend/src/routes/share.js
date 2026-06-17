@@ -21,11 +21,7 @@ function escapeHtml(value) {
 function parseImages(val) {
   if (!val) return [];
   if (typeof val === 'string') {
-    try {
-      return JSON.parse(val);
-    } catch {
-      return [];
-    }
+    try { return JSON.parse(val); } catch { return []; }
   }
   return val;
 }
@@ -36,43 +32,68 @@ function absoluteUrl(url) {
   return `${SITE_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
-router.get('/autos/:id', async (req, res) => {
-  try {
-    const row = await get(
-      "SELECT id, make, model, year, image_url, images FROM autos WHERE id = ? AND status = 'published'",
-      [req.params.id],
-    );
-    if (!row) return res.status(404).type('text/plain').send('Vehículo no encontrado');
+async function buildAutoHtml(id) {
+  const row = await get(
+    "SELECT id, make, model, year, image_url, images FROM autos WHERE id = ? AND status = 'published'",
+    [id],
+  );
+  if (!row) return null;
 
-    const images = parseImages(row.images);
-    const imageUrl = absoluteUrl(row.image_url || images[0] || null);
-    const pageUrl = `${SITE_BASE}/autos/${row.id}`;
-    const subtitle = `${row.make} ${row.model} ${row.year}`;
+  const images = parseImages(row.images);
+  const imageUrl = absoluteUrl(row.image_url || images[0] || null);
+  const pageUrl  = `${SITE_BASE}/autos/${row.id}`;
+  const shareUrl = `${SITE_BASE}/s/${row.id}`;
+  const subtitle = `${row.make} ${row.model} ${row.year}`;
 
-    const html = `<!DOCTYPE html>
+  const imgMeta = imageUrl ? `
+  <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${escapeHtml(subtitle)}">
+  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : '';
+
+  return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <title>${escapeHtml(subtitle)}</title>
   <meta name="description" content="${escapeHtml(subtitle)}">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Trámites Vehiculares de México">
+  <meta property="og:site_name" content="Tr\u00e1mites Vehiculares de M\u00e9xico">
   <meta property="og:title" content="${escapeHtml(SHARE_TAGLINE)}">
   <meta property="og:description" content="${escapeHtml(subtitle)}">
-  <meta property="og:url" content="${escapeHtml(pageUrl)}">
-  ${imageUrl ? `<meta property="og:image" content="${escapeHtml(imageUrl)}">` : ''}
-  ${imageUrl ? `<meta property="og:image:alt" content="${escapeHtml(subtitle)}">` : ''}
+  <meta property="og:url" content="${escapeHtml(shareUrl)}">
+  ${imgMeta}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(SHARE_TAGLINE)}">
   <meta name="twitter:description" content="${escapeHtml(subtitle)}">
-  ${imageUrl ? `<meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : ''}
   <meta http-equiv="refresh" content="0;url=${escapeHtml(pageUrl)}">
+  <script>window.location.replace("${escapeHtml(pageUrl)}");</script>
 </head>
 <body>
-  <p><a href="${escapeHtml(pageUrl)}">${escapeHtml(subtitle)}</a></p>
+  <p>Redirigiendo... <a href="${escapeHtml(pageUrl)}">${escapeHtml(subtitle)}</a></p>
 </body>
 </html>`;
+}
 
+// Ruta montada en /api/share: GET /api/share/autos/:id
+router.get('/autos/:id', async (req, res) => {
+  try {
+    const html = await buildAutoHtml(req.params.id);
+    if (!html) return res.status(404).type('text/plain').send('Vehículo no encontrado');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).type('text/plain').send('Error al generar vista previa');
+  }
+});
+
+// Ruta corta montada en /s: GET /s/:id
+router.get('/:id', async (req, res) => {
+  try {
+    const html = await buildAutoHtml(req.params.id);
+    if (!html) return res.status(404).type('text/plain').send('Vehículo no encontrado');
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {

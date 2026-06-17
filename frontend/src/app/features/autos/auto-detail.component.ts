@@ -113,16 +113,19 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
 
   shareAuto() {
     const a = this.auto();
-    const url = window.location.href;
+    // /s/:id siempre sirve OG tags → WhatsApp/redes ven imagen y título correctamente
+    const shareUrl = a
+      ? `${window.location.origin}/s/${a.id}`
+      : window.location.href;
     const shareData: ShareData = {
       title: AUTO_SHARE_TAGLINE,
       text: a ? getAutoShareSubtitle(a) : AUTO_SHARE_TAGLINE,
-      url,
+      url: shareUrl,
     };
     if (navigator.share) {
-      navigator.share(shareData).catch(() => this.copyShareLink(url));
+      navigator.share(shareData).catch(() => this.copyShareLink(shareUrl));
     } else {
-      this.copyShareLink(url);
+      this.copyShareLink(shareUrl);
     }
   }
 
