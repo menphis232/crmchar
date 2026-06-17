@@ -39,46 +39,48 @@
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'gallery') {
                     <div class="gallery">
-                      <div class="gallery-viewer">
-                        @if (currentGalleryItem(); as item) {
-                          @if (item.type === 'video') {
-                            @if (item.embedUrl) {
-                              <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                            } @else {
-                              <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
+                      <div class="gallery-layout">
+                        @if (galleryItems().length) {
+                          <div class="gallery-thumbs-col">
+                            @for (item of galleryItems(); track $index) {
+                              @if (item.type === 'video') {
+                                <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
+                                  @if (item.poster) {
+                                    <img [src]="item.poster" alt="Video del vehículo">
+                                  } @else {
+                                    <span class="gallery-thumb-video-bg"></span>
+                                  }
+                                  <span class="gallery-thumb-play" aria-hidden="true">▶</span>
+                                </button>
+                              } @else {
+                                <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                              }
                             }
-                          } @else {
-                            <img [src]="item.url" class="gallery-main" alt="Vehículo">
-                          }
+                          </div>
                         }
-                        @if (showGalleryNav()) {
-                          <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-                          </button>
-                          <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-                          </button>
-                          <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
-                        }
-                      </div>
-                      @if (galleryItems().length) {
-                        <div class="gallery-thumbs">
-                          @for (item of galleryItems(); track $index) {
+                        <div class="gallery-viewer">
+                          @if (currentGalleryItem(); as item) {
                             @if (item.type === 'video') {
-                              <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
-                                @if (item.poster) {
-                                  <img [src]="item.poster" alt="Video del vehículo">
-                                } @else {
-                                  <span class="gallery-thumb-video-bg"></span>
-                                }
-                                <span class="gallery-thumb-play" aria-hidden="true">▶</span>
-                              </button>
+                              @if (item.embedUrl) {
+                                <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                              } @else {
+                                <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
+                              }
                             } @else {
-                              <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                              <img [src]="item.url" class="gallery-main" alt="Vehículo">
                             }
+                          }
+                          @if (showGalleryNav()) {
+                            <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                            </button>
+                            <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                            </button>
+                            <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
                           }
                         </div>
-                      }
+                      </div>
                     </div>
                   }
 
@@ -120,10 +122,10 @@
                 <div class="ds-price-label">Precio normal</div>
                 <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
                 <div class="ds-price-label">Precio especial</div>
-                <div class="ds-price" style="font-size:28px; font-weight:800; color:#2b7de9; margin-bottom:0;">{{ formatPrice(a.specialPrice!) }}</div>
+                <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
               } @else {
                 <div class="ds-price-label">Precio</div>
-                <div class="ds-price" style="font-size:28px; font-weight:800; color:var(--gold); margin-bottom:0;">{{ formatPrice(a.price) }}</div>
+                <div class="ds-price">{{ formatPrice(a.price) }}</div>
               }
             </div>
 
@@ -164,116 +166,167 @@
       </div>
       }
     } @else {
-      <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
-      <div class="detail-container">
-        <div class="gallery">
-          <div class="gallery-viewer">
-            @if (currentGalleryItem(); as item) {
-              @if (item.type === 'video') {
-                @if (item.embedUrl) {
-                  <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                } @else {
-                  <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
-                }
-              } @else {
-                <img [src]="item.url" class="gallery-main" alt="Vehículo">
-              }
-            }
-            @if (showGalleryNav()) {
-              <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-              <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-              <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
-            }
-          </div>
-          @if (galleryItems().length) {
-            <div class="gallery-thumbs">
-              @for (item of galleryItems(); track $index) {
-                @if (item.type === 'video') {
-                  <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
-                    @if (item.poster) {
-                      <img [src]="item.poster" alt="Video del vehículo">
-                    } @else {
-                      <span class="gallery-thumb-video-bg"></span>
+      <!-- VISTA CLÁSICA (DEFAULT) -->
+      <div class="detail-page">
+        <div class="detail-container">
+          <div class="detail-gallery-col">
+            <div class="gallery">
+              <div class="gallery-layout">
+                @if (galleryItems().length) {
+                  <div class="gallery-thumbs-col">
+                    @for (item of galleryItems(); track $index) {
+                      @if (item.type === 'video') {
+                        <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
+                          @if (item.poster) {
+                            <img [src]="item.poster" alt="Video del vehículo">
+                          } @else {
+                            <span class="gallery-thumb-video-bg"></span>
+                          }
+                          <span class="gallery-thumb-play" aria-hidden="true">▶</span>
+                        </button>
+                      } @else {
+                        <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                      }
                     }
-                    <span class="gallery-thumb-play" aria-hidden="true">▶</span>
-                  </button>
-                } @else {
-                  <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
+                  </div>
                 }
+
+                <div class="gallery-viewer">
+                  @if (currentGalleryItem(); as item) {
+                    @if (item.type === 'video') {
+                      @if (item.embedUrl) {
+                        <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                      } @else {
+                        <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
+                      }
+                    } @else {
+                      <img [src]="item.url" class="gallery-main" [alt]="a.make + ' ' + a.model">
+                    }
+                  }
+                  @if (showGalleryNav()) {
+                    <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                    </button>
+                    <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                    </button>
+                    <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="detail-sidebar">
+            <div class="ds-tags">
+              <span class="ds-tag">Semi nuevo</span>
+              <span class="ds-tag">{{ a.make }}</span>
+            </div>
+
+            <div class="ds-make">{{ a.make }}</div>
+            <h1 class="ds-model">{{ a.model }}</h1>
+
+            @if (a.verified) {
+              <div class="ds-verified">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+                Verificado
+              </div>
+            }
+
+            <div class="ds-price-block">
+              @if (hasSpecialPrice(a)) {
+                <div class="ds-price-label">Precio normal</div>
+                <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
+                <div class="ds-price-label">Precio especial</div>
+                <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
+              } @else {
+                <div class="ds-price-label">Precio</div>
+                <div class="ds-price">{{ formatPrice(a.price) }}</div>
               }
             </div>
-          }
+
+            <div class="ds-specs">
+              <div class="ds-spec-row">
+                <span class="ds-spec-icon" aria-hidden="true">◷</span>
+                <span>{{ a.year }}</span>
+              </div>
+              <div class="ds-spec-row">
+                <span class="ds-spec-icon" aria-hidden="true">◎</span>
+                <span>{{ a.mileage | number }} km</span>
+              </div>
+              @if (a.dealerName) {
+                <div class="ds-spec-row">
+                  <span class="ds-spec-icon" aria-hidden="true">⌂</span>
+                  <span>{{ a.dealerName }}</span>
+                </div>
+              }
+              @if (a.location) {
+                <div class="ds-spec-row">
+                  <span class="ds-spec-icon" aria-hidden="true">⌖</span>
+                  <span>{{ a.location }}</span>
+                </div>
+              }
+            </div>
+
+            @if (a.description) {
+              <p class="ds-description-snippet">{{ a.description }}</p>
+            }
+
+            <div class="detail-actions">
+              <button type="button" class="btn-detail-outline" (click)="scrollToInquiry()">Más información</button>
+              <button type="button" class="btn-detail-outline" (click)="shareAuto()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <path d="M8.6 13.5l6.8 3.9M15.4 6.6l-6.8 3.9"/>
+                </svg>
+                Compartir ficha
+              </button>
+            </div>
+
+            <a [href]="whatsappLink()" target="_blank" rel="noopener" class="btn-whatsapp">Contactar por WhatsApp</a>
+
+            <div class="dealer-card">
+              @if (a.dealerSlug) {
+                <a [routerLink]="['/concesionarias', a.dealerSlug]" class="dealer-link">
+                  <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                  <div>
+                    <div class="dealer-label">Vendido por</div>
+                    <div class="dealer-name">{{ a.dealerName }} <span class="dealer-arrow">→</span></div>
+                  </div>
+                </a>
+              } @else {
+                <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                <div>
+                  <div class="dealer-label">Vendido por</div>
+                  <div class="dealer-name">{{ a.dealerName }}</div>
+                </div>
+              }
+            </div>
+
+            <div class="inquiry-box" id="detail-inquiry">
+              <h3>¿Tienes preguntas?</h3>
+              @if (inquirySent()) {
+                <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
+              } @else {
+                <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre" class="inq-input">
+                <input [(ngModel)]="inquiry.clientEmail" placeholder="Email" class="inq-input">
+                <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
+                <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
+                @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
+                <button class="btn-inquiry" (click)="sendInquiry()">Enviar pregunta</button>
+              }
+            </div>
+
+            <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
+          </aside>
+
           @if (a.description) {
-            <div class="description">
-              <h3>Descripción del Vehículo</h3>
+            <div class="detail-description" id="detail-description">
+              <h3>Descripción</h3>
               <p>{{ a.description }}</p>
             </div>
           }
         </div>
-
-        <aside class="detail-sidebar">
-          <div class="ds-make">{{ a.make }}</div>
-          <h1 class="ds-model">{{ a.model }}</h1>
-          <div class="ds-price-block">
-            @if (hasSpecialPrice(a)) {
-              <div class="ds-price-label">Precio normal</div>
-              <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
-              <div class="ds-price-label">Precio especial</div>
-              <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
-            } @else {
-              <div class="ds-price-label">Precio</div>
-              <div class="ds-price">{{ formatPrice(a.price) }}</div>
-            }
-          </div>
-
-          <div class="ds-specs">
-            <div class="ds-spec-item"><div class="ds-spec-label">AÑO</div><div class="ds-spec-value">{{ a.year }}</div></div>
-            <div class="ds-spec-item"><div class="ds-spec-label">KILOMETRAJE</div><div class="ds-spec-value">{{ a.mileage | number }} km</div></div>
-            <div class="ds-spec-item"><div class="ds-spec-label">TRANSMISIÓN</div><div class="ds-spec-value">{{ a.transmission }}</div></div>
-            <div class="ds-spec-item"><div class="ds-spec-label">UBICACIÓN</div><div class="ds-spec-value">{{ a.location }}</div></div>
-          </div>
-
-          <a [href]="whatsappLink()" target="_blank" class="btn-whatsapp">💬 Contactar por WhatsApp</a>
-          <button class="btn-share" (click)="shareAuto()">🔗 Compartir vehículo</button>
-
-          <div class="dealer-card">
-            @if (a.dealerSlug) {
-              <a [routerLink]="['/concesionarias', a.dealerSlug]" class="dealer-link" style="width:100%">
-                <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
-                <div>
-                  <div class="dealer-label">Vendido por:</div>
-                  <div class="dealer-name">{{ a.dealerName }} <span class="dealer-arrow">→</span></div>
-                </div>
-              </a>
-            } @else {
-              <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
-              <div>
-                <div class="dealer-label">Vendido por:</div>
-                <div class="dealer-name">{{ a.dealerName }} (sin enlace)</div>
-              </div>
-            }
-          </div>
-
-          <div class="inquiry-box">
-            <h3>¿Tienes preguntas?</h3>
-            @if (inquirySent()) {
-              <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
-            } @else {
-              <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre" class="inq-input">
-              <input [(ngModel)]="inquiry.clientEmail" placeholder="Email" class="inq-input">
-              <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
-              <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
-              @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
-              <button class="btn-inquiry" (click)="sendInquiry()">Enviar pregunta</button>
-            }
-          </div>
-
-          <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
-        </aside>
       </div>
     }
 

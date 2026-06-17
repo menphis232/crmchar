@@ -166,10 +166,11 @@ for (const auto of autos) {
     videosCleared++;
   }
 
-  // Precio especial en todos los publicados (descuento 60%–85% del precio normal)
+  // ~50% con precio especial, el resto solo precio normal
   const basePrice = Number(auto.price);
-  if (basePrice > 0) {
-    const discount = 0.60 + (hashStr(`${auto.id}-special`) % 26) / 100;
+  const withSpecial = hashStr(`${auto.id}-special`) % 100 < 50;
+  if (withSpecial && basePrice > 0) {
+    const discount = 0.88 + (hashStr(`${auto.id}-disc`) % 8) / 100;
     const special = Math.max(10000, Math.round((basePrice * discount) / 10000) * 10000);
     if (special > 0 && special < basePrice) {
       await c.query('UPDATE autos SET special_price = ? WHERE id = ?', [special, auto.id]);

@@ -1,13 +1,15 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { ConcesionariaService } from '../../core/api.service';
 import { DealerProfile, Auto } from '../../models';
-import { hasSpecialPrice, effectivePrice } from '../../shared/auto-price.util';
+import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+
+type DealerFilterTab = 'marca' | 'verificado' | 'estado';
 
 @Component({
   selector: 'app-dealer-profile',
@@ -16,22 +18,33 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   templateUrl: './dealer-profile.component.html',
   styleUrl: './dealer-profile.component.css',
 })
-export class DealerProfileComponent implements OnInit {
+export class DealerProfileComponent implements OnInit, OnDestroy {
   dealer = signal<DealerProfile | null>(null);
   autos = signal<Auto[]>([]);
   loading = signal(true);
   autosLoading = signal(true);
   error = signal('');
 
-  // Filters
   searchQuery = signal('');
-  priceRange = signal('');
+  selectedMakes = signal<Set<string>>(new Set());
+  selectedCities = signal<Set<string>>(new Set());
+  verifiedFilter = signal<'all' | 'yes' | 'no'>('all');
+  filtersOpen = signal(false);
+  filterTab = signal<DealerFilterTab>('marca');
 
-  // Pagination
+  pendingMakes = signal<Set<string>>(new Set());
+  pendingCities = signal<Set<string>>(new Set());
+  pendingVerified = signal<'all' | 'yes' | 'no'>('all');
+
+  makeSearch = signal('');
+  citySearch = signal('');
+  makeShowAll = signal(false);
+  cityShowAll = signal(false);
+  readonly FILTER_PREVIEW_LIMIT = 8;
+
   readonly PAGE_SIZE = 9;
   currentPage = signal(1);
 
-  // Chat
   chatOpen = false;
   chatMessage = '';
   chatHistory: { role: 'user' | 'model'; content: string }[] = [];
@@ -40,26 +53,79 @@ export class DealerProfileComponent implements OnInit {
   private slug = '';
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+  private ignoreNextDocClick = false;
 
-  // Derived
-  availableMakes = computed(() => {
-    const makes = this.autos().map(a => a.make).filter(Boolean);
-    return [...new Set(makes)].sort();
+  makes = computed(() => {
+    const counts = new Map<string, number>();
+    for (const a of this.autos()) {
+      counts.set(a.make, (counts.get(a.make) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .map(([make, count]) => ({ make, count }))
+      .sort((a, b) => b.count - a.count);
+  });
+
+  availableCities = computed(() => {
+    const cities = this.autos()
+      .map(a => a.location)
+      .filter((c): c is string => !!c);
+    return [...new Set(cities)].sort();
+  });
+
+  filteredMakes = computed(() => {
+    const q = this.makeSearch().toLowerCase().trim();
+    const list = this.makes();
+    if (!q) return list;
+    return list.filter(m => m.make.toLowerCase().includes(q));
+  });
+
+  filteredCities = computed(() => {
+    const q = this.citySearch().toLowerCase().trim();
+    const list = this.availableCities();
+    if (!q) return list;
+    return list.filter(c => c.toLowerCase().includes(q));
+  });
+
+  visibleMakes = computed(() => {
+    const list = this.filteredMakes();
+    if (this.makeShowAll() || this.makeSearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
+      return list;
+    }
+    const selected = this.selectedMakes();
+    const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
+    const extras = list.filter(m => selected.has(m.make) && !preview.some(p => p.make === m.make));
+    return [...preview, ...extras];
+  });
+
+  visibleCities = computed(() => {
+    const list = this.filteredCities();
+    if (this.cityShowAll() || this.citySearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
+      return list;
+    }
+    const selected = this.selectedCities();
+    const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
+    const extras = list.filter(c => selected.has(c) && !preview.includes(c));
+    return [...preview, ...extras];
   });
 
   filteredAutos = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
-    const range = this.priceRange();
+    const makes = this.selectedMakes();
+    const cities = this.selectedCities();
+    const verified = this.verifiedFilter();
+
     return this.autos().filter(car => {
       const matchesSearch = !q ||
         car.make.toLowerCase().includes(q) ||
         car.model.toLowerCase().includes(q) ||
         car.location?.toLowerCase().includes(q);
-      const matchesPrice =
-        range === 'low' ? effectivePrice(car) < 500000 :
-        range === 'mid' ? effectivePrice(car) >= 500000 && effectivePrice(car) <= 1000000 :
-        range === 'high' ? effectivePrice(car) > 1000000 : true;
-      return matchesSearch && matchesPrice;
+      const matchesMake = makes.size === 0 || makes.has(car.make);
+      const matchesCity = cities.size === 0 || cities.has(car.location ?? '');
+      const matchesVerified =
+        verified === 'all' ||
+        (verified === 'yes' && !!car.verified) ||
+        (verified === 'no' && !car.verified);
+      return matchesSearch && matchesMake && matchesCity && matchesVerified;
     });
   });
 
@@ -120,15 +186,93 @@ export class DealerProfileComponent implements OnInit {
 
   onSearch(q: string) { this.searchSubject.next(q); }
 
-  onPriceChange(range: string) {
-    this.priceRange.set(range);
+  clearFilters() {
+    this.searchQuery.set('');
+    this.selectedMakes.set(new Set());
+    this.selectedCities.set(new Set());
+    this.verifiedFilter.set('all');
+    this.makeSearch.set('');
+    this.citySearch.set('');
+    this.makeShowAll.set(false);
+    this.cityShowAll.set(false);
+    this.syncPendingFilters();
     this.currentPage.set(1);
   }
 
-  clearFilters() {
-    this.searchQuery.set('');
-    this.priceRange.set('');
+  toggleFiltersPanel(event?: Event) {
+    event?.stopPropagation();
+    const opening = !this.filtersOpen();
+    if (opening) {
+      this.syncPendingFilters();
+      this.ignoreNextDocClick = true;
+    }
+    this.filtersOpen.set(opening);
+  }
+
+  setFilterTab(tab: DealerFilterTab) {
+    this.filterTab.set(tab);
+  }
+
+  syncPendingFilters() {
+    this.pendingMakes.set(new Set(this.selectedMakes()));
+    this.pendingCities.set(new Set(this.selectedCities()));
+    this.pendingVerified.set(this.verifiedFilter());
+  }
+
+  applyPendingFilters() {
+    this.selectedMakes.set(new Set(this.pendingMakes()));
+    this.selectedCities.set(new Set(this.pendingCities()));
+    this.verifiedFilter.set(this.pendingVerified());
+    this.filtersOpen.set(false);
     this.currentPage.set(1);
+  }
+
+  clearPendingFilters() {
+    this.pendingMakes.set(new Set());
+    this.pendingCities.set(new Set());
+    this.pendingVerified.set('all');
+    this.makeSearch.set('');
+    this.citySearch.set('');
+  }
+
+  selectAllMakes() { this.pendingMakes.set(new Set()); }
+  selectAllCities() { this.pendingCities.set(new Set()); }
+
+  togglePendingMake(make: string) {
+    const s = new Set(this.pendingMakes());
+    if (s.has(make)) s.delete(make); else s.add(make);
+    this.pendingMakes.set(s);
+  }
+
+  togglePendingCity(city: string) {
+    const s = new Set(this.pendingCities());
+    if (s.has(city)) s.delete(city); else s.add(city);
+    this.pendingCities.set(s);
+  }
+
+  isPendingMakeSelected(make: string) { return this.pendingMakes().has(make); }
+  isPendingCitySelected(city: string) { return this.pendingCities().has(city); }
+
+  onMakeSearchChange(q: string) {
+    this.makeSearch.set(q);
+    this.makeShowAll.set(!!q.trim());
+  }
+
+  onCitySearchChange(q: string) {
+    this.citySearch.set(q);
+    this.cityShowAll.set(!!q.trim());
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeFiltersOnOutsideClick(event: MouseEvent) {
+    if (this.ignoreNextDocClick) {
+      this.ignoreNextDocClick = false;
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (!target.closest('.filters-dropdown-wrap') && this.filtersOpen()) {
+      this.filtersOpen.set(false);
+    }
   }
 
   goToPage(page: number) {
@@ -143,9 +287,13 @@ export class DealerProfileComponent implements OnInit {
 
   hasSpecialPrice = hasSpecialPrice;
 
-  get hasActiveFilters() { return !!this.searchQuery() || !!this.priceRange(); }
+  get hasActiveFilters(): boolean {
+    return !!this.searchQuery() ||
+      this.selectedMakes().size > 0 ||
+      this.selectedCities().size > 0 ||
+      this.verifiedFilter() !== 'all';
+  }
 
-  // Chat
   toggleChat() {
     this.chatOpen = !this.chatOpen;
     if (this.chatOpen && this.chatHistory.length === 0) {
@@ -186,10 +334,6 @@ export class DealerProfileComponent implements OnInit {
       const box = document.getElementById('dealer-chat-messages');
       if (box) box.scrollTop = box.scrollHeight;
     }, 100);
-  }
-
-  initials(name?: string) {
-    return (name || 'DC').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
 
   shareDealer() {

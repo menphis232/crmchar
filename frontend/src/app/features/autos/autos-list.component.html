@@ -3,329 +3,205 @@
 }
 <app-nav />
 
-<header class="catalog-header autos-header">
-  <div class="header-content">
-    <span class="header-eyebrow">CONCESIONARIAS AFILIADAS</span>
-    <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'VEHÍCULOS PREMIUM EN VENTA' }}</h1>
-    <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Directorio nacional de autos verificados por concesionarias afiliadas.' }}</p>
-  </div>
-</header>
+<div class="autos-page">
+  <section class="autos-hero">
+    <h1 class="autos-hero-title">INVENTARIO SEMINUEVOS</h1>
+  </section>
 
-<!-- Search Bar -->
-<div class="search-bar-wrap">
-  <div class="search-bar-inner">
-    <div class="search-input-wrap">
-      <span class="search-icon">🔍</span>
-      <input
-        id="autos-search"
-        type="text"
-        class="search-input"
-        placeholder="Buscar por marca, modelo, concesionaria o ciudad..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="onSearch($event)"
-      />
-      @if (searchQuery()) {
-        <button class="search-clear" (click)="onSearch('')" title="Limpiar búsqueda">✕</button>
-      }
-    </div>
-    <div class="results-count">
-      <span class="count-num">{{ filteredAutos().length }}</span>
-      <span class="count-label">vehículos encontrados</span>
-    </div>
-  </div>
-</div>
+  <div class="catalog-container">
+    <div class="autos-toolbar">
+      <div class="autos-search-row">
+        <input
+          id="autos-search"
+          type="text"
+          class="autos-search-input"
+          placeholder="Buscar por marca, modelo..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearch($event)"
+        />
 
-<div class="catalog-container">
-  <button type="button" class="filters-mobile-toggle" (click)="toggleFiltersPanel()">
-    {{ filtersOpen() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-    @if (activeFilterCount() > 0) {
-      <span class="filters-mobile-badge">{{ activeFilterCount() }}</span>
-    }
-  </button>
+        <div class="filters-dropdown-wrap">
+          <button
+            type="button"
+            class="filters-trigger"
+            [class.is-open]="filtersOpen()"
+            (click)="toggleFiltersPanel($event)"
+            [attr.aria-expanded]="filtersOpen()"
+          >
+            <svg class="filters-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span>Filtros</span>
+            <svg class="filters-trigger-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
 
-  <!-- Sidebar Filters -->
-  <aside class="filters" [class.filters-open]="filtersOpen()">
-    <div class="filters-header">
-      <span class="filters-title">FILTROS</span>
-      @if (hasActiveFilters) {
-        <button type="button" class="clear-filters-btn" (click)="clearFilters()">Limpiar</button>
-      }
-    </div>
+          @if (filtersOpen()) {
+            <div class="filters-panel" (click)="$event.stopPropagation()">
+              <div class="filters-tabs">
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'marca'" (click)="setFilterTab('marca')">Marca</button>
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'verificado'" (click)="setFilterTab('verificado')">Verificado</button>
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'concesionaria'" (click)="setFilterTab('concesionaria')">Concesion...</button>
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'estado'" (click)="setFilterTab('estado')">Estado</button>
+              </div>
 
-    <!-- Marca -->
-    <div class="filter-group" [class.is-open]="makeSectionOpen()">
-      <button type="button" class="filter-group-toggle" (click)="toggleMakeSection()">
-        <span class="filter-group-toggle-label">
-          <span class="filter-icon">🚗</span> MARCA
-          @if (selectedMakes().size > 0) {
-            <span class="filter-section-badge">{{ selectedMakes().size }}</span>
-          }
-        </span>
-        <span class="filter-chevron" [class.open]="makeSectionOpen()">▼</span>
-      </button>
-      @if (makeSectionOpen()) {
-        <div class="filter-group-body">
-          @if (makes().length > FILTER_PREVIEW_LIMIT) {
-            <input
-              type="search"
-              class="filter-search-input"
-              placeholder="Buscar marca..."
-              [ngModel]="makeSearch()"
-              (ngModelChange)="onMakeSearchChange($event)"
-            />
-          }
-          <div class="filter-options filter-options-list">
-            @for (m of visibleMakes(); track m.make) {
-              <label class="filter-label" [class.active]="isMakeSelected(m.make)">
-                <input
-                  type="checkbox"
-                  class="filter-checkbox"
-                  [checked]="isMakeSelected(m.make)"
-                  (change)="onMakeToggle(m.make, $any($event.target).checked)"
-                />
-                <span class="filter-label-text">{{ m.make }}</span>
-                <span class="filter-count">{{ m.count }}</span>
-              </label>
-            } @empty {
-              <p class="filter-empty-hint">Ninguna marca coincide con tu búsqueda.</p>
-            }
-          </div>
-          @if (hiddenMakesCount() > 0) {
-            <button type="button" class="filter-more-btn" (click)="makeShowAll.set(true)">
-              Ver {{ hiddenMakesCount() }} marcas más
-            </button>
-          } @else if (makeShowAll() && filteredMakes().length > FILTER_PREVIEW_LIMIT && !makeSearch()) {
-            <button type="button" class="filter-more-btn" (click)="makeShowAll.set(false)">
-              Ver menos marcas
-            </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Ciudad -->
-    @if (availableCities().length > 0) {
-      <div class="filter-group" [class.is-open]="citySectionOpen()">
-        <button type="button" class="filter-group-toggle" (click)="toggleCitySection()">
-          <span class="filter-group-toggle-label">
-            <span class="filter-icon">📍</span> CIUDAD
-            @if (selectedCities().size > 0) {
-              <span class="filter-section-badge">{{ selectedCities().size }}</span>
-            }
-          </span>
-          <span class="filter-chevron" [class.open]="citySectionOpen()">▼</span>
-        </button>
-        @if (citySectionOpen()) {
-          <div class="filter-group-body">
-            @if (availableCities().length > FILTER_PREVIEW_LIMIT) {
-              <input
-                type="search"
-                class="filter-search-input"
-                placeholder="Buscar ciudad..."
-                [ngModel]="citySearch()"
-                (ngModelChange)="onCitySearchChange($event)"
-              />
-            }
-            <div class="filter-options filter-options-list">
-              @for (city of visibleCities(); track city) {
-                <label class="filter-label" [class.active]="isCitySelected(city)">
+              <div class="filters-panel-body">
+                @if (filterTab() === 'marca') {
                   <input
-                    type="checkbox"
-                    class="filter-checkbox"
-                    [checked]="isCitySelected(city)"
-                    (change)="onCityToggle(city, $any($event.target).checked)"
+                    type="search"
+                    class="filters-panel-search"
+                    placeholder="Buscar marca..."
+                    [ngModel]="makeSearch()"
+                    (ngModelChange)="onMakeSearchChange($event)"
                   />
-                  <span class="filter-label-text">{{ city }}</span>
-                </label>
-              } @empty {
-                <p class="filter-empty-hint">Ninguna ciudad coincide con tu búsqueda.</p>
-              }
-            </div>
-            @if (hiddenCitiesCount() > 0) {
-              <button type="button" class="filter-more-btn" (click)="cityShowAll.set(true)">
-                Ver {{ hiddenCitiesCount() }} ciudades más
-              </button>
-            } @else if (cityShowAll() && filteredCities().length > FILTER_PREVIEW_LIMIT && !citySearch()) {
-              <button type="button" class="filter-more-btn" (click)="cityShowAll.set(false)">
-                Ver menos ciudades
-              </button>
-            }
-          </div>
-        }
-      </div>
-    }
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingMakes().size === 0" (click)="selectAllMakes()">Todos</button>
+                    @for (m of visibleMakes(); track m.make) {
+                      <button type="button" class="filters-list-item" [class.active]="isPendingMakeSelected(m.make)" (click)="togglePendingMake(m.make)">{{ m.make }}</button>
+                    }
+                  </div>
+                }
 
-    <!-- Precio -->
-    <div class="filter-group" [class.is-open]="priceSectionOpen()">
-      <button type="button" class="filter-group-toggle" (click)="togglePriceSection()">
-        <span class="filter-group-toggle-label">
-          <span class="filter-icon">💰</span> PRECIO
-          @if (priceRange()) {
-            <span class="filter-section-badge">1</span>
-          }
-        </span>
-        <span class="filter-chevron" [class.open]="priceSectionOpen()">▼</span>
-      </button>
-      @if (priceSectionOpen()) {
-        <div class="filter-group-body">
-          <div class="filter-options">
-            <label class="filter-label" [class.active]="priceRange() === ''">
-              <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('')" [checked]="priceRange() === ''" />
-              <span class="filter-label-text">Todos los precios</span>
-            </label>
-            <label class="filter-label" [class.active]="priceRange() === 'low'">
-              <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('low')" [checked]="priceRange() === 'low'" />
-              <span class="filter-label-text">Menos de $500k</span>
-            </label>
-            <label class="filter-label" [class.active]="priceRange() === 'mid'">
-              <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('mid')" [checked]="priceRange() === 'mid'" />
-              <span class="filter-label-text">$500k — $1M</span>
-            </label>
-            <label class="filter-label" [class.active]="priceRange() === 'high'">
-              <input type="radio" name="price" class="filter-checkbox" (change)="onPriceChange('high')" [checked]="priceRange() === 'high'" />
-              <span class="filter-label-text">Más de $1M</span>
-            </label>
-          </div>
-        </div>
-      }
-    </div>
+                @if (filterTab() === 'verificado') {
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'all'" (click)="pendingVerified.set('all')">Todos</button>
+                    <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'yes'" (click)="pendingVerified.set('yes')">Verificados</button>
+                    <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'no'" (click)="pendingVerified.set('no')">No verificados</button>
+                  </div>
+                }
 
-    <!-- Active chips -->
-    @if (hasActiveFilters) {
-      <div class="active-filters">
-        @if (searchQuery()) {
-          <span class="filter-chip">
-            🔍 "{{ searchQuery() }}"
-            <button type="button" (click)="onSearch('')">✕</button>
-          </span>
-        }
-        @for (make of selectedMakesArray(); track make) {
-          <span class="filter-chip">
-            🚗 {{ make }}
-            <button type="button" (click)="onMakeToggle(make, false)">✕</button>
-          </span>
-        }
-        @for (city of selectedCitiesArray(); track city) {
-          <span class="filter-chip">
-            📍 {{ city }}
-            <button type="button" (click)="onCityToggle(city, false)">✕</button>
-          </span>
-        }
-        @if (priceRange()) {
-          <span class="filter-chip">
-            💰 {{ priceRange() === 'low' ? '< $500k' : priceRange() === 'mid' ? '$500k–$1M' : '> $1M' }}
-            <button type="button" (click)="onPriceChange('')">✕</button>
-          </span>
-        }
-      </div>
-    }
-  </aside>
+                @if (filterTab() === 'concesionaria') {
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingDealers().size === 0" (click)="selectAllDealers()">Todos</button>
+                    @for (dealer of availableDealers(); track dealer) {
+                      <button type="button" class="filters-list-item" [class.active]="isPendingDealerSelected(dealer)" (click)="togglePendingDealer(dealer)">{{ dealer }}</button>
+                    }
+                  </div>
+                }
 
-  <!-- Main Grid -->
-  <main class="car-grid-wrap">
-    @if (loading()) {
-      <div class="loading-grid">
-        @for (i of [1,2,3,4,5,6]; track i) {
-          <div class="skeleton-card">
-            <div class="skeleton-img"></div>
-            <div class="skeleton-body">
-              <div class="skeleton-line short"></div>
-              <div class="skeleton-line"></div>
-              <div class="skeleton-line medium"></div>
-            </div>
-          </div>
-        }
-      </div>
-    } @else if (error()) {
-      <div class="empty-state">
-        <div class="empty-icon">⚠️</div>
-        <h3 class="empty-title">Error al cargar</h3>
-        <p class="empty-desc">{{ error() }}</p>
-        <button class="empty-clear-btn" (click)="loadAutos()">Reintentar</button>
-      </div>
-    } @else if (filteredAutos().length === 0) {
-      <div class="empty-state">
-        <div class="empty-icon">🚗</div>
-        <h3 class="empty-title">Sin vehículos</h3>
-        <p class="empty-desc">No encontramos vehículos con esos criterios.<br>Intenta cambiar los filtros.</p>
-        <button class="empty-clear-btn" (click)="clearFilters()">Limpiar filtros</button>
-      </div>
-    } @else {
-      <div class="car-grid">
-        @for (car of paginatedAutos(); track car.id) {
-          <a [routerLink]="['/autos', car.id]" class="car-card">
-            <div class="car-img-wrap">
-              <img
-                [src]="car.imageUrl || 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop'"
-                [alt]="car.model"
-                class="car-img"
-              />
-              <span class="car-badge car-badge-left">Semi nuevo</span>
-              <span class="car-badge car-badge-right">{{ car.make }}</span>
-              @if (car.verified) {
-                <span class="car-badge car-badge-verified">
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 4.8 5.4.8-3.9 3.8.9 5.3L12 14.8 7.2 16.7l.9-5.3L4.2 7.6l5.4-.8L12 2z"/></svg>
-                  Verificado
-                </span>
-              }
-            </div>
-            <div class="car-details">
-              <div class="car-make">{{ car.make }}</div>
-              <h3 class="car-model">{{ car.model }}</h3>
-
-              <div class="car-price-block">
-                @if (hasSpecialPrice(car)) {
-                  <div class="car-price-label">Precio normal</div>
-                  <div class="car-price-old">{{ formatPrice(car.price) }}</div>
-                  <div class="car-price-label">Precio especial</div>
-                  <div class="car-price-current">{{ formatPrice(car.specialPrice!) }}</div>
-                } @else {
-                  <div class="car-price-label">Precio</div>
-                  <div class="car-price-current">{{ formatPrice(car.price) }}</div>
+                @if (filterTab() === 'estado') {
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingCities().size === 0" (click)="selectAllCities()">Todos</button>
+                    @for (city of visibleCities(); track city) {
+                      <button type="button" class="filters-list-item" [class.active]="isPendingCitySelected(city)" (click)="togglePendingCity(city)">{{ city }}</button>
+                    }
+                  </div>
                 }
               </div>
 
-              <ul class="car-meta">
-                <li><span class="car-meta-icon" aria-hidden="true">◷</span>{{ car.year }}</li>
-                <li><span class="car-meta-icon" aria-hidden="true">◎</span>{{ car.mileage | number }} km</li>
-                <li><span class="car-meta-icon" aria-hidden="true">⌂</span>{{ car.dealerName || car.location || '—' }}</li>
-              </ul>
+              <div class="filters-panel-footer">
+                <button type="button" class="filters-clear-link" (click)="clearPendingFilters()">Limpiar filtros</button>
+                <button type="button" class="filters-apply-btn" (click)="applyPendingFilters()">Aplicar</button>
+              </div>
             </div>
-          </a>
-        }
+          }
+        </div>
       </div>
 
-      <!-- Pagination -->
-      @if (totalPages() > 1) {
-        <nav class="pagination" aria-label="Paginación de vehículos">
-          <button
-            class="page-btn page-arrow"
-            [disabled]="currentPage() === 1"
-            (click)="goToPage(currentPage() - 1)"
-            aria-label="Página anterior"
-          >‹</button>
+      <p class="autos-results-count">{{ filteredAutos().length }} vehículos encontrados</p>
+    </div>
 
-          @for (page of pages(); track page) {
-            <button
-              class="page-btn"
-              [class.active]="page === currentPage()"
-              (click)="goToPage(page)"
-              [attr.aria-current]="page === currentPage() ? 'page' : null"
-            >{{ page }}</button>
+    <main class="car-grid-wrap">
+      @if (loading()) {
+        <div class="loading-grid">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="skeleton-card">
+              <div class="skeleton-img"></div>
+              <div class="skeleton-body">
+                <div class="skeleton-line short"></div>
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line medium"></div>
+              </div>
+            </div>
           }
+        </div>
+      } @else if (error()) {
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <h3 class="empty-title">Error al cargar</h3>
+          <p class="empty-desc">{{ error() }}</p>
+          <button class="empty-clear-btn" (click)="loadAutos()">Reintentar</button>
+        </div>
+      } @else if (filteredAutos().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">🚗</div>
+          <h3 class="empty-title">Sin vehículos</h3>
+          <p class="empty-desc">No encontramos vehículos con esos criterios.<br>Intenta cambiar los filtros.</p>
+          <button class="empty-clear-btn" (click)="clearFilters()">Limpiar filtros</button>
+        </div>
+      } @else {
+        <div class="car-grid">
+          @for (car of paginatedAutos(); track car.id) {
+            <a [routerLink]="['/autos', car.id]" class="car-card">
+              <div class="car-img-wrap">
+                <img
+                  [src]="car.imageUrl || 'https://images.unsplash.com/photo-1555215695-3004980ad54e?w=600&auto=format&fit=crop'"
+                  [alt]="car.model"
+                  class="car-img"
+                />
+                <span class="car-badge car-badge-left">Semi nuevo</span>
+                <span class="car-badge car-badge-right">{{ car.make }}</span>
+                @if (car.verified) {
+                  <span class="car-badge car-badge-verified">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 4.8 5.4.8-3.9 3.8.9 5.3L12 14.8 7.2 16.7l.9-5.3L4.2 7.6l5.4-.8L12 2z"/></svg>
+                    Verificado
+                  </span>
+                }
+              </div>
+              <div class="car-details">
+                <div class="car-make">{{ car.make }}</div>
+                <h3 class="car-model">{{ car.model }}</h3>
 
-          <button
-            class="page-btn page-arrow"
-            [disabled]="currentPage() === totalPages()"
-            (click)="goToPage(currentPage() + 1)"
-            aria-label="Página siguiente"
-          >›</button>
+                <div class="car-price-block" [class.has-special]="hasSpecialPrice(car)">
+                  @if (hasSpecialPrice(car)) {
+                    <div class="car-price-label">Precio normal</div>
+                    <div class="car-price-old">{{ formatPrice(car.price) }}</div>
+                    <div class="car-price-label">Precio especial</div>
+                    <div class="car-price-current">{{ formatPrice(car.specialPrice!) }}</div>
+                  } @else {
+                    <div class="car-price-label">Precio</div>
+                    <div class="car-price-current">{{ formatPrice(car.price) }}</div>
+                  }
+                </div>
 
-          <span class="page-info">
-            Página {{ currentPage() }} de {{ totalPages() }}
-          </span>
-        </nav>
+                <ul class="car-meta">
+                  <li><span class="car-meta-icon" aria-hidden="true">◷</span>{{ car.year }}</li>
+                  <li><span class="car-meta-icon" aria-hidden="true">◎</span>{{ car.mileage | number }} km</li>
+                  <li><span class="car-meta-icon" aria-hidden="true">⌂</span>{{ car.dealerName || car.location || '—' }}</li>
+                </ul>
+              </div>
+            </a>
+          }
+        </div>
+
+        @if (totalPages() > 1) {
+          <nav class="pagination" aria-label="Paginación de vehículos">
+            <button
+              class="page-btn page-nav"
+              [disabled]="currentPage() === 1"
+              (click)="goToPage(currentPage() - 1)"
+              aria-label="Página anterior"
+            >‹</button>
+
+            @for (page of pages(); track page) {
+              <button
+                class="page-btn page-num"
+                [class.active]="page === currentPage()"
+                (click)="goToPage(page)"
+                [attr.aria-current]="page === currentPage() ? 'page' : null"
+              >{{ page }}</button>
+            }
+
+            <button
+              class="page-btn page-nav"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+              aria-label="Página siguiente"
+            >›</button>
+          </nav>
+        }
       }
-    }
-  </main>
+    </main>
+  </div>
 </div>

@@ -17,78 +17,131 @@
   </div>
 } @else {
   @if (dealer(); as d) {
+  <div class="dp-page">
 
     <!-- ── HERO ── -->
-    <header class="dp-hero">
-      <div class="dp-hero-bg"></div>
-      <div class="dp-hero-content">
-        <div class="dp-logo-wrap">
-          @if (d.logoUrl) {
-            <img [src]="d.logoUrl" [alt]="d.name" class="dp-logo" />
-          } @else {
-            <div class="dp-logo-initials">{{ initials(d.name) }}</div>
-          }
+    <section class="dp-hero">
+      @if (d.logoUrl) {
+        <div class="dp-hero-logo">
+          <img [src]="d.logoUrl" [alt]="d.name" class="dp-logo" />
         </div>
-        <div class="dp-hero-info">
-          <span class="dp-eyebrow">CONCESIONARIA AFILIADA</span>
-          <h1 class="dp-title">{{ d.name }}</h1>
-          @if (d.address) {
-            <p class="dp-address">📍 {{ d.address }}</p>
-          }
-          <div class="dp-hero-stats">
-            <div class="dp-stat">
-              <span class="dp-stat-val">{{ d.autosCount }}</span>
-              <span class="dp-stat-lbl">VEHÍCULOS</span>
-            </div>
-            @if (d.rating && d.rating > 0) {
-              <div class="dp-stat-sep"></div>
-              <div class="dp-stat">
-                <span class="dp-stat-val">{{ d.rating }}/5</span>
-                <span class="dp-stat-lbl">CALIFICACIÓN</span>
-              </div>
-              <div class="dp-stat-sep"></div>
-              <div class="dp-stat">
-                <span class="dp-stat-val">{{ d.reviewCount }}</span>
-                <span class="dp-stat-lbl">RESEÑAS</span>
-              </div>
-            }
+      }
+      <h1 class="dp-hero-title">{{ d.name }}</h1>
+      @if (d.address) {
+        <p class="dp-hero-sub">{{ d.address }}</p>
+      }
+      <div class="dp-hero-stats">
+        <div class="dp-stat">
+          <span class="dp-stat-val">{{ d.autosCount }}</span>
+          <span class="dp-stat-lbl">Vehículos</span>
+        </div>
+        @if (d.rating && d.rating > 0) {
+          <div class="dp-stat-sep"></div>
+          <div class="dp-stat">
+            <span class="dp-stat-val">{{ d.rating }}/5</span>
+            <span class="dp-stat-lbl">Calificación</span>
           </div>
-        </div>
-        <div class="dp-hero-actions">
-          @if (d.phone) {
-            <a [href]="whatsappLink()" target="_blank" class="dp-btn dp-btn-wa">💬 WhatsApp</a>
-          }
-          <button class="dp-btn dp-btn-share" (click)="shareDealer()">🔗 Compartir</button>
-        </div>
+          <div class="dp-stat-sep"></div>
+          <div class="dp-stat">
+            <span class="dp-stat-val">{{ d.reviewCount }}</span>
+            <span class="dp-stat-lbl">Reseñas</span>
+          </div>
+        }
       </div>
-    </header>
+      <div class="dp-hero-actions">
+        @if (d.phone) {
+          <a [href]="whatsappLink()" target="_blank" rel="noopener" class="dp-btn dp-btn-wa">Contactar por WhatsApp</a>
+        }
+        <button type="button" class="dp-btn dp-btn-share" (click)="shareDealer()">Compartir concesionaria</button>
+      </div>
+    </section>
 
-    <!-- ── SEARCH BAR ── -->
-    <div class="dp-search-wrap">
-      <div class="dp-search-inner">
-        <div class="dp-search-input-wrap">
-          <span class="dp-search-icon">🔍</span>
+    <div class="dp-catalog">
+      <!-- ── BUSCADOR ── -->
+      <div class="dp-toolbar">
+        <div class="dp-search-row">
           <input
             id="dealer-search"
             type="text"
             class="dp-search-input"
-            placeholder="Buscar vehículo por marca, modelo o ciudad..."
+            placeholder="Buscar por marca, modelo..."
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearch($event)"
           />
-          @if (searchQuery()) {
-            <button class="dp-search-clear" (click)="onSearch('')">✕</button>
-          }
-        </div>
-        <div class="dp-results-count">
-          <span class="dp-count-num">{{ filteredAutos().length }}</span>
-          <span class="dp-count-lbl">vehículos</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- ── MAIN LAYOUT ── -->
-    <div class="dp-layout">
+          <div class="filters-dropdown-wrap">
+            <button
+              type="button"
+              class="filters-trigger"
+              [class.is-open]="filtersOpen()"
+              (click)="toggleFiltersPanel($event)"
+              [attr.aria-expanded]="filtersOpen()"
+            >
+              <svg class="filters-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              <span>Filtros</span>
+              <svg class="filters-trigger-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+
+            @if (filtersOpen()) {
+              <div class="filters-panel" (click)="$event.stopPropagation()">
+                <div class="filters-tabs">
+                  <button type="button" class="filters-tab" [class.active]="filterTab() === 'marca'" (click)="setFilterTab('marca')">Marca</button>
+                  <button type="button" class="filters-tab" [class.active]="filterTab() === 'verificado'" (click)="setFilterTab('verificado')">Verificado</button>
+                  <button type="button" class="filters-tab" [class.active]="filterTab() === 'estado'" (click)="setFilterTab('estado')">Estado</button>
+                </div>
+
+                <div class="filters-panel-body">
+                  @if (filterTab() === 'marca') {
+                    <input
+                      type="search"
+                      class="filters-panel-search"
+                      placeholder="Buscar marca..."
+                      [ngModel]="makeSearch()"
+                      (ngModelChange)="onMakeSearchChange($event)"
+                    />
+                    <div class="filters-list">
+                      <button type="button" class="filters-list-item" [class.active]="pendingMakes().size === 0" (click)="selectAllMakes()">Todos</button>
+                      @for (m of visibleMakes(); track m.make) {
+                        <button type="button" class="filters-list-item" [class.active]="isPendingMakeSelected(m.make)" (click)="togglePendingMake(m.make)">{{ m.make }}</button>
+                      }
+                    </div>
+                  }
+
+                  @if (filterTab() === 'verificado') {
+                    <div class="filters-list">
+                      <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'all'" (click)="pendingVerified.set('all')">Todos</button>
+                      <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'yes'" (click)="pendingVerified.set('yes')">Verificados</button>
+                      <button type="button" class="filters-list-item" [class.active]="pendingVerified() === 'no'" (click)="pendingVerified.set('no')">No verificados</button>
+                    </div>
+                  }
+
+                  @if (filterTab() === 'estado') {
+                    <div class="filters-list">
+                      <button type="button" class="filters-list-item" [class.active]="pendingCities().size === 0" (click)="selectAllCities()">Todos</button>
+                      @for (city of visibleCities(); track city) {
+                        <button type="button" class="filters-list-item" [class.active]="isPendingCitySelected(city)" (click)="togglePendingCity(city)">{{ city }}</button>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="filters-panel-footer">
+                  <button type="button" class="filters-clear-link" (click)="clearPendingFilters()">Limpiar filtros</button>
+                  <button type="button" class="filters-apply-btn" (click)="applyPendingFilters()">Aplicar</button>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+        <p class="dp-results-count">{{ filteredAutos().length }} vehículos encontrados</p>
+      </div>
+
+      <!-- ── MAIN LAYOUT ── -->
+      <div class="dp-layout">
 
       <!-- Sidebar -->
       <aside class="dp-sidebar">
@@ -114,29 +167,6 @@
           @if (d.phone) {
             <a [href]="whatsappLink()" target="_blank" class="dp-btn-wa-full">💬 Contactar por WhatsApp</a>
           }
-        </div>
-
-        <!-- Price Filter -->
-        <div class="dp-filter-card">
-          <h3 class="dp-card-title">PRECIO</h3>
-          <div class="dp-filter-opts">
-            <label class="dp-filter-lbl" [class.active]="priceRange() === ''">
-              <input type="radio" name="price" (change)="onPriceChange('')" [checked]="priceRange() === ''" class="dp-radio" />
-              Todos los precios
-            </label>
-            <label class="dp-filter-lbl" [class.active]="priceRange() === 'low'">
-              <input type="radio" name="price" (change)="onPriceChange('low')" [checked]="priceRange() === 'low'" class="dp-radio" />
-              Menos de $500k
-            </label>
-            <label class="dp-filter-lbl" [class.active]="priceRange() === 'mid'">
-              <input type="radio" name="price" (change)="onPriceChange('mid')" [checked]="priceRange() === 'mid'" class="dp-radio" />
-              $500k — $1M
-            </label>
-            <label class="dp-filter-lbl" [class.active]="priceRange() === 'high'">
-              <input type="radio" name="price" (change)="onPriceChange('high')" [checked]="priceRange() === 'high'" class="dp-radio" />
-              Más de $1M
-            </label>
-          </div>
         </div>
 
         <!-- Google Maps -->
@@ -202,7 +232,7 @@
                 <div class="dp-car-details">
                   <div class="dp-car-make">{{ car.make }}</div>
                   <h3 class="dp-car-model">{{ car.model }}</h3>
-                  <div class="dp-car-price-block">
+                  <div class="dp-car-price-block" [class.has-special]="hasSpecialPrice(car)">
                     @if (hasSpecialPrice(car)) {
                       <div class="dp-car-price-label">Precio normal</div>
                       <div class="dp-car-price-old">{{ formatPrice(car.price) }}</div>
@@ -225,17 +255,17 @@
 
           <!-- Pagination -->
           @if (totalPages() > 1) {
-            <nav class="dp-pagination">
-              <button class="dp-page-btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">‹</button>
+            <nav class="dp-pagination" aria-label="Paginación de vehículos">
+              <button type="button" class="dp-page-btn dp-page-nav" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)" aria-label="Anterior">‹</button>
               @for (page of pages(); track page) {
-                <button class="dp-page-btn" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page }}</button>
+                <button type="button" class="dp-page-btn dp-page-num" [class.active]="page === currentPage()" (click)="goToPage(page)">{{ page }}</button>
               }
-              <button class="dp-page-btn" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)">›</button>
-              <span class="dp-page-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+              <button type="button" class="dp-page-btn dp-page-nav" [disabled]="currentPage() === totalPages()" (click)="goToPage(currentPage() + 1)" aria-label="Siguiente">›</button>
             </nav>
           }
         }
       </main>
+    </div>
     </div>
 
     <!-- ── AI CHATBOT (solo si hasAi) ── -->
@@ -282,5 +312,6 @@
       </div>
     }
 
+  </div>
   }
 }

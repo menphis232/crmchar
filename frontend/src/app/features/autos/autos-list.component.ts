@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, computed, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,15 +28,22 @@ export class AutosListComponent implements OnInit, OnDestroy {
   private readonly previewPageKey = 'autos';
   private unsubscribePreview?: () => void;
 
-  // Filters
+  // Filters (applied)
   searchQuery = signal('');
   selectedMakes = signal<Set<string>>(new Set());
-  priceRange = signal('');
   selectedCities = signal<Set<string>>(new Set());
+  selectedDealers = signal<Set<string>>(new Set());
+  verifiedFilter = signal<'all' | 'yes' | 'no'>('all');
+  priceRange = signal('');
   filtersOpen = signal(false);
-  makeSectionOpen = signal(false);
-  citySectionOpen = signal(false);
-  priceSectionOpen = signal(true);
+  filterTab = signal<'marca' | 'verificado' | 'concesionaria' | 'estado'>('marca');
+
+  // Filters (pending in dropdown)
+  pendingMakes = signal<Set<string>>(new Set());
+  pendingCities = signal<Set<string>>(new Set());
+  pendingDealers = signal<Set<string>>(new Set());
+  pendingVerified = signal<'all' | 'yes' | 'no'>('all');
+
   makeSearch = signal('');
   citySearch = signal('');
   makeShowAll = signal(false);
@@ -49,6 +56,7 @@ export class AutosListComponent implements OnInit, OnDestroy {
 
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+  private ignoreNextDocClick = false;
 
   // Derived: unique cities from data
   availableCities = computed(() => {
@@ -58,11 +66,20 @@ export class AutosListComponent implements OnInit, OnDestroy {
     return [...new Set(cities)].sort();
   });
 
+  availableDealers = computed(() => {
+    const dealers = this.autos()
+      .map(a => a.dealerName)
+      .filter((d): d is string => !!d);
+    return [...new Set(dealers)].sort();
+  });
+
   // Client-side filtering
   filteredAutos = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const makes = this.selectedMakes();
     const cities = this.selectedCities();
+    const dealers = this.selectedDealers();
+    const verified = this.verifiedFilter();
     const range = this.priceRange();
 
     return this.autos().filter(car => {
@@ -73,11 +90,16 @@ export class AutosListComponent implements OnInit, OnDestroy {
         car.location?.toLowerCase().includes(q);
       const matchesMake = makes.size === 0 || makes.has(car.make);
       const matchesCity = cities.size === 0 || cities.has(car.location ?? '');
+      const matchesDealer = dealers.size === 0 || dealers.has(car.dealerName ?? '');
+      const matchesVerified =
+        verified === 'all' ||
+        (verified === 'yes' && !!car.verified) ||
+        (verified === 'no' && !car.verified);
       const matchesPrice =
         range === 'low' ? effectivePrice(car) < 500000 :
         range === 'mid' ? effectivePrice(car) >= 500000 && effectivePrice(car) <= 1000000 :
         range === 'high' ? effectivePrice(car) > 1000000 : true;
-      return matchesSearch && matchesMake && matchesCity && matchesPrice;
+      return matchesSearch && matchesMake && matchesCity && matchesDealer && matchesVerified && matchesPrice;
     });
   });
 
@@ -98,7 +120,11 @@ export class AutosListComponent implements OnInit, OnDestroy {
   selectedCitiesArray = computed(() => [...this.selectedCities()]);
 
   activeFilterCount = computed(() =>
-    this.selectedMakes().size + this.selectedCities().size + (this.priceRange() ? 1 : 0)
+    this.selectedMakes().size +
+    this.selectedCities().size +
+    this.selectedDealers().size +
+    (this.verifiedFilter() !== 'all' ? 1 : 0) +
+    (this.priceRange() ? 1 : 0)
   );
 
   filteredMakes = computed(() => {
@@ -229,28 +255,92 @@ export class AutosListComponent implements OnInit, OnDestroy {
     this.searchQuery.set('');
     this.selectedMakes.set(new Set());
     this.selectedCities.set(new Set());
+    this.selectedDealers.set(new Set());
+    this.verifiedFilter.set('all');
     this.priceRange.set('');
     this.makeSearch.set('');
     this.citySearch.set('');
     this.makeShowAll.set(false);
     this.cityShowAll.set(false);
+    this.syncPendingFilters();
     this.currentPage.set(1);
   }
 
-  toggleFiltersPanel() {
-    this.filtersOpen.update(v => !v);
+  toggleFiltersPanel(event?: Event) {
+    event?.stopPropagation();
+    const opening = !this.filtersOpen();
+    if (opening) {
+      this.syncPendingFilters();
+      this.ignoreNextDocClick = true;
+    }
+    this.filtersOpen.set(opening);
   }
 
-  toggleMakeSection() {
-    this.makeSectionOpen.update(v => !v);
+  setFilterTab(tab: 'marca' | 'verificado' | 'concesionaria' | 'estado') {
+    this.filterTab.set(tab);
   }
 
-  toggleCitySection() {
-    this.citySectionOpen.update(v => !v);
+  syncPendingFilters() {
+    this.pendingMakes.set(new Set(this.selectedMakes()));
+    this.pendingCities.set(new Set(this.selectedCities()));
+    this.pendingDealers.set(new Set(this.selectedDealers()));
+    this.pendingVerified.set(this.verifiedFilter());
   }
 
-  togglePriceSection() {
-    this.priceSectionOpen.update(v => !v);
+  applyPendingFilters() {
+    this.selectedMakes.set(new Set(this.pendingMakes()));
+    this.selectedCities.set(new Set(this.pendingCities()));
+    this.selectedDealers.set(new Set(this.pendingDealers()));
+    this.verifiedFilter.set(this.pendingVerified());
+    this.filtersOpen.set(false);
+    this.currentPage.set(1);
+  }
+
+  clearPendingFilters() {
+    this.pendingMakes.set(new Set());
+    this.pendingCities.set(new Set());
+    this.pendingDealers.set(new Set());
+    this.pendingVerified.set('all');
+    this.makeSearch.set('');
+    this.citySearch.set('');
+  }
+
+  selectAllMakes() { this.pendingMakes.set(new Set()); }
+  selectAllCities() { this.pendingCities.set(new Set()); }
+  selectAllDealers() { this.pendingDealers.set(new Set()); }
+
+  togglePendingMake(make: string) {
+    const s = new Set(this.pendingMakes());
+    if (s.has(make)) s.delete(make); else s.add(make);
+    this.pendingMakes.set(s);
+  }
+
+  togglePendingCity(city: string) {
+    const s = new Set(this.pendingCities());
+    if (s.has(city)) s.delete(city); else s.add(city);
+    this.pendingCities.set(s);
+  }
+
+  togglePendingDealer(dealer: string) {
+    const s = new Set(this.pendingDealers());
+    if (s.has(dealer)) s.delete(dealer); else s.add(dealer);
+    this.pendingDealers.set(s);
+  }
+
+  isPendingMakeSelected(make: string) { return this.pendingMakes().has(make); }
+  isPendingCitySelected(city: string) { return this.pendingCities().has(city); }
+  isPendingDealerSelected(dealer: string) { return this.pendingDealers().has(dealer); }
+
+  @HostListener('document:click', ['$event'])
+  closeFiltersOnOutsideClick(event: MouseEvent) {
+    if (this.ignoreNextDocClick) {
+      this.ignoreNextDocClick = false;
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (!target.closest('.filters-dropdown-wrap') && this.filtersOpen()) {
+      this.filtersOpen.set(false);
+    }
   }
 
   onMakeSearchChange(q: string) {
@@ -280,6 +370,11 @@ export class AutosListComponent implements OnInit, OnDestroy {
   isCitySelected(city: string) { return this.selectedCities().has(city); }
 
   get hasActiveFilters(): boolean {
-    return !!this.searchQuery() || this.selectedMakes().size > 0 || this.selectedCities().size > 0 || !!this.priceRange();
+    return !!this.searchQuery() ||
+      this.selectedMakes().size > 0 ||
+      this.selectedCities().size > 0 ||
+      this.selectedDealers().size > 0 ||
+      this.verifiedFilter() !== 'all' ||
+      !!this.priceRange();
   }
 }

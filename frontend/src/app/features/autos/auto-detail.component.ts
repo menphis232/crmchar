@@ -100,6 +100,11 @@ export class AutoDetailComponent implements OnInit {
     document.getElementById('dynamic-form-section')?.scrollIntoView({ behavior: 'smooth' });
   }
 
+  scrollToInquiry() {
+    const target = document.getElementById('detail-description') ?? document.getElementById('detail-inquiry');
+    target?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   shareAuto() {
     const a = this.auto();
     const url = window.location.href;
