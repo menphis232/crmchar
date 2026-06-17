@@ -7,7 +7,23 @@ import { CrmDeal } from '../../models';
   standalone: true,
   imports: [DecimalPipe],
   templateUrl: './crm-kanban.component.html',
-  styleUrls: ['./panel-dashboard.css', './crm-kanban-dark.css'],
+  styleUrl: './panel-dashboard.css',
+  styles: [`
+    .kanban-stage-select {
+      color-scheme: dark;
+      background-color: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: rgba(255,255,255,0.80) !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      padding: 5px 8px !important;
+      width: 100% !important;
+      cursor: pointer !important;
+      margin-top: 4px !important;
+    }
+    .kanban-stage-select option { background: #1a1a1a; color: #ffffff; }
+    .kanban-select-label { color: rgba(255,255,255,0.38) !important; font-size: 9px !important; }
+  `],
 })
 export class CrmKanbanComponent {
   stages = input.required<string[]>();
