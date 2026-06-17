@@ -336,6 +336,36 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep .kanban-days   { color: rgba(255,255,255,0.42) !important; }
 :host ::ng-deep .kanban-value  { color: rgba(255,255,255,0.85) !important; }
 
+/* Select "Mover a etapa" dentro de la tarjeta */
+:host ::ng-deep .kanban-select-label {
+  color: rgba(255,255,255,0.38) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase !important;
+  margin-top: 8px !important;
+  display: block !important;
+}
+:host ::ng-deep .kanban-stage-select {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  color: rgba(255,255,255,0.80) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  padding: 5px 8px !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  margin-top: 4px !important;
+}
+:host ::ng-deep .kanban-stage-select:focus {
+  border-color: rgba(255,255,255,0.45) !important;
+  outline: none !important;
+}
+:host ::ng-deep .kanban-stage-select option {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
 /* Botón → avanzar etapa */
 :host ::ng-deep .kanban-next {
   background: rgba(255,255,255,0.10) !important;
