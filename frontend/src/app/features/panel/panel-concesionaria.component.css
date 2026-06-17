@@ -152,6 +152,7 @@
   -webkit-text-fill-color: #ffffff !important;
   caret-color: #ffffff !important;
   border-radius: 8px !important;
+  color-scheme: dark !important;
 }
 
 .dash-card input::placeholder,
@@ -356,6 +357,7 @@ select option { background: #111111; color: #ffffff; }
   width: 100% !important;
   cursor: pointer !important;
   margin-top: 4px !important;
+  color-scheme: dark !important;
 }
 :host ::ng-deep .kanban-stage-select:focus {
   border-color: rgba(255,255,255,0.45) !important;
