@@ -133,7 +133,7 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
 
   private copyShareLink(url: string) {
     navigator.clipboard.writeText(url).then(() => {
-      this.toast.info(url, '🔗 Enlace copiado — pégalo en WhatsApp');
+      this.toast.success('Enlace copiado');
     }).catch(() => {
       prompt('Copia este enlace y pégalo en WhatsApp:', url);
     });
