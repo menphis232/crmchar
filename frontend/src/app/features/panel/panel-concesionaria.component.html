@@ -122,6 +122,10 @@
       </div>
 
       @if (todayInbox(); as inbox) {
+        <div class="dash-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <p class="card-desc" style="margin:0;">Registra clientes que llegaron por teléfono, showroom o referidos.</p>
+          <button type="button" class="btn-nuevo-lead" (click)="openManualLeadForm()">＋ Nuevo lead</button>
+        </div>
         <app-crm-today-inbox
           [inbox]="inbox"
           [stageLabels]="crmDashboard()?.stageLabels ?? {}"
@@ -151,6 +155,7 @@
             </select>
           </div>
           <button type="button" class="btn-copy pipeline-filter-btn" (click)="loadDeals()">Buscar</button>
+          <button type="button" class="btn-nuevo-lead" (click)="openManualLeadForm()">＋ Nuevo lead</button>
         </div>
         <app-crm-kanban
           [stages]="crm.stages"
@@ -576,6 +581,77 @@
     }
   </main>
 </div>
+
+@if (showManualLeadForm()) {
+  <div class="modal-overlay" (click)="closeManualLeadForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeManualLeadForm()" aria-label="Cerrar">✕</button>
+      <h2 class="card-title" style="margin-bottom:8px;">+ Nuevo lead manual</h2>
+      <p class="card-desc" style="margin-bottom:20px;">Registra un cliente que llegó por teléfono, showroom o referido.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ml-name">Nombre del cliente *</label>
+          <input id="ml-name" [(ngModel)]="manualLead.clientName" placeholder="Ej. Juan Pérez">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ml-email">Email</label>
+          <input id="ml-email" type="email" [(ngModel)]="manualLead.clientEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label for="ml-phone">Teléfono / WhatsApp</label>
+          <input id="ml-phone" type="tel" [(ngModel)]="manualLead.clientPhone" placeholder="55 1234 5678">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ml-car">Vehículo de interés</label>
+          <select id="ml-car" [(ngModel)]="manualLead.autoId" (ngModelChange)="onManualLeadCarChange()">
+            <option value="">— Sin vehículo específico —</option>
+            @for (car of manualLeadCars(); track car.id) {
+              <option [value]="car.id">{{ car.make }} {{ car.model }} {{ car.year }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="ml-value">Valor estimado (MXN)</label>
+          <input id="ml-value" type="number" [(ngModel)]="manualLead.estimatedValue" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="ml-title">Título del lead</label>
+          <input id="ml-title" [(ngModel)]="manualLead.title" placeholder="Ej. BMW X5 2023">
+        </div>
+        @if (crmDashboard(); as crm) {
+          <div class="form-group">
+            <label for="ml-stage">Etapa inicial</label>
+            <select id="ml-stage" [(ngModel)]="manualLead.stage">
+              @for (s of crm.stages; track s) {
+                <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1 1 100%;">
+          <label for="ml-notes">Notas / mensaje del cliente</label>
+          <textarea id="ml-notes" rows="3" [(ngModel)]="manualLead.message" placeholder="¿Qué busca? ¿Cómo llegó el contacto?"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+        <button type="button" class="btn-ghost" (click)="closeManualLeadForm()">Cancelar</button>
+        <button type="button" class="btn-copy" (click)="saveManualLead()" [disabled]="savingManualLead()">
+          {{ savingManualLead() ? 'Guardando...' : 'Crear lead' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- VEGA AI Assistant — Asistente Animado del Panel Concesionaria -->
 <app-ai-assistant panelRole="concesionaria" />

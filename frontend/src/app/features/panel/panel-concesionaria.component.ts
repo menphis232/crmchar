@@ -46,7 +46,7 @@ const AUTO_DOC_LABELS = [
   standalone: true,
   imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent],
   templateUrl: './panel-concesionaria.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })
 export class PanelConcesionariaComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -85,6 +85,21 @@ export class PanelConcesionariaComponent implements OnInit {
   newDocLabel = AUTO_DOC_LABELS[0];
   newDocNotes = '';
   isUploadingPrivateDoc = false;
+
+  // Manual lead form
+  showManualLeadForm = signal(false);
+  savingManualLead = signal(false);
+  manualLeadCars = signal<Auto[]>([]);
+  manualLead = {
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    autoId: '',
+    title: '',
+    message: '',
+    estimatedValue: '' as string | number,
+    stage: 'lead_nuevo',
+  };
 
   constructor(
     public auth: AuthService,
@@ -262,6 +277,67 @@ export class PanelConcesionariaComponent implements OnInit {
   onDealUpdated() {
     this.loadCrm();
     this.loadDashboard();
+  }
+
+  openManualLeadForm() {
+    this.manualLead = {
+      clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      autoId: '',
+      title: '',
+      message: '',
+      estimatedValue: '',
+      stage: 'lead_nuevo',
+    };
+    this.autosService.getMyInventory('published').subscribe(cars => this.manualLeadCars.set(cars));
+    this.showManualLeadForm.set(true);
+  }
+
+  closeManualLeadForm() {
+    this.showManualLeadForm.set(false);
+  }
+
+  onManualLeadCarChange() {
+    const car = this.manualLeadCars().find(c => c.id === this.manualLead.autoId);
+    if (!car) return;
+    this.manualLead.title = `${car.make} ${car.model} ${car.year}`;
+    const price = car.specialPrice ?? car.price;
+    if (price) this.manualLead.estimatedValue = price;
+  }
+
+  saveManualLead() {
+    if (!this.manualLead.clientName.trim()) {
+      this.toast.warning('El nombre del cliente es obligatorio');
+      return;
+    }
+    this.savingManualLead.set(true);
+    const estimatedValue = this.manualLead.estimatedValue !== ''
+      ? Number(this.manualLead.estimatedValue)
+      : undefined;
+    this.crmService.createDeal({
+      clientName: this.manualLead.clientName.trim(),
+      clientEmail: this.manualLead.clientEmail.trim() || undefined,
+      clientPhone: this.manualLead.clientPhone.trim() || undefined,
+      autoId: this.manualLead.autoId || undefined,
+      title: this.manualLead.title.trim() || undefined,
+      message: this.manualLead.message.trim() || undefined,
+      estimatedValue,
+      stage: this.manualLead.stage || 'lead_nuevo',
+    }).subscribe({
+      next: (deal) => {
+        this.savingManualLead.set(false);
+        this.showManualLeadForm.set(false);
+        this.toast.success('Lead registrado');
+        this.loadCrm();
+        this.loadDashboard();
+        this.openDeal(deal.id);
+      },
+      error: (e) => {
+        this.savingManualLead.set(false);
+        this.toast.error(e.error?.error || 'Error al crear lead');
+      },
+    });
   }
 
   startNew() {
