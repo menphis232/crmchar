@@ -1,6 +1,8 @@
-import { Component, input, output, signal, PLATFORM_ID, inject } from '@angular/core';
+import { Component, input, output, signal, PLATFORM_ID, inject, effect, ElementRef, viewChildren } from '@angular/core';
 import { isPlatformBrowser, DecimalPipe } from '@angular/common';
 import { CrmDeal } from '../../models';
+
+export interface KanbanStage { id: string; label: string; }
 
 @Component({
   selector: 'app-crm-kanban',
@@ -29,36 +31,221 @@ import { CrmDeal } from '../../models';
       background: transparent !important;
     }
     .kanban-select-label { color: rgba(255,255,255,0.38) !important; font-size: 9px !important; }
+
+    /* ── Editable column header ── */
+    .kanban-col-header { position: relative; user-select: none; }
+    .col-drag-handle {
+      cursor: grab;
+      opacity: 0.35;
+      font-size: 14px;
+      padding: 0 4px;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+    }
+    .col-drag-handle:hover { opacity: 0.80; }
+    .col-title-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .col-title-text.editable-hint { cursor: pointer; }
+    .col-title-text.editable-hint:hover { text-decoration: underline dotted rgba(255,255,255,0.4); }
+    .col-title-input {
+      flex: 1;
+      background: rgba(255,255,255,0.08) !important;
+      border: 1px solid rgba(255,255,255,0.35) !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      border-radius: 5px !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.10em !important;
+      text-transform: uppercase !important;
+      padding: 3px 7px !important;
+      outline: none !important;
+      font-family: var(--f-display) !important;
+      width: 100% !important;
+    }
+    .kanban-col.col-drag-over-left  { border-left: 3px solid rgba(255,255,255,0.60) !important; }
+    .kanban-col.col-drag-over-right { border-right: 3px solid rgba(255,255,255,0.60) !important; }
+    .kanban-col.col-dragging        { opacity: 0.40; }
+
+    /* ── Add column button ── */
+    .kanban-add-col {
+      flex: 0 0 48px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 12px;
+    }
+    .btn-add-col {
+      background: transparent;
+      border: 1px dashed rgba(255,255,255,0.22);
+      color: rgba(255,255,255,0.45);
+      font-size: 22px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+      line-height: 1;
+    }
+    .btn-add-col:hover {
+      border-color: rgba(255,255,255,0.60);
+      color: #ffffff;
+      background: rgba(255,255,255,0.06);
+    }
   `],
 })
 export class CrmKanbanComponent {
-  stages = input.required<string[]>();
+  stages      = input.required<string[]>();
   stageLabels = input.required<Record<string, string>>();
-  deals = input.required<CrmDeal[]>();
-  showValue = input(false);
+  deals       = input.required<CrmDeal[]>();
+  showValue   = input(false);
+  editable    = input(false);
 
-  dealSelect = output<CrmDeal>();
-  stageChange = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
+  dealSelect   = output<CrmDeal>();
+  stageChange  = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
+  stagesChange = output<KanbanStage[]>();
 
-  dragOverStage = signal<string | null>(null);
-  isTouchDevice = signal(false);
-  private platformId = inject(PLATFORM_ID);
+  // ── local editable stage list ──
+  localStages = signal<KanbanStage[]>([]);
+
+  // ── inline edit ──
+  editingStageId = signal<string | null>(null);
+  editingLabel   = signal('');
+
+  // ── column drag state ──
+  colDraggingId  = signal<string | null>(null);
+  colDragOverId  = signal<string | null>(null);
+  colDragSide    = signal<'left' | 'right'>('right');
+
+  // ── card drag state ──
+  dragOverStage   = signal<string | null>(null);
+  isTouchDevice   = signal(false);
+  private platformId     = inject(PLATFORM_ID);
   private draggedDealId: string | null = null;
   private didDrag = false;
   private suppressClickUntil = 0;
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      this.isTouchDevice.set(
-        'ontouchstart' in window || navigator.maxTouchPoints > 0
-      );
+      this.isTouchDevice.set('ontouchstart' in window || navigator.maxTouchPoints > 0);
     }
+    // Sync localStages from inputs whenever they change
+    effect(() => {
+      const ids    = this.stages();
+      const labels = this.stageLabels();
+      this.localStages.set(ids.map(id => ({ id, label: labels[id] || id })));
+    });
   }
 
-  dealsInStage(stage: string) {
-    return this.deals().filter(d => d.stage === stage);
+  // ── helpers ──
+  dealsInStage(stage: string) { return this.deals().filter(d => d.stage === stage); }
+
+  private emitStagesChange() {
+    this.stagesChange.emit([...this.localStages()]);
   }
 
+  // ════════════════════════════════════════
+  // INLINE EDIT — column title
+  // ════════════════════════════════════════
+  startEdit(stageId: string, event: Event) {
+    if (!this.editable()) return;
+    event.stopPropagation();
+    const label = this.localStages().find(s => s.id === stageId)?.label ?? stageId;
+    this.editingStageId.set(stageId);
+    this.editingLabel.set(label);
+    // focus the input on next tick
+    setTimeout(() => {
+      const input = document.querySelector<HTMLInputElement>('.col-title-input');
+      input?.focus();
+      input?.select();
+    }, 0);
+  }
+
+  saveEdit(stageId: string) {
+    const newLabel = this.editingLabel().trim();
+    if (newLabel) {
+      this.localStages.update(list =>
+        list.map(s => s.id === stageId ? { ...s, label: newLabel } : s)
+      );
+      this.emitStagesChange();
+    }
+    this.editingStageId.set(null);
+  }
+
+  cancelEdit() { this.editingStageId.set(null); }
+
+  onEditKeydown(stageId: string, event: KeyboardEvent) {
+    if (event.key === 'Enter') { event.preventDefault(); this.saveEdit(stageId); }
+    if (event.key === 'Escape') { this.cancelEdit(); }
+  }
+
+  // ════════════════════════════════════════
+  // COLUMN DRAG & DROP — reorder
+  // ════════════════════════════════════════
+  onColDragStart(event: DragEvent, stageId: string) {
+    if (!this.editable()) return;
+    this.colDraggingId.set(stageId);
+    event.dataTransfer?.setData('text/x-col-id', stageId);
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  }
+
+  onColDragEnd() { this.colDraggingId.set(null); this.colDragOverId.set(null); }
+
+  onColDragOver(event: DragEvent, stageId: string) {
+    if (!event.dataTransfer?.types.includes('text/x-col-id')) return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.colDragOverId.set(stageId);
+    // Determine side
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.colDragSide.set(event.clientX < rect.left + rect.width / 2 ? 'left' : 'right');
+  }
+
+  onColDragLeave(event: DragEvent, stageId: string) {
+    if (this.colDragOverId() === stageId) this.colDragOverId.set(null);
+  }
+
+  onColDrop(event: DragEvent, targetId: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    const fromId = event.dataTransfer?.getData('text/x-col-id');
+    this.colDraggingId.set(null);
+    this.colDragOverId.set(null);
+    if (!fromId || fromId === targetId) return;
+
+    const list = [...this.localStages()];
+    const fromIdx   = list.findIndex(s => s.id === fromId);
+    const targetIdx = list.findIndex(s => s.id === targetId);
+    if (fromIdx < 0 || targetIdx < 0) return;
+
+    const [moved] = list.splice(fromIdx, 1);
+    const insertAt = this.colDragSide() === 'left' ? targetIdx : targetIdx + 1;
+    list.splice(fromIdx < targetIdx ? insertAt - 1 : insertAt, 0, moved);
+    this.localStages.set(list);
+    this.emitStagesChange();
+  }
+
+  // ════════════════════════════════════════
+  // ADD COLUMN
+  // ════════════════════════════════════════
+  addColumn() {
+    const label = prompt('Nombre de la nueva etapa:')?.trim();
+    if (!label) return;
+    const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now();
+    this.localStages.update(list => [...list, { id, label }]);
+    this.emitStagesChange();
+  }
+
+  // ════════════════════════════════════════
+  // CARD DRAG & DROP  (existing logic)
+  // ════════════════════════════════════════
   onDragStart(event: DragEvent, deal: CrmDeal) {
     this.didDrag = true;
     this.suppressClickUntil = Date.now() + 600;
@@ -82,6 +269,7 @@ export class CrmKanbanComponent {
   }
 
   onDragOver(event: DragEvent, stage: string) {
+    if (event.dataTransfer?.types.includes('text/x-col-id')) return; // ignore col drags
     event.preventDefault();
     event.stopPropagation();
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
@@ -96,6 +284,7 @@ export class CrmKanbanComponent {
   }
 
   onDrop(event: DragEvent, stage: string) {
+    if (event.dataTransfer?.types.includes('text/x-col-id')) return;
     event.preventDefault();
     event.stopPropagation();
     this.dragOverStage.set(null);
@@ -108,7 +297,6 @@ export class CrmKanbanComponent {
       event.dataTransfer?.getData('text/plain');
 
     this.draggedDealId = null;
-
     if (!dealId) return;
 
     const deal = this.deals().find(d => d.id === dealId);
@@ -131,7 +319,7 @@ export class CrmKanbanComponent {
     if (!(event as InputEvent).isTrusted) return;
     const select = event.target as HTMLSelectElement;
     const stage = select.value;
-    if (stage && stage !== deal.stage && this.stages().includes(stage)) {
+    if (stage && stage !== deal.stage && this.localStages().map(s=>s.id).includes(stage)) {
       this.stageChange.emit({ deal, stage, fromDrag: false });
     } else if (stage && stage !== deal.stage) {
       select.value = deal.stage;
@@ -140,14 +328,12 @@ export class CrmKanbanComponent {
 
   moveDeal(deal: CrmDeal, event: Event) {
     event.stopPropagation();
-    const stages = this.stages();
+    const stages = this.localStages().map(s => s.id);
     const idx = stages.indexOf(deal.stage);
     if (idx >= 0 && idx < stages.length - 1) {
       this.stageChange.emit({ deal, stage: stages[idx + 1] });
     }
   }
 
-  stopClick(event: Event) {
-    event.stopPropagation();
-  }
+  stopClick(event: Event) { event.stopPropagation(); }
 }

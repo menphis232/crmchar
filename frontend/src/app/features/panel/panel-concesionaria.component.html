@@ -162,8 +162,10 @@
           [stageLabels]="crm.stageLabels"
           [deals]="deals()"
           [showValue]="true"
+          [editable]="true"
           (dealSelect)="selectedDealId.set($event.id)"
           (stageChange)="onStageChange($event)"
+          (stagesChange)="onStagesChange($event)"
         />
       </div>
 

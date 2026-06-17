@@ -5,7 +5,7 @@ import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
-import { AutosService, ConcesionariaService, CrmService, SiteService, ThemeService, UploadService } from '../../core/api.service';
+import { AdminService, AutosService, ConcesionariaService, CrmService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { Auto, AutoStatus, AutoPrivateDocument, ConcesionariaDashboard, CrmDashboard, CrmDeal, CrmTodayInbox, DealerReview, MessageTemplate, SiteSettings, PageBuilderConfig } from '../../models';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
@@ -106,6 +106,7 @@ export class PanelConcesionariaComponent implements OnInit {
     private autosService: AutosService,
     private concesionariaService: ConcesionariaService,
     private crmService: CrmService,
+    private adminService: AdminService,
     private siteService: SiteService,
     private themeService: ThemeService,
     private uploadService: UploadService,
@@ -265,6 +266,16 @@ export class PanelConcesionariaComponent implements OnInit {
         this.message.set('No se pudo mover la tarjeta');
         this.loadCrm();
       },
+    });
+  }
+
+  onStagesChange(stages: { id: string; label: string }[]) {
+    this.adminService.updateMyProfile({ crm_stages: stages }).subscribe({
+      next: () => {
+        this.toast.success('Etapas guardadas');
+        this.loadCrm();
+      },
+      error: () => this.toast.error('Error al guardar etapas'),
     });
   }
 

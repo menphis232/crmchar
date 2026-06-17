@@ -1,37 +1,71 @@
 <div class="kanban-hint" [class.kanban-hint-touch]="isTouchDevice()">
   @if (isTouchDevice()) {
     💡 Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.
+  } @else if (editable()) {
+    💡 Arrastra el ≡ para reordenar columnas · Haz clic en el nombre para editarlo · Arrastra tarjetas entre columnas.
   } @else {
     💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
   }
 </div>
 
-<p class="kanban-scroll-hint">← Desliza para ver más etapas (incl. Perdido) →</p>
+<p class="kanban-scroll-hint">← Desliza para ver más etapas →</p>
 
 <div class="kanban-board">
-  @for (stage of stages(); track stage) {
+  @for (stage of localStages(); track stage.id; let idx = $index) {
     <div
       class="kanban-col"
-      [class.drag-over]="dragOverStage() === stage"
-      [class.kanban-col-lost]="stage === 'perdido'"
-      (dragover)="onDragOver($event, stage)"
-      (dragleave)="onDragLeave($event, stage)"
-      (drop)="onDrop($event, stage)"
+      [class.drag-over]="dragOverStage() === stage.id"
+      [class.kanban-col-lost]="stage.id === 'perdido'"
+      [class.col-dragging]="colDraggingId() === stage.id"
+      [class.col-drag-over-left]="colDragOverId() === stage.id && colDragSide() === 'left'"
+      [class.col-drag-over-right]="colDragOverId() === stage.id && colDragSide() === 'right'"
+      (dragover)="onColDragOver($event, stage.id)"
+      (dragleave)="onColDragLeave($event, stage.id)"
+      (drop)="onColDrop($event, stage.id)"
     >
+      <!-- ── Column header ── -->
       <div class="kanban-col-header">
-        <span>{{ stageLabels()[stage] || stage }}</span>
-        <span class="kanban-count">{{ dealsInStage(stage).length }}</span>
+        @if (editable()) {
+          <span
+            class="col-drag-handle"
+            draggable="true"
+            title="Arrastrar para reordenar"
+            (dragstart)="onColDragStart($event, stage.id)"
+            (dragend)="onColDragEnd()"
+          >≡</span>
+        }
+
+        @if (editingStageId() === stage.id) {
+          <input
+            class="col-title-input"
+            [value]="editingLabel()"
+            (input)="editingLabel.set($any($event.target).value)"
+            (keydown)="onEditKeydown(stage.id, $event)"
+            (blur)="saveEdit(stage.id)"
+            autocomplete="off"
+          />
+        } @else {
+          <span
+            class="col-title-text"
+            [class.editable-hint]="editable()"
+            (click)="startEdit(stage.id, $event)"
+            [title]="editable() ? 'Clic para editar nombre' : ''"
+          >{{ stage.label }}</span>
+        }
+
+        <span class="kanban-count">{{ dealsInStage(stage.id).length }}</span>
       </div>
 
+      <!-- ── Cards ── -->
       <div
         class="kanban-cards"
-        (dragover)="onDragOver($event, stage)"
-        (drop)="onDrop($event, stage)"
+        (dragover)="onDragOver($event, stage.id)"
+        (drop)="onDrop($event, stage.id)"
       >
-        @for (deal of dealsInStage(stage); track deal.id) {
+        @for (deal of dealsInStage(stage.id); track deal.id) {
           <div
             class="kanban-card"
-            [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage !== 'completado' && stage !== 'vendido' && stage !== 'perdido'"
+            [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage.id !== 'completado' && stage.id !== 'vendido' && stage.id !== 'perdido'"
             [attr.draggable]="!isTouchDevice()"
             (dragstart)="onDragStart($event, deal)"
             (dragend)="onDragEnd()"
@@ -42,7 +76,7 @@
           >
             <div class="kanban-card-top">
               <strong>{{ deal.title }}</strong>
-              @if (stages().indexOf(deal.stage) < stages().length - 1) {
+              @if (localStages().findIndex(s => s.id === deal.stage) < localStages().length - 1) {
                 <button type="button" class="kanban-next" title="Avanzar etapa" (click)="moveDeal(deal, $event)">→</button>
               }
             </div>
@@ -69,8 +103,8 @@
               (touchstart)="stopClick($event)"
               (change)="onSelectStage(deal, $event)"
             >
-              @for (s of stages(); track s) {
-                <option [value]="s" [selected]="s === deal.stage">{{ stageLabels()[s] || s }}</option>
+              @for (s of localStages(); track s.id) {
+                <option [value]="s.id" [selected]="s.id === deal.stage">{{ s.label }}</option>
               }
             </select>
 
@@ -83,11 +117,18 @@
         } @empty {
           <div
             class="kanban-empty"
-            (dragover)="onDragOver($event, stage)"
-            (drop)="onDrop($event, stage)"
+            (dragover)="onDragOver($event, stage.id)"
+            (drop)="onDrop($event, stage.id)"
           >Soltar aquí</div>
         }
       </div>
+    </div>
+  }
+
+  <!-- ── Add column button (editable mode only) ── -->
+  @if (editable()) {
+    <div class="kanban-add-col">
+      <button type="button" class="btn-add-col" title="Agregar etapa" (click)="addColumn()">+</button>
     </div>
   }
 </div>
