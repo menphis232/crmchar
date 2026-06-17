@@ -18,9 +18,9 @@
 ══════════════════════════════════════════ */
 .dash-card,
 :host ::ng-deep .dash-card {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-top: 2px solid rgba(255,255,255,0.18) !important;
+  background: #141414 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-top: 2px solid rgba(255,255,255,0.28) !important;
   border-radius: 14px !important;
   box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
 }
@@ -39,9 +39,9 @@
    STATS
 ══════════════════════════════════════════ */
 .stat-box {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-top: 2px solid rgba(255,255,255,0.22) !important;
+  background: #141414 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-top: 2px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
 }
@@ -216,15 +216,15 @@ select option { background: #111111; color: #ffffff; }
 ══════════════════════════════════════════ */
 .inbox-row,
 :host ::ng-deep .inbox-row {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
+  background: #1e1e1e !important;
+  border: 1px solid rgba(255,255,255,0.13) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
 }
 .inbox-row:hover,
 :host ::ng-deep .inbox-row:hover {
-  border-color: rgba(255,255,255,0.30) !important;
-  background: #141414 !important;
+  border-color: rgba(255,255,255,0.40) !important;
+  background: #282828 !important;
 }
 .inbox-row.stalled,
 :host ::ng-deep .inbox-row.stalled { border-color: rgba(255,68,68,0.35) !important; }
@@ -261,57 +261,93 @@ select option { background: #111111; color: #ffffff; }
 ══════════════════════════════════════════ */
 .kanban-board,
 :host ::ng-deep .kanban-board {
-  scrollbar-color: rgba(255,255,255,0.12) transparent !important;
+  scrollbar-color: rgba(255,255,255,0.18) transparent !important;
 }
 
+/* Hint bar */
+:host ::ng-deep .kanban-hint,
+:host ::ng-deep .kanban-scroll-hint {
+  background: #161616 !important;
+  color: rgba(255,255,255,0.45) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+
+/* Columnas — fondo gris oscuro visible */
 .kanban-col,
 :host ::ng-deep .kanban-col {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-top: 2px solid rgba(255,255,255,0.18) !important;
+  background: #181818 !important;
+  border: 1px solid rgba(255,255,255,0.13) !important;
+  border-top: 3px solid rgba(255,255,255,0.28) !important;
   border-radius: 12px !important;
-  scrollbar-color: rgba(255,255,255,0.10) transparent;
+  scrollbar-color: rgba(255,255,255,0.14) transparent;
 }
 .kanban-col.drag-over,
 :host ::ng-deep .kanban-col.drag-over {
-  border-color: rgba(255,255,255,0.30) !important;
-  background: #141414 !important;
+  border-color: rgba(255,255,255,0.40) !important;
+  background: #202020 !important;
 }
 
+/* Header de columna */
 .kanban-col-header,
 :host ::ng-deep .kanban-col-header {
-  color: rgba(255,255,255,0.55) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  color: rgba(255,255,255,0.90) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.12em !important;
 }
 .kanban-col-header span:first-child,
 :host ::ng-deep .kanban-col-header span:first-child {
-  color: rgba(255,255,255,0.80) !important;
+  color: #ffffff !important;
 }
 
+/* Contador de columna */
 .kanban-count,
 :host ::ng-deep .kanban-count {
-  background: rgba(255,255,255,0.12) !important;
+  background: rgba(255,255,255,0.16) !important;
   color: #ffffff !important;
   border-radius: 999px !important;
 }
 
+/* Tarjetas — gris más claro que la columna */
 .kanban-card,
 :host ::ng-deep .kanban-card {
-  background: #141414 !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
-  border-left: 3px solid rgba(255,255,255,0.18) !important;
-  border-radius: 8px !important;
+  background: #242424 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-left: 3px solid rgba(255,255,255,0.30) !important;
+  border-radius: 10px !important;
   color: #ffffff !important;
-  box-shadow: none !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.40) !important;
 }
 .kanban-card:hover,
 :host ::ng-deep .kanban-card:hover {
-  border-left-color: rgba(255,255,255,0.60) !important;
-  background: #1a1a1a !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
+  border-left-color: #ffffff !important;
+  background: #2c2c2c !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.60) !important;
 }
 .kanban-card.stalled,
-:host ::ng-deep .kanban-card.stalled { border-left-color: #ff6b6b !important; }
+:host ::ng-deep .kanban-card.stalled {
+  border-left-color: #ff6b6b !important;
+}
+
+/* Contenido de la tarjeta */
+:host ::ng-deep .kanban-card-top strong { color: #ffffff !important; font-weight: 700 !important; }
+:host ::ng-deep .kanban-contact { color: rgba(255,255,255,0.75) !important; }
+:host ::ng-deep .kanban-meta,
+:host ::ng-deep .kanban-days   { color: rgba(255,255,255,0.42) !important; }
+:host ::ng-deep .kanban-value  { color: rgba(255,255,255,0.85) !important; }
+
+/* Botón → avanzar etapa */
+:host ::ng-deep .kanban-next {
+  background: rgba(255,255,255,0.10) !important;
+  border: 1px solid rgba(255,255,255,0.22) !important;
+  color: rgba(255,255,255,0.80) !important;
+  border-radius: 6px !important;
+}
+:host ::ng-deep .kanban-next:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}
 
 /* deal-panel / contact-panel */
 :host ::ng-deep .dash-card .card-title { color: #ffffff !important; }
