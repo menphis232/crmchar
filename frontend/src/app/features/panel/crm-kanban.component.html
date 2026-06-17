@@ -76,7 +76,7 @@
           >
             <div class="kanban-card-top">
               <strong>{{ deal.title }}</strong>
-              @if (localStages().findIndex(s => s.id === deal.stage) < localStages().length - 1) {
+              @if (canAdvance(deal)) {
                 <button type="button" class="kanban-next" title="Avanzar etapa" (click)="moveDeal(deal, $event)">→</button>
               }
             </div>

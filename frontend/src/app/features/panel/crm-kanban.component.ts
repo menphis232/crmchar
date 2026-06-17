@@ -326,12 +326,18 @@ export class CrmKanbanComponent {
     }
   }
 
+  canAdvance(deal: CrmDeal): boolean {
+    const stages = this.localStages();
+    const idx = stages.findIndex(s => s.id === deal.stage);
+    return idx >= 0 && idx < stages.length - 1;
+  }
+
   moveDeal(deal: CrmDeal, event: Event) {
     event.stopPropagation();
-    const stages = this.localStages().map(s => s.id);
-    const idx = stages.indexOf(deal.stage);
+    const stages = this.localStages();
+    const idx = stages.findIndex(s => s.id === deal.stage);
     if (idx >= 0 && idx < stages.length - 1) {
-      this.stageChange.emit({ deal, stage: stages[idx + 1] });
+      this.stageChange.emit({ deal, stage: stages[idx + 1].id });
     }
   }
 
