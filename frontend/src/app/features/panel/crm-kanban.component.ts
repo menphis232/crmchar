@@ -22,6 +22,12 @@ import { CrmDeal } from '../../models';
       margin-top: 4px !important;
     }
     .kanban-stage-select option { background: #1a1a1a; color: #ffffff; }
+    .kanban-stage-select:focus {
+      border-color: var(--brand-black);
+      color: var(--brand-black);
+      outline: none;
+      background: transparent !important;
+    }
     .kanban-select-label { color: rgba(255,255,255,0.38) !important; font-size: 9px !important; }
   `],
 })
