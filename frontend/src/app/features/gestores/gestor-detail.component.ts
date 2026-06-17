@@ -1,13 +1,15 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { NavComponent } from '../../shared/nav.component';
 import { GestoresService } from '../../core/api.service';
+import { ToastService } from '../../core/toast.service';
 import { Gestor } from '../../models';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-gestor-detail',
@@ -17,6 +19,8 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
   styleUrl: './gestor-detail.component.css',
 })
 export class GestorDetailComponent implements OnInit {
+  private toast = inject(ToastService);
+
   gestor = signal<Gestor | null>(null);
   loading = signal(true);
   solicitudSent = signal(false);
@@ -72,6 +76,31 @@ export class GestorDetailComponent implements OnInit {
         this.solicitudForm = { clientName: '', clientEmail: '', clientPhone: '', serviceName: '', location: '' };
         this.customData = {};
       },
+    });
+  }
+
+  shareGestor() {
+    const g = this.gestor();
+    const shareUrl = g
+      ? `${window.location.origin}/sg/${g.slug}`
+      : window.location.href;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+      navigator.share({
+        title: GESTOR_SHARE_TAGLINE,
+        text: g ? g.name : GESTOR_SHARE_TAGLINE,
+        url: shareUrl,
+      }).catch(() => this.copyLink(shareUrl));
+    } else {
+      this.copyLink(shareUrl);
+    }
+  }
+
+  private copyLink(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      this.toast.success('Enlace copiado');
+    }).catch(() => {
+      prompt('Copia este enlace:', url);
     });
   }
 

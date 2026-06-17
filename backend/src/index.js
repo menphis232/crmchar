@@ -56,8 +56,9 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);
-// Ruta corta /s/:id → sirve OG HTML directamente (para WhatsApp/redes sociales)
-app.use('/s', shareRoutes);
+// Rutas cortas para compartir con OG tags
+app.use('/s', shareRoutes);   // /s/:id  → autos
+app.use('/sg', shareRoutes);  // /sg/:slug → gestores
 
 app.use((err, _req, res, _next) => {
   console.error(err);
