@@ -1,11 +1,13 @@
 <nav class="dash-nav">
-  <a routerLink="/autos" class="dash-logo">
-    @if (auth.user()?.logo_url) {
+  @if (auth.user()?.logo_url) {
+    <a routerLink="/autos" class="dash-logo">
       <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
-    } @else {
-      <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
-    }
-  </a>
+    </a>
+  } @else {
+    <a [href]="tvmMainSite" class="dash-logo">
+      <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+    </a>
+  }
   <div class="dash-user">
     <app-notification-bell />
 

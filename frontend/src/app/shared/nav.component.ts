@@ -3,6 +3,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AuthService } from '../core/auth.service';
 import { CrmService } from '../core/api.service';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
 
 @Component({
   selector: 'app-nav',
@@ -10,8 +11,8 @@ import { CrmService } from '../core/api.service';
   imports: [RouterLink, RouterLinkActive, DatePipe, NgTemplateOutlet],
   template: `
     <nav id="main-nav">
-      <a routerLink="/autos" class="nav-logo">
-        <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="brand-logo" />
+      <a [href]="tvmMainSite" class="nav-logo">
+        <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="brand-logo" />
       </a>
 
       <div class="header-mobile-actions">
@@ -134,6 +135,9 @@ import { CrmService } from '../core/api.service';
 })
 export class NavComponent implements OnInit {
   @Input() showLinks = true;
+
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
 
   showDropdown = signal(false);
   isMobileMenuOpen = signal(false);

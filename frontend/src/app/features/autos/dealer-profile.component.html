@@ -23,7 +23,9 @@
     <section class="dp-hero">
       @if (d.logoUrl) {
         <div class="dp-hero-logo">
-          <img [src]="d.logoUrl" [alt]="d.name" class="dp-logo" />
+          <div class="dp-logo-frame">
+            <img [src]="d.logoUrl" [alt]="d.name" class="dp-logo" />
+          </div>
         </div>
       }
       <h1 class="dp-hero-title">{{ d.name }}</h1>
@@ -150,7 +152,7 @@
         <div class="dp-info-card">
           <h3 class="dp-card-title">INFORMACIÓN</h3>
           @if (d.description) {
-            <p class="dp-description">{{ d.description }}</p>
+            <div class="dp-description rich-text-content" [innerHTML]="d.description"></div>
           }
           @if (d.phone) {
             <div class="dp-info-row">
@@ -267,6 +269,57 @@
       </main>
     </div>
     </div>
+
+    @if (d.reviews; as reviews) {
+      @if (reviews.length) {
+      <section class="dp-reviews">
+        <h2 class="dp-reviews-title">Reseñas de clientes</h2>
+        @if (d.rating && d.rating > 0) {
+          <p class="dp-reviews-summary">{{ d.rating }}/5 · {{ d.reviewCount }} reseñas</p>
+        }
+
+        <div
+          class="dp-reviews-carousel"
+          (mouseenter)="pauseReviewAutoSlide()"
+          (mouseleave)="startReviewAutoSlide()"
+        >
+          @if (reviews.length > 1) {
+            <button type="button" class="dp-reviews-nav dp-reviews-nav-prev" (click)="prevReviewSlide()" aria-label="Reseña anterior">‹</button>
+          }
+
+          <div class="dp-reviews-viewport">
+            <div class="dp-reviews-track" [style.transform]="reviewTrackTransform()">
+              @for (r of reviews; track r.id) {
+                <article class="dp-review-card">
+                  <div class="dp-review-stars">{{ stars(r.rating) }}</div>
+                  <p class="dp-review-text">"{{ r.comment }}"</p>
+                  <div class="dp-review-author">— {{ r.author }}</div>
+                </article>
+              }
+            </div>
+          </div>
+
+          @if (reviews.length > 1) {
+            <button type="button" class="dp-reviews-nav dp-reviews-nav-next" (click)="nextReviewSlide()" aria-label="Siguiente reseña">›</button>
+          }
+        </div>
+
+        @if (reviews.length > 1) {
+          <div class="dp-reviews-dots" aria-label="Indicador de reseñas">
+            @for (r of reviews; track r.id; let i = $index) {
+              <button
+                type="button"
+                class="dp-reviews-dot"
+                [class.active]="reviewSlideIndex() === i"
+                (click)="goToReviewSlide(i)"
+                [attr.aria-label]="'Ir a reseña ' + (i + 1)"
+              ></button>
+            }
+          </div>
+        }
+      </section>
+      }
+    }
 
     <!-- ── AI CHATBOT (solo si hasAi) ── -->
     @if (d.hasAi) {

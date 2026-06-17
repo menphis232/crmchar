@@ -1,3 +1,5 @@
+@import './car-card.shared.css';
+
 :host {
   display: block;
 }
@@ -18,12 +20,12 @@
 .autos-hero-title {
   font-family: var(--f-display);
   font-size: 72px;
-  font-weight: 900;
-  letter-spacing: 0.04em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-letter-spacing);
   text-transform: uppercase;
   color: #fff;
   margin: 0;
-  line-height: 1.05;
+  line-height: 1.08;
 }
 
 .autos-toolbar {
@@ -515,190 +517,26 @@
   align-items: stretch;
 }
 
-/* ── CAR CARD (ficha oscura) ── */
-.car-card {
-  background: #0a0a0a;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 520px;
-  text-decoration: none;
-  color: #fff;
-  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}
-.car-card:hover {
-  transform: translateY(-4px);
-  border-color: #e2e8f0;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.45);
-}
-.car-img-wrap {
-  position: relative;
-  height: 220px;
-  flex-shrink: 0;
-  overflow: hidden;
-  background: #111;
-}
-.car-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-.car-card:hover .car-img { transform: scale(1.04); }
-.car-badge {
-  position: absolute;
-  z-index: 2;
-  font-family: var(--f-ui);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 7px 14px;
-  border-radius: 999px;
-  background: #000;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.18);
-}
-.car-badge-left { top: 14px; left: 14px; }
-.car-badge-right {
-  top: 14px;
-  right: 14px;
-  max-width: 45%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.car-badge-verified {
-  left: 14px;
-  bottom: 14px;
-  top: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(30, 100, 220, 0.92);
-  border-color: rgba(120, 180, 255, 0.35);
-}
-.car-badge-verified svg {
-  width: 12px;
-  height: 12px;
-  fill: currentColor;
-}
-.car-details {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 22px 22px 24px;
-  background: #000;
-  min-height: 300px;
-}
-.car-make {
-  font-family: var(--f-ui);
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  color: rgba(255,255,255,0.72);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-.car-model {
-  font-family: var(--f-display);
-  font-size: clamp(20px, 2vw, 26px);
-  color: #fff;
-  margin: 0 0 18px;
-  line-height: 1.1;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  min-height: 2.2em;
-  max-height: 2.2em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-.car-price-block {
-  margin-bottom: 18px;
-  min-height: 72px;
-  flex-shrink: 0;
-}
-.car-price-block.has-special {
-  min-height: 118px;
-}
-.car-price-label {
-  font-family: var(--f-ui);
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.9);
-  margin-bottom: 4px;
-  font-weight: 600;
-}
-.car-price-old {
-  font-family: var(--f-display);
-  font-size: 22px;
-  color: #fff;
-  text-decoration: line-through;
-  text-decoration-color: #ef4444;
-  text-decoration-thickness: 2px;
-  margin-bottom: 12px;
-  font-weight: 700;
-}
-.car-price-current {
-  font-family: var(--f-display);
-  font-size: clamp(26px, 2.8vw, 32px);
-  color: rgb(37, 99, 235) !important;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
-.car-meta {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: auto;
-  min-height: 88px;
-  flex-shrink: 0;
-}
-.car-meta li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--f-ui);
-  font-size: 14px;
-  color: rgba(255,255,255,0.88);
-  font-weight: 500;
-}
-.car-meta-icon {
-  width: 18px;
-  color: rgba(255,255,255,0.45);
-  text-align: center;
-  flex-shrink: 0;
-  font-size: 15px;
-}
-
 /* ── SKELETON ── */
 .loading-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
+  align-items: stretch;
 }
 .skeleton-card {
   background: var(--surface);
   border: 1px solid #e2e8f0;
   border-radius: 14px;
   overflow: hidden;
-  min-height: 520px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 .skeleton-img {
-  height: 200px;
+  aspect-ratio: 16 / 10;
+  width: 100%;
+  flex-shrink: 0;
   background: linear-gradient(90deg, #f0ede9 25%, #e8e4de 50%, #f0ede9 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

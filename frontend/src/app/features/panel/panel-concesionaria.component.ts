@@ -19,6 +19,8 @@ import { NotificationBellComponent } from '../../shared/notification-bell.compon
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
 
@@ -42,11 +44,13 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrl: './panel-dashboard.css',
 })
 export class PanelConcesionariaComponent implements OnInit {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
 
   isMobileMenuOpen = signal(false);
   tab = signal<Tab>('dashboard');

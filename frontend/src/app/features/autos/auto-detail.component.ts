@@ -1,13 +1,17 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavComponent } from '../../shared/nav.component';
 import { AutosService, ConcesionariaService } from '../../core/api.service';
+import { ToastService } from '../../core/toast.service';
 import { Auto } from '../../models';
 import { buildAutoGalleryItems } from '../../shared/auto-video.util';
 import { hasSpecialPrice } from '../../shared/auto-price.util';
+import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
+import { getAutoShareSubtitle } from '../../shared/auto-share.util';
+import { MetaTagsService } from '../../shared/meta-tags.service';
 
 @Component({
   selector: 'app-auto-detail',
@@ -16,8 +20,10 @@ import { hasSpecialPrice } from '../../shared/auto-price.util';
   templateUrl: './auto-detail.component.html',
   styleUrl: './auto-detail.component.css',
 })
-export class AutoDetailComponent implements OnInit {
+export class AutoDetailComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
+  private metaTags = inject(MetaTagsService);
+  private toast = inject(ToastService);
 
   auto = signal<Auto | null>(null);
   activeGalleryIndex = signal(0);
@@ -46,10 +52,15 @@ export class AutoDetailComponent implements OnInit {
       next: data => {
         this.auto.set(data);
         this.activeGalleryIndex.set(0);
+        this.metaTags.setAutoShareTags(data);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  ngOnDestroy() {
+    this.metaTags.reset();
   }
 
   setGalleryIndex(index: number) {
@@ -100,20 +111,25 @@ export class AutoDetailComponent implements OnInit {
     document.getElementById('dynamic-form-section')?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  scrollToInquiry() {
-    const target = document.getElementById('detail-description') ?? document.getElementById('detail-inquiry');
-    target?.scrollIntoView({ behavior: 'smooth' });
-  }
-
   shareAuto() {
     const a = this.auto();
     const url = window.location.href;
-    const title = a ? `${a.make} ${a.model} ${a.year}` : 'Vehículo en venta';
+    const shareData: ShareData = {
+      title: AUTO_SHARE_TAGLINE,
+      text: a ? getAutoShareSubtitle(a) : AUTO_SHARE_TAGLINE,
+      url,
+    };
     if (navigator.share) {
-      navigator.share({ title, url }).catch(() => {});
+      navigator.share(shareData).catch(() => this.copyShareLink(url));
     } else {
-      navigator.clipboard.writeText(url).then(() => alert('¡Enlace copiado al portapapeles!'));
+      this.copyShareLink(url);
     }
+  }
+
+  private copyShareLink(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      this.toast.success('Enlace copiado al portapapeles');
+    });
   }
 
   sendInquiry() {

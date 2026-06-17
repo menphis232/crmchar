@@ -44,6 +44,9 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
 
   readonly PAGE_SIZE = 9;
   currentPage = signal(1);
+  reviewSlideIndex = signal(0);
+
+  reviewTrackTransform = computed(() => `translateX(-${this.reviewSlideIndex() * 100}%)`);
 
   chatOpen = false;
   chatMessage = '';
@@ -54,6 +57,7 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   private ignoreNextDocClick = false;
+  private reviewAutoTimer?: ReturnType<typeof setInterval>;
 
   makes = computed(() => {
     const counts = new Map<string, number>();
@@ -165,13 +169,19 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.stopReviewAutoSlide();
     this.destroy$.next();
     this.destroy$.complete();
   }
 
   loadProfile() {
     this.concesionariaService.getDealerBySlug(this.slug).subscribe({
-      next: d => { this.dealer.set(d); this.loading.set(false); },
+      next: d => {
+        this.dealer.set(d);
+        this.loading.set(false);
+        this.reviewSlideIndex.set(0);
+        this.startReviewAutoSlide();
+      },
       error: () => { this.error.set('No se encontró la concesionaria'); this.loading.set(false); },
     });
   }
@@ -283,6 +293,49 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
 
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
+  }
+
+  stars(rating: number) {
+    return '⭐'.repeat(Math.round(rating));
+  }
+
+  nextReviewSlide() {
+    const count = this.dealer()?.reviews?.length ?? 0;
+    if (count <= 1) return;
+    this.reviewSlideIndex.set((this.reviewSlideIndex() + 1) % count);
+    this.startReviewAutoSlide();
+  }
+
+  prevReviewSlide() {
+    const count = this.dealer()?.reviews?.length ?? 0;
+    if (count <= 1) return;
+    this.reviewSlideIndex.set((this.reviewSlideIndex() - 1 + count) % count);
+    this.startReviewAutoSlide();
+  }
+
+  goToReviewSlide(index: number) {
+    this.reviewSlideIndex.set(index);
+    this.startReviewAutoSlide();
+  }
+
+  startReviewAutoSlide() {
+    this.stopReviewAutoSlide();
+    const count = this.dealer()?.reviews?.length ?? 0;
+    if (count <= 1) return;
+    this.reviewAutoTimer = setInterval(() => {
+      this.reviewSlideIndex.set((this.reviewSlideIndex() + 1) % count);
+    }, 5000);
+  }
+
+  pauseReviewAutoSlide() {
+    this.stopReviewAutoSlide();
+  }
+
+  private stopReviewAutoSlide() {
+    if (this.reviewAutoTimer) {
+      clearInterval(this.reviewAutoTimer);
+      this.reviewAutoTimer = undefined;
+    }
   }
 
   hasSpecialPrice = hasSpecialPrice;

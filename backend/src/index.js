@@ -16,6 +16,7 @@ import paymentsRoutes from './routes/payments.js';
 import clientRoutes from './routes/client.js';
 import webhooksRoutes from './routes/webhooks.js';
 import aiRoutes from './routes/ai.js';
+import shareRoutes from './routes/share.js';
 import { testConnection } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -54,6 +55,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/share', shareRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-panel-cliente',
@@ -16,6 +17,9 @@ import { environment } from '../../../environments/environment';
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css']
 })
 export class PanelClienteComponent implements OnInit, OnDestroy {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
   auth = inject(AuthService);
   http = inject(HttpClient);
   router = inject(Router);

@@ -34,8 +34,8 @@
   font-size: var(--page-title-size, clamp(36px, 5vw, 56px));
   color: #ffffff;
   margin-bottom: 12px;
-  letter-spacing: 0.04em;
-  font-weight: 900;
+  letter-spacing: var(--display-letter-spacing);
+  font-weight: var(--display-weight);
 }
 .subtitle {
   font-family: var(--f-ui);

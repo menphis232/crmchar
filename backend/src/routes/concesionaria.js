@@ -196,12 +196,14 @@ router.get('/public/:slug', async (req, res) => {
       if (admin && admin.ai_api_key) user.has_ai = 1;
     }
 
-    const stats = await get(`
-      SELECT COUNT(*) as autosCount, AVG(r.rating) as avgRating, COUNT(r.id) as reviewCount
-      FROM autos a
-      LEFT JOIN concesionaria_reviews r ON r.user_id = a.user_id
-      WHERE a.user_id = ? AND a.status = 'published'
-    `, [user.id]);
+    const [autosCount, reviewAgg, reviewRows] = await Promise.all([
+      get(`SELECT COUNT(*) as c FROM autos WHERE user_id = ? AND status = 'published'`, [user.id]),
+      get('SELECT AVG(rating) as avg, COUNT(*) as count FROM concesionaria_reviews WHERE user_id = ?', [user.id]),
+      query(`
+        SELECT id, author, rating, comment, created_at as createdAt
+        FROM concesionaria_reviews WHERE user_id = ? ORDER BY created_at DESC LIMIT 20
+      `, [user.id]),
+    ]);
 
     res.json({
       id: user.id,
@@ -216,9 +218,10 @@ router.get('/public/:slug', async (req, res) => {
       chatbot_btn_color: user.chatbot_btn_color || '#4F46E5',
       chatbot_text_color: user.chatbot_text_color || '#FFFFFF',
       hasAi: !!user.has_ai,
-      autosCount: stats.autosCount || 0,
-      rating: stats.avgRating ? Number(Number(stats.avgRating).toFixed(1)) : 0,
-      reviewCount: stats.reviewCount || 0,
+      autosCount: autosCount?.c || 0,
+      rating: reviewAgg?.avg ? Number(Number(reviewAgg.avg).toFixed(1)) : 0,
+      reviewCount: reviewAgg?.count || 0,
+      reviews: reviewRows,
     });
   } catch (err) {
     console.error(err);

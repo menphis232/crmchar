@@ -35,6 +35,10 @@
   --f-display: 'League Spartan', sans-serif;
   --f-ui:      'League Spartan', sans-serif;
   --f-body:    'League Spartan', sans-serif;
+  --display-weight: 500;
+  --display-weight-strong: 600;
+  --display-letter-spacing: 0.06em;
+  --display-letter-spacing-wide: 0.12em;
 
   --nav-h:      72px;
   --radius:     0px;          /* Square corners = minimal/clean */
@@ -179,8 +183,8 @@ img { max-width: 100%; display: block; }
 .catalog-title {
   font-family: var(--f-display);
   font-size: clamp(32px, 5vw, 48px);
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-letter-spacing);
   text-transform: uppercase;
   color: #ffffff;
   margin-bottom: 10px;

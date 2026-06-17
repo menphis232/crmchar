@@ -1,0 +1,33 @@
+.rich-text-content {
+  font-family: var(--f-display);
+  line-height: 1.7;
+  word-break: break-word;
+  letter-spacing: 0.03em;
+}
+
+.rich-text-content :where(p, ul, ol) {
+  margin: 0 0 0.75em;
+}
+
+.rich-text-content :where(p:last-child, ul:last-child, ol:last-child) {
+  margin-bottom: 0;
+}
+
+.rich-text-content ul,
+.rich-text-content ol {
+  padding-left: 1.35em;
+}
+
+.rich-text-content strong,
+.rich-text-content b {
+  font-weight: 700;
+}
+
+.rich-text-content em,
+.rich-text-content i {
+  font-style: italic;
+}
+
+.rich-text-content u {
+  text-decoration: underline;
+}

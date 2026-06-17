@@ -33,6 +33,7 @@ function autoRow(row) {
     videoUrl: row.video_url || null,
     dealerName: row.dealer_name,
     dealerSlug: row.dealer_slug || null,
+    dealerLogoUrl: row.dealer_logo_url || null,
     status: row.status || 'published',
     active: row.status === 'published',
     googleAnalyticsId: row.google_analytics_id || null,
@@ -68,7 +69,7 @@ async function assertAutoOwner(autoId, userId) {
 router.get('/', async (req, res) => {
   try {
     const { make, minPrice, maxPrice } = req.query;
-    let sql = `SELECT a.*, u.slug AS dealer_slug, u.google_analytics_id, u.page_builder_config
+    let sql = `SELECT a.*, u.slug AS dealer_slug, u.logo_url AS dealer_logo_url, u.google_analytics_id, u.page_builder_config
                FROM autos a JOIN users u ON a.user_id = u.id
                WHERE a.status = 'published'`;
     const params = [];
@@ -110,7 +111,7 @@ router.get('/me/inventory', authRequired, requireRole('concesionaria'), async (r
 router.get('/:id', async (req, res) => {
   try {
     const row = await get(`
-      SELECT a.*, u.google_analytics_id, u.page_builder_config, u.slug AS dealer_slug
+      SELECT a.*, u.google_analytics_id, u.page_builder_config, u.slug AS dealer_slug, u.logo_url AS dealer_logo_url
       FROM autos a 
       JOIN users u ON a.user_id = u.id 
       WHERE a.id = ? AND a.status = 'published'`, [req.params.id]);

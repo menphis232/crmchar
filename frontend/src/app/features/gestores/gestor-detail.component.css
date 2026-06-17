@@ -33,9 +33,9 @@
 .profile-name {
   font-family: var(--f-display);
   font-size: clamp(28px, 5vw, 44px);
-  font-weight: 900;
+  font-weight: var(--display-weight);
   color: #ffffff;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--display-letter-spacing);
 }
 .profile-location {
   font-family: var(--f-ui);
@@ -49,8 +49,9 @@
 .ps-val {
   font-family: var(--f-display);
   font-size: 28px;
-  font-weight: 900;
+  font-weight: var(--display-weight-strong);
   color: #ffffff;
+  letter-spacing: var(--display-letter-spacing);
 }
 .ps-lbl {
   font-family: var(--f-ui);
@@ -81,10 +82,10 @@
 .section-title {
   font-family: var(--f-display);
   font-size: 22px;
-  font-weight: 900;
+  font-weight: var(--display-weight);
   margin-bottom: 20px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--display-letter-spacing);
   color: var(--brand-black);
 }
 .reviews-title { margin-top: 40px; }

@@ -20,6 +20,7 @@ import { ToastService } from '../../core/toast.service';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm' | 'automatizaciones';
 
@@ -55,6 +56,9 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   styleUrl: './panel-dashboard.css',
 })
 export class PanelGestorComponent implements OnInit {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
   tab = signal<GestorTab>('dashboard');
   profile = signal<Gestor | null>(null);
   panelTheme = signal<SiteSettings>({});

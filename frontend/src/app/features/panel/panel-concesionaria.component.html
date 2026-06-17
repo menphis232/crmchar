@@ -1,11 +1,13 @@
 <nav class="dash-nav">
-  <a routerLink="/autos" class="dash-logo">
-    @if (auth.user()?.logo_url) {
+  @if (auth.user()?.logo_url) {
+    <a routerLink="/autos" class="dash-logo">
       <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
-    } @else {
-      <img src="https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
-    }
-  </a>
+    </a>
+  } @else {
+    <a [href]="tvmMainSite" class="dash-logo">
+      <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+    </a>
+  }
   <div class="dash-user">
     <app-notification-bell />
 
@@ -311,7 +313,7 @@
         </div>
         <div class="form-group" style="margin-bottom:16px;">
           <label>Descripción</label>
-          <textarea [(ngModel)]="form.description" rows="4" placeholder="Describe el vehículo..."></textarea>
+          <app-rich-text-editor [(ngModel)]="form.description" placeholder="Describe el vehículo..."></app-rich-text-editor>
         </div>
 
         <div class="auto-private-docs">
@@ -459,7 +461,7 @@
 
         <div class="form-group" style="margin-bottom:16px;">
           <label>Descripción de la Concesionaria</label>
-          <textarea [(ngModel)]="profileDescription" rows="3" placeholder="Descripción breve de tu concesionaria, especialidad, años de experiencia..."></textarea>
+          <app-rich-text-editor [(ngModel)]="profileDescription" placeholder="Descripción breve de tu concesionaria, especialidad, años de experiencia..."></app-rich-text-editor>
         </div>
 
         <div class="form-row">

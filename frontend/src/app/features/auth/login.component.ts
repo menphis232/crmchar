@@ -2,6 +2,7 @@ import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-login',
@@ -11,6 +12,9 @@ import { AuthService } from '../../core/auth.service';
   styleUrl: './login.component.css',
 })
 export class LoginComponent {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
   mode = signal<'select' | 'login' | 'register' | 'forgot'>('select');
   role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente'>('cliente');
   email = '';

@@ -87,8 +87,8 @@
                   @if (b.type === 'text') {
                     <div class="description" style="background:var(--surface); padding:20px; border-radius:8px;">
                       <h3>{{ b.data.content === 'Bienvenido...' ? 'Descripción del Vehículo' : 'Descripción' }}</h3>
-                      <p>{{ a.description }}</p>
-                      <p style="color:var(--muted); font-size:14px; margin-top:10px;">{{ b.data.content !== 'Bienvenido...' ? b.data.content : '' }}</p>
+                      <p>{{ b.data.content !== 'Bienvenido...' ? b.data.content : '' }}</p>
+                      <div class="rich-text-content" [innerHTML]="a.description"></div>
                     </div>
                   }
                 </div>
@@ -102,14 +102,26 @@
             <div class="dealer-card" style="margin-bottom: 20px;">
               @if (a.dealerSlug) {
                 <a [routerLink]="['/concesionarias', a.dealerSlug]" class="dealer-link" style="width:100%">
-                  <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                  @if (a.dealerLogoUrl) {
+                    <div class="dealer-avatar dealer-avatar-logo">
+                      <img [src]="a.dealerLogoUrl" [alt]="a.dealerName || 'Concesionaria'" />
+                    </div>
+                  } @else {
+                    <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                  }
                   <div>
                     <div class="dealer-label">Vendido por:</div>
                     <div class="dealer-name">{{ a.dealerName }} <span class="dealer-arrow">→</span></div>
                   </div>
                 </a>
               } @else {
-                <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                @if (a.dealerLogoUrl) {
+                  <div class="dealer-avatar dealer-avatar-logo">
+                    <img [src]="a.dealerLogoUrl" [alt]="a.dealerName || 'Concesionaria'" />
+                  </div>
+                } @else {
+                  <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                }
                 <div>
                   <div class="dealer-label">Vendido por:</div>
                   <div class="dealer-name">{{ a.dealerName }} (sin enlace)</div>
@@ -268,12 +280,7 @@
               }
             </div>
 
-            @if (a.description) {
-              <p class="ds-description-snippet">{{ a.description }}</p>
-            }
-
             <div class="detail-actions">
-              <button type="button" class="btn-detail-outline" (click)="scrollToInquiry()">Más información</button>
               <button type="button" class="btn-detail-outline" (click)="shareAuto()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                   <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
@@ -288,14 +295,26 @@
             <div class="dealer-card">
               @if (a.dealerSlug) {
                 <a [routerLink]="['/concesionarias', a.dealerSlug]" class="dealer-link">
-                  <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                  @if (a.dealerLogoUrl) {
+                    <div class="dealer-avatar dealer-avatar-logo">
+                      <img [src]="a.dealerLogoUrl" [alt]="a.dealerName || 'Concesionaria'" />
+                    </div>
+                  } @else {
+                    <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                  }
                   <div>
                     <div class="dealer-label">Vendido por</div>
                     <div class="dealer-name">{{ a.dealerName }} <span class="dealer-arrow">→</span></div>
                   </div>
                 </a>
               } @else {
-                <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                @if (a.dealerLogoUrl) {
+                  <div class="dealer-avatar dealer-avatar-logo">
+                    <img [src]="a.dealerLogoUrl" [alt]="a.dealerName || 'Concesionaria'" />
+                  </div>
+                } @else {
+                  <div class="dealer-avatar">{{ dealerInitials(a.dealerName) }}</div>
+                }
                 <div>
                   <div class="dealer-label">Vendido por</div>
                   <div class="dealer-name">{{ a.dealerName }}</div>
@@ -321,9 +340,9 @@
           </aside>
 
           @if (a.description) {
-            <div class="detail-description" id="detail-description">
+            <div class="detail-description rich-text-content" id="detail-description">
               <h3>Descripción</h3>
-              <p>{{ a.description }}</p>
+              <div [innerHTML]="a.description"></div>
             </div>
           }
         </div>

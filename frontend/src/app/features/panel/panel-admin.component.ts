@@ -11,6 +11,7 @@ import { NotificationBellComponent } from '../../shared/notification-bell.compon
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
@@ -22,6 +23,9 @@ type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-ge
   styleUrl: './panel-dashboard.css',
 })
 export class PanelAdminComponent implements OnInit {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
   isMobileMenuOpen = signal(false);
   tab = signal<AdminTab>('stats');
   stats = signal<AdminStats | null>(null);

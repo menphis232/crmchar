@@ -71,6 +71,7 @@ export interface Auto {
   videoUrl?: string | null;
   dealerName?: string;
   dealerSlug?: string;
+  dealerLogoUrl?: string | null;
   status?: AutoStatus;
   active?: boolean;
   google_analytics_id?: string;
@@ -452,6 +453,7 @@ export interface DealerProfile {
   mapEmbedUrl?: string;
   rating?: number;
   reviewCount?: number;
+  reviews?: DealerReview[];
   autosCount?: number;
   hasAi: boolean;
   chatbot_bg_color?: string;

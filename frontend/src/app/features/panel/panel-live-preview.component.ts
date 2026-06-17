@@ -1,6 +1,7 @@
 import { Component, ElementRef, Input, OnChanges } from '@angular/core';
 import { ThemeService } from '../../core/api.service';
 import { SiteSettings } from '../../models';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-panel-live-preview',
@@ -9,6 +10,9 @@ import { SiteSettings } from '../../models';
   styleUrls: ['./panel-live-preview.component.css', './panel-dashboard.css'],
 })
 export class PanelLivePreviewComponent implements OnChanges {
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
   @Input() theme: SiteSettings = {};
   @Input() pageKey = 'panel-gestor';
 
