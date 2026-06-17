@@ -7,7 +7,7 @@ import { CrmDeal } from '../../models';
   standalone: true,
   imports: [DecimalPipe],
   templateUrl: './crm-kanban.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-dashboard.css', './crm-kanban-dark.css'],
 })
 export class CrmKanbanComponent {
   stages = input.required<string[]>();
