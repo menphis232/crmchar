@@ -14,9 +14,10 @@
 }
 
 /* ══════════════════════════════════════════
-   CARDS
+   CARDS  (directo + ::ng-deep para hijos)
 ══════════════════════════════════════════ */
-.dash-card {
+.dash-card,
+:host ::ng-deep .dash-card {
   background: #0d0d0d !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-top: 2px solid rgba(255,255,255,0.18) !important;
@@ -24,11 +25,13 @@
   box-shadow: 0 4px 24px rgba(0,0,0,0.7) !important;
 }
 
-.card-title {
+.card-title,
+:host ::ng-deep .card-title {
   color: #ffffff !important;
 }
 
-.card-desc {
+.card-desc,
+:host ::ng-deep .card-desc {
   color: rgba(255,255,255,0.45) !important;
 }
 
@@ -209,23 +212,35 @@ select option { background: #111111; color: #ffffff; }
 }
 
 /* ══════════════════════════════════════════
-   INBOX
+   INBOX  (::ng-deep para crm-today-inbox)
 ══════════════════════════════════════════ */
-.inbox-row {
+.inbox-row,
+:host ::ng-deep .inbox-row {
   background: #0d0d0d !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
 }
-.inbox-row:hover {
+.inbox-row:hover,
+:host ::ng-deep .inbox-row:hover {
   border-color: rgba(255,255,255,0.30) !important;
   background: #141414 !important;
 }
-.inbox-row.stalled { border-color: rgba(255,68,68,0.35) !important; }
-.inbox-info h4 { color: #ffffff !important; }
-.inbox-info p  { color: rgba(255,255,255,0.45) !important; }
-.inbox-section-title { color: rgba(255,255,255,0.30) !important; }
-.inbox-section-title.warn { color: #ff6b6b !important; }
+.inbox-row.stalled,
+:host ::ng-deep .inbox-row.stalled { border-color: rgba(255,68,68,0.35) !important; }
+
+.inbox-info h4,
+:host ::ng-deep .inbox-info h4 { color: #ffffff !important; }
+.inbox-info p,
+:host ::ng-deep .inbox-info p   { color: rgba(255,255,255,0.45) !important; }
+
+.inbox-section-title,
+:host ::ng-deep .inbox-section-title { color: rgba(255,255,255,0.30) !important; }
+.inbox-section-title.warn,
+:host ::ng-deep .inbox-section-title.warn { color: #ff6b6b !important; }
+
+:host ::ng-deep .empty { color: rgba(255,255,255,0.40) !important; }
+:host ::ng-deep .user-meta { color: rgba(255,255,255,0.45) !important; }
 
 /* ══════════════════════════════════════════
    PIPELINE FILTERS
@@ -242,39 +257,46 @@ select option { background: #111111; color: #ffffff; }
 }
 
 /* ══════════════════════════════════════════
-   KANBAN
+   KANBAN  (::ng-deep para crm-kanban)
 ══════════════════════════════════════════ */
-.kanban-board {
+.kanban-board,
+:host ::ng-deep .kanban-board {
   scrollbar-color: rgba(255,255,255,0.12) transparent !important;
 }
 
-.kanban-col {
+.kanban-col,
+:host ::ng-deep .kanban-col {
   background: #0d0d0d !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-top: 2px solid rgba(255,255,255,0.18) !important;
   border-radius: 12px !important;
   scrollbar-color: rgba(255,255,255,0.10) transparent;
 }
-.kanban-col.drag-over {
+.kanban-col.drag-over,
+:host ::ng-deep .kanban-col.drag-over {
   border-color: rgba(255,255,255,0.30) !important;
   background: #141414 !important;
 }
 
-.kanban-col-header {
+.kanban-col-header,
+:host ::ng-deep .kanban-col-header {
   color: rgba(255,255,255,0.55) !important;
   border-bottom: 1px solid rgba(255,255,255,0.07) !important;
 }
-.kanban-col-header span:first-child {
+.kanban-col-header span:first-child,
+:host ::ng-deep .kanban-col-header span:first-child {
   color: rgba(255,255,255,0.80) !important;
 }
 
-.kanban-count {
+.kanban-count,
+:host ::ng-deep .kanban-count {
   background: rgba(255,255,255,0.12) !important;
   color: #ffffff !important;
   border-radius: 999px !important;
 }
 
-.kanban-card {
+.kanban-card,
+:host ::ng-deep .kanban-card {
   background: #141414 !important;
   border: 1px solid rgba(255,255,255,0.07) !important;
   border-left: 3px solid rgba(255,255,255,0.18) !important;
@@ -282,12 +304,71 @@ select option { background: #111111; color: #ffffff; }
   color: #ffffff !important;
   box-shadow: none !important;
 }
-.kanban-card:hover {
+.kanban-card:hover,
+:host ::ng-deep .kanban-card:hover {
   border-left-color: rgba(255,255,255,0.60) !important;
   background: #1a1a1a !important;
   box-shadow: 0 4px 16px rgba(0,0,0,0.6) !important;
 }
-.kanban-card.stalled { border-left-color: #ff6b6b !important; }
+.kanban-card.stalled,
+:host ::ng-deep .kanban-card.stalled { border-left-color: #ff6b6b !important; }
+
+/* deal-panel / contact-panel */
+:host ::ng-deep .dash-card .card-title { color: #ffffff !important; }
+:host ::ng-deep .section-sub { color: rgba(255,255,255,0.80) !important; }
+:host ::ng-deep .inquiry-msg { color: rgba(255,255,255,0.70) !important; }
+:host ::ng-deep .task-row {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-radius: 8px !important;
+  color: #ffffff !important;
+}
+:host ::ng-deep .review-card {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(255,255,255,0.09) !important;
+  border-left: 4px solid rgba(255,255,255,0.25) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+}
+:host ::ng-deep .status-tag { border-radius: 999px !important; }
+:host ::ng-deep .filter-tabs button {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: rgba(255,255,255,0.45) !important;
+  border-radius: 999px !important;
+}
+:host ::ng-deep .filter-tabs button.active {
+  border-color: #ffffff !important;
+  color: #ffffff !important;
+  background: rgba(255,255,255,0.10) !important;
+}
+:host ::ng-deep .divider { border-color: rgba(255,255,255,0.07) !important; }
+:host ::ng-deep .btn-copy {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 8px !important;
+}
+:host ::ng-deep .btn-ghost {
+  color: rgba(255,255,255,0.65) !important;
+  border: 1px solid rgba(255,255,255,0.22) !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+}
+:host ::ng-deep .form-group label { color: rgba(255,255,255,0.50) !important; }
+:host ::ng-deep input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+:host ::ng-deep textarea,
+:host ::ng-deep select {
+  background-color: #111111 !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  border-radius: 8px !important;
+}
+:host ::ng-deep input::placeholder,
+:host ::ng-deep textarea::placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1; }
+:host ::ng-deep select option { background: #111111; color: #ffffff; }
 
 /* ══════════════════════════════════════════
    INVENTARIO / CARS
