@@ -117,13 +117,15 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
     const shareUrl = a
       ? `${window.location.origin}/s/${a.id}`
       : window.location.href;
-    const shareData: ShareData = {
-      title: AUTO_SHARE_TAGLINE,
-      text: a ? getAutoShareSubtitle(a) : AUTO_SHARE_TAGLINE,
-      url: shareUrl,
-    };
-    if (navigator.share) {
-      navigator.share(shareData).catch(() => this.copyShareLink(shareUrl));
+
+    // En móvil usamos el share nativo; en escritorio directamente al portapapeles
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+      navigator.share({
+        title: AUTO_SHARE_TAGLINE,
+        text: a ? getAutoShareSubtitle(a) : AUTO_SHARE_TAGLINE,
+        url: shareUrl,
+      }).catch(() => this.copyShareLink(shareUrl));
     } else {
       this.copyShareLink(shareUrl);
     }
@@ -131,7 +133,9 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
 
   private copyShareLink(url: string) {
     navigator.clipboard.writeText(url).then(() => {
-      this.toast.success('Enlace copiado al portapapeles');
+      this.toast.info(url, '🔗 Enlace copiado — pégalo en WhatsApp');
+    }).catch(() => {
+      prompt('Copia este enlace y pégalo en WhatsApp:', url);
     });
   }
 
