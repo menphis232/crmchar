@@ -23,7 +23,8 @@ El proyecto es una aplicación web full-stack diseñada para la gestión de trá
   - `tramites-frontend`: Nginx sirviendo la app de Angular y actuando como Reverse Proxy para la API y los WebSockets.
   - `tramites-backend`: Node.js API en el puerto 3000.
   - `tramites-db`: Servidor MySQL 8.
-- **Dominio/IP:** `2.25.197.82`
+- **Dominio producción:** `https://central.tramitesvehicularesdemexico.com`
+- **IP servidor:** `2.25.197.82`
 
 ---
 

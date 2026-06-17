@@ -25,6 +25,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-supersecret}
       - DB_NAME=${DB_NAME:-tramites_vehiculares}
       - PORT=3000
+      - FRONTEND_URL=${FRONTEND_URL:-https://central.tramitesvehicularesdemexico.com}
+      - API_PUBLIC_URL=${API_PUBLIC_URL:-https://central.tramitesvehicularesdemexico.com}
     ports:
       - "3000:3000"
     volumes:

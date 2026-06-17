@@ -3,7 +3,7 @@ chcp 65001 > nul
 echo.
 echo ====================================
 echo   DEPLOY AL SERVIDOR
-echo   github.com/menphis232/crmchar
+echo   central.tramitesvehicularesdemexico.com
 echo ====================================
 echo.
 
