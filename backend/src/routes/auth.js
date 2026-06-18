@@ -235,7 +235,7 @@ router.patch('/me', authRequired, async (req, res) => {
     if (panel_assistant_bg_color !== undefined) { sets.push('panel_assistant_bg_color = ?'); params.push(panel_assistant_bg_color || '#0f172a'); }
     if (panel_assistant_btn_color !== undefined) { sets.push('panel_assistant_btn_color = ?'); params.push(panel_assistant_btn_color || '#4F46E5'); }
     if (panel_assistant_text_color !== undefined) { sets.push('panel_assistant_text_color = ?'); params.push(panel_assistant_text_color || '#FFFFFF'); }
-    if (panel_assistant_font !== undefined) { sets.push('panel_assistant_font = ?'); params.push(panel_assistant_font || 'League Spartan'); }
+    if (panel_assistant_font !== undefined) { sets.push('panel_assistant_font = ?'); params.push(panel_assistant_font || 'Spartan'); }
     if (panel_assistant_prompt !== undefined) { sets.push('panel_assistant_prompt = ?'); params.push(panel_assistant_prompt || null); }
     if (description !== undefined) { sets.push('description = ?'); params.push(description || null); }
     if (phone !== undefined) { sets.push('phone = ?'); params.push(phone || null); }

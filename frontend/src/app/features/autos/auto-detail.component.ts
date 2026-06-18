@@ -4,6 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavComponent } from '../../shared/nav.component';
+import { CAR_LUCIDE_ICONS } from '../../shared/car-lucide-icons';
 import { AutosService, ConcesionariaService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { Auto } from '../../models';
@@ -17,7 +18,7 @@ import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.com
 @Component({
   selector: 'app-auto-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent, ...CAR_LUCIDE_ICONS],
   templateUrl: './auto-detail.component.html',
   styleUrl: './auto-detail.component.css',
 })

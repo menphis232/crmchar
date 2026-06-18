@@ -156,13 +156,13 @@
           }
           @if (d.phone) {
             <div class="dp-info-row">
-              <span class="dp-info-icon">📞</span>
+              <span class="dp-info-icon"><svg lucidePhone [size]="18" aria-hidden="true"></svg></span>
               <a [href]="'tel:' + d.phone" class="dp-info-val">{{ d.phone }}</a>
             </div>
           }
           @if (d.address) {
             <div class="dp-info-row">
-              <span class="dp-info-icon">📍</span>
+              <span class="dp-info-icon"><svg lucideMapPin [size]="18" aria-hidden="true"></svg></span>
               <span class="dp-info-val">{{ d.address }}</span>
             </div>
           }
@@ -174,7 +174,7 @@
         <!-- Google Maps -->
         @if (safeMapUrl()) {
           <div class="dp-map-card">
-            <h3 class="dp-card-title">📍 UBICACIÓN</h3>
+            <h3 class="dp-card-title"><svg lucideMapPin [size]="18" class="dp-card-title-icon" aria-hidden="true"></svg> UBICACIÓN</h3>
             <div class="dp-map-wrap">
               <iframe
                 [src]="safeMapUrl()!"
@@ -246,9 +246,9 @@
                     }
                   </div>
                   <ul class="dp-car-meta">
-                    <li><span class="dp-car-meta-icon">◷</span>{{ car.year }}</li>
-                    <li><span class="dp-car-meta-icon">◎</span>{{ car.mileage | number }} km</li>
-                    <li><span class="dp-car-meta-icon">⌂</span>{{ car.location || '—' }}</li>
+                    <li><svg lucideCalendar class="dp-car-meta-icon" [size]="14" aria-hidden="true"></svg>{{ car.year }}</li>
+                    <li><svg lucideGauge class="dp-car-meta-icon" [size]="14" aria-hidden="true"></svg>{{ car.mileage | number }} km</li>
+                    <li><svg lucideMapPin class="dp-car-meta-icon" [size]="14" aria-hidden="true"></svg>{{ car.location || '—' }}</li>
                   </ul>
                 </div>
               </a>

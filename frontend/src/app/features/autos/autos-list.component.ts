@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
+import { CAR_LUCIDE_ICONS } from '../../shared/car-lucide-icons';
 import { AutosService, SiteService, ThemeService } from '../../core/api.service';
 import { PreviewThemeService } from '../../core/preview-theme.service';
 import { hasSpecialPrice, effectivePrice } from '../../shared/auto-price.util';
@@ -12,7 +13,7 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-autos-list',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, ...CAR_LUCIDE_ICONS],
   templateUrl: './autos-list.component.html',
   styleUrl: './autos-list.component.css',
 })

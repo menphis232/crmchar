@@ -14,6 +14,12 @@
   font-family: var(--f-ui);
 }
 
+.profile-location-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .detail-page {
   background: #000;
   min-height: 100vh;
@@ -306,7 +312,7 @@
 .ds-verified svg {
   width: 14px;
   height: 14px;
-  fill: currentColor;
+  flex-shrink: 0;
 }
 
 .ds-price-block {
@@ -372,8 +378,6 @@
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.85);
-  font-size: 16px;
-  line-height: 1;
 }
 
 .detail-actions {

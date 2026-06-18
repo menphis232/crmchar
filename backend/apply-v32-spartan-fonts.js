@@ -2,7 +2,7 @@ import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const SPARTAN = "'League Spartan', sans-serif";
+const SPARTAN = "'Spartan', sans-serif";
 
 const c = await mysql.createConnection({
   host: process.env.DB_HOST || 'localhost',

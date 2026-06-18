@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
+import { CAR_LUCIDE_ICONS } from '../../shared/car-lucide-icons';
 import { ConcesionariaService } from '../../core/api.service';
 import { DealerProfile, Auto } from '../../models';
 import { hasSpecialPrice } from '../../shared/auto-price.util';
@@ -18,7 +19,7 @@ type DealerFilterTab = 'marca' | 'verificado' | 'estado';
 @Component({
   selector: 'app-dealer-profile',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappLeadModalComponent],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappLeadModalComponent, ...CAR_LUCIDE_ICONS],
   templateUrl: './dealer-profile.component.html',
   styleUrl: './dealer-profile.component.css',
 })

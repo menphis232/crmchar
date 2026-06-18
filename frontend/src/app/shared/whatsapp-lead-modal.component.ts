@@ -27,7 +27,7 @@ export interface WhatsappLeadData {
       background: #000; border: 1px solid rgba(255,255,255,.1);
       border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 420px;
       box-shadow: 0 24px 64px rgba(0,0,0,.9);
-      font-family: 'League Spartan', sans-serif;
+      font-family: 'Spartan', sans-serif;
       animation: wl-in .2s ease;
     }
     @keyframes wl-in { from { opacity:0; transform:scale(.95) translateY(10px); } to { opacity:1; transform:none; } }

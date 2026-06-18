@@ -260,7 +260,7 @@
 .autos-results-count {
   margin: 14px 0 20px;
   font-family: var(--f-ui);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
 }
@@ -691,7 +691,7 @@
   }
   .autos-results-count {
     margin: 12px 0 16px;
-    font-size: 15px;
+    font-size: 13px;
   }
   .pagination {
     gap: 12px;

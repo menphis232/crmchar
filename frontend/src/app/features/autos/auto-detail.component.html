@@ -6,7 +6,7 @@
   @if (auto(); as a) {
     @if (a.page_builder_config; as config) {
       @if (config.blocks?.length) {
-        <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'League Spartan'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
+        <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'Spartan'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
           
           <!-- MAIN REGION (Contains everything not sidebar) -->
           @for (b of config.blocks; track b.id) {
@@ -21,7 +21,7 @@
                   <div class="hero-overlay" style="position: absolute; inset: 0; background: rgba(0,0,0,0.6);"></div>
                   <div class="profile-info" style="position: relative; z-index: 1;">
                     <h1 class="profile-name" style="color: #fff;">{{ b.data.title !== 'Marca Modelo 2024' && b.data.title ? b.data.title : a.make + ' ' + a.model + ' ' + a.year }}</h1>
-                    <div class="profile-location" style="color: #ddd;">📍 {{ a.location }}</div>
+                    <div class="profile-location profile-location-with-icon" style="color: #ddd;"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ a.location }}</div>
                     @if (b.data.buttonText) {
                       <button class="preview-btn" style="margin-top:20px; background:var(--p-theme); border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;" [style.color]="b.data.buttonTextColor || '#1a1d24'" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
                     }
@@ -72,10 +72,10 @@
                           }
                           @if (showGalleryNav()) {
                             <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                              <svg lucideChevronLeft [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
                             </button>
                             <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                              <svg lucideChevronRight [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
                             </button>
                             <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
                           }
@@ -217,10 +217,10 @@
                   }
                   @if (showGalleryNav()) {
                     <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+                      <svg lucideChevronLeft [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
                     </button>
                     <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                      <svg lucideChevronRight [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
                     </button>
                     <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
                   }
@@ -240,7 +240,7 @@
 
             @if (a.verified) {
               <div class="ds-verified">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
+                <svg lucideBadgeCheck [size]="14" aria-hidden="true"></svg>
                 Verificado
               </div>
             }
@@ -259,22 +259,22 @@
 
             <div class="ds-specs">
               <div class="ds-spec-row">
-                <span class="ds-spec-icon" aria-hidden="true">◷</span>
+                <svg lucideCalendar class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
                 <span>{{ a.year }}</span>
               </div>
               <div class="ds-spec-row">
-                <span class="ds-spec-icon" aria-hidden="true">◎</span>
+                <svg lucideGauge class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
                 <span>{{ a.mileage | number }} km</span>
               </div>
               @if (a.dealerName) {
                 <div class="ds-spec-row">
-                  <span class="ds-spec-icon" aria-hidden="true">⌂</span>
+                  <svg lucideBuilding2 class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
                   <span>{{ a.dealerName }}</span>
                 </div>
               }
               @if (a.location) {
                 <div class="ds-spec-row">
-                  <span class="ds-spec-icon" aria-hidden="true">⌖</span>
+                  <svg lucideMapPin class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
                   <span>{{ a.location }}</span>
                 </div>
               }
@@ -282,10 +282,7 @@
 
             <div class="detail-actions">
               <button type="button" class="btn-detail-outline" (click)="shareAuto()">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
-                  <path d="M8.6 13.5l6.8 3.9M15.4 6.6l-6.8 3.9"/>
-                </svg>
+                <svg lucideShare2 [size]="18" aria-hidden="true"></svg>
                 Compartir ficha
               </button>
             </div>

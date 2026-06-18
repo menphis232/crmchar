@@ -131,7 +131,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   bgColor = computed(() => this.auth.user()?.panel_assistant_bg_color || '#0f172a');
   btnColor = computed(() => this.auth.user()?.panel_assistant_btn_color || '#4F46E5');
   textColor = computed(() => this.auth.user()?.panel_assistant_text_color || '#FFFFFF');
-  assistantFont = computed(() => this.auth.user()?.panel_assistant_font || 'League Spartan');
+  assistantFont = computed(() => this.auth.user()?.panel_assistant_font || 'Spartan');
 
   positionClass = computed(() => {
     const pos = this.auth.user()?.panel_assistant_position || 'bottom-right';

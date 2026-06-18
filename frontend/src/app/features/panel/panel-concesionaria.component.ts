@@ -145,7 +145,7 @@ export class PanelConcesionariaComponent implements OnInit {
       this.panelAssistantBgColor = u.panel_assistant_bg_color || '#0f172a';
       this.panelAssistantBtnColor = u.panel_assistant_btn_color || '#4F46E5';
       this.panelAssistantTextColor = u.panel_assistant_text_color || '#FFFFFF';
-      this.panelAssistantFont = u.panel_assistant_font || 'League Spartan';
+      this.panelAssistantFont = u.panel_assistant_font || 'Spartan';
       this.panelAssistantPrompt = u.panel_assistant_prompt || '';
       this.crmStages = u.crm_stages ? [...u.crm_stages] : [
         { id: 'lead_nuevo', label: 'Lead Nuevo' },
@@ -610,11 +610,11 @@ export class PanelConcesionariaComponent implements OnInit {
   panelAssistantBgColor = '#0f172a';
   panelAssistantBtnColor = '#4F46E5';
   panelAssistantTextColor = '#FFFFFF';
-  panelAssistantFont = 'League Spartan';
+  panelAssistantFont = 'Spartan';
   panelAssistantPrompt = '';
 
   readonly assistantFontOptions = [
-    { value: 'League Spartan', label: 'League Spartan (actual)' },
+    { value: 'Spartan', label: 'Spartan (actual)' },
     { value: 'Inter', label: 'Inter' },
     { value: 'Montserrat', label: 'Montserrat' },
     { value: 'Poppins', label: 'Poppins' },
