@@ -2,7 +2,7 @@
   @if (isTouchDevice()) {
     💡 Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.
   } @else if (editable()) {
-    💡 Arrastra el ≡ para reordenar columnas · Haz clic en el nombre para editarlo · Arrastra tarjetas entre columnas.
+    💡 Arrastra la cabecera para reordenar columnas · Doble clic en el nombre para editarlo · Arrastra tarjetas entre columnas.
   } @else {
     💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
   }
@@ -24,17 +24,13 @@
       (drop)="onColDrop($event, stage.id)"
     >
       <!-- ── Column header ── -->
-      <div class="kanban-col-header">
-        @if (editable()) {
-          <span
-            class="col-drag-handle"
-            draggable="true"
-            title="Arrastrar para reordenar"
-            (dragstart)="onColDragStart($event, stage.id)"
-            (dragend)="onColDragEnd()"
-          >≡</span>
-        }
-
+      <div
+        class="kanban-col-header"
+        [attr.draggable]="editable() && editingStageId() !== stage.id ? 'true' : null"
+        [class.col-header-draggable]="editable() && editingStageId() !== stage.id"
+        (dragstart)="onColDragStart($event, stage.id)"
+        (dragend)="onColDragEnd()"
+      >
         @if (editingStageId() === stage.id) {
           <input
             class="col-title-input"
@@ -48,8 +44,8 @@
           <span
             class="col-title-text"
             [class.editable-hint]="editable()"
-            (click)="startEdit(stage.id, $event)"
-            [title]="editable() ? 'Clic para editar nombre' : ''"
+            (dblclick)="startEdit(stage.id, $event)"
+            [title]="editable() ? 'Arrastra para mover · Doble clic para renombrar' : ''"
           >{{ stage.label }}</span>
         }
 

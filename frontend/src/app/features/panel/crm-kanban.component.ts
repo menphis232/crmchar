@@ -34,23 +34,16 @@ export interface KanbanStage { id: string; label: string; }
 
     /* ── Editable column header ── */
     .kanban-col-header { position: relative; user-select: none; }
-    .col-drag-handle {
-      cursor: grab;
-      opacity: 0.35;
-      font-size: 14px;
-      padding: 0 4px;
-      flex-shrink: 0;
-      transition: opacity 0.15s;
-    }
-    .col-drag-handle:hover { opacity: 0.80; }
+    .col-header-draggable { cursor: grab; }
+    .col-header-draggable:active { cursor: grabbing; }
     .col-title-text {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .col-title-text.editable-hint { cursor: pointer; }
-    .col-title-text.editable-hint:hover { text-decoration: underline dotted rgba(255,255,255,0.4); }
+    .col-title-text.editable-hint { cursor: grab; }
+    .col-title-text.editable-hint:hover { opacity: 0.80; }
     .col-title-input {
       flex: 1;
       background: rgba(255,255,255,0.08) !important;
@@ -249,11 +242,11 @@ export class CrmKanbanComponent {
   // ════════════════════════════════════════
   startEdit(stageId: string, event: Event) {
     if (!this.editable()) return;
+    event.preventDefault();
     event.stopPropagation();
     const label = this.localStages().find(s => s.id === stageId)?.label ?? stageId;
     this.editingStageId.set(stageId);
     this.editingLabel.set(label);
-    // focus the input on next tick
     setTimeout(() => {
       const input = document.querySelector<HTMLInputElement>('.col-title-input');
       input?.focus();
