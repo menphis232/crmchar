@@ -19,6 +19,8 @@ export interface User {
   email: string;
   role: 'gestor' | 'concesionaria' | 'cliente' | 'admin';
   name: string;
+  status?: 'active' | 'pending_payment' | 'deactivated' | string;
+  payment_failed_count?: number;
   parent_id?: string;
   permissions?: string[];
   logo_url?: string;
@@ -477,4 +479,44 @@ export interface DealerProfile {
   chatbot_bg_color?: string;
   chatbot_btn_color?: string;
   chatbot_text_color?: string;
+}
+
+export interface BillingSummary {
+  hasSubscription: boolean;
+  status: string;
+  stripeSubscriptionStatus?: string | null;
+  paymentFailedCount?: number;
+  planAmount: number | null;
+  planCurrency: string;
+  planInterval: string | null;
+  lastPaymentDate: string | null;
+  nextInvoiceDate: string | null;
+  accessUntilDate?: string | null;
+  cancelAtPeriodEnd: boolean;
+  canCancel?: boolean;
+  canReactivate?: boolean;
+  canResubscribe?: boolean;
+}
+
+export interface BillingInvoice {
+  id: string;
+  number: string | null;
+  amount: number;
+  currency: string;
+  status: string;
+  paidAt: string | null;
+  createdAt: string | null;
+  periodStart: string | null;
+  periodEnd: string | null;
+  pdfUrl: string | null;
+  hostedUrl: string | null;
+}
+
+export interface BillingPaymentMethod {
+  id: string;
+  brand: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  isDefault: boolean;
 }

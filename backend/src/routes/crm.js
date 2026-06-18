@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import { requireActiveSubscription } from '../middleware/subscription.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
@@ -25,7 +26,7 @@ function crmRoles(req, res, next) {
   next();
 }
 
-router.use(authRequired, crmRoles);
+router.use(authRequired, crmRoles, requireActiveSubscription);
 
 // FASE 3.4: Notificaciones
 router.get('/notifications', async (req, res) => {

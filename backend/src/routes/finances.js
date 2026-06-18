@@ -1,6 +1,7 @@
 import express from 'express';
 import { get, query, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
+import { requireActiveSubscription } from '../middleware/subscription.js';
 import { v4 as uuid } from 'uuid';
 import PDFDocument from 'pdfkit';
 import https from 'https';
@@ -19,7 +20,7 @@ function finRoles(req, res, next) {
   next();
 }
 
-router.use(authRequired, finRoles);
+router.use(authRequired, finRoles, requireActiveSubscription);
 
 // ──────────────────────────────────────────────
 // MÉTODOS DE PAGO CONFIGURABLES

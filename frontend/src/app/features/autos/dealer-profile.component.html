@@ -156,18 +156,21 @@
           }
           @if (d.phone) {
             <div class="dp-info-row">
-              <span class="dp-info-icon"><svg lucidePhone [size]="18" aria-hidden="true"></svg></span>
+              <span class="dp-info-icon"><svg lucidePhone [size]="16" aria-hidden="true"></svg></span>
               <a [href]="'tel:' + d.phone" class="dp-info-val">{{ d.phone }}</a>
             </div>
           }
           @if (d.address) {
             <div class="dp-info-row">
-              <span class="dp-info-icon"><svg lucideMapPin [size]="18" aria-hidden="true"></svg></span>
+              <span class="dp-info-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg></span>
               <span class="dp-info-val">{{ d.address }}</span>
             </div>
           }
           @if (d.phone) {
-            <button class="dp-btn-wa-full" (click)="openWaModal($event)">💬 Contactar por WhatsApp</button>
+            <button class="dp-btn-wa-full" (click)="openWaModal($event)">
+              <app-whatsapp-icon [size]="18" />
+              Contactar por WhatsApp
+            </button>
           }
         </div>
 

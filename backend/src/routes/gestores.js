@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import { requireActiveSubscription } from '../middleware/subscription.js';
 import { createDealFromSolicitud } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
@@ -56,7 +57,7 @@ router.get('/filters/states', async (_req, res) => {
   }
 });
 
-router.get('/me/profile', authRequired, requireRole('gestor'), async (req, res) => {
+router.get('/me/profile', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
@@ -77,7 +78,7 @@ router.get('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
   }
 });
 
-router.put('/me/profile', authRequired, requireRole('gestor'), async (req, res) => {
+router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
@@ -107,7 +108,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), async (req, res) 
   }
 });
 
-router.post('/me/services', authRequired, requireRole('gestor'), async (req, res) => {
+router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const { name, timeEstimate, price, required_documents } = req.body;
@@ -131,7 +132,7 @@ router.post('/me/services', authRequired, requireRole('gestor'), async (req, res
   }
 });
 
-router.delete('/me/services/:id', authRequired, requireRole('gestor'), async (req, res) => {
+router.delete('/me/services/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const result = await run('DELETE FROM gestor_services WHERE id = ? AND gestor_id = ?', [req.params.id, row.id]);
@@ -142,7 +143,7 @@ router.delete('/me/services/:id', authRequired, requireRole('gestor'), async (re
   }
 });
 
-router.patch('/me/solicitudes/:id', authRequired, requireRole('gestor'), async (req, res) => {
+router.patch('/me/solicitudes/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const { status } = req.body;

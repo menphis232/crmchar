@@ -10,6 +10,7 @@ import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.component';
+import { WhatsappIconComponent } from '../../shared/whatsapp-icon.component';
 import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { MetaTagsService } from '../../shared/meta-tags.service';
 import { ToastService } from '../../core/toast.service';
@@ -19,7 +20,7 @@ type DealerFilterTab = 'marca' | 'verificado' | 'estado';
 @Component({
   selector: 'app-dealer-profile',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappLeadModalComponent, ...CAR_LUCIDE_ICONS],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappLeadModalComponent, WhatsappIconComponent, ...CAR_LUCIDE_ICONS],
   templateUrl: './dealer-profile.component.html',
   styleUrl: './dealer-profile.component.css',
 })

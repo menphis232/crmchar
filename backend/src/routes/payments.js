@@ -2,6 +2,10 @@ import { Router } from 'express';
 import Stripe from 'stripe';
 import { get, run } from '../db.js';
 import { v4 as uuid } from 'uuid';
+import {
+  getPlatformStripeAdmin,
+  activateUserSubscription,
+} from '../utils/subscription-lifecycle.js';
 
 const router = Router();
 
@@ -57,14 +61,8 @@ router.post('/confirm-subscription', async (req, res) => {
       return res.status(400).json({ error: 'Falta session_id' });
     }
 
-    const admin = await get(`
-      SELECT stripe_secret_key FROM users
-      WHERE role IN ('admin', 'super_admin')
-        AND stripe_secret_key IS NOT NULL AND stripe_secret_key != ''
-      ORDER BY CASE role WHEN 'super_admin' THEN 0 ELSE 1 END
-      LIMIT 1
-    `);
-    if (!admin || !admin.stripe_secret_key) {
+    const admin = await getPlatformStripeAdmin();
+    if (!admin?.stripe_secret_key) {
       return res.status(400).json({ error: 'El sistema no tiene Stripe configurado' });
     }
 
@@ -74,17 +72,12 @@ router.post('/confirm-subscription', async (req, res) => {
     if (session.payment_status === 'paid' && session.mode === 'subscription') {
       const userId = session.metadata?.user_id;
       if (userId) {
-        await run(
-          "UPDATE users SET status = 'active', stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?",
-          [session.customer, session.subscription, userId]
-        );
+        await activateUserSubscription(userId, session.customer, session.subscription);
         return res.json({ success: true });
-      } else {
-        return res.status(400).json({ error: 'Sesión sin metadata de usuario' });
       }
-    } else {
-      return res.status(400).json({ error: 'El pago de la suscripción no se ha completado' });
+      return res.status(400).json({ error: 'Sesión sin metadata de usuario' });
     }
+    return res.status(400).json({ error: 'El pago de la suscripción no se ha completado' });
   } catch (err) {
     console.error('Stripe Subscription Confirm Error:', err);
     res.status(500).json({ error: 'Error interno al confirmar la suscripción' });

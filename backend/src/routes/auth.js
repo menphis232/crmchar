@@ -6,35 +6,16 @@ import { authRequired, signToken } from '../middleware/auth.js';
 import Stripe from 'stripe';
 import { sendEmail } from '../utils/mailer.js';
 import { getFrontendBase } from '../utils/frontend-url.js';
+import {
+  getPlatformStripeAdmin,
+  getOrgSubscriptionStatus,
+  sendActivationEmailByEmail,
+  activateUserSubscription,
+  createActivationCheckout,
+} from '../utils/subscription-lifecycle.js';
 
-function getRegisterOrigin(req) {
+function getRegisterOrigin() {
   return getFrontendBase();
-}
-
-async function getPlatformStripeAdmin() {
-  return get(`
-    SELECT stripe_secret_key, stripe_price_id
-    FROM users
-    WHERE role IN ('admin', 'super_admin')
-      AND stripe_secret_key IS NOT NULL AND stripe_secret_key != ''
-      AND stripe_price_id IS NOT NULL AND stripe_price_id != ''
-    ORDER BY CASE role WHEN 'super_admin' THEN 0 ELSE 1 END
-    LIMIT 1
-  `);
-}
-
-async function sendPaymentReminderEmail(toEmail, name, roleName, checkoutUrl) {
-  const subject = `💳 Activa tu cuenta de ${roleName} en Trámites Vehiculares`;
-  const html = `
-      <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Bienvenido, ${name}!</h2>
-      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Tu cuenta de <strong>${roleName}</strong> fue creada exitosamente.</p>
-      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Para acceder a tu panel y comenzar a operar, es necesario que actives tu suscripción mensual haciendo clic en el botón de abajo:</p>
-      <div style="text-align: center; margin: 32px 0;">
-        <a href="${checkoutUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; display: inline-block;">Activar mi cuenta &rarr;</a>
-      </div>
-      <p style="color: #888; font-size: 13px;">Si el botón no funciona, copia y pega este enlace en tu navegador:<br><a href="${checkoutUrl}" style="color: #c8a94a;">${checkoutUrl}</a></p>
-  `;
-  await sendEmail(toEmail, subject, `Activa tu cuenta: ${checkoutUrl}`, html);
 }
 
 async function sendForgotPasswordEmail(toEmail, name, newPassword) {
@@ -81,6 +62,7 @@ router.post('/register', async (req, res) => {
     
     // Check if we need to enforce subscription payment
     let stripeCheckoutUrl = null;
+    let stripeSessionId = null;
     let initialStatus = 'active';
 
     if (role === 'gestor' || role === 'concesionaria') {
@@ -88,7 +70,7 @@ router.post('/register', async (req, res) => {
       if (admin) {
         try {
           initialStatus = 'pending_payment';
-          const origin = getRegisterOrigin(req);
+          const origin = getRegisterOrigin();
           const stripe = new Stripe(admin.stripe_secret_key);
           const session = await stripe.checkout.sessions.create({
             mode: 'subscription',
@@ -100,6 +82,7 @@ router.post('/register', async (req, res) => {
             metadata: { user_id: userId, role },
           });
           stripeCheckoutUrl = session.url;
+          stripeSessionId = session.id;
         } catch (stripeErr) {
           console.error('Stripe register error:', stripeErr);
           return res.status(400).json({
@@ -135,10 +118,12 @@ router.post('/register', async (req, res) => {
       ]);
     }
 
+    if (stripeSessionId) {
+      await run('UPDATE users SET stripe_checkout_session_id = ? WHERE id = ?', [stripeSessionId, userId]).catch(() => {});
+    }
+
     if (stripeCheckoutUrl) {
-      // Send payment reminder email in the background
-      const roleName = role === 'gestor' ? 'Gestoría' : 'Concesionaria';
-      sendPaymentReminderEmail(email.toLowerCase(), String(name).trim(), roleName, stripeCheckoutUrl).catch(console.error);
+      // No enviar correo aquí: el usuario va directo a pagar. El correo se envía solo si cancela o falla el pago.
       return res.status(201).json({ requirePayment: true, checkoutUrl: stripeCheckoutUrl });
     }
 
@@ -153,6 +138,53 @@ router.post('/register', async (req, res) => {
   }
 });
 
+router.post('/send-activation-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email requerido' });
+    const result = await sendActivationEmailByEmail(email.toLowerCase());
+    if (result.sent) return res.json({ success: true });
+    if (result.reason === 'already_active') {
+      return res.json({ success: true, message: 'Tu cuenta ya está activa' });
+    }
+    if (result.reason === 'deactivated') {
+      return res.status(403).json({ error: 'Cuenta desactivada. Contacta soporte.' });
+    }
+    return res.status(404).json({ error: 'Usuario no encontrado' });
+  } catch (err) {
+    console.error('send-activation-email error:', err);
+    res.status(500).json({ error: 'No se pudo enviar el correo de activación' });
+  }
+});
+
+router.post('/resume-payment', authRequired, async (req, res) => {
+  try {
+    const user = await get('SELECT id, email, name, role, status, parent_id FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (user.parent_id) {
+      return res.status(403).json({ error: 'Solo el titular puede gestionar el pago' });
+    }
+    if (user.status === 'active') {
+      return res.json({ success: true, message: 'Cuenta ya activa' });
+    }
+
+    const admin = await getPlatformStripeAdmin();
+    if (!admin) return res.status(400).json({ error: 'Stripe no configurado' });
+
+    const stripe = new Stripe(admin.stripe_secret_key);
+    const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+
+    if (user.status !== 'pending_payment' && user.status !== 'deactivated') {
+      await run("UPDATE users SET status = 'pending_payment' WHERE id = ?", [user.id]);
+    }
+
+    return res.json({ success: true, checkoutUrl });
+  } catch (err) {
+    console.error('resume-payment error:', err);
+    res.status(500).json({ error: 'No se pudo generar el enlace de pago' });
+  }
+});
+
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -163,13 +195,18 @@ router.post('/login', async (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password_hash)) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
-    if (user.status === 'pending_payment') {
-      return res.status(403).json({ error: 'Tu cuenta requiere una suscripción activa para acceder. Por favor revisa tu correo o contáctanos para el pago.' });
-    }
     if (user.permissions && typeof user.permissions === 'string') {
       try { user.permissions = JSON.parse(user.permissions); } catch(e){}
     }
-    const { password_hash, ...safe } = user;
+    const subscriptionStatus = await getOrgSubscriptionStatus(user.id, user.parent_id);
+    const { password_hash, status: _s, ...safe } = user;
+    safe.status = subscriptionStatus;
+    if (user.parent_id) {
+      const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [user.parent_id]);
+      safe.payment_failed_count = org?.payment_failed_count || 0;
+    } else {
+      safe.payment_failed_count = user.payment_failed_count || 0;
+    }
     res.json({ token: signToken(safe), user: safe });
   } catch (err) {
     console.error(err);
@@ -213,8 +250,14 @@ router.post('/forgot-password', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
+    if (user.parent_id) {
+      const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [user.parent_id]);
+      user.payment_failed_count = org?.payment_failed_count || 0;
+    }
 
     let profile = null;
     if (user.role === 'gestor') {

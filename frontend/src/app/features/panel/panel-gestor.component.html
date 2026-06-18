@@ -20,13 +20,16 @@
       }
     </button>
 
-    <!-- Desktop Avatar & Logout -->
+    <!-- Desktop Avatar Menu -->
     <div class="desktop-only">
-      <span>{{ profile()?.name }}</span>
-      <div class="avatar">{{ initials(profile()?.name) }}</div>
-      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-      </button>
+      <app-panel-user-menu
+        [name]="profile()?.name || auth.user()?.name || ''"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials(profile()?.name || auth.user()?.name)"
+        [showName]="true"
+        [showBilling]="!auth.user()?.parent_id"
+        (logout)="auth.logout()"
+      />
     </div>
   </div>
 </nav>
@@ -35,13 +38,16 @@
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
     <!-- Mobile User Section -->
     <div class="mobile-only sidebar-user-section">
-      <div class="avatar">{{ initials(profile()?.name) }}</div>
+      <app-panel-user-menu
+        [name]="profile()?.name || auth.user()?.name || ''"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials(profile()?.name || auth.user()?.name)"
+        [showBilling]="!auth.user()?.parent_id"
+        (logout)="auth.logout()"
+      />
       <div style="flex:1;">
         <strong>{{ profile()?.name || 'Gestor' }}</strong>
       </div>
-      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-      </button>
     </div>
 
     @if (hasPerm('dashboard')) {
@@ -555,6 +561,9 @@
     }
   </main>
 </div>
+
+<!-- Bloqueo por suscripción pendiente / desactivada -->
+<app-panel-subscription-lock />
 
 <!-- VEGA AI Assistant — Asistente Animado del Panel Gestor -->
 <app-ai-assistant panelRole="gestor" />

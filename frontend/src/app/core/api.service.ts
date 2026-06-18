@@ -4,7 +4,7 @@ import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
   CrmContact, CrmContact360, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
-  MessageTemplate, SiteSettings, StateFilter, FinTransaction, FinDashboard
+  MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
 
@@ -403,5 +403,21 @@ export class FinancesService {
     if (to) url += `&to=${to}`;
     return url;
   }
+}
+
+@Injectable({ providedIn: 'root' })
+export class BillingService {
+  private base = `${environment.apiUrl}/billing`;
+  constructor(private http: HttpClient) {}
+
+  getSummary() { return this.http.get<BillingSummary>(`${this.base}/summary`); }
+  getInvoices() { return this.http.get<{ invoices: BillingInvoice[] }>(`${this.base}/invoices`); }
+  getPaymentMethods() { return this.http.get<{ methods: BillingPaymentMethod[]; defaultPaymentMethodId: string | null }>(`${this.base}/payment-methods`); }
+  createSetupIntent() { return this.http.post<{ clientSecret: string; publishableKey: string }>(`${this.base}/setup-intent`, {}); }
+  deletePaymentMethod(id: string) { return this.http.delete<{ success: boolean }>(`${this.base}/payment-methods/${id}`); }
+  setDefaultPaymentMethod(id: string) { return this.http.put<{ success: boolean }>(`${this.base}/payment-methods/${id}/default`, {}); }
+  cancelSubscription() { return this.http.post<BillingSummary>(`${this.base}/cancel-subscription`, {}); }
+  reactivateSubscription() { return this.http.post<BillingSummary>(`${this.base}/reactivate-subscription`, {}); }
+  resubscribe() { return this.http.post<{ success: boolean; checkoutUrl?: string }>(`${this.base}/resubscribe`, {}); }
 }
 

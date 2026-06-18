@@ -2,13 +2,14 @@ import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import { requireActiveSubscription } from '../middleware/subscription.js';
 import { createDealFromInquiry, findOrCreateContact, createManualVentaDeal } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 const router = Router();
 
-router.get('/me/dashboard', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.get('/me/dashboard', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const uid = req.user.id;
     const [published, draft, baja, inquiriesNew, reviews] = await Promise.all([
@@ -31,7 +32,7 @@ router.get('/me/dashboard', authRequired, requireRole('concesionaria'), async (r
   }
 });
 
-router.get('/me/inquiries', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.get('/me/inquiries', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const rows = await query(`
       SELECT i.id, i.client_name as clientName, i.client_email as clientEmail,
@@ -47,7 +48,7 @@ router.get('/me/inquiries', authRequired, requireRole('concesionaria'), async (r
   }
 });
 
-router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const { reply, status } = req.body;
     const result = await run(`
@@ -61,7 +62,7 @@ router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), as
   }
 });
 
-router.get('/me/reviews', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.get('/me/reviews', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const rows = await query(`
       SELECT id, author, rating, comment, created_at as createdAt

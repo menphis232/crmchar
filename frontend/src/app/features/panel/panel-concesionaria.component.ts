@@ -21,6 +21,8 @@ import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
+import { PanelUserMenuComponent } from './panel-user-menu.component';
+import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'finanzas';
 
@@ -43,7 +45,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })
@@ -114,6 +116,7 @@ export class PanelConcesionariaComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.auth.getMe().subscribe();
     this.siteService.get('panel-concesionaria').subscribe(t => {
       this.panelTheme.set(t);
       this.themeService.applyPanel(t);

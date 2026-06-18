@@ -10,7 +10,8 @@ export function signToken(user) {
       role: user.role, 
       name: user.name,
       parent_id: user.parent_id,
-      permissions: user.permissions
+      permissions: user.permissions,
+      status: user.status,
     },
     JWT_SECRET,
     { expiresIn: '7d' }

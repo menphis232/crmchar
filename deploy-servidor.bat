@@ -41,6 +41,7 @@ docker exec tramites-backend node apply-v31-auto-video.js 2>/dev/null || echo 'v
 docker exec tramites-backend node apply-v32-spartan-fonts.js 2>/dev/null || echo 'v32 ok'; ^
 docker exec tramites-backend node apply-v33-auto-special-price.js 2>/dev/null || echo 'v33 ok'; ^
 docker exec tramites-backend node apply-v34-auto-verified.js 2>/dev/null || echo 'v34 ok'; ^
+docker exec tramites-backend node apply-v35-subscription-status.js 2>/dev/null || echo 'v35 ok'; ^
 docker exec tramites-backend node src/migrate.js 2>/dev/null || echo 'migrate.js ok'; ^
 echo ''; ^
 echo '=== [6/6] Rebuild y restart ==='; ^

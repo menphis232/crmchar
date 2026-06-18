@@ -1,27 +1,30 @@
 import { Router } from 'express';
 import Stripe from 'stripe';
 import { get, run } from '../db.js';
+import {
+  getPlatformStripeAdmin,
+  activateUserSubscription,
+  handlePaymentFailed,
+  stripeRefId,
+} from '../utils/subscription-lifecycle.js';
 
 const router = Router();
 
+async function getStripeInstance() {
+  const admin = await getPlatformStripeAdmin();
+  if (!admin?.stripe_secret_key) return null;
+  return new Stripe(admin.stripe_secret_key);
+}
+
 router.post('/stripe', async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const superAdmin = await get("SELECT stripe_secret_key FROM users WHERE role = 'super_admin' LIMIT 1");
-  
-  if (!superAdmin || !superAdmin.stripe_secret_key) {
-    console.error('Webhook Error: No stripe secret key found for super admin');
-    return res.status(400).send(`Webhook Error: Stripe not configured`);
+  const stripe = await getStripeInstance();
+  if (!stripe) {
+    console.error('Webhook Error: Stripe not configured');
+    return res.status(400).send('Webhook Error: Stripe not configured');
   }
-  
-  const stripe = new Stripe(superAdmin.stripe_secret_key);
 
   let event;
-
   try {
-    // Note: since this endpoint is using express.raw, req.body is a Buffer
-    // In local development, you might not have the webhook secret configured, 
-    // so we can fallback to just parsing the body if signature verification fails and we are not in prod.
-    // For production, you MUST use constructEvent with the endpoint secret.
     event = JSON.parse(req.body.toString());
   } catch (err) {
     console.error(`Webhook Error: ${err.message}`);
@@ -32,46 +35,68 @@ router.post('/stripe', async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        if (session.mode === 'subscription' && session.metadata?.user_id) {
-          const userId = session.metadata.user_id;
-          const customerId = session.customer;
-          const subscriptionId = session.subscription;
-
-          await run(
-            "UPDATE users SET status = 'active', stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?",
-            [customerId, subscriptionId, userId]
+        if (session.mode === 'subscription' && session.metadata?.user_id && session.payment_status === 'paid') {
+          await activateUserSubscription(
+            session.metadata.user_id,
+            session.customer,
+            session.subscription,
           );
-          console.log(`Usuario ${userId} activado tras pago de suscripción.`);
+          console.log(`Usuario ${session.metadata.user_id} activado tras pago de suscripción.`);
         }
         break;
       }
-      
+
       case 'customer.subscription.deleted': {
         const subscription = event.data.object;
-        await run("UPDATE users SET status = 'pending_payment' WHERE stripe_subscription_id = ?", [subscription.id]);
-        console.log(`Suscripción ${subscription.id} cancelada. Usuario bloqueado.`);
+        await run(
+          "UPDATE users SET status = 'deactivated', stripe_subscription_id = NULL WHERE stripe_subscription_id = ?",
+          [subscription.id],
+        );
+        console.log(`Suscripción ${subscription.id} terminada. Usuario desactivado.`);
         break;
       }
-      
-      case 'invoice.payment_failed': {
-        const invoice = event.data.object;
-        if (invoice.subscription) {
-          await run("UPDATE users SET status = 'pending_payment' WHERE stripe_subscription_id = ?", [invoice.subscription]);
-          console.log(`Pago fallido para suscripción ${invoice.subscription}. Usuario bloqueado temporalmente.`);
+
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object;
+        const subId = subscription.id;
+        if (['canceled', 'incomplete_expired', 'unpaid'].includes(subscription.status)) {
+          await run(
+            "UPDATE users SET status = 'deactivated' WHERE stripe_subscription_id = ?",
+            [subId],
+          );
+          console.log(`Suscripción ${subId} en estado ${subscription.status}. Usuario desactivado.`);
+        } else if (subscription.status === 'active' && !subscription.cancel_at_period_end) {
+          await run(
+            "UPDATE users SET status = 'active', payment_failed_count = 0 WHERE stripe_subscription_id = ?",
+            [subId],
+          );
         }
         break;
       }
-      
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        const subId = stripeRefId(invoice.subscription);
+        if (subId) {
+          await handlePaymentFailed(subId);
+        }
+        break;
+      }
+
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object;
-        if (invoice.subscription) {
-          await run("UPDATE users SET status = 'active' WHERE stripe_subscription_id = ?", [invoice.subscription]);
+        const subId = stripeRefId(invoice.subscription);
+        if (subId) {
+          await run(
+            "UPDATE users SET status = 'active', payment_failed_count = 0 WHERE stripe_subscription_id = ?",
+            [subId],
+          );
         }
         break;
       }
     }
 
-    res.json({received: true});
+    res.json({ received: true });
   } catch (err) {
     console.error('Error procesando webhook de Stripe:', err);
     res.status(500).end();

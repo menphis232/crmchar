@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
+import { requireActiveSubscription } from '../middleware/subscription.js';
 
 const router = Router();
 
@@ -95,7 +96,7 @@ router.get('/filters/makes', async (_req, res) => {
   }
 });
 
-router.get('/me/inventory', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.get('/me/inventory', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const { status } = req.query;
     let sql = 'SELECT * FROM autos WHERE user_id = ?';
@@ -124,7 +125,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Documentación privada del vehículo (solo panel concesionaria, no pública)
-router.get('/:id/private-documents', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.get('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const auto = await assertAutoOwner(req.params.id, req.user.id);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
@@ -140,7 +141,7 @@ router.get('/:id/private-documents', authRequired, requireRole('concesionaria'),
   }
 });
 
-router.post('/:id/private-documents', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.post('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const auto = await assertAutoOwner(req.params.id, req.user.id);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
@@ -165,7 +166,7 @@ router.post('/:id/private-documents', authRequired, requireRole('concesionaria')
   }
 });
 
-router.delete('/:id/private-documents/:docId', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.delete('/:id/private-documents/:docId', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const auto = await assertAutoOwner(req.params.id, req.user.id);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
@@ -183,7 +184,7 @@ router.delete('/:id/private-documents/:docId', authRequired, requireRole('conces
 });
 
 
-router.post('/', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl, verified } = req.body;
     if (!make || !model || !year || price == null || mileage == null) {
@@ -215,7 +216,7 @@ router.post('/', authRequired, requireRole('concesionaria'), async (req, res) =>
   }
 });
 
-router.put('/:id', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     if (!existing) return res.status(404).json({ error: 'Vehículo no encontrado' });
@@ -256,7 +257,7 @@ router.put('/:id', authRequired, requireRole('concesionaria'), async (req, res) 
   }
 });
 
-router.patch('/:id/status', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.patch('/:id/status', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const { status } = req.body;
     if (!['draft', 'published', 'baja'].includes(status)) {
@@ -274,7 +275,7 @@ router.patch('/:id/status', authRequired, requireRole('concesionaria'), async (r
   }
 });
 
-router.delete('/:id', authRequired, requireRole('concesionaria'), async (req, res) => {
+router.delete('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
   try {
     const result = await run('DELETE FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
     if (!result.affectedRows) return res.status(404).json({ error: 'Vehículo no encontrado' });

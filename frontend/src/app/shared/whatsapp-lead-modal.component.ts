@@ -1,8 +1,8 @@
-import { Component, Input, Output, EventEmitter, signal } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { inject } from '@angular/core';
 import { environment } from '../../environments/environment';
+import { WhatsappIconComponent } from './whatsapp-icon.component';
 
 export interface WhatsappLeadData {
   dealerSlug: string;
@@ -15,7 +15,7 @@ export interface WhatsappLeadData {
 @Component({
   selector: 'app-whatsapp-lead-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, WhatsappIconComponent],
   styles: [`
     .wl-overlay {
       position: fixed; inset: 0; z-index: 9999;
@@ -25,48 +25,56 @@ export interface WhatsappLeadData {
     }
     .wl-card {
       background: #000; border: 1px solid rgba(255,255,255,.1);
-      border-radius: 16px; padding: 32px 28px; width: 100%; max-width: 420px;
+      border-radius: 16px; padding: 24px 22px; width: 100%; max-width: 400px;
       box-shadow: 0 24px 64px rgba(0,0,0,.9);
       font-family: 'Spartan', sans-serif;
       animation: wl-in .2s ease;
     }
     @keyframes wl-in { from { opacity:0; transform:scale(.95) translateY(10px); } to { opacity:1; transform:none; } }
-    .wl-logo { font-size: 36px; text-align: center; margin-bottom: 6px; }
-    .wl-title { font-size: 20px; font-weight: 700; color: #fff; text-align: center; margin: 0 0 4px; }
-    .wl-sub { font-size: 13px; color: rgba(255,255,255,.5); text-align: center; margin: 0 0 24px; line-height: 1.5; }
+    .wl-logo-wrap {
+      display: flex; justify-content: center; margin-bottom: 12px;
+    }
+    .wl-logo-circle {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: rgba(37,211,102,.15); border: 1px solid rgba(37,211,102,.35);
+      display: flex; align-items: center; justify-content: center;
+      color: #25D366;
+    }
+    .wl-title { font-size: 17px; font-weight: 700; color: #fff; text-align: center; margin: 0 0 4px; }
+    .wl-sub { font-size: 12px; color: rgba(255,255,255,.5); text-align: center; margin: 0 0 18px; line-height: 1.45; }
     .wl-badge {
       background: rgba(37,211,102,.12); border: 1px solid rgba(37,211,102,.3);
-      border-radius: 8px; padding: 8px 12px; margin-bottom: 20px;
-      font-size: 12px; color: rgba(37,211,102,.9); text-align: center;
+      border-radius: 8px; padding: 8px 10px; margin-bottom: 16px;
+      font-size: 11px; color: rgba(37,211,102,.9); text-align: center; line-height: 1.4;
     }
-    .wl-group { margin-bottom: 14px; }
-    .wl-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.6); margin-bottom: 5px; display: block; letter-spacing: .04em; text-transform: uppercase; }
+    .wl-group { margin-bottom: 12px; }
+    .wl-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.6); margin-bottom: 4px; display: block; letter-spacing: .04em; text-transform: uppercase; }
     .wl-input {
       width: 100%; box-sizing: border-box;
       background: #111; border: 1px solid rgba(255,255,255,.12);
-      border-radius: 8px; padding: 11px 14px; color: #fff; font-size: 14px;
+      border-radius: 8px; padding: 10px 12px; color: #fff; font-size: 13px;
       font-family: inherit; outline: none; transition: border-color .15s;
     }
     .wl-input:focus { border-color: rgba(37,211,102,.6); }
     .wl-input::placeholder { color: rgba(255,255,255,.3); }
-    .wl-note { font-size: 11px; color: rgba(255,255,255,.35); margin: 4px 0 0; line-height: 1.4; }
+    .wl-note { font-size: 10px; color: rgba(255,255,255,.35); margin: 4px 0 0; line-height: 1.4; }
     .wl-btn-wa {
-      width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer;
-      background: #25D366; color: #fff; font-size: 15px; font-weight: 700;
-      font-family: inherit; margin-top: 8px; display: flex; align-items: center;
+      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+      background: #25D366; color: #fff; font-size: 13px; font-weight: 700;
+      font-family: inherit; margin-top: 6px; display: flex; align-items: center;
       justify-content: center; gap: 8px; transition: opacity .15s;
     }
     .wl-btn-wa:hover { opacity: .9; }
     .wl-btn-wa:disabled { opacity: .5; cursor: not-allowed; }
-    .wl-cancel { width: 100%; background: none; border: none; color: rgba(255,255,255,.4); font-size: 13px; font-family: inherit; cursor: pointer; margin-top: 10px; padding: 6px; }
+    .wl-cancel { width: 100%; background: none; border: none; color: rgba(255,255,255,.4); font-size: 12px; font-family: inherit; cursor: pointer; margin-top: 8px; padding: 6px; }
     .wl-cancel:hover { color: rgba(255,255,255,.7); }
-    .wl-error { color: #f87171; font-size: 12px; margin-top: 8px; text-align: center; }
-    .wl-success-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
-    .wl-success-title { font-size: 20px; font-weight: 700; color: #25D366; text-align: center; margin: 0 0 8px; }
-    .wl-success-msg { font-size: 13px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.6; margin: 0 0 20px; }
+    .wl-error { color: #f87171; font-size: 11px; margin-top: 8px; text-align: center; }
+    .wl-success-icon { display: flex; justify-content: center; margin-bottom: 10px; color: #25D366; }
+    .wl-success-title { font-size: 17px; font-weight: 700; color: #25D366; text-align: center; margin: 0 0 8px; }
+    .wl-success-msg { font-size: 12px; color: rgba(255,255,255,.55); text-align: center; line-height: 1.55; margin: 0 0 16px; }
     .wl-btn-open {
-      width: 100%; padding: 14px; border: none; border-radius: 10px; cursor: pointer;
-      background: #25D366; color: #fff; font-size: 15px; font-weight: 700;
+      width: 100%; padding: 12px; border: none; border-radius: 10px; cursor: pointer;
+      background: #25D366; color: #fff; font-size: 13px; font-weight: 700;
       font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
     .wl-btn-open:hover { opacity: .9; }
@@ -76,7 +84,11 @@ export interface WhatsappLeadData {
       <div class="wl-card" (click)="$event.stopPropagation()">
 
         @if (!submitted()) {
-          <div class="wl-logo">💬</div>
+          <div class="wl-logo-wrap">
+            <div class="wl-logo-circle">
+              <app-whatsapp-icon [size]="28" />
+            </div>
+          </div>
           <h2 class="wl-title">Continuar a WhatsApp</h2>
           <p class="wl-sub">
             @if (data.autoLabel) { Interesado en: <strong style="color:#fff">{{ data.autoLabel }}</strong><br> }
@@ -84,7 +96,7 @@ export interface WhatsappLeadData {
           </p>
 
           <div class="wl-badge">
-            🔒 Tu información se guarda de forma segura. Te crearemos una cuenta para hacer seguimiento.
+            Tu información se guarda de forma segura. Te crearemos una cuenta para hacer seguimiento.
           </div>
 
           <div class="wl-group">
@@ -108,13 +120,18 @@ export interface WhatsappLeadData {
           }
 
           <button class="wl-btn-wa" (click)="submit()" [disabled]="loading()">
-            @if (loading()) { ⏳ Procesando... }
-            @else { 📲 Continuar a WhatsApp }
+            @if (loading()) { Procesando... }
+            @else {
+              <app-whatsapp-icon [size]="16" />
+              Continuar a WhatsApp
+            }
           </button>
           <button class="wl-cancel" (click)="close.emit()">Cancelar</button>
 
         } @else {
-          <div class="wl-success-icon">✅</div>
+          <div class="wl-success-icon">
+            <app-whatsapp-icon [size]="40" />
+          </div>
           <h2 class="wl-success-title">¡Todo listo!</h2>
           <p class="wl-success-msg">
             Tu información fue registrada.
@@ -123,7 +140,8 @@ export interface WhatsappLeadData {
             }
           </p>
           <button class="wl-btn-open" (click)="openWhatsapp()">
-            💬 Abrir WhatsApp
+            <app-whatsapp-icon [size]="16" />
+            Abrir WhatsApp
           </button>
           <button class="wl-cancel" (click)="close.emit()">Cerrar</button>
         }

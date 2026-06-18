@@ -4,6 +4,8 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
+import { AuthService } from '../../core/auth.service';
+
 @Component({
   selector: 'app-subscription-success',
   standalone: true,
@@ -36,7 +38,7 @@ export class SubscriptionSuccessComponent implements OnInit {
   loading = signal(true);
   error = signal('');
 
-  constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router) {}
+  constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router, private auth: AuthService) {}
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -52,7 +54,10 @@ export class SubscriptionSuccessComponent implements OnInit {
         .subscribe({
           next: () => {
             this.loading.set(false);
-            setTimeout(() => this.router.navigate(['/login']), 4000); // Auto redirect after 4s
+            if (this.auth.isLoggedIn()) {
+              this.auth.getMe().subscribe();
+            }
+            setTimeout(() => this.router.navigate(['/login']), 4000);
           },
           error: (err) => {
             this.error.set(err.error?.error || 'Ocurrió un error al verificar tu pago de suscripción.');
