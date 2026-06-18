@@ -3,10 +3,15 @@
    Negro/blanco/gris sin tocar nav ni sidebar
 ══════════════════════════════════════════ */
 
-/* ── Fondo del layout principal ── */
+/* ── Fondo del layout principal + variables de texto ── */
 :host {
   display: block;
   background: #000;
+  /* Sobreescribir variables de texto para que los inline styles hereden blanco */
+  --text:     #ffffff;
+  --mx-white: #ffffff;
+  --muted:    rgba(255,255,255,0.45);
+  --brand-grey: rgba(255,255,255,0.35);
 }
 
 .dash-container {
@@ -392,12 +397,14 @@ select option { background: #111111; color: #ffffff; }
   color: #ffffff !important;
 }
 :host ::ng-deep .review-card {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-left: 4px solid rgba(255,255,255,0.25) !important;
+  background: #181818 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-left: 4px solid rgba(255,255,255,0.30) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
 }
+:host ::ng-deep .review-card p { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+:host ::ng-deep .review-author { color: rgba(255,255,255,0.50) !important; -webkit-text-fill-color: rgba(255,255,255,0.50) !important; font-size: 13px !important; }
 :host ::ng-deep .status-tag { border-radius: 999px !important; }
 :host ::ng-deep .filter-tabs button {
   background: transparent !important;
@@ -468,12 +475,14 @@ select option { background: #111111; color: #ffffff; }
 .status-tag { border-radius: 999px !important; }
 
 .review-card {
-  background: #0d0d0d !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-left: 4px solid rgba(255,255,255,0.25) !important;
+  background: #181818 !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  border-left: 4px solid rgba(255,255,255,0.30) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
 }
+.review-card p { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
+.review-author { color: rgba(255,255,255,0.50) !important; -webkit-text-fill-color: rgba(255,255,255,0.50) !important; }
 
 .task-row {
   background: #0d0d0d !important;
