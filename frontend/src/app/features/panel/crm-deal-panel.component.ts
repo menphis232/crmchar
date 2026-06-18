@@ -50,6 +50,8 @@ import { ToastService } from '../../core/toast.service';
     .deal-panel-body { background: #000 !important; }
     .deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
     .deal-subsection { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; margin-bottom: 8px !important; }
+    .deal-subsection--ocr { background: #0d0d0d !important; border-color: rgba(255,255,255,0.10) !important; }
+    .deal-subsection--ocr h4 { color: rgba(255,255,255,0.45) !important; }
 
     /* Header */
     .deal-panel-header {
@@ -98,9 +100,42 @@ import { ToastService } from '../../core/toast.service';
     .link-name { color: #ffffff !important; font-family: var(--f-display) !important; font-weight: 700 !important; }
     .link-name:hover { color: rgba(255,255,255,0.60) !important; }
 
-    /* Inputs / selects */
-    input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
-    textarea, select {
+    /* Selects — mismo estilo que kanban leads */
+    .deal-panel select,
+    .deal-section select {
+      color-scheme: dark !important;
+      background-color: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: rgba(255,255,255,0.80) !important;
+      -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      padding: 8px 10px !important;
+      width: 100% !important;
+      cursor: pointer !important;
+      font-family: var(--f-display) !important;
+      box-sizing: border-box !important;
+    }
+    .deal-panel select:focus,
+    .deal-section select:focus {
+      border-color: rgba(255,255,255,0.45) !important;
+      outline: none !important;
+      background-color: #1a1a1a !important;
+      color: rgba(255,255,255,0.80) !important;
+      -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
+    }
+    .deal-panel select option,
+    .deal-section select option {
+      background: #1a1a1a !important;
+      color: #ffffff !important;
+    }
+
+    /* Inputs / textarea */
+    .deal-panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+    .deal-section input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+    .deal-panel textarea,
+    .deal-section textarea {
       background: #161616 !important;
       border: 1px solid rgba(255,255,255,0.13) !important;
       color: #ffffff !important;
@@ -110,14 +145,22 @@ import { ToastService } from '../../core/toast.service';
       font-family: var(--f-display) !important;
       font-size: 14px !important;
       color-scheme: dark !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
     }
-    input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.25) !important; opacity: 1; }
-    input:focus, textarea:focus, select:focus {
+    .deal-panel input::placeholder,
+    .deal-panel textarea::placeholder,
+    .deal-section input::placeholder,
+    .deal-section textarea::placeholder { color: rgba(255,255,255,0.25) !important; opacity: 1; }
+    .deal-panel input:focus,
+    .deal-panel textarea:focus,
+    .deal-section input:focus,
+    .deal-section textarea:focus {
       border-color: rgba(255,255,255,0.40) !important;
       box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
       outline: none !important;
+      background: #161616 !important;
     }
-    select option { background: #161616 !important; color: #ffffff !important; }
 
     /* Botones */
     .btn-copy {
