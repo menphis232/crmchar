@@ -499,7 +499,7 @@
           <p class="card-desc" style="margin-top:4px; font-size:11px;">Este logo se mostrará en las cotizaciones PDF y en tu página pública.</p>
           @if (profileLogoUrl) {
             <div style="margin-top:12px; padding:12px; background:var(--surface); border-radius:8px; display:inline-block; position:relative;">
-              <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo" (error)="profileLogoUrl = ''">
+              <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo">
               <button class="btn-delete small" style="position:absolute; top:-10px; right:-10px;" (click)="profileLogoUrl = ''">X</button>
             </div>
           }

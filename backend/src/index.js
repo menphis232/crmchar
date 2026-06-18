@@ -28,6 +28,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+app.set('trust proxy', 1);
 
 // FASE 3.3 Automatizaciones: Ejecutar robot
 startAutomationsCron();

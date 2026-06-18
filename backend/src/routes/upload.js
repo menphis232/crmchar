@@ -74,6 +74,19 @@ const uploadVideo = multer({
 
 const router = Router();
 
+const PUBLIC_BASE = (
+  process.env.API_PUBLIC_URL ||
+  process.env.FRONTEND_URL ||
+  ''
+).replace(/\/$/, '');
+
+function buildPublicUploadUrl(req, filename) {
+  if (PUBLIC_BASE) return `${PUBLIC_BASE}/uploads/${filename}`;
+  const host = req.get('host');
+  const protocol = req.protocol;
+  return `${protocol}://${host}/uploads/${filename}`;
+}
+
 router.post('/', authRequired, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
@@ -88,9 +101,7 @@ router.post('/', authRequired, upload.single('file'), async (req, res) => {
       .png()
       .toFile(outputPath);
 
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const url = `${protocol}://${host}/uploads/${filename}`;
+    const url = buildPublicUploadUrl(req, filename);
     
     res.json({ url });
   } catch (err) {
@@ -104,9 +115,7 @@ router.post('/document', authRequired, uploadDocument.single('file'), async (req
     if (!req.file) {
       return res.status(400).json({ error: 'No se envió ningún archivo' });
     }
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+    const url = buildPublicUploadUrl(req, req.file.filename);
     res.json({ url, fileName: req.file.originalname });
   } catch (err) {
     console.error(err);
@@ -119,9 +128,7 @@ router.post('/video', authRequired, uploadVideo.single('file'), async (req, res)
     if (!req.file) {
       return res.status(400).json({ error: 'No se envió ningún video' });
     }
-    const host = req.get('host');
-    const protocol = req.protocol;
-    const url = `${protocol}://${host}/uploads/${req.file.filename}`;
+    const url = buildPublicUploadUrl(req, req.file.filename);
     res.json({ url, fileName: req.file.originalname });
   } catch (err) {
     console.error(err);

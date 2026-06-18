@@ -656,7 +656,7 @@ export class PanelConcesionariaComponent implements OnInit {
       next: (res: any) => {
         this.profileLogoUrl = res.url;
         this.isUploadingLogo = false;
-        this.message.set('Logo subido correctamente, no olvides guardar cambios.');
+        this.saveProfile();
       },
       error: () => {
         this.isUploadingLogo = false;
