@@ -19,6 +19,118 @@
 }
 
 /* ══════════════════════════════════════════
+   TIPOGRAFÍA — Spartan + tamaños más grandes
+══════════════════════════════════════════ */
+
+/* Sidebar / menú */
+.dash-link {
+  font-family: var(--f-display) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+}
+
+/* Cards */
+.card-title,
+:host ::ng-deep .card-title {
+  font-family: var(--f-display) !important;
+  font-size: 20px !important;
+  letter-spacing: 0.08em !important;
+}
+
+.card-desc,
+:host ::ng-deep .card-desc {
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Texto general dentro del panel */
+.dash-container,
+.dash-main {
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+}
+
+/* Stats */
+.stat-num { font-size: 36px !important; }
+.stat-label {
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+}
+
+/* Inbox */
+.inbox-info h4,
+:host ::ng-deep .inbox-info h4 {
+  font-family: var(--f-display) !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+}
+.inbox-info p,
+:host ::ng-deep .inbox-info p {
+  font-family: var(--f-display) !important;
+  font-size: 13px !important;
+}
+.inbox-row,
+:host ::ng-deep .inbox-row {
+  font-family: var(--f-display) !important;
+}
+
+/* Kanban */
+:host ::ng-deep .kanban-col-header {
+  font-family: var(--f-display) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.12em !important;
+}
+:host ::ng-deep .kanban-card-top strong {
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+}
+:host ::ng-deep .kanban-contact { font-size: 13px !important; font-family: var(--f-display) !important; }
+:host ::ng-deep .kanban-meta,
+:host ::ng-deep .kanban-days,
+:host ::ng-deep .kanban-value { font-family: var(--f-display) !important; font-size: 12px !important; }
+
+/* Sección sub */
+.section-sub,
+:host ::ng-deep .section-sub {
+  font-family: var(--f-display) !important;
+  font-size: 16px !important;
+}
+
+/* Form labels */
+.form-group label,
+:host ::ng-deep .form-group label {
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.12em !important;
+}
+
+/* Inputs */
+.dash-card input,
+.dash-container input,
+.form-group input,
+.dash-card select,
+.dash-container select,
+.form-group select,
+.dash-card textarea,
+.dash-container textarea,
+.form-group textarea {
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+}
+
+/* Botones */
+.btn-copy, .btn-ghost, .btn-delete, .btn-nuevo-lead {
+  font-family: var(--f-display) !important;
+  font-size: 12px !important;
+}
+
+/* Reseñas */
+.review-card p { font-family: var(--f-display) !important; font-size: 14px !important; }
+.review-author  { font-family: var(--f-display) !important; font-size: 13px !important; }
+
+/* ══════════════════════════════════════════
    CARDS  (directo + ::ng-deep para hijos)
 ══════════════════════════════════════════ */
 .dash-card,
