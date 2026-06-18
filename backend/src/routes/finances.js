@@ -219,8 +219,8 @@ router.get('/', async (req, res) => {
        LEFT JOIN autos a ON d.auto_id = a.id
        WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC, f.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, limit, offset]
+       LIMIT ${limit} OFFSET ${offset}`,
+      params
     );
 
     res.json({
