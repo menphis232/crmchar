@@ -185,7 +185,20 @@ import { ToastService } from '../../core/toast.service';
     .card-desc { color: rgba(255,255,255,0.45) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
     .section-sub { color: rgba(255,255,255,0.75) !important; font-family: var(--f-display) !important; font-size: 15px !important; }
     .divider { border-color: rgba(255,255,255,0.07) !important; }
-    .inquiry-msg { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
+    .inquiry-msg,
+    .deal-panel .inquiry-msg {
+      color: rgba(255,255,255,0.80) !important;
+      background: #161616 !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+      border-left: 3px solid rgba(255,255,255,0.25) !important;
+      border-radius: 10px !important;
+      padding: 12px 14px !important;
+      font-family: var(--f-display) !important;
+      font-size: 14px !important;
+      font-style: italic !important;
+      line-height: 1.5 !important;
+      margin: 8px 0 !important;
+    }
     .reply-msg { color: #4ade80 !important; font-family: var(--f-display) !important; }
 
     /* Activity */
