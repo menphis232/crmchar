@@ -71,6 +71,95 @@ export interface KanbanStage { id: string; label: string; }
     .kanban-col.col-drag-over-right { border-right: 3px solid rgba(255,255,255,0.60) !important; }
     .kanban-col.col-dragging        { opacity: 0.40; }
 
+    /* ── Add column modal ── */
+    .add-col-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+      backdrop-filter: blur(4px);
+    }
+    .add-col-modal {
+      background: #0d0d0d;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 18px;
+      padding: 32px 28px 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.80);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .add-col-modal h3 {
+      margin: 0;
+      color: #ffffff;
+      font-family: var(--f-display);
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .add-col-modal p {
+      margin: 0;
+      color: rgba(255,255,255,0.45);
+      font-size: 13px;
+      font-family: var(--f-ui);
+      line-height: 1.5;
+    }
+    .add-col-input {
+      background: #111 !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      border-radius: 10px !important;
+      font-size: 15px !important;
+      font-family: var(--f-ui) !important;
+      padding: 12px 14px !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      outline: none !important;
+      transition: border-color 0.2s !important;
+    }
+    .add-col-input:focus { border-color: rgba(255,255,255,0.50) !important; }
+    .add-col-input::placeholder { color: rgba(255,255,255,0.28) !important; }
+    .add-col-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .btn-add-col-cancel {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: rgba(255,255,255,0.60);
+      font-family: var(--f-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      padding: 9px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-add-col-cancel:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+    .btn-add-col-confirm {
+      background: #ffffff;
+      border: 2px solid #ffffff;
+      color: #000000;
+      font-family: var(--f-display);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      padding: 9px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-add-col-confirm:hover { background: transparent; color: #fff; }
+    .btn-add-col-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
+
     /* ── Add column button ── */
     .kanban-add-col {
       flex: 0 0 48px;
@@ -118,6 +207,10 @@ export class CrmKanbanComponent {
   // ── inline edit ──
   editingStageId = signal<string | null>(null);
   editingLabel   = signal('');
+
+  // ── add column modal ──
+  showAddCol   = signal(false);
+  newColLabel  = signal('');
 
   // ── column drag state ──
   colDraggingId  = signal<string | null>(null);
@@ -233,15 +326,24 @@ export class CrmKanbanComponent {
   }
 
   // ════════════════════════════════════════
-  // ADD COLUMN
+  // ADD COLUMN modal
   // ════════════════════════════════════════
   addColumn() {
-    const label = prompt('Nombre de la nueva etapa:')?.trim();
+    this.newColLabel.set('');
+    this.showAddCol.set(true);
+    setTimeout(() => document.getElementById('new-col-input')?.focus(), 0);
+  }
+
+  confirmAddColumn() {
+    const label = this.newColLabel().trim();
     if (!label) return;
     const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now();
     this.localStages.update(list => [...list, { id, label }]);
     this.emitStagesChange();
+    this.showAddCol.set(false);
   }
+
+  cancelAddColumn() { this.showAddCol.set(false); }
 
   // ════════════════════════════════════════
   // CARD DRAG & DROP  (existing logic)

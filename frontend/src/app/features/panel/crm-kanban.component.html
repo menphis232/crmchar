@@ -132,3 +132,30 @@
     </div>
   }
 </div>
+
+<!-- ── Add column modal ── -->
+@if (showAddCol()) {
+  <div class="add-col-overlay" (click)="cancelAddColumn()">
+    <div class="add-col-modal" (click)="$event.stopPropagation()">
+      <h3>Nueva etapa</h3>
+      <p>Dale un nombre a la nueva columna del embudo.</p>
+      <input
+        id="new-col-input"
+        class="add-col-input"
+        [value]="newColLabel()"
+        (input)="newColLabel.set($any($event.target).value)"
+        (keydown.enter)="confirmAddColumn()"
+        (keydown.escape)="cancelAddColumn()"
+        placeholder="Ej: Prueba de manejo"
+        autocomplete="off"
+        maxlength="40"
+      />
+      <div class="add-col-actions">
+        <button type="button" class="btn-add-col-cancel" (click)="cancelAddColumn()">Cancelar</button>
+        <button type="button" class="btn-add-col-confirm" (click)="confirmAddColumn()" [disabled]="!newColLabel().trim()">
+          Agregar columna
+        </button>
+      </div>
+    </div>
+  </div>
+}
