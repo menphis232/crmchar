@@ -5,13 +5,10 @@ import { get, run } from '../db.js';
 import { authRequired, signToken } from '../middleware/auth.js';
 import Stripe from 'stripe';
 import { sendEmail } from '../utils/mailer.js';
+import { getFrontendBase } from '../utils/frontend-url.js';
 
 function getRegisterOrigin(req) {
-  return (
-    req.headers.origin
-    || process.env.FRONTEND_URL
-    || 'https://central.tramitesvehicularesdemexico.com'
-  ).replace(/\/$/, '');
+  return getFrontendBase();
 }
 
 async function getPlatformStripeAdmin() {

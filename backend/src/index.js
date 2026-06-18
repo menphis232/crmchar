@@ -13,6 +13,7 @@ import siteRoutes, { adminSiteRouter } from './routes/site.js';
 import uploadRoutes from './routes/upload.js';
 import financesRoutes from './routes/finances.js';
 import paymentsRoutes from './routes/payments.js';
+import billingRoutes from './routes/billing.js';
 import clientRoutes from './routes/client.js';
 import webhooksRoutes from './routes/webhooks.js';
 import aiRoutes from './routes/ai.js';
@@ -23,6 +24,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkStalledDeals } from './crm/automations.js';
 import { startAutomationsCron } from './cron/automations.js';
+import { redirectToFrontend } from './utils/frontend-url.js';
 
 dotenv.config();
 
@@ -44,6 +46,10 @@ app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, db: 'mysql' }));
 
+// Stripe redirige aquí si la URL de éxito apunta al backend; enviamos al SPA del frontend
+app.get('/subscription/success', (req, res) => redirectToFrontend(req, res, '/subscription/success'));
+app.get('/registro-pendiente', (req, res) => redirectToFrontend(req, res, '/registro-pendiente'));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/gestores', gestoresRoutes);
 app.use('/api/autos', autosRoutes);
@@ -55,6 +61,7 @@ app.use('/api/admin/site', adminSiteRouter);
 app.use('/api/site', siteRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/billing', billingRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);

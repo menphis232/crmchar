@@ -57,7 +57,13 @@ router.post('/confirm-subscription', async (req, res) => {
       return res.status(400).json({ error: 'Falta session_id' });
     }
 
-    const admin = await get("SELECT stripe_secret_key FROM users WHERE role = 'admin' LIMIT 1");
+    const admin = await get(`
+      SELECT stripe_secret_key FROM users
+      WHERE role IN ('admin', 'super_admin')
+        AND stripe_secret_key IS NOT NULL AND stripe_secret_key != ''
+      ORDER BY CASE role WHEN 'super_admin' THEN 0 ELSE 1 END
+      LIMIT 1
+    `);
     if (!admin || !admin.stripe_secret_key) {
       return res.status(400).json({ error: 'El sistema no tiene Stripe configurado' });
     }
