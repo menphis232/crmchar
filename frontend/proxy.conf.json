@@ -10,5 +10,26 @@
     "secure": false,
     "ws": true,
     "logLevel": "info"
+  },
+  "/s": {
+    "target": "http://127.0.0.1:3000",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/sg": {
+    "target": "http://127.0.0.1:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/sg/": "/sg/gestores/"
+    }
+  },
+  "/sc": {
+    "target": "http://127.0.0.1:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/sc/": "/sc/concesionarias/"
+    }
   }
 }

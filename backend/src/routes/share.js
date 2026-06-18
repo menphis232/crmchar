@@ -58,6 +58,16 @@ function absoluteUrl(url) {
   return `${SITE_BASE}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
+function buildImageMeta(imageUrl, subtitle) {
+  if (!imageUrl) return '';
+  return `
+  <meta property="og:image" content="${escapeHtml(imageUrl)}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${escapeHtml(subtitle)}">
+  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">`;
+}
+
 async function buildAutoHtml(id) {
   const row = await get(
     "SELECT id, make, model, year, image_url, images FROM autos WHERE id = ? AND status = 'published'",
@@ -71,14 +81,13 @@ async function buildAutoHtml(id) {
   const shareUrl = `${SITE_BASE}/s/${row.id}`;
   const subtitle = `${row.make} ${row.model} ${row.year}`;
 
-  const imgMeta = imageUrl ? `
-  <meta property="og:image" content="${escapeHtml(imageUrl)}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${escapeHtml(subtitle)}">
-  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : '';
-
-  return buildHtml({ tagline: AUTO_TAGLINE, subtitle, shareUrl, pageUrl, imgMeta });
+  return buildHtml({
+    tagline: AUTO_TAGLINE,
+    subtitle,
+    shareUrl,
+    pageUrl,
+    imgMeta: buildImageMeta(imageUrl, subtitle),
+  });
 }
 
 // Ruta montada en /api/share: GET /api/share/autos/:id
@@ -94,7 +103,7 @@ router.get('/autos/:id', async (req, res) => {
   }
 });
 
-// Ruta corta montada en /s: GET /s/autos/:id  o  GET /s/g/:slug
+// Ruta corta montada en /s: GET /s/:id → autos
 router.get('/:id', async (req, res) => {
   try {
     const html = await buildAutoHtml(req.params.id);
@@ -121,14 +130,13 @@ async function buildGestorHtml(slug) {
   const shareUrl = `${SITE_BASE}/sg/${row.slug}`;
   const subtitle = `${row.name} — ${row.location || 'México'}`;
 
-  const imgMeta = imageUrl ? `
-  <meta property="og:image" content="${escapeHtml(imageUrl)}">
-  <meta property="og:image:width" content="1200">
-  <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="${escapeHtml(subtitle)}">
-  <meta name="twitter:image" content="${escapeHtml(imageUrl)}">` : '';
-
-  return buildHtml({ tagline: GESTOR_TAGLINE, subtitle, shareUrl, pageUrl, imgMeta });
+  return buildHtml({
+    tagline: GESTOR_TAGLINE,
+    subtitle,
+    shareUrl,
+    pageUrl,
+    imgMeta: buildImageMeta(imageUrl, subtitle),
+  });
 }
 
 // GET /api/share/gestores/:slug
@@ -136,6 +144,42 @@ router.get('/gestores/:slug', async (req, res) => {
   try {
     const html = await buildGestorHtml(req.params.slug);
     if (!html) return res.status(404).type('text/plain').send('Gestor no encontrado');
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (err) {
+    console.error(err);
+    res.status(500).type('text/plain').send('Error al generar vista previa');
+  }
+});
+
+// ── CONCESIONARIAS ───────────────────────────────────────────────────────────
+
+async function buildDealerHtml(slug) {
+  const row = await get(
+    "SELECT id, slug, name, logo_url FROM users WHERE slug = ? AND role = 'concesionaria'",
+    [slug],
+  );
+  if (!row) return null;
+
+  const imageUrl = absoluteUrl(row.logo_url || null);
+  const pageUrl  = `${SITE_BASE}/concesionarias/${row.slug}`;
+  const shareUrl = `${SITE_BASE}/sc/${row.slug}`;
+  const subtitle = row.name;
+
+  return buildHtml({
+    tagline: AUTO_TAGLINE,
+    subtitle,
+    shareUrl,
+    pageUrl,
+    imgMeta: buildImageMeta(imageUrl, subtitle),
+  });
+}
+
+// GET /api/share/concesionarias/:slug
+router.get('/concesionarias/:slug', async (req, res) => {
+  try {
+    const html = await buildDealerHtml(req.params.slug);
+    if (!html) return res.status(404).type('text/plain').send('Concesionaria no encontrada');
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.send(html);
   } catch (err) {

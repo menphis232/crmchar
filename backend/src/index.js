@@ -58,7 +58,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);
 // Rutas cortas para compartir con OG tags
 app.use('/s', shareRoutes);   // /s/:id  → autos
-app.use('/sg', shareRoutes);  // /sg/:slug → gestores
+app.use('/sg', shareRoutes);  // /sg/gestores/:slug → gestores
+app.use('/sc', shareRoutes);  // /sc/concesionarias/:slug → concesionarias
 
 app.use((err, _req, res, _next) => {
   console.error(err);

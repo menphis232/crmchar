@@ -1,6 +1,6 @@
-import { Component, OnInit, OnDestroy, HostListener, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, signal, computed, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { NavComponent } from '../../shared/nav.component';
 import { ConcesionariaService } from '../../core/api.service';
@@ -9,17 +9,23 @@ import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.component';
+import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
+import { MetaTagsService } from '../../shared/meta-tags.service';
+import { ToastService } from '../../core/toast.service';
 
 type DealerFilterTab = 'marca' | 'verificado' | 'estado';
 
 @Component({
   selector: 'app-dealer-profile',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappLeadModalComponent],
   templateUrl: './dealer-profile.component.html',
   styleUrl: './dealer-profile.component.css',
 })
 export class DealerProfileComponent implements OnInit, OnDestroy {
+  private metaTags = inject(MetaTagsService);
+  private toast = inject(ToastService);
+
   dealer = signal<DealerProfile | null>(null);
   autos = signal<Auto[]>([]);
   loading = signal(true);
@@ -46,9 +52,6 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
 
   readonly PAGE_SIZE = 9;
   currentPage = signal(1);
-  reviewSlideIndex = signal(0);
-
-  reviewTrackTransform = computed(() => `translateX(-${this.reviewSlideIndex() * 100}%)`);
 
   chatOpen = false;
   chatMessage = '';
@@ -59,7 +62,6 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
   private ignoreNextDocClick = false;
-  private reviewAutoTimer?: ReturnType<typeof setInterval>;
 
   makes = computed(() => {
     const counts = new Map<string, number>();
@@ -171,7 +173,7 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.stopReviewAutoSlide();
+    this.metaTags.reset();
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -180,9 +182,8 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
     this.concesionariaService.getDealerBySlug(this.slug).subscribe({
       next: d => {
         this.dealer.set(d);
+        this.metaTags.setDealerShareTags(d);
         this.loading.set(false);
-        this.reviewSlideIndex.set(0);
-        this.startReviewAutoSlide();
       },
       error: () => { this.error.set('No se encontró la concesionaria'); this.loading.set(false); },
     });
@@ -298,46 +299,8 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   }
 
   stars(rating: number) {
-    return '⭐'.repeat(Math.round(rating));
-  }
-
-  nextReviewSlide() {
-    const count = this.dealer()?.reviews?.length ?? 0;
-    if (count <= 1) return;
-    this.reviewSlideIndex.set((this.reviewSlideIndex() + 1) % count);
-    this.startReviewAutoSlide();
-  }
-
-  prevReviewSlide() {
-    const count = this.dealer()?.reviews?.length ?? 0;
-    if (count <= 1) return;
-    this.reviewSlideIndex.set((this.reviewSlideIndex() - 1 + count) % count);
-    this.startReviewAutoSlide();
-  }
-
-  goToReviewSlide(index: number) {
-    this.reviewSlideIndex.set(index);
-    this.startReviewAutoSlide();
-  }
-
-  startReviewAutoSlide() {
-    this.stopReviewAutoSlide();
-    const count = this.dealer()?.reviews?.length ?? 0;
-    if (count <= 1) return;
-    this.reviewAutoTimer = setInterval(() => {
-      this.reviewSlideIndex.set((this.reviewSlideIndex() + 1) % count);
-    }, 5000);
-  }
-
-  pauseReviewAutoSlide() {
-    this.stopReviewAutoSlide();
-  }
-
-  private stopReviewAutoSlide() {
-    if (this.reviewAutoTimer) {
-      clearInterval(this.reviewAutoTimer);
-      this.reviewAutoTimer = undefined;
-    }
+    const full = Math.max(0, Math.min(5, Math.round(rating)));
+    return '★'.repeat(full) + '☆'.repeat(5 - full);
   }
 
   hasSpecialPrice = hasSpecialPrice;
@@ -392,13 +355,28 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   }
 
   shareDealer() {
-    const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({ title: this.dealer()?.name, url });
+    const d = this.dealer();
+    const shareUrl = d
+      ? `${window.location.origin}/sc/${d.slug}`
+      : window.location.href;
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.share) {
+      navigator.share({
+        title: AUTO_SHARE_TAGLINE,
+        text: d ? d.name : AUTO_SHARE_TAGLINE,
+        url: shareUrl,
+      }).catch(() => this.copyShareLink(shareUrl));
     } else {
-      navigator.clipboard.writeText(url);
-      alert('¡Enlace copiado al portapapeles!');
+      this.copyShareLink(shareUrl);
     }
+  }
+
+  private copyShareLink(url: string) {
+    navigator.clipboard.writeText(url).then(() => {
+      this.toast.success('Enlace copiado');
+    }).catch(() => {
+      prompt('Copia este enlace:', url);
+    });
   }
 
   waModalData = computed(() => {

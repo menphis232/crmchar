@@ -68,13 +68,18 @@
 
                   @if (b.type === 'reviews' && g.reviews?.length) {
                     <h3 class="section-title reviews-title">{{ b.data.title }}</h3>
-                    <div class="reviews-slider" style="margin-bottom: 40px;">
+                    <div class="reviews-list">
                       @for (r of g.reviews; track r.id) {
-                        <div class="review-card slide">
-                          <div class="review-stars">{{ stars(r.rating) }}</div>
-                          <p class="review-text">"{{ r.comment }}"</p>
-                          <div class="review-author">- {{ r.author }}</div>
-                        </div>
+                        <article class="review-item">
+                          <div class="review-header">
+                            <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+                            <span class="review-author">{{ r.author }}</span>
+                          </div>
+                          <p class="review-text">{{ r.comment }}</p>
+                          @if (r.createdAt) {
+                            <time class="review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
+                          }
+                        </article>
                       }
                     </div>
                   }
@@ -193,13 +198,18 @@
 
           @if (g.reviews?.length) {
             <h3 class="section-title reviews-title">Reseñas Destacadas</h3>
-            <div class="reviews-slider">
+            <div class="reviews-list">
               @for (r of g.reviews; track r.id) {
-                <div class="review-card slide">
-                  <div class="review-stars">{{ stars(r.rating) }}</div>
-                  <p class="review-text">"{{ r.comment }}"</p>
-                  <div class="review-author">- {{ r.author }}</div>
-                </div>
+                <article class="review-item">
+                  <div class="review-header">
+                    <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+                    <span class="review-author">{{ r.author }}</span>
+                  </div>
+                  <p class="review-text">{{ r.comment }}</p>
+                  @if (r.createdAt) {
+                    <time class="review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
+                  }
+                </article>
               }
             </div>
           }

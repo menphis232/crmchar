@@ -274,49 +274,31 @@
       @if (reviews.length) {
       <section class="dp-reviews">
         <h2 class="dp-reviews-title">Reseñas de clientes</h2>
+
         @if (d.rating && d.rating > 0) {
-          <p class="dp-reviews-summary">{{ d.rating }}/5 · {{ d.reviewCount }} reseñas</p>
-        }
-
-        <div
-          class="dp-reviews-carousel"
-          (mouseenter)="pauseReviewAutoSlide()"
-          (mouseleave)="startReviewAutoSlide()"
-        >
-          @if (reviews.length > 1) {
-            <button type="button" class="dp-reviews-nav dp-reviews-nav-prev" (click)="prevReviewSlide()" aria-label="Reseña anterior">‹</button>
-          }
-
-          <div class="dp-reviews-viewport">
-            <div class="dp-reviews-track" [style.transform]="reviewTrackTransform()">
-              @for (r of reviews; track r.id) {
-                <article class="dp-review-card">
-                  <div class="dp-review-stars">{{ stars(r.rating) }}</div>
-                  <p class="dp-review-text">"{{ r.comment }}"</p>
-                  <div class="dp-review-author">— {{ r.author }}</div>
-                </article>
-              }
+          <div class="dp-reviews-summary-block">
+            <div class="dp-reviews-score">{{ d.rating | number:'1.1-1' }}</div>
+            <div class="dp-reviews-summary-meta">
+              <div class="dp-reviews-stars-lg" [attr.aria-label]="d.rating + ' de 5'">{{ stars(d.rating) }}</div>
+              <p class="dp-reviews-summary">{{ d.reviewCount }} reseñas globales</p>
             </div>
           </div>
-
-          @if (reviews.length > 1) {
-            <button type="button" class="dp-reviews-nav dp-reviews-nav-next" (click)="nextReviewSlide()" aria-label="Siguiente reseña">›</button>
-          }
-        </div>
-
-        @if (reviews.length > 1) {
-          <div class="dp-reviews-dots" aria-label="Indicador de reseñas">
-            @for (r of reviews; track r.id; let i = $index) {
-              <button
-                type="button"
-                class="dp-reviews-dot"
-                [class.active]="reviewSlideIndex() === i"
-                (click)="goToReviewSlide(i)"
-                [attr.aria-label]="'Ir a reseña ' + (i + 1)"
-              ></button>
-            }
-          </div>
         }
+
+        <ul class="dp-reviews-list">
+          @for (r of reviews; track r.id) {
+            <li class="dp-review-item">
+              <div class="dp-review-header">
+                <span class="dp-review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+                <span class="dp-review-author">{{ r.author }}</span>
+              </div>
+              <p class="dp-review-text">{{ r.comment }}</p>
+              @if (r.createdAt) {
+                <time class="dp-review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
+              }
+            </li>
+          }
+        </ul>
       </section>
       }
     }

@@ -64,7 +64,8 @@ export class GestorDetailComponent implements OnInit {
   }
 
   stars(rating: number) {
-    return '⭐'.repeat(Math.round(rating));
+    const full = Math.max(0, Math.min(5, Math.round(rating)));
+    return '★'.repeat(full) + '☆'.repeat(5 - full);
   }
 
   sendSolicitud() {
