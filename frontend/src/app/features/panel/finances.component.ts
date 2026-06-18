@@ -1,10 +1,11 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinancesService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from '../../models';
+import { formatMoney } from '../../shared/format-amount.util';
 
 @Component({
   selector: 'app-finances',
@@ -76,32 +77,42 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
             <div class="stat-icon">📈</div>
             <div class="stat-body">
               <span class="stat-label">Ingresos Totales</span>
-              <span class="stat-val income-val">\${{ dashboard()!.totalIncome | number:'1.2-2' }}</span>
+              @let inc = fmt(dashboard()!.totalIncome);
+              <span class="stat-val income-val" [class.has-tip]="inc.truncated"
+                (mouseenter)="showTipIf($event, inc)"
+                (mouseleave)="hideTip()">{{ inc.display }}</span>
             </div>
           </div>
           <div class="stat-card expense-card">
             <div class="stat-icon">📉</div>
             <div class="stat-body">
               <span class="stat-label">Gastos Totales</span>
-              <span class="stat-val expense-val">\${{ dashboard()!.totalExpense | number:'1.2-2' }}</span>
+              @let exp = fmt(dashboard()!.totalExpense);
+              <span class="stat-val expense-val" [class.has-tip]="exp.truncated"
+                (mouseenter)="showTipIf($event, exp)"
+                (mouseleave)="hideTip()">{{ exp.display }}</span>
             </div>
           </div>
           <div class="stat-card balance-card" [class.negative]="dashboard()!.netBalance < 0">
             <div class="stat-icon">⚖️</div>
             <div class="stat-body">
               <span class="stat-label">Balance Neto</span>
-              <span class="stat-val" [class.balance-pos]="dashboard()!.netBalance >= 0" [class.balance-neg]="dashboard()!.netBalance < 0">
-                {{ dashboard()!.netBalance >= 0 ? '+' : '' }}\${{ dashboard()!.netBalance | number:'1.2-2' }}
-              </span>
+              @let bal = fmt(dashboard()!.netBalance, true);
+              <span class="stat-val" [class.balance-pos]="dashboard()!.netBalance >= 0" [class.balance-neg]="dashboard()!.netBalance < 0"
+                [class.has-tip]="bal.truncated"
+                (mouseenter)="showTipIf($event, bal)"
+                (mouseleave)="hideTip()">{{ bal.display }}</span>
             </div>
           </div>
           <div class="stat-card month-card">
             <div class="stat-icon">📅</div>
             <div class="stat-body">
               <span class="stat-label">Balance Mes Actual</span>
-              <span class="stat-val" [class.balance-pos]="dashboard()!.monthBalance >= 0" [class.balance-neg]="dashboard()!.monthBalance < 0">
-                {{ dashboard()!.monthBalance >= 0 ? '+' : '' }}\${{ dashboard()!.monthBalance | number:'1.2-2' }}
-              </span>
+              @let mon = fmt(dashboard()!.monthBalance, true);
+              <span class="stat-val" [class.balance-pos]="dashboard()!.monthBalance >= 0" [class.balance-neg]="dashboard()!.monthBalance < 0"
+                [class.has-tip]="mon.truncated"
+                (mouseenter)="showTipIf($event, mon)"
+                (mouseleave)="hideTip()">{{ mon.display }}</span>
             </div>
           </div>
         </div>
@@ -116,7 +127,10 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
                   <div class="method-pill" [style.border-color]="m.color">
                     <span class="method-icon">{{ m.icon }}</span>
                     <span class="method-name">{{ m.label }}</span>
-                    <span class="method-amount" [style.color]="m.color">\${{ getMethodAmount(m.id) | number:'1.2-2' }}</span>
+                    @let ma = fmt(getMethodAmount(m.id));
+                    <span class="method-amount" [style.color]="m.color" [class.has-tip]="ma.truncated"
+                      (mouseenter)="showTipIf($event, ma)"
+                      (mouseleave)="hideTip()">{{ ma.display }}</span>
                   </div>
                 }
               }
@@ -165,9 +179,11 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
                   </td>
                   <td class="col-deal">{{ linkLabel(tx) }}</td>
                   <td class="col-right">
-                    <span [class.txt-income]="tx.type === 'income'" [class.txt-expense]="tx.type === 'expense'">
-                      {{ tx.type === 'income' ? '+' : '-' }}\${{ tx.amount | number:'1.2-2' }}
-                    </span>
+                    @let ta = fmt(tx.type === 'income' ? +tx.amount : -tx.amount, true, 13);
+                    <span [class.txt-income]="tx.type === 'income'" [class.txt-expense]="tx.type === 'expense'"
+                      [class.has-tip]="ta.truncated"
+                      (mouseenter)="showTipIf($event, ta)"
+                      (mouseleave)="hideTip()">{{ ta.display }}</span>
                   </td>
                   <td>
                     <button class="btn-del" (click)="deleteTx(tx.id)" title="Eliminar">✕</button>
@@ -451,21 +467,30 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
     .fin-select option { background: #1a1a1a; color: #fff; }
 
     /* ── STATS GRID ── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
-    .stat-card { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #141414; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+    .stat-card {
+      display: flex; align-items: center; gap: 14px; padding: 16px 18px;
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #141414;
+      min-width: 0; container-type: inline-size;
+    }
     .income-card { border-top: 2px solid rgba(34,197,94,0.50); }
     .expense-card { border-top: 2px solid rgba(239,68,68,0.50); }
     .balance-card { border-top: 2px solid rgba(255,255,255,0.30); }
     .balance-card.negative { border-top-color: rgba(239,68,68,0.50); }
     .month-card { border-top: 2px solid rgba(59,130,246,0.50); }
-    .stat-icon { font-size: 26px; flex-shrink: 0; }
-    .stat-body { display: flex; flex-direction: column; gap: 4px; }
-    .stat-label { font-size: 11px; color: rgba(255,255,255,0.40); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; font-family: var(--f-display); }
-    .stat-val { font-size: 26px; font-weight: 800; color: #fff; font-family: var(--f-display); }
+    .stat-icon { font-size: 24px; flex-shrink: 0; }
+    .stat-body { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+    .stat-label { font-size: 10px; color: rgba(255,255,255,0.40); text-transform: uppercase; letter-spacing: 0.12em; font-weight: 700; font-family: var(--f-display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stat-val {
+      display: block;
+      font-size: clamp(14px, 9cqi, 22px); font-weight: 800; color: #fff; font-family: var(--f-display);
+      font-variant-numeric: tabular-nums; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.15;
+    }
     .income-val { color: #4ade80; }
     .expense-val { color: #f87171; }
     .balance-pos { color: #fff !important; }
     .balance-neg { color: #f87171 !important; }
+    .has-tip { cursor: help; }
 
     /* ── METHOD BREAKDOWN ── */
     .section-title { margin: 0 0 12px 0; font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.70); font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; }
@@ -474,7 +499,7 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
     .method-pill { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 14px; }
     .method-icon { font-size: 18px; }
     .method-name { font-size: 13px; color: rgba(255,255,255,0.50); font-family: var(--f-display); }
-    .method-amount { font-size: 15px; font-weight: 800; font-family: var(--f-display); }
+    .method-amount { font-size: 15px; font-weight: 800; font-family: var(--f-display); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
 
     /* ── TABS ── */
     .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.10); }
@@ -498,8 +523,8 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
     .badge { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.06em; }
     .badge-income { background: rgba(34,197,94,.12); color: #4ade80; }
     .badge-expense { background: rgba(239,68,68,.12); color: #f87171; }
-    .txt-income { color: #4ade80; font-weight: 800; }
-    .txt-expense { color: #f87171; font-weight: 800; }
+    .txt-income { color: #4ade80; font-weight: 800; max-width: 140px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
+    .txt-expense { color: #f87171; font-weight: 800; max-width: 140px; display: inline-block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 
     .method-tag { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; font-family: var(--f-display); }
     .mt-stripe { background: rgba(99,102,241,.15); color: #a5b4fc; }
@@ -592,7 +617,7 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
     .btn-ghost:hover { background: rgba(255,255,255,.06); color: #fff; }
   `]
 })
-export class FinancesComponent implements OnInit {
+export class FinancesComponent implements OnInit, OnDestroy {
   dashboard = signal<FinDashboard | null>(null);
   transactions = signal<FinTransaction[]>([]);
   filterDeals = signal<FinFilterOptions['deals']>([]);
@@ -891,13 +916,23 @@ export class FinancesComponent implements OnInit {
   }
 
   doExportCsv() {
-    window.open(this.fin.exportCsv(this.filterFrom || undefined, this.filterTo || undefined), '_blank');
-    this.toast.info('Tu archivo CSV se está descargando.', '📊 Exportando CSV');
+    window.open(this.fin.exportCsv(
+      this.filterFrom || undefined,
+      this.filterTo || undefined,
+      this.filterMethod || undefined,
+      this.filterDealId || undefined,
+    ), '_blank');
+    this.toast.info('Exportando con los filtros actuales (fecha, método y trámite).', '📊 Exportando CSV');
   }
 
   doExportPdf() {
-    window.open(this.fin.exportPdf(this.filterFrom || undefined, this.filterTo || undefined), '_blank');
-    this.toast.info('Tu reporte PDF se está generando.', '📄 Exportando PDF');
+    window.open(this.fin.exportPdf(
+      this.filterFrom || undefined,
+      this.filterTo || undefined,
+      this.filterMethod || undefined,
+      this.filterDealId || undefined,
+    ), '_blank');
+    this.toast.info('Generando PDF con los filtros actuales.', '📄 Exportando PDF');
   }
 
   methodLabel(method: string): string {
@@ -929,5 +964,69 @@ export class FinancesComponent implements OnInit {
       return tx.vehicle_label || tx.deal_title || '—';
     }
     return tx.deal_title || '—';
+  }
+
+  // ── Tooltip de montos ─────────────────────────────────────────
+  private _tipEl: HTMLElement | null = null;
+
+  fmt(n: number, signed = false, maxLength = 10) {
+    return formatMoney(n, { signed, maxLength });
+  }
+
+  showTipIf(ev: MouseEvent, d: { truncated: boolean; full: string }): void {
+    if (d.truncated) this.showTip(ev, d.full);
+  }
+
+  showTip(ev: MouseEvent, fullText: string): void {
+    this.hideTip();
+
+    const anchor = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+
+    const tip = document.createElement('div');
+    tip.textContent = fullText;
+    // Apply styles individually to avoid cssText parsing quirks
+    tip.style.position = 'fixed';
+    tip.style.zIndex = '99999';
+    tip.style.background = '#111111';
+    tip.style.color = '#ffffff';
+    tip.style.border = '1px solid rgba(255,255,255,0.25)';
+    tip.style.padding = '7px 14px';
+    tip.style.borderRadius = '8px';
+    tip.style.fontSize = '13px';
+    tip.style.fontWeight = '700';
+    tip.style.fontFamily = 'Spartan, sans-serif';
+    tip.style.whiteSpace = 'nowrap';
+    tip.style.boxShadow = '0 6px 24px rgba(0,0,0,0.85)';
+    tip.style.pointerEvents = 'none';
+    tip.style.visibility = 'hidden';  // hidden but rendered so we can measure
+    tip.style.top = '0';
+    tip.style.left = '0';
+
+    document.body.appendChild(tip);
+    this._tipEl = tip;
+
+    // Measure synchronously after append (forced reflow)
+    const tw = tip.offsetWidth;
+    const th = tip.offsetHeight;
+
+    let left = anchor.left;
+    let top = anchor.top - th - 8;
+
+    if (left + tw > window.innerWidth - 8) left = window.innerWidth - tw - 8;
+    if (left < 8) left = 8;
+    if (top < 8) top = anchor.bottom + 8;
+
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+    tip.style.visibility = 'visible';
+  }
+
+  hideTip(): void {
+    this._tipEl?.remove();
+    this._tipEl = null;
+  }
+
+  ngOnDestroy(): void {
+    this.hideTip();
   }
 }

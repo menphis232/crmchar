@@ -137,14 +137,20 @@ router.get('/dashboard', async (req, res) => {
 
 const VEHICLE_LABEL_SQL = `CASE WHEN a.id IS NOT NULL THEN TRIM(CONCAT(TRIM(a.make), ' ', TRIM(a.model), ' (', a.year, ')')) ELSE NULL END`;
 
-function buildTxFilters(query, alias = 'f') {
-  const { from, to, payment_method, deal_id } = query;
+function buildTxFilters(queryParams, alias = 'f') {
+  const { from, to, payment_method, deal_id } = queryParams;
   let sql = '';
   const params = [];
 
   if (from && to) {
     sql += ` AND ${alias}.date BETWEEN ? AND ?`;
     params.push(from, to);
+  } else if (from) {
+    sql += ` AND ${alias}.date >= ?`;
+    params.push(from);
+  } else if (to) {
+    sql += ` AND ${alias}.date <= ?`;
+    params.push(to);
   }
   if (payment_method) {
     sql += ` AND ${alias}.payment_method = ?`;
@@ -156,6 +162,28 @@ function buildTxFilters(query, alias = 'f') {
   }
 
   return { sql, params };
+}
+
+function exportPeriodLabel(from, to) {
+  if (from && to) return `${from}_${to}`;
+  if (from) return `desde_${from}`;
+  if (to) return `hasta_${to}`;
+  return 'total';
+}
+
+function exportFiltersSummary(req, userMethods = [], dealTitle = null) {
+  const parts = [];
+  const { from, to, payment_method, deal_id } = req.query;
+  if (from && to) parts.push(`Período: ${formatDate(from)} — ${formatDate(to)}`);
+  else if (from) parts.push(`Desde: ${formatDate(from)}`);
+  else if (to) parts.push(`Hasta: ${formatDate(to)}`);
+  else parts.push('Período: Todos los registros');
+  if (payment_method) parts.push(`Método: ${methodLabel(payment_method, userMethods)}`);
+  if (deal_id) {
+    const label = req.user?.role === 'concesionaria' ? 'Vehículo' : 'Trámite';
+    parts.push(`${label}: ${dealTitle || 'Seleccionado'}`);
+  }
+  return parts.join('  ·  ');
 }
 
 router.get('/filter-options', async (req, res) => {
@@ -308,14 +336,8 @@ router.get('/deals/pending', async (req, res) => {
 
 router.get('/export/csv', async (req, res) => {
   try {
-    const { from, to } = req.query;
-    let dateFilter = '';
-    const params = [req.orgId];
-
-    if (from && to) {
-      dateFilter = ' AND f.date BETWEEN ? AND ?';
-      params.push(from, to);
-    }
+    const { sql: extraFilter, params: filterParams } = buildTxFilters(req.query);
+    const params = [req.orgId, ...filterParams];
 
     const transactions = await query(
       `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, f.referencia,
@@ -323,7 +345,7 @@ router.get('/export/csv', async (req, res) => {
        FROM fin_transactions f 
        LEFT JOIN crm_deals d ON f.deal_id = d.id 
        LEFT JOIN autos a ON d.auto_id = a.id
-       WHERE f.user_id = ?${dateFilter}
+       WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC`,
       params
     );
@@ -353,7 +375,7 @@ router.get('/export/csv', async (req, res) => {
       return `${t.date},${tipo},${desc},${ref},${metodo},${monto},${cat},${deal}`;
     }).join('\n');
 
-    const label = from && to ? `${from}_${to}` : 'total';
+    const label = exportPeriodLabel(req.query.from, req.query.to);
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="finanzas_${label}.csv"`);
     res.send('\uFEFF' + header + rows); // BOM para Excel
@@ -369,36 +391,30 @@ router.get('/export/csv', async (req, res) => {
 
 router.get('/export/pdf', async (req, res) => {
   try {
-    const { from, to } = req.query;
-    let dateFilter = '';
-    const params = [req.orgId];
-
-    if (from && to) {
-      dateFilter = ' AND f.date BETWEEN ? AND ?';
-      params.push(from, to);
-    }
+    const { sql: extraFilter, params: filterParams } = buildTxFilters(req.query);
+    const params = [req.orgId, ...filterParams];
 
     const transactions = await query(
-      `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, d.title as deal_title 
+      `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, f.referencia,
+              d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
        FROM fin_transactions f 
        LEFT JOIN crm_deals d ON f.deal_id = d.id 
-       WHERE f.user_id = ?${dateFilter}
+       LEFT JOIN autos a ON d.auto_id = a.id
+       WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC`,
       params
     );
 
-    // Totals
     let totalIncome = 0;
     let totalExpense = 0;
     transactions.forEach(t => {
       if (t.type === 'income') totalIncome += Number(t.amount);
       else totalExpense += Number(t.amount);
     });
+    const netBalance = totalIncome - totalExpense;
 
-    // Get user info (logo + name)
     const [user] = await query('SELECT name, logo_url FROM users WHERE id = ?', [req.orgId]);
 
-    // Get site logo as fallback
     let siteLogo = null;
     try {
       const [siteSetting] = await query(
@@ -412,114 +428,162 @@ router.get('/export/pdf', async (req, res) => {
 
     const logoUrl = user?.logo_url || siteLogo;
 
-    // Load custom payment methods for this user
     let userMethods = [];
     try {
       const [uRow] = await query('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
       if (uRow?.fin_payment_methods) userMethods = JSON.parse(uRow.fin_payment_methods);
     } catch {}
 
-    // Build PDF
-    const doc = new PDFDocument({ margin: 50, size: 'A4' });
-    const label = from && to ? `${from}_${to}` : 'total';
+    const label = exportPeriodLabel(req.query.from, req.query.to);
+    const linkCol = req.user?.role === 'concesionaria' ? 'Vehículo' : 'Trámite';
+
+    let dealTitle = null;
+    if (req.query.deal_id) {
+      const [dealRow] = await query(
+        `SELECT COALESCE(${VEHICLE_LABEL_SQL}, d.title) as title
+         FROM crm_deals d LEFT JOIN autos a ON d.auto_id = a.id WHERE d.id = ?`,
+        [req.query.deal_id],
+      );
+      dealTitle = dealRow?.title || null;
+    }
+
+    const filtersText = exportFiltersSummary(req, userMethods, dealTitle);
+    const generatedAt = new Date().toLocaleString('es-MX', { dateStyle: 'medium', timeStyle: 'short' });
+
+    const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="finanzas_${label}.pdf"`);
     doc.pipe(res);
 
-    // Header band
-    doc.rect(0, 0, doc.page.width, 80).fill('#0f0f0f');
+    const pageW = doc.page.width;
+    const contentW = pageW - 80;
+    const gold = '#C8A94A';
+    const dark = '#0B0B0B';
+    const muted = '#8A8A8A';
+    const border = '#2A2A2A';
 
-    // Logo
+    // ── Header ──
+    doc.rect(0, 0, pageW, 96).fill(dark);
+    doc.rect(0, 96, pageW, 3).fill(gold);
+
     if (logoUrl) {
       try {
         const imgBuffer = await fetchImageBuffer(logoUrl);
-        doc.image(imgBuffer, 50, 15, { height: 50, fit: [120, 50] });
+        doc.image(imgBuffer, 40, 22, { fit: [56, 56] });
       } catch {}
     }
 
-    // Company name
-    doc.fillColor('#C8A94A').fontSize(20).font('Helvetica-Bold')
-      .text(user?.name || 'Reporte de Finanzas', logoUrl ? 185 : 50, 25);
-    doc.fillColor('#888888').fontSize(10).font('Helvetica')
-      .text('Reporte Financiero', logoUrl ? 185 : 50, 50);
+    const titleX = logoUrl ? 108 : 40;
+    doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(20)
+      .text(user?.name || 'Reporte Financiero', titleX, 28, { width: contentW - 60 });
+    doc.fillColor(gold).font('Helvetica').fontSize(10)
+      .text('REPORTE DE FINANZAS', titleX, 54);
+    doc.fillColor(muted).fontSize(8)
+      .text(`Generado: ${generatedAt}`, pageW - 220, 30, { width: 180, align: 'right' });
 
-    // Date range
-    const rangeText = from && to
-      ? `Período: ${formatDate(from)} — ${formatDate(to)}`
-      : 'Período: Todos los registros';
-    doc.fillColor('#888888').fontSize(9).text(rangeText, 400, 60, { align: 'right', width: 145 });
+    // ── Filter bar ──
+    doc.y = 112;
+    doc.roundedRect(40, doc.y, contentW, 28, 6).fillAndStroke('#141414', border);
+    doc.fillColor('#CCCCCC').font('Helvetica').fontSize(8)
+      .text(filtersText, 52, doc.y + 10, { width: contentW - 24 });
 
-    doc.moveDown(4);
+    // ── KPI cards ──
+    const kpiY = 152;
+    const kpiW = (contentW - 20) / 3;
+    const kpis = [
+      { label: 'INGRESOS', value: `$${fmtNum(totalIncome)}`, color: '#22C55E', bg: '#0F1F14' },
+      { label: 'GASTOS', value: `$${fmtNum(totalExpense)}`, color: '#EF4444', bg: '#1F0F0F' },
+      { label: 'BALANCE NETO', value: `${netBalance >= 0 ? '+' : ''}$${fmtNum(netBalance)}`, color: netBalance >= 0 ? gold : '#EF4444', bg: '#141414' },
+    ];
+    kpis.forEach((kpi, i) => {
+      const x = 40 + i * (kpiW + 10);
+      doc.roundedRect(x, kpiY, kpiW, 58, 8).fillAndStroke(kpi.bg, border);
+      doc.fillColor(muted).font('Helvetica-Bold').fontSize(7)
+        .text(kpi.label, x + 12, kpiY + 10, { width: kpiW - 24 });
+      drawFitText(doc, kpi.value, x + 12, kpiY + 26, kpiW - 24, kpi.color, 16, 9);
+    });
 
-    // Summary cards
-    const cardY = 100;
-    const cardW = 150;
+    // ── Table ──
+    const tableTop = kpiY + 78;
+    const cols = {
+      fecha: 40,
+      tipo: 98,
+      desc: 138,
+      ref: 268,
+      metodo: 338,
+      link: 398,
+      monto: pageW - 40,
+    };
+    const colWidths = {
+      fecha: 54, tipo: 36, desc: 124, ref: 66, metodo: 56, link: 92, monto: 72,
+    };
 
-    // Ingresos
-    doc.rect(50, cardY, cardW, 60).fill('#0a2e1a');
-    doc.fillColor('#22c55e').fontSize(10).font('Helvetica-Bold').text('INGRESOS TOTALES', 55, cardY + 8, { width: cardW - 10 });
-    doc.fillColor('#22c55e').fontSize(18).font('Helvetica-Bold').text(`$${fmtNum(totalIncome)}`, 55, cardY + 25, { width: cardW - 10 });
+    const drawTableHeader = (y) => {
+      doc.roundedRect(40, y, contentW, 22, 4).fill('#1A1A1A');
+      doc.fillColor(gold).font('Helvetica-Bold').fontSize(7);
+      doc.text('FECHA', cols.fecha + 8, y + 7, { width: colWidths.fecha });
+      doc.text('TIPO', cols.tipo, y + 7, { width: colWidths.tipo });
+      doc.text('DESCRIPCIÓN', cols.desc, y + 7, { width: colWidths.desc });
+      doc.text('REF.', cols.ref, y + 7, { width: colWidths.ref });
+      doc.text('MÉTODO', cols.metodo, y + 7, { width: colWidths.metodo });
+      doc.text(linkCol.toUpperCase(), cols.link, y + 7, { width: colWidths.link });
+      doc.text('MONTO', cols.monto - colWidths.monto, y + 7, { width: colWidths.monto, align: 'right' });
+      return y + 26;
+    };
 
-    // Gastos
-    doc.rect(215, cardY, cardW, 60).fill('#2e0a0a');
-    doc.fillColor('#ef4444').fontSize(10).font('Helvetica-Bold').text('GASTOS TOTALES', 220, cardY + 8, { width: cardW - 10 });
-    doc.fillColor('#ef4444').fontSize(18).font('Helvetica-Bold').text(`$${fmtNum(totalExpense)}`, 220, cardY + 25, { width: cardW - 10 });
-
-    // Balance
-    const balPositive = totalIncome - totalExpense >= 0;
-    doc.rect(380, cardY, cardW, 60).fill(balPositive ? '#0a1e2e' : '#2e0a0a');
-    doc.fillColor(balPositive ? '#C8A94A' : '#ef4444').fontSize(10).font('Helvetica-Bold').text('BALANCE NETO', 385, cardY + 8, { width: cardW - 10 });
-    doc.fillColor(balPositive ? '#C8A94A' : '#ef4444').fontSize(18).font('Helvetica-Bold').text(`$${fmtNum(totalIncome - totalExpense)}`, 385, cardY + 25, { width: cardW - 10 });
-
-    doc.moveDown(1);
-    doc.y = cardY + 80;
-
-    // Table header
-    const tY = doc.y + 10;
-    doc.rect(50, tY, doc.page.width - 100, 22).fill('#1a1a1a');
-    const cols = { fecha: 50, tipo: 120, descripcion: 175, metodo: 330, monto: 430, total: doc.page.width - 100 };
-
-    doc.fillColor('#C8A94A').fontSize(9).font('Helvetica-Bold');
-    doc.text('FECHA', cols.fecha, tY + 6);
-    doc.text('TIPO', cols.tipo, tY + 6);
-    doc.text('DESCRIPCIÓN', cols.descripcion, tY + 6);
-    doc.text('MÉTODO', cols.metodo, tY + 6);
-    doc.text('MONTO', cols.monto, tY + 6, { width: 80, align: 'right' });
-
-    let rowY = tY + 26;
+    let rowY = drawTableHeader(tableTop);
     let rowCount = 0;
 
+    if (transactions.length === 0) {
+      doc.fillColor(muted).font('Helvetica').fontSize(9)
+        .text('No hay transacciones con los filtros aplicados.', 40, rowY + 8, { width: contentW, align: 'center' });
+    }
+
     for (const t of transactions) {
-      if (rowY > doc.page.height - 80) {
+      if (rowY > doc.page.height - 70) {
         doc.addPage();
-        rowY = 50;
+        doc.rect(0, 0, pageW, 36).fill(dark);
+        doc.fillColor(gold).font('Helvetica-Bold').fontSize(9)
+          .text(user?.name || 'Reporte Financiero', 40, 12);
+        rowY = drawTableHeader(48);
       }
 
-      const bg = rowCount % 2 === 0 ? '#111111' : '#0a0a0a';
-      doc.rect(50, rowY, doc.page.width - 100, 20).fill(bg);
+      const bg = rowCount % 2 === 0 ? '#111111' : '#0D0D0D';
+      doc.rect(40, rowY, contentW, 20).fill(bg);
 
       const isIncome = t.type === 'income';
-      doc.fillColor('#aaaaaa').fontSize(8).font('Helvetica');
-      doc.text(formatDate(t.date), cols.fecha, rowY + 5, { width: 65 });
+      const typeColor = isIncome ? '#22C55E' : '#EF4444';
+      const linkVal = req.user?.role === 'concesionaria'
+        ? (t.vehicle_label || t.deal_title || '—')
+        : (t.deal_title || '—');
 
-      doc.fillColor(isIncome ? '#22c55e' : '#ef4444').fontSize(8).font('Helvetica-Bold');
-      doc.text(isIncome ? 'Ingreso' : 'Gasto', cols.tipo, rowY + 5, { width: 50 });
+      doc.fillColor('#BBBBBB').font('Helvetica').fontSize(7);
+      doc.text(formatDate(t.date), cols.fecha + 8, rowY + 6, { width: colWidths.fecha });
+      doc.fillColor(typeColor).font('Helvetica-Bold');
+      doc.text(isIncome ? 'Ing.' : 'Gasto', cols.tipo, rowY + 6, { width: colWidths.tipo });
+      doc.fillColor('#DDDDDD').font('Helvetica');
+      doc.text(truncate(t.description, 28), cols.desc, rowY + 6, { width: colWidths.desc });
+      doc.text(truncate(t.referencia, 14), cols.ref, rowY + 6, { width: colWidths.ref });
+      doc.text(truncate(methodLabel(t.payment_method || 'general', userMethods), 12), cols.metodo, rowY + 6, { width: colWidths.metodo });
+      doc.text(truncate(linkVal, 18), cols.link, rowY + 6, { width: colWidths.link });
+      doc.fillColor(typeColor).font('Helvetica-Bold');
+      doc.text(`${isIncome ? '+' : '-'}$${fmtNum(t.amount)}`, cols.monto - colWidths.monto, rowY + 6, { width: colWidths.monto, align: 'right' });
 
-      doc.fillColor('#cccccc').fontSize(8).font('Helvetica');
-      doc.text((t.description || '').substring(0, 35), cols.descripcion, rowY + 5, { width: 150 });
-      doc.text(methodLabel(t.payment_method || 'general', userMethods), cols.metodo, rowY + 5, { width: 90 });
-
-      doc.fillColor(isIncome ? '#22c55e' : '#ef4444').fontSize(8).font('Helvetica-Bold');
-      doc.text(`${isIncome ? '+' : '-'}$${fmtNum(t.amount)}`, cols.monto, rowY + 5, { width: 80, align: 'right' });
-
-      rowY += 22;
+      rowY += 20;
       rowCount++;
     }
 
-    // Footer
-    doc.rect(50, rowY + 10, doc.page.width - 100, 1).fill('#333333');
-    doc.fillColor('#888888').fontSize(8).font('Helvetica')
-      .text(`Generado el ${new Date().toLocaleDateString('es-MX')} — ${user?.name || ''}`, 50, rowY + 18, { align: 'center', width: doc.page.width - 100 });
+    // ── Footer on all pages ──
+    const pages = doc.bufferedPageRange();
+    for (let i = pages.start; i < pages.start + pages.count; i++) {
+      doc.switchToPage(i);
+      const footerY = doc.page.height - 36;
+      doc.moveTo(40, footerY).lineTo(pageW - 40, footerY).strokeColor(border).lineWidth(0.5).stroke();
+      doc.fillColor(muted).font('Helvetica').fontSize(7);
+      doc.text(`${transactions.length} transacciones`, 40, footerY + 10);
+      doc.text(`Página ${i - pages.start + 1} de ${pages.count}`, pageW - 120, footerY + 10, { width: 80, align: 'right' });
+      doc.fillColor(gold).text('Trámites Vehiculares de México', 40, footerY + 10, { width: contentW, align: 'center' });
+    }
 
     doc.end();
   } catch (err) {
@@ -550,6 +614,22 @@ function methodLabel(method, customMethods = []) {
 
 function fmtNum(n) {
   return Number(n).toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function truncate(str, max) {
+  const s = String(str || '');
+  if (s.length <= max) return s || '—';
+  return `${s.slice(0, max - 1)}…`;
+}
+
+function drawFitText(doc, text, x, y, maxWidth, color, maxSize = 16, minSize = 9) {
+  let size = maxSize;
+  doc.fillColor(color).font('Helvetica-Bold').fontSize(size);
+  while (size > minSize && doc.widthOfString(text) > maxWidth) {
+    size -= 0.5;
+    doc.fontSize(size);
+  }
+  doc.text(text, x, y, { width: maxWidth, lineBreak: false });
 }
 
 function formatDate(dateStr) {

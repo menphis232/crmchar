@@ -388,19 +388,23 @@ export class FinancesService {
     return this.http.put<{ success: boolean }>(`${this.base}/payment-methods`, { methods });
   }
 
-  exportCsv(from?: string, to?: string): string {
+  exportCsv(from?: string, to?: string, paymentMethod?: string, dealId?: string): string {
     const token = localStorage.getItem('tramites_token') || '';
     let url = `${this.base}/export/csv?token=${token}`;
-    if (from) url += `&from=${from}`;
-    if (to) url += `&to=${to}`;
+    if (from) url += `&from=${encodeURIComponent(from)}`;
+    if (to) url += `&to=${encodeURIComponent(to)}`;
+    if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
+    if (dealId) url += `&deal_id=${encodeURIComponent(dealId)}`;
     return url;
   }
 
-  exportPdf(from?: string, to?: string): string {
+  exportPdf(from?: string, to?: string, paymentMethod?: string, dealId?: string): string {
     const token = localStorage.getItem('tramites_token') || '';
     let url = `${this.base}/export/pdf?token=${token}`;
-    if (from) url += `&from=${from}`;
-    if (to) url += `&to=${to}`;
+    if (from) url += `&from=${encodeURIComponent(from)}`;
+    if (to) url += `&to=${encodeURIComponent(to)}`;
+    if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
+    if (dealId) url += `&deal_id=${encodeURIComponent(dealId)}`;
     return url;
   }
 }

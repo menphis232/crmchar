@@ -71,8 +71,25 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--gold) !important;
 }
 
-.swal2-toast .swal2-icon {
-  width: 1.6em !important;
-  height: 1.6em !important;
-  margin: 0 !important;
+.amount-tip-portal {
+  position: fixed;
+  z-index: 99999;
+  background: #0a0a0a;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 7px 13px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--f-display, 'Spartan', sans-serif);
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.70);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
 }
+
+.has-amount-tip {
+  cursor: help;
+}
+

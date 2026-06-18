@@ -100,7 +100,11 @@
           <div class="stat-label">1ª Respuesta</div>
         </div>
         <div class="stat-box">
-          <div class="stat-num">{{ (crmDashboard()?.totals?.pipelineValue ?? 0) | number:'1.0-0' }}</div>
+          <span
+            class="stat-num"
+            [amountTip]="crmDashboard()?.totals?.pipelineValue ?? 0"
+            [amountDecimals]="0"
+          ></span>
           <div class="stat-label">Embudo MXN</div>
         </div>
         <div class="stat-box">

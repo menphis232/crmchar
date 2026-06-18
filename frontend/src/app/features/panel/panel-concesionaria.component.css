@@ -52,12 +52,8 @@
   font-size: 14px !important;
 }
 
-/* Stats */
-.stat-num { font-size: 36px !important; }
-.stat-label {
-  font-family: var(--f-display) !important;
-  font-size: 11px !important;
-}
+/* Stats — heredan clamp de panel-dashboard.css; solo color/tema oscuro */
+.stat-num { color: #ffffff !important; }
 
 /* Inbox */
 .inbox-info h4,
@@ -161,6 +157,8 @@
   border-top: 2px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
   box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
+  overflow: hidden !important;
+  min-width: 0 !important;
 }
 .stat-box:hover {
   border-top-color: rgba(255,255,255,0.55) !important;
@@ -169,6 +167,10 @@
 
 .stat-num {
   color: #ffffff !important;
+}
+
+:host ::ng-deep .num-truncated {
+  cursor: help;
 }
 
 .stat-label {
