@@ -45,7 +45,7 @@ body {
   letter-spacing: 0.08em;
   text-decoration: none;
 }
-.dash-brand-logo { max-height: 38px; object-fit: contain; filter: brightness(0) invert(1); }
+.dash-brand-logo { max-height: 42px; object-fit: contain; filter: drop-shadow(0 0 6px rgba(255,255,255,0.15)); }
 
 .dash-user {
   display: flex;
