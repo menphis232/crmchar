@@ -81,9 +81,9 @@ import { ToastService } from '../../core/toast.service';
     /* Sections */
     .deal-section { border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
     .deal-section h4 {
-      color: rgba(255,255,255,0.35) !important;
+      color: rgba(255,255,255,0.40) !important;
       font-family: var(--f-display) !important;
-      font-size: 9px !important;
+      font-size: 11px !important;
       letter-spacing: 0.22em !important;
       font-weight: 700 !important;
     }
@@ -91,14 +91,60 @@ import { ToastService } from '../../core/toast.service';
 
     /* Contact card */
     .deal-contact-card {
-      background: #161616 !important;
-      border: 1px solid rgba(255,255,255,0.09) !important;
-      border-radius: 12px !important;
+      background: #141414 !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
+      border-radius: 14px !important;
+      padding: 20px 22px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 12px !important;
     }
-    .deal-contact-card p { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
-    .deal-contact-card strong { color: #ffffff !important; font-family: var(--f-display) !important; font-weight: 700 !important; }
-    .link-name { color: #ffffff !important; font-family: var(--f-display) !important; font-weight: 700 !important; }
-    .link-name:hover { color: rgba(255,255,255,0.60) !important; }
+    .deal-contact-card .link-name,
+    .deal-contact-card .deal-contact-name,
+    .deal-contact-card strong {
+      color: #ffffff !important;
+      font-family: var(--f-display) !important;
+      font-size: 22px !important;
+      font-weight: 800 !important;
+      letter-spacing: 0.06em !important;
+      text-transform: uppercase !important;
+      text-decoration: none !important;
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 0 6px !important;
+      cursor: pointer !important;
+      line-height: 1.2 !important;
+    }
+    .deal-contact-card .link-name:hover {
+      color: rgba(255,255,255,0.65) !important;
+      text-decoration: none !important;
+    }
+    .deal-contact-card p {
+      color: rgba(255,255,255,0.72) !important;
+      font-family: var(--f-display) !important;
+      font-size: 16px !important;
+      letter-spacing: 0.03em !important;
+      margin: 0 !important;
+      line-height: 1.5 !important;
+    }
+    .deal-contact-card .btn-copy.small {
+      margin-top: 8px !important;
+      align-self: flex-start !important;
+      background: transparent !important;
+      color: rgba(255,255,255,0.75) !important;
+      border: 1px solid rgba(255,255,255,0.28) !important;
+      font-family: var(--f-display) !important;
+      font-size: 11px !important;
+      letter-spacing: 0.14em !important;
+      padding: 9px 18px !important;
+      border-radius: 999px !important;
+    }
+    .deal-contact-card .btn-copy.small:hover {
+      background: rgba(255,255,255,0.08) !important;
+      color: #ffffff !important;
+      border-color: rgba(255,255,255,0.50) !important;
+    }
 
     /* Selects — mismo estilo que kanban leads */
     .deal-panel select,
