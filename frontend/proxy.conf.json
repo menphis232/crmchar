@@ -21,12 +21,12 @@
     "ws": true,
     "logLevel": "info"
   },
-  "/s": {
+  "/s/": {
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "changeOrigin": true
   },
-  "/sg": {
+  "/sg/": {
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "changeOrigin": true,
@@ -34,7 +34,7 @@
       "^/sg/": "/sg/gestores/"
     }
   },
-  "/sc": {
+  "/sc/": {
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "changeOrigin": true,
