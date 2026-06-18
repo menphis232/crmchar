@@ -27,6 +27,11 @@ services:
       - PORT=3000
       - FRONTEND_URL=${FRONTEND_URL:-https://central.tramitesvehicularesdemexico.com}
       - API_PUBLIC_URL=${API_PUBLIC_URL:-https://central.tramitesvehicularesdemexico.com}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
     ports:
       - "3000:3000"
     volumes:

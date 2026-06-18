@@ -34,10 +34,11 @@ export async function resolveEmailLogo(userId = null) {
 
 export async function createTransporter() {
   if (process.env.SMTP_HOST && process.env.SMTP_USER) {
+    const port = Number(process.env.SMTP_PORT || 587);
     return nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT || 587,
-      secure: process.env.SMTP_PORT == 465,
+      port,
+      secure: port === 465,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -76,8 +77,10 @@ export async function sendEmail(to, subject, text, html, userId = null) {
     `;
 
     const transporter = await createTransporter();
+    const from = process.env.SMTP_FROM
+      || `"Trámites Vehiculares de México" <${process.env.SMTP_USER || 'noreply@tramitesvehicularesdemexico.com'}>`;
     const info = await transporter.sendMail({
-      from: '"Trámites Vehiculares de México" <noreply@tramitesvehiculares.com>',
+      from,
       to,
       subject,
       text,
