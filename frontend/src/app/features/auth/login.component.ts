@@ -58,7 +58,12 @@ export class LoginComponent {
           this.auth.redirectByRole();
         }
       },
-      error: (e) => { this.loading.set(false); this.error.set(e.error?.error || 'Error al registrarse'); },
+      error: (e) => {
+        this.loading.set(false);
+        const msg = e.error?.error || 'Error al registrarse';
+        const details = e.error?.details ? ` (${e.error.details})` : '';
+        this.error.set(msg + details);
+      },
     });
   }
 

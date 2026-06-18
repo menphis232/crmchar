@@ -6,6 +6,26 @@ import { authRequired, signToken } from '../middleware/auth.js';
 import Stripe from 'stripe';
 import { sendEmail } from '../utils/mailer.js';
 
+function getRegisterOrigin(req) {
+  return (
+    req.headers.origin
+    || process.env.FRONTEND_URL
+    || 'https://central.tramitesvehicularesdemexico.com'
+  ).replace(/\/$/, '');
+}
+
+async function getPlatformStripeAdmin() {
+  return get(`
+    SELECT stripe_secret_key, stripe_price_id
+    FROM users
+    WHERE role IN ('admin', 'super_admin')
+      AND stripe_secret_key IS NOT NULL AND stripe_secret_key != ''
+      AND stripe_price_id IS NOT NULL AND stripe_price_id != ''
+    ORDER BY CASE role WHEN 'super_admin' THEN 0 ELSE 1 END
+    LIMIT 1
+  `);
+}
+
 async function sendPaymentReminderEmail(toEmail, name, roleName, checkoutUrl) {
   const subject = `💳 Activa tu cuenta de ${roleName} en Trámites Vehiculares`;
   const html = `
@@ -48,6 +68,12 @@ router.post('/register', async (req, res) => {
     if (!email || !password || !role || !name) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
+    if (String(name).trim().length < 2) {
+      return res.status(400).json({ error: 'El nombre comercial es obligatorio' });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
     if (!['gestor', 'concesionaria', 'cliente'].includes(role)) {
       return res.status(400).json({ error: 'Rol inválido' });
     }
@@ -61,42 +87,50 @@ router.post('/register', async (req, res) => {
     let initialStatus = 'active';
 
     if (role === 'gestor' || role === 'concesionaria') {
-      const admin = await get("SELECT stripe_secret_key, stripe_price_id FROM users WHERE role = 'admin' LIMIT 1");
-      if (admin && admin.stripe_secret_key && admin.stripe_price_id) {
-        initialStatus = 'pending_payment';
-        const origin = req.headers.origin || 'http://localhost:4200';
-        const stripe = new Stripe(admin.stripe_secret_key);
-        const session = await stripe.checkout.sessions.create({
-          mode: 'subscription',
-          payment_method_types: ['card'],
-          line_items: [{ price: admin.stripe_price_id, quantity: 1 }],
-          success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(email.toLowerCase())}`,
-          customer_email: email.toLowerCase(),
-          metadata: { user_id: userId, role }
-        });
-        stripeCheckoutUrl = session.url;
+      const admin = await getPlatformStripeAdmin();
+      if (admin) {
+        try {
+          initialStatus = 'pending_payment';
+          const origin = getRegisterOrigin(req);
+          const stripe = new Stripe(admin.stripe_secret_key);
+          const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [{ price: admin.stripe_price_id, quantity: 1 }],
+            success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(email.toLowerCase())}`,
+            customer_email: email.toLowerCase(),
+            metadata: { user_id: userId, role },
+          });
+          stripeCheckoutUrl = session.url;
+        } catch (stripeErr) {
+          console.error('Stripe register error:', stripeErr);
+          return res.status(400).json({
+            error: 'No se pudo iniciar el pago de suscripción. Revisa la configuración de Stripe (clave y Price ID) en el panel admin.',
+            details: stripeErr.message,
+          });
+        }
       }
     }
 
     const hash = bcrypt.hashSync(password, 10);
     await run('INSERT INTO users (id, email, password_hash, role, name, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, email.toLowerCase(), hash, role, name, initialStatus]);
+      [userId, email.toLowerCase(), hash, role, String(name).trim(), initialStatus]);
 
     if (role === 'concesionaria') {
       // Generate unique slug from name
-      const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const baseSlug = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'concesionaria';
       const slug = `${baseSlug}-${userId.slice(0, 6)}`;
       await run('UPDATE users SET slug = ? WHERE id = ?', [slug, userId]);
     }
 
     if (role === 'gestor') {
-      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const slugBase = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'gestor';
       await run(`
         INSERT INTO gestores (id, user_id, slug, name, location, state, banner_url, photo_url, bio, whatsapp, schedule)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        uuid(), userId, `${slug}-${userId.slice(0, 6)}`, name,
+        uuid(), userId, `${slugBase}-${userId.slice(0, 6)}`, String(name).trim(),
         'Ciudad de México', 'CDMX',
         'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600',
         'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200',
@@ -107,15 +141,18 @@ router.post('/register', async (req, res) => {
     if (stripeCheckoutUrl) {
       // Send payment reminder email in the background
       const roleName = role === 'gestor' ? 'Gestoría' : 'Concesionaria';
-      sendPaymentReminderEmail(email.toLowerCase(), name, roleName, stripeCheckoutUrl).catch(console.error);
+      sendPaymentReminderEmail(email.toLowerCase(), String(name).trim(), roleName, stripeCheckoutUrl).catch(console.error);
       return res.status(201).json({ requirePayment: true, checkoutUrl: stripeCheckoutUrl });
     }
 
-    const user = { id: userId, email: email.toLowerCase(), role, name };
+    const user = { id: userId, email: email.toLowerCase(), role, name: String(name).trim() };
     res.status(201).json({ token: signToken(user), user });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al registrar' });
+    console.error('Register error:', err);
+    if (err.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'El email ya está registrado' });
+    }
+    res.status(500).json({ error: 'Error al registrar', details: err.message });
   }
 });
 
