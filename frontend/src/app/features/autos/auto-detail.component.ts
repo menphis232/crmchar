@@ -12,11 +12,12 @@ import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { getAutoShareSubtitle } from '../../shared/auto-share.util';
 import { MetaTagsService } from '../../shared/meta-tags.service';
+import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.component';
 
 @Component({
   selector: 'app-auto-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent],
   templateUrl: './auto-detail.component.html',
   styleUrl: './auto-detail.component.css',
 })
@@ -30,6 +31,7 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
   loading = signal(true);
   inquirySent = signal(false);
   inquiryError = signal('');
+  showWaModal = signal(false);
 
   inquiry = { clientName: '', clientEmail: '', clientPhone: '', message: '' };
 
@@ -96,11 +98,21 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
 
   hasSpecialPrice = hasSpecialPrice;
 
-  whatsappLink() {
+  waModalData = computed(() => {
     const a = this.auto();
-    if (!a) return '#';
-    const text = encodeURIComponent(`Hola, estoy interesado en el ${a.make} ${a.model} publicado.`);
-    return `https://wa.me/525500000000?text=${text}`;
+    if (!a) return null;
+    return {
+      dealerSlug: a.dealerSlug || '',
+      dealerPhone: a.dealerPhone || '',
+      dealerName: a.dealerName || '',
+      autoId: a.id,
+      autoLabel: `${a.make} ${a.model} ${a.year}`,
+    };
+  });
+
+  openWaModal(e: Event) {
+    e.preventDefault();
+    this.showWaModal.set(true);
   }
 
   dealerInitials(name?: string) {

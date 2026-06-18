@@ -170,7 +170,7 @@
                 </div>
               }
             }
-            <a [href]="whatsappLink()" target="_blank" class="btn-whatsapp" style="display:block; text-align:center; margin-bottom:15px;">💬 Contactar por WhatsApp</a>
+            <button class="btn-whatsapp" style="display:block; text-align:center; margin-bottom:15px; width:100%; cursor:pointer; border:none;" (click)="openWaModal($event)">💬 Contactar por WhatsApp</button>
             <button class="btn-share" (click)="shareAuto()" style="display:block; width:100%; margin-bottom:15px;">🔗 Compartir vehículo</button>
             <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
           </aside>
@@ -290,7 +290,7 @@
               </button>
             </div>
 
-            <a [href]="whatsappLink()" target="_blank" rel="noopener" class="btn-whatsapp">Contactar por WhatsApp</a>
+            <button class="btn-whatsapp" style="cursor:pointer; border:none;" (click)="openWaModal($event)">Contactar por WhatsApp</button>
 
             <div class="dealer-card">
               @if (a.dealerSlug) {
@@ -350,4 +350,11 @@
     }
 
   }
+}
+
+@if (showWaModal() && waModalData()) {
+  <app-whatsapp-lead-modal
+    [data]="waModalData()!"
+    (close)="showWaModal.set(false)"
+  />
 }

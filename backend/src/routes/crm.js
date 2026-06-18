@@ -6,6 +6,7 @@ import { authRequired, requireRole } from '../middleware/auth.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
+  createManualVentaDeal,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -298,7 +299,7 @@ router.get('/deals', async (req, res) => {
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
              c.whatsapp as contact_whatsapp,
-             i.message as client_message, i.reply as client_reply,
+             COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
@@ -325,6 +326,59 @@ router.get('/deals', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar deals' });
+  }
+});
+
+router.post('/deals', async (req, res) => {
+  try {
+    if (req.user.role !== 'concesionaria') {
+      return res.status(403).json({ error: 'Solo concesionarias pueden crear leads manuales de venta' });
+    }
+
+    const uid = req.orgId;
+    const { clientName, clientEmail, clientPhone, title, autoId, message, estimatedValue, stage } = req.body;
+
+    if (!clientName?.trim()) {
+      return res.status(400).json({ error: 'El nombre del cliente es obligatorio' });
+    }
+
+    const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
+    const allowedStages = stagesForRole('concesionaria', userRow?.crm_stages);
+    const dealStage = stage || initialStageForRole('concesionaria');
+    const isCustom = dealStage.startsWith('etapa_');
+    if (!allowedStages.includes(dealStage) && !isCustom) {
+      return res.status(400).json({ error: 'Etapa inválida' });
+    }
+
+    const dealId = await createManualVentaDeal(uid, {
+      clientName,
+      clientEmail,
+      clientPhone,
+      title,
+      autoId,
+      message,
+      estimatedValue,
+      stage: dealStage,
+    });
+
+    const row = await get(`
+      SELECT d.*,
+             c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
+             c.whatsapp as contact_whatsapp,
+             COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
+             a.make, a.model,
+             DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
+      FROM crm_deals d
+      JOIN contacts c ON c.id = d.contact_id
+      LEFT JOIN auto_inquiries i ON d.ref_type = 'auto_inquiry' AND d.ref_id = i.id
+      LEFT JOIN autos a ON d.auto_id = a.id
+      WHERE d.id = ? AND d.user_id = ?
+    `, [dealId, uid]);
+
+    res.status(201).json(dealRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Error al crear lead' });
   }
 });
 
@@ -394,7 +448,7 @@ router.get('/deals/:id', async (req, res) => {
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
              c.whatsapp as contact_whatsapp, c.source as contact_source, c.notes as contact_notes,
-             i.message as client_message, i.reply as client_reply,
+             COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d

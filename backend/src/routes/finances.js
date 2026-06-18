@@ -134,26 +134,102 @@ router.get('/dashboard', async (req, res) => {
 // LIST (con filtro de fecha)
 // ──────────────────────────────────────────────
 
-router.get('/', async (req, res) => {
+const VEHICLE_LABEL_SQL = `CASE WHEN a.id IS NOT NULL THEN TRIM(CONCAT(TRIM(a.make), ' ', TRIM(a.model), ' (', a.year, ')')) ELSE NULL END`;
+
+function buildTxFilters(query, alias = 'f') {
+  const { from, to, payment_method, deal_id } = query;
+  let sql = '';
+  const params = [];
+
+  if (from && to) {
+    sql += ` AND ${alias}.date BETWEEN ? AND ?`;
+    params.push(from, to);
+  }
+  if (payment_method) {
+    sql += ` AND ${alias}.payment_method = ?`;
+    params.push(payment_method);
+  }
+  if (deal_id) {
+    sql += ` AND ${alias}.deal_id = ?`;
+    params.push(deal_id);
+  }
+
+  return { sql, params };
+}
+
+router.get('/filter-options', async (req, res) => {
   try {
     const { from, to } = req.query;
+    const baseParams = [req.orgId];
     let dateFilter = '';
-    const params = [req.orgId];
-
     if (from && to) {
       dateFilter = ' AND f.date BETWEEN ? AND ?';
-      params.push(from, to);
+      baseParams.push(from, to);
     }
 
-    const transactions = await query(
-      `SELECT f.*, d.title as deal_title 
-       FROM fin_transactions f 
-       LEFT JOIN crm_deals d ON f.deal_id = d.id 
+    const deals = await query(
+      `SELECT DISTINCT d.id, COALESCE(${VEHICLE_LABEL_SQL}, d.title) as title
+       FROM fin_transactions f
+       INNER JOIN crm_deals d ON f.deal_id = d.id
+       LEFT JOIN autos a ON d.auto_id = a.id
+       WHERE f.user_id = ? AND f.deal_id IS NOT NULL${dateFilter}
+       ORDER BY title ASC`,
+      baseParams
+    );
+
+    const methodRows = await query(
+      `SELECT DISTINCT f.payment_method
+       FROM fin_transactions f
        WHERE f.user_id = ?${dateFilter}
-       ORDER BY f.date DESC, f.created_at DESC`,
+       ORDER BY f.payment_method ASC`,
+      baseParams
+    );
+
+    res.json({
+      deals,
+      methods: methodRows.map(r => r.payment_method || 'general').filter(Boolean),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar filtros' });
+  }
+});
+
+router.get('/', async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(5, parseInt(req.query.limit, 10) || 15));
+    const offset = (page - 1) * limit;
+
+    const { sql: extraFilter, params: filterParams } = buildTxFilters(req.query);
+    const params = [req.orgId, ...filterParams];
+
+    const [countRow] = await query(
+      `SELECT COUNT(*) as total
+       FROM fin_transactions f
+       WHERE f.user_id = ?${extraFilter}`,
       params
     );
-    res.json(transactions);
+    const total = Number(countRow?.total || 0);
+
+    const transactions = await query(
+      `SELECT f.*, d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
+       FROM fin_transactions f
+       LEFT JOIN crm_deals d ON f.deal_id = d.id
+       LEFT JOIN autos a ON d.auto_id = a.id
+       WHERE f.user_id = ?${extraFilter}
+       ORDER BY f.date DESC, f.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    res.json({
+      items: transactions,
+      total,
+      page,
+      limit,
+      pages: Math.max(1, Math.ceil(total / limit)),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar transacciones' });
@@ -166,14 +242,14 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { type, amount, description, category, date, deal_id, payment_method } = req.body;
+    const { type, amount, description, category, date, deal_id, payment_method, referencia } = req.body;
     if (!type || !amount || !description || !date) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
     const id = uuid();
     await run(
-      'INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, category, date, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, req.orgId, deal_id || null, type, amount, description, category || 'general', date, payment_method || 'general']
+      'INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, req.orgId, deal_id || null, type, amount, description, category || 'general', date, payment_method || 'general', referencia?.trim() || null]
     );
     res.status(201).json({ id });
   } catch (err) {
@@ -202,12 +278,20 @@ router.delete('/:id', async (req, res) => {
 
 router.get('/deals/pending', async (req, res) => {
   try {
+    const isDealer = req.user?.role === 'concesionaria';
     const deals = await query(
-      `SELECT d.id, d.title, d.estimated_value,
-         COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
-       FROM crm_deals d
-       WHERE d.user_id = ?
-       HAVING paid_amount < estimated_value AND estimated_value > 0`,
+      isDealer
+        ? `SELECT d.id, COALESCE(${VEHICLE_LABEL_SQL}, d.title) as title, d.estimated_value,
+             COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
+           FROM crm_deals d
+           LEFT JOIN autos a ON d.auto_id = a.id
+           WHERE d.user_id = ? AND d.stage NOT IN ('perdido', 'vendido')
+           ORDER BY d.updated_at DESC`
+        : `SELECT d.id, d.title, d.estimated_value,
+             COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
+           FROM crm_deals d
+           WHERE d.user_id = ?
+           HAVING paid_amount < estimated_value AND estimated_value > 0`,
       [req.orgId]
     );
     res.json(deals);
@@ -233,9 +317,11 @@ router.get('/export/csv', async (req, res) => {
     }
 
     const transactions = await query(
-      `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, d.title as deal_title 
+      `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, f.referencia,
+              d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
        FROM fin_transactions f 
        LEFT JOIN crm_deals d ON f.deal_id = d.id 
+       LEFT JOIN autos a ON d.auto_id = a.id
        WHERE f.user_id = ?${dateFilter}
        ORDER BY f.date DESC`,
       params
@@ -248,16 +334,22 @@ router.get('/export/csv', async (req, res) => {
       if (uRow?.fin_payment_methods) userMethods = JSON.parse(uRow.fin_payment_methods);
     } catch {}
 
+    const linkCol = req.user?.role === 'concesionaria' ? 'Vehículo Relacionado' : 'Trámite Relacionado';
+
     // Build CSV
-    const header = 'Fecha,Tipo,Descripción,Método de Pago,Monto,Categoría,Trámite Relacionado\n';
+    const header = `Fecha,Tipo,Descripción,Referencia,Método de Pago,Monto,Categoría,${linkCol}\n`;
     const rows = transactions.map(t => {
       const tipo = t.type === 'income' ? 'Ingreso' : 'Gasto';
       const metodo = methodLabel(t.payment_method || 'general', userMethods);
       const monto = Number(t.amount).toFixed(2);
       const desc = `"${(t.description || '').replace(/"/g, '""')}"`;
-      const deal = `"${(t.deal_title || '').replace(/"/g, '""')}"`;
+      const ref = `"${(t.referencia || '').replace(/"/g, '""')}"`;
+      const link = req.user?.role === 'concesionaria'
+        ? (t.vehicle_label || t.deal_title || '')
+        : (t.deal_title || '');
+      const deal = `"${link.replace(/"/g, '""')}"`;
       const cat = `"${(t.category || '').replace(/"/g, '""')}"`;
-      return `${t.date},${tipo},${desc},${metodo},${monto},${cat},${deal}`;
+      return `${t.date},${tipo},${desc},${ref},${metodo},${monto},${cat},${deal}`;
     }).join('\n');
 
     const label = from && to ? `${from}_${to}` : 'total';

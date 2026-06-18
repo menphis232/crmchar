@@ -1,11 +1,19 @@
 import {
   Component, OnInit, OnDestroy, signal, computed, Input, inject, NgZone, PLATFORM_ID, effect
 } from '@angular/core';
-import { isPlatformBrowser, DatePipe } from '@angular/common';
+import { isPlatformBrowser, DatePipe, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
+
+const GOOGLE_FONTS: Record<string, string> = {
+  'Inter': 'Inter:wght@400;600;700',
+  'Montserrat': 'Montserrat:wght@400;600;700',
+  'Poppins': 'Poppins:wght@400;600;700',
+  'Roboto': 'Roboto:wght@400;500;700',
+  'Open Sans': 'Open+Sans:wght@400;600;700',
+};
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -48,16 +56,16 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
 
 const QUICK_QUESTIONS: Record<string, string[]> = {
   gestor: [
-    '¿Cómo agrego un nuevo trámite?',
-    '¿Cómo configuro mis servicios?',
-    '¿Cómo exporto mis finanzas?',
-    '¿Qué hacen las automatizaciones?',
+    '¿Cuánto he vendido hoy?',
+    'Muéstrame mis trámites activos',
+    'Crea un lead nuevo',
+    '¿Cuál es mi balance en finanzas?',
   ],
   concesionaria: [
-    '¿Cómo publico un vehículo?',
-    '¿Cómo muevo un lead en el embudo?',
-    '¿Cómo creo plantillas de respuesta?',
-    '¿Cómo personalizo mis etapas CRM?',
+    '¿Cuántos vehículos tengo en inventario?',
+    '¿Cuánto he vendido hoy?',
+    'Registra un ingreso',
+    'Crea un lead nuevo',
   ],
   admin: [
     '¿Cómo gestiono usuarios?',
@@ -80,6 +88,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private zone = inject(NgZone);
   private platformId = inject(PLATFORM_ID);
+  private doc = inject(DOCUMENT) as Document;
 
   isTourActive = signal(false);
   isChatOpen = signal(false);
@@ -122,6 +131,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   bgColor = computed(() => this.auth.user()?.panel_assistant_bg_color || '#0f172a');
   btnColor = computed(() => this.auth.user()?.panel_assistant_btn_color || '#4F46E5');
   textColor = computed(() => this.auth.user()?.panel_assistant_text_color || '#FFFFFF');
+  assistantFont = computed(() => this.auth.user()?.panel_assistant_font || 'League Spartan');
 
   positionClass = computed(() => {
     const pos = this.auth.user()?.panel_assistant_position || 'bottom-right';
@@ -143,6 +153,20 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
         });
       }
       this.lastAssistantName = name;
+    });
+
+    effect(() => {
+      const font = this.assistantFont();
+      if (isPlatformBrowser(this.platformId) && GOOGLE_FONTS[font]) {
+        const id = `gf-${font.replace(/ /g, '-').toLowerCase()}`;
+        if (!this.doc.getElementById(id)) {
+          const link = this.doc.createElement('link');
+          link.id = id;
+          link.rel = 'stylesheet';
+          link.href = `https://fonts.googleapis.com/css2?family=${GOOGLE_FONTS[font]}&display=swap`;
+          this.doc.head.appendChild(link);
+        }
+      }
     });
   }
 
@@ -282,8 +306,10 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     const roleName = this.panelRole === 'gestor' ? 'Gestor de Trámites'
       : this.panelRole === 'concesionaria' ? 'Concesionaria' : 'Administrador';
 
-    const context = `Eres ${this.assistantName()}, asistente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
+    const context = `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
 Responde en español mexicano, breve y amigable. Usa emojis ocasionalmente.
+Tienes acceso en tiempo real a datos del negocio: inventario, leads activos, finanzas (ingresos, gastos, balance) y perfil del usuario.
+Puedes ejecutar acciones directamente: crear leads, registrar ingresos/gastos, agregar vehículos al inventario, actualizar el perfil, enviar correos y mensajes de chat.
 Si preguntan cómo hacer algo en el panel, da pasos numerados claros.`;
 
     this.http.post<{ reply: string }>(`${environment.apiUrl}/ai/chat`, {

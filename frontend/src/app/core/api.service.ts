@@ -59,6 +59,18 @@ export class CrmService {
     if (filters?.stage) params = params.set('stage', filters.stage);
     return this.http.get<CrmDeal[]>(`${this.base}/deals`, { params });
   }
+  createDeal(data: {
+    clientName: string;
+    clientEmail?: string;
+    clientPhone?: string;
+    title?: string;
+    autoId?: string;
+    message?: string;
+    estimatedValue?: number;
+    stage?: string;
+  }) {
+    return this.http.post<CrmDeal>(`${this.base}/deals`, data);
+  }
   getDeal(id: string) { return this.http.get<CrmDeal>(`${this.base}/deals/${id}`); }
   updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
@@ -337,11 +349,29 @@ export class FinancesService {
     return this.http.get<FinDashboard>(`${this.base}/dashboard`, { params });
   }
 
-  getTransactions(from?: string, to?: string) {
+  getTransactions(opts?: {
+    from?: string;
+    to?: string;
+    page?: number;
+    limit?: number;
+    payment_method?: string;
+    deal_id?: string;
+  }) {
+    let params = new HttpParams();
+    if (opts?.from) params = params.set('from', opts.from);
+    if (opts?.to) params = params.set('to', opts.to);
+    if (opts?.page) params = params.set('page', String(opts.page));
+    if (opts?.limit) params = params.set('limit', String(opts.limit));
+    if (opts?.payment_method) params = params.set('payment_method', opts.payment_method);
+    if (opts?.deal_id) params = params.set('deal_id', opts.deal_id);
+    return this.http.get<import('../models').FinTransactionsPage>(this.base, { params });
+  }
+
+  getFilterOptions(from?: string, to?: string) {
     let params = new HttpParams();
     if (from) params = params.set('from', from);
     if (to) params = params.set('to', to);
-    return this.http.get<FinTransaction[]>(this.base, { params });
+    return this.http.get<import('../models').FinFilterOptions>(`${this.base}/filter-options`, { params });
   }
 
   createTransaction(data: Partial<FinTransaction>) {

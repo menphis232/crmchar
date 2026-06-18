@@ -89,48 +89,67 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
     .notification-wrapper { position: relative; display: inline-block; }
     .notification-btn { display: flex; align-items: center; justify-content: center; }
     .badge {
-      position: absolute; top: -5px; right: -5px; background: #ffffff; color: var(--brand-black);
-      font-size: 10px; font-weight: bold; border-radius: 50%; padding: 2px 6px;
+      position: absolute; top: -5px; right: -5px; background: #ffffff; color: #000000;
+      font-size: 10px; font-weight: 800; border-radius: 999px; padding: 2px 6px;
     }
     .notification-dropdown {
       position: absolute; top: 100%; right: 0; width: 340px;
-      background: #ffffff;
-      border: 1px solid rgba(0,0,0,0.12);
-      border-top: 3px solid var(--brand-black);
-      border-radius: 0;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.15);
-      z-index: 1000; margin-top: 10px; display: flex; flex-direction: column; max-height: 420px;
+      background: #141414;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-top: 2px solid rgba(255,255,255,0.35);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.65);
+      z-index: 1000; margin-top: 10px;
+      display: flex; flex-direction: column; max-height: 420px; overflow: hidden;
     }
     .nd-header {
       display: flex; justify-content: space-between; align-items: center; padding: 14px 16px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      background: #f8f7f5;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #0d0d0d;
     }
     .nd-header h4 {
-      margin: 0; color: var(--brand-black); font-family: var(--f-display);
-      font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      margin: 0; color: #ffffff; font-family: var(--f-display);
+      font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
     }
     .btn-link {
-      background: none; border: none; color: var(--brand-black); cursor: pointer;
-      font-size: 11px; font-weight: 600; text-decoration: underline; opacity: 0.7;
+      background: none; border: none; color: rgba(255,255,255,0.45); cursor: pointer;
+      font-size: 11px; font-weight: 600; font-family: var(--f-display);
+      text-decoration: none; transition: color 0.2s;
     }
-    .btn-link:hover { opacity: 1; }
-    .nd-body { overflow-y: auto; flex: 1; scrollbar-width: thin; scrollbar-color: #ccc transparent; }
+    .btn-link:hover { color: #ffffff; }
+    .nd-body {
+      overflow-y: auto; flex: 1;
+      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;
+    }
     .nd-body::-webkit-scrollbar { width: 6px; }
-    .nd-body::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-    .nd-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
+    .nd-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    .nd-empty {
+      padding: 28px 20px; text-align: center;
+      color: rgba(255,255,255,0.40); font-size: 13px; font-family: var(--f-display);
+    }
     .nd-item {
-      padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
       cursor: pointer; transition: background 0.2s;
     }
-    .nd-item:hover { background: #f0ede9; }
+    .nd-item:last-child { border-bottom: none; }
+    .nd-item:hover { background: rgba(255,255,255,0.04); }
     .nd-item.unread {
-      border-left: 3px solid var(--brand-black);
-      background: #f8f7f5;
+      border-left: 3px solid rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.03);
+      padding-left: 13px;
     }
-    .nd-title { font-weight: 700; font-size: 13px; color: var(--brand-black); margin-bottom: 4px; }
-    .nd-body-text { font-size: 12px; color: #555; margin-bottom: 6px; line-height: 1.5; }
-    .nd-date { font-size: 10px; color: var(--muted); text-align: right; }
+    .nd-title {
+      font-weight: 700; font-size: 13px; color: #ffffff;
+      margin-bottom: 4px; font-family: var(--f-display); line-height: 1.35;
+    }
+    .nd-body-text {
+      font-size: 12px; color: rgba(255,255,255,0.50);
+      margin-bottom: 6px; line-height: 1.5; font-family: var(--f-display);
+    }
+    .nd-date {
+      font-size: 10px; color: rgba(255,255,255,0.32);
+      text-align: right; font-family: var(--f-display);
+    }
   `]
 })
 export class NavComponent implements OnInit {

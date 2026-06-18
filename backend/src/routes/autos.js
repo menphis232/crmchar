@@ -34,6 +34,7 @@ function autoRow(row) {
     dealerName: row.dealer_name,
     dealerSlug: row.dealer_slug || null,
     dealerLogoUrl: row.dealer_logo_url || null,
+    dealerPhone: row.dealer_phone || null,
     status: row.status || 'published',
     active: row.status === 'published',
     googleAnalyticsId: row.google_analytics_id || null,
@@ -111,7 +112,7 @@ router.get('/me/inventory', authRequired, requireRole('concesionaria'), async (r
 router.get('/:id', async (req, res) => {
   try {
     const row = await get(`
-      SELECT a.*, u.google_analytics_id, u.page_builder_config, u.slug AS dealer_slug, u.logo_url AS dealer_logo_url
+      SELECT a.*, u.google_analytics_id, u.page_builder_config, u.slug AS dealer_slug, u.logo_url AS dealer_logo_url, u.name AS dealer_name, u.phone AS dealer_phone
       FROM autos a 
       JOIN users u ON a.user_id = u.id 
       WHERE a.id = ? AND a.status = 'published'`, [req.params.id]);

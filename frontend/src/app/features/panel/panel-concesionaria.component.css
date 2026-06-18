@@ -558,6 +558,26 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep select option { background: #111111; color: #ffffff; }
 
 /* ══════════════════════════════════════════
+   DOCUMENTACIÓN PRIVADA DEL VEHÍCULO
+══════════════════════════════════════════ */
+.auto-private-docs {
+  background: #0d0d0d !important;
+  border-color: rgba(255,255,255,0.14) !important;
+}
+.auto-private-doc-item {
+  background: #1a1a1a !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+.auto-private-doc-meta strong { color: #ffffff !important; }
+.auto-private-doc-meta span { color: rgba(255,255,255,0.40) !important; }
+.auto-private-doc-meta em { color: rgba(255,255,255,0.55) !important; }
+.auto-private-docs-badge {
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.55) !important;
+  border-color: rgba(255,255,255,0.12) !important;
+}
+
+/* ══════════════════════════════════════════
    INVENTARIO / CARS
 ══════════════════════════════════════════ */
 .car-item {

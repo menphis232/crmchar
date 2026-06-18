@@ -22,7 +22,7 @@ import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 
-type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'ajustes-crm' | 'finanzas';
+type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'finanzas';
 
 const DEFAULT_AI_TIPS = [
   'Responde leads en menos de 2 horas con fotos del vehículo y opciones de financiamiento; la velocidad cierra ventas en concesionarias.',
@@ -32,12 +32,11 @@ const DEFAULT_AI_TIPS = [
 
 const AUTO_DOC_LABELS = [
   'Factura de origen',
-  'Tarjeta de circulación',
-  'Tenencia / refrendo',
-  'Verificación vehicular',
-  'Póliza de seguro',
-  'Revisión mecánica',
-  'Comprobante de propiedad',
+  'Refacturas',
+  'Pagos anteriores',
+  'Baja de placas',
+  'Identificación antiguo propietario',
+  'Contrato de compra venta',
   'Otro',
 ] as const;
 
@@ -76,7 +75,6 @@ export class PanelConcesionariaComponent implements OnInit {
 
   // CRM Stages Settings
   crmStages: { id: string, label: string }[] = [];
-  isSavingStages = false;
 
   form: Partial<Auto> & { status?: AutoStatus } = this.emptyForm();
 
@@ -147,6 +145,8 @@ export class PanelConcesionariaComponent implements OnInit {
       this.panelAssistantBgColor = u.panel_assistant_bg_color || '#0f172a';
       this.panelAssistantBtnColor = u.panel_assistant_btn_color || '#4F46E5';
       this.panelAssistantTextColor = u.panel_assistant_text_color || '#FFFFFF';
+      this.panelAssistantFont = u.panel_assistant_font || 'League Spartan';
+      this.panelAssistantPrompt = u.panel_assistant_prompt || '';
       this.crmStages = u.crm_stages ? [...u.crm_stages] : [
         { id: 'lead_nuevo', label: 'Lead Nuevo' },
         { id: 'contactado', label: 'Contactado' },
@@ -499,6 +499,32 @@ export class PanelConcesionariaComponent implements OnInit {
     if (/\.(jpg|jpeg|png|webp|gif)$/.test(name)) return '🖼️';
     return '📎';
   }
+
+  downloadPrivateDocument(doc: AutoPrivateDocument) {
+    const fileName = doc.fileName || doc.label || 'documento';
+    const url = doc.fileUrl;
+    fetch(url)
+      .then(res => {
+        if (!res.ok) throw new Error('fetch failed');
+        return res.blob();
+      })
+      .then(blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+      })
+      .catch(() => {
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.click();
+      });
+  }
   // -------------------------
 
   saveCar(asDraft = false) {
@@ -584,6 +610,19 @@ export class PanelConcesionariaComponent implements OnInit {
   panelAssistantBgColor = '#0f172a';
   panelAssistantBtnColor = '#4F46E5';
   panelAssistantTextColor = '#FFFFFF';
+  panelAssistantFont = 'League Spartan';
+  panelAssistantPrompt = '';
+
+  readonly assistantFontOptions = [
+    { value: 'League Spartan', label: 'League Spartan (actual)' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'Montserrat', label: 'Montserrat' },
+    { value: 'Poppins', label: 'Poppins' },
+    { value: 'Roboto', label: 'Roboto' },
+    { value: 'Open Sans', label: 'Open Sans' },
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Georgia', label: 'Georgia' },
+  ];
 
   readonly assistantColorFields: ColorPaletteFieldDef[] = [
     { key: 'bg', label: 'Fondo del chat' },
@@ -633,51 +672,6 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
-  // CRM Stages Settings Methods
-  addCrmStage() {
-    this.crmStages.push({ id: `etapa_${Date.now()}`, label: 'Nueva Etapa' });
-    this.saveCrmStages();
-  }
-
-  removeCrmStage(index: number) {
-    if (this.crmStages.length <= 2) {
-      alert('Debes tener al menos 2 etapas.');
-      return;
-    }
-    this.crmStages.splice(index, 1);
-    this.saveCrmStages();
-  }
-
-  moveCrmStageUp(index: number) {
-    if (index === 0) return;
-    const temp = this.crmStages[index];
-    this.crmStages[index] = this.crmStages[index - 1];
-    this.crmStages[index - 1] = temp;
-    this.saveCrmStages();
-  }
-
-  moveCrmStageDown(index: number) {
-    if (index === this.crmStages.length - 1) return;
-    const temp = this.crmStages[index];
-    this.crmStages[index] = this.crmStages[index + 1];
-    this.crmStages[index + 1] = temp;
-    this.saveCrmStages();
-  }
-
-  saveCrmStages() {
-    this.isSavingStages = true;
-    this.auth.updateMe({ crm_stages: this.crmStages }).subscribe({
-      next: () => {
-        this.isSavingStages = false;
-        this.toast.success('Las etapas del embudo de ventas han sido actualizadas.', '¡Guardado!');
-        this.loadCrm();
-      },
-      error: () => {
-        this.isSavingStages = false;
-      }
-    });
-  }
-
   saveProfile() {
     this.auth.updateMe({
       name: this.profileName,
@@ -692,6 +686,8 @@ export class PanelConcesionariaComponent implements OnInit {
       panel_assistant_bg_color: this.panelAssistantBgColor,
       panel_assistant_btn_color: this.panelAssistantBtnColor,
       panel_assistant_text_color: this.panelAssistantTextColor,
+      panel_assistant_font: this.panelAssistantFont,
+      panel_assistant_prompt: this.panelAssistantPrompt || null,
     }).subscribe({
       next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
       error: () => {}

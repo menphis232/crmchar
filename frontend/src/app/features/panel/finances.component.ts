@@ -2,8 +2,9 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinancesService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
-import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
+import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from '../../models';
 
 @Component({
   selector: 'app-finances',
@@ -35,9 +36,9 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
       <div class="filter-bar">
         <div class="date-inputs">
           <label>Desde</label>
-          <input type="date" [(ngModel)]="filterFrom" (change)="loadData()">
+          <input type="date" [(ngModel)]="filterFrom" (change)="onDateChange()">
           <label>Hasta</label>
-          <input type="date" [(ngModel)]="filterTo" (change)="loadData()">
+          <input type="date" [(ngModel)]="filterTo" (change)="onDateChange()">
         </div>
         <div class="quick-btns">
           <button (click)="setRange('today')" [class.active]="quickRange === 'today'">Hoy</button>
@@ -45,6 +46,26 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
           <button (click)="setRange('month')" [class.active]="quickRange === 'month'">Este mes</button>
           <button (click)="setRange('year')" [class.active]="quickRange === 'year'">Este año</button>
           <button (click)="setRange('all')" [class.active]="quickRange === 'all'">Todo</button>
+        </div>
+        <div class="tx-filters">
+          <div class="tx-filter-field">
+            <label>Método de pago</label>
+            <select class="fin-select" [(ngModel)]="filterMethod" (change)="onFilterChange()">
+              <option value="">Todos los métodos</option>
+              @for (m of filterMethods(); track m) {
+                <option [value]="m">{{ methodLabel(m) }}</option>
+              }
+            </select>
+          </div>
+          <div class="tx-filter-field">
+            <label>{{ isConcesionaria ? 'Vehículo' : 'Trámite' }}</label>
+            <select class="fin-select" [(ngModel)]="filterDealId" (change)="onFilterChange()">
+              <option value="">{{ isConcesionaria ? 'Todos los vehículos' : 'Todos los trámites' }}</option>
+              @for (d of filterDeals(); track d.id) {
+                <option [value]="d.id">{{ d.title }}</option>
+              }
+            </select>
+          </div>
         </div>
       </div>
 
@@ -119,8 +140,9 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
                 <th>Fecha</th>
                 <th>Tipo</th>
                 <th>Descripción</th>
+                <th>Referencia</th>
                 <th>Método</th>
-                <th>Trámite</th>
+                <th>{{ isConcesionaria ? 'Vehículo' : 'Trámite' }}</th>
                 <th class="col-right">Monto</th>
                 <th></th>
               </tr>
@@ -135,12 +157,13 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
                     </span>
                   </td>
                   <td class="col-desc">{{ tx.description }}</td>
+                  <td class="col-ref">{{ tx.referencia || '—' }}</td>
                   <td>
                     <span class="method-tag" [class]="'mt-' + (tx.payment_method || 'general')">
                       {{ methodLabel(tx.payment_method || 'general') }}
                     </span>
                   </td>
-                  <td class="col-deal">{{ tx.deal_title || '—' }}</td>
+                  <td class="col-deal">{{ linkLabel(tx) }}</td>
                   <td class="col-right">
                     <span [class.txt-income]="tx.type === 'income'" [class.txt-expense]="tx.type === 'expense'">
                       {{ tx.type === 'income' ? '+' : '-' }}\${{ tx.amount | number:'1.2-2' }}
@@ -152,7 +175,7 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="empty-state">
+                  <td colspan="8" class="empty-state">
                     <div class="empty-inner">
                       <span class="empty-icon">📭</span>
                       <p>No hay transacciones en este período.</p>
@@ -164,6 +187,14 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
             </tbody>
           </table>
         </div>
+
+        @if (totalPages() > 1 || totalItems() > 0) {
+          <div class="pagination">
+            <button type="button" class="page-btn" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">← Anterior</button>
+            <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }} · {{ totalItems() }} registros</span>
+            <button type="button" class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">Siguiente →</button>
+          </div>
+        }
       }
 
       <!-- ── CONFIG MÉTODOS DE PAGO ── -->
@@ -294,7 +325,12 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
 
               <div class="field-row">
                 <label>Descripción *</label>
-                <input type="text" [(ngModel)]="newTx.description" placeholder="Ej. Anticipo de trámite de placas">
+                <input type="text" [(ngModel)]="newTx.description" [placeholder]="isConcesionaria ? 'Ej. Anticipo de apartado' : 'Ej. Anticipo de trámite de placas'">
+              </div>
+
+              <div class="field-row">
+                <label>Referencia</label>
+                <input type="text" [(ngModel)]="newTx.referencia" placeholder="Ej. Factura #123, folio, transferencia...">
               </div>
 
               <div class="field-row">
@@ -322,14 +358,14 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
                 }
               </div>
 
-              @if (newTx.type === 'income') {
+              @if (newTx.type === 'income' || isConcesionaria) {
                 <div class="field-row">
-                  <label>Trámite relacionado (opcional)</label>
+                  <label>{{ isConcesionaria ? 'Vehículo / Lead (opcional)' : 'Trámite relacionado (opcional)' }}</label>
                   <div class="select-wrap">
                     <select [(ngModel)]="newTx.deal_id" class="method-select">
                       <option [ngValue]="null">— Ninguno —</option>
                       @for (deal of pendingDeals(); track deal.id) {
-                        <option [ngValue]="deal.id">{{ deal.title }} (pendiente: \${{ deal.estimated_value - deal.paid_amount | number:'1.2-2' }})</option>
+                        <option [ngValue]="deal.id">{{ deal.title }}@if (!isConcesionaria) { (pendiente: \${{ deal.estimated_value - deal.paid_amount | number:'1.2-2' }}) }</option>
                       }
                     </select>
                     <span class="select-arrow">▾</span>
@@ -356,190 +392,223 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS } from '../../models';
     </div>
   `,
   styles: [`
-    :host { display: block; }
+    :host {
+      display: block;
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.45);
+      --surface: #141414;
+      --border: rgba(255,255,255,0.10);
+      --gold: rgba(255,255,255,0.75);
+      --bg: #000;
+      font-family: var(--f-display);
+    }
 
     /* ── WRAP ── */
-    .fin-wrap { display: flex; flex-direction: column; gap: 20px; }
+    .fin-wrap { display: flex; flex-direction: column; gap: 20px; color: #fff; }
 
     /* ── HEADER ── */
     .fin-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; }
-    .fin-title { margin: 0; font-size: 22px; font-weight: 800; background: linear-gradient(135deg, var(--gold), #e8c96d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .fin-sub { margin: 4px 0 0 0; font-size: 13px; color: var(--muted); }
+    .fin-title { margin: 0; font-size: 24px; font-weight: 800; font-family: var(--f-display); color: #fff; letter-spacing: 0.06em; text-transform: uppercase; }
+    .fin-sub { margin: 4px 0 0 0; font-size: 15px; color: rgba(255,255,255,0.45); font-family: var(--f-display); }
     .fin-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    .btn-new { background: linear-gradient(135deg, var(--gold), #b8952e); color: #000; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; transition: opacity .2s; }
-    .btn-new:hover { opacity: .85; }
-    .btn-new:disabled { opacity: .5; cursor: not-allowed; }
-    .btn-new.small { padding: 6px 14px; font-size: 12px; }
+    .btn-new { background: #fff; color: #000; border: 2px solid #fff; padding: 10px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12px; font-family: var(--f-display); letter-spacing: 0.10em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
+    .btn-new:hover { background: transparent; color: #fff; }
+    .btn-new:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-new.small { padding: 6px 14px; font-size: 11px; }
 
-    .btn-export { padding: 10px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; border: 1px solid; }
-    .btn-export.csv { background: rgba(34,197,94,.1); border-color: rgba(34,197,94,.4); color: #22c55e; }
-    .btn-export.csv:hover { background: rgba(34,197,94,.2); }
-    .btn-export.pdf { background: rgba(200,169,74,.1); border-color: rgba(200,169,74,.4); color: var(--gold); }
-    .btn-export.pdf:hover { background: rgba(200,169,74,.2); }
+    .btn-export { padding: 10px 16px; border-radius: 8px; font-size: 11px; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; border: 1px solid; background: transparent; }
+    .btn-export.csv { border-color: rgba(34,197,94,.35); color: #4ade80; }
+    .btn-export.csv:hover { background: rgba(34,197,94,.10); }
+    .btn-export.pdf { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.75); }
+    .btn-export.pdf:hover { background: rgba(255,255,255,.08); }
 
     /* ── FILTER BAR ── */
-    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 20px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
     .date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .date-inputs label { font-size: 12px; color: var(--muted); }
-    .date-inputs input { background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; }
-    .date-inputs input:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
+    .date-inputs label { font-size: 10px; color: rgba(255,255,255,0.40); font-family: var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; }
+    .date-inputs input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; color-scheme: dark; }
+    .date-inputs input:focus { border-color: rgba(255,255,255,0.40); }
     .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-    .quick-btns button { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 6px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all .2s; }
-    .quick-btns button:hover, .quick-btns button.active { background: var(--gold); border-color: var(--gold); color: #000; font-weight: 700; }
+    .quick-btns button { background: transparent; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.45); padding: 6px 12px; border-radius: 999px; font-size: 11px; font-family: var(--f-display); letter-spacing: 0.06em; cursor: pointer; transition: all .2s; }
+    .quick-btns button:hover, .quick-btns button.active { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.40); color: #fff; font-weight: 700; }
+
+    .tx-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+    .tx-filter-field { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+    .tx-filter-field label { font-size: 10px; color: rgba(255,255,255,0.40); font-family: var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; }
+    .fin-select {
+      color-scheme: dark;
+      background-color: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: rgba(255,255,255,0.80) !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      padding: 8px 10px !important;
+      font-family: var(--f-display) !important;
+      cursor: pointer !important;
+      width: 100% !important;
+    }
+    .fin-select option { background: #1a1a1a; color: #fff; }
 
     /* ── STATS GRID ── */
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
-    .stat-card { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); position: relative; overflow: hidden; }
-    .stat-card::before { content: ''; position: absolute; inset: 0; opacity: .05; pointer-events: none; }
-    .income-card::before { background: #22c55e; }
-    .expense-card::before { background: #ef4444; }
-    .balance-card::before { background: var(--gold); }
-    .month-card::before { background: #3b82f6; }
-    .income-card { border-top: 3px solid #22c55e; }
-    .expense-card { border-top: 3px solid #ef4444; }
-    .balance-card { border-top: 3px solid var(--gold); }
-    .balance-card.negative { border-top-color: #ef4444; }
-    .month-card { border-top: 3px solid #3b82f6; }
-    .stat-icon { font-size: 28px; flex-shrink: 0; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .stat-card { display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #141414; }
+    .income-card { border-top: 2px solid rgba(34,197,94,0.50); }
+    .expense-card { border-top: 2px solid rgba(239,68,68,0.50); }
+    .balance-card { border-top: 2px solid rgba(255,255,255,0.30); }
+    .balance-card.negative { border-top-color: rgba(239,68,68,0.50); }
+    .month-card { border-top: 2px solid rgba(59,130,246,0.50); }
+    .stat-icon { font-size: 26px; flex-shrink: 0; }
     .stat-body { display: flex; flex-direction: column; gap: 4px; }
-    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
-    .stat-val { font-size: 22px; font-weight: 800; color: var(--text); }
-    .income-val { color: #22c55e; }
-    .expense-val { color: #ef4444; }
-    .balance-pos { color: var(--gold) !important; }
-    .balance-neg { color: #ef4444 !important; }
+    .stat-label { font-size: 11px; color: rgba(255,255,255,0.40); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; font-family: var(--f-display); }
+    .stat-val { font-size: 26px; font-weight: 800; color: #fff; font-family: var(--f-display); }
+    .income-val { color: #4ade80; }
+    .expense-val { color: #f87171; }
+    .balance-pos { color: #fff !important; }
+    .balance-neg { color: #f87171 !important; }
 
     /* ── METHOD BREAKDOWN ── */
-    .section-title { margin: 0 0 12px 0; font-size: 14px; font-weight: 700; color: var(--text); }
-    .method-breakdown { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+    .section-title { margin: 0 0 12px 0; font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.70); font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; }
+    .method-breakdown { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
     .method-pills { display: flex; flex-wrap: wrap; gap: 10px; }
-    .method-pill { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,.2); border: 1px solid; border-radius: 8px; padding: 8px 14px; }
+    .method-pill { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 14px; }
     .method-icon { font-size: 18px; }
-    .method-name { font-size: 13px; color: var(--muted); }
-    .method-amount { font-size: 15px; font-weight: 700; }
+    .method-name { font-size: 13px; color: rgba(255,255,255,0.50); font-family: var(--f-display); }
+    .method-amount { font-size: 15px; font-weight: 800; font-family: var(--f-display); }
 
     /* ── TABS ── */
-    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid var(--border); }
-    .tab-bar button { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 13px; color: var(--muted); cursor: pointer; font-weight: 600; margin-bottom: -1px; transition: all .2s; }
-    .tab-bar button:hover { color: var(--text); }
-    .tab-active { color: var(--gold) !important; border-bottom-color: var(--gold) !important; }
+    .tab-bar { display: flex; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.10); }
+    .tab-bar button { background: transparent; border: none; border-bottom: 2px solid transparent; padding: 10px 18px; font-size: 12px; color: rgba(255,255,255,0.40); cursor: pointer; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.06em; margin-bottom: -1px; transition: all .2s; }
+    .tab-bar button:hover { color: rgba(255,255,255,0.80); }
+    .tab-active { color: #fff !important; border-bottom-color: rgba(255,255,255,0.60) !important; }
 
     /* ── TABLE ── */
-    .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow-x: auto; }
+    .table-wrap { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; overflow-x: auto; }
     .fin-table { width: 100%; border-collapse: collapse; min-width: 640px; }
-    .fin-table th { padding: 12px 16px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; text-align: left; }
-    .fin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,.03); font-size: 13px; color: var(--text); }
+    .fin-table th { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; text-align: left; }
+    .fin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 15px; color: rgba(255,255,255,0.80); font-family: var(--f-display); }
     .fin-table tr:last-child td { border-bottom: none; }
-    .tx-row:hover { background: rgba(255,255,255,.02); }
+    .tx-row:hover { background: rgba(255,255,255,0.03); }
     .col-right { text-align: right; }
-    .col-date { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .col-date { color: rgba(255,255,255,0.40); font-size: 12px; white-space: nowrap; }
     .col-desc { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .col-deal { color: var(--muted); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-deal { color: rgba(255,255,255,0.40); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-ref { color: rgba(255,255,255,0.55); font-size: 12px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    .badge { padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .badge-income { background: rgba(34,197,94,.15); color: #22c55e; }
-    .badge-expense { background: rgba(239,68,68,.15); color: #ef4444; }
+    .badge { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.06em; }
+    .badge-income { background: rgba(34,197,94,.12); color: #4ade80; }
+    .badge-expense { background: rgba(239,68,68,.12); color: #f87171; }
+    .txt-income { color: #4ade80; font-weight: 800; }
+    .txt-expense { color: #f87171; font-weight: 800; }
 
-    .txt-income { color: #22c55e; font-weight: 700; }
-    .txt-expense { color: #ef4444; font-weight: 700; }
+    .method-tag { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; font-family: var(--f-display); }
+    .mt-stripe { background: rgba(99,102,241,.15); color: #a5b4fc; }
+    .mt-efectivo { background: rgba(34,197,94,.12); color: #4ade80; }
+    .mt-transferencia { background: rgba(59,130,246,.12); color: #93c5fd; }
+    .mt-mercadopago { background: rgba(168,85,247,.12); color: #d8b4fe; }
+    .mt-general { background: rgba(255,255,255,.08); color: rgba(255,255,255,0.50); }
 
-    .method-tag { padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
-    .mt-stripe { background: rgba(99,102,241,.15); color: #818cf8; }
-    .mt-efectivo { background: rgba(34,197,94,.15); color: #22c55e; }
-    .mt-transferencia { background: rgba(59,130,246,.15); color: #60a5fa; }
-    .mt-mercadopago { background: rgba(168,85,247,.15); color: #c084fc; }
-    .mt-general { background: rgba(255,255,255,.07); color: var(--muted); }
-
-    .btn-del { background: transparent; border: 1px solid transparent; color: var(--muted); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all .2s; }
-    .btn-del:hover { border-color: rgba(239,68,68,.4); color: #ef4444; background: rgba(239,68,68,.1); }
+    .btn-del { background: transparent; border: 1px solid transparent; color: rgba(255,255,255,0.35); width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all .2s; }
+    .btn-del:hover { border-color: rgba(239,68,68,.4); color: #f87171; background: rgba(239,68,68,.10); }
 
     .empty-state { text-align: center; padding: 48px !important; }
     .empty-inner { display: flex; flex-direction: column; align-items: center; gap: 12px; }
     .empty-icon { font-size: 40px; }
-    .empty-inner p { color: var(--muted); margin: 0; }
+    .empty-inner p { color: rgba(255,255,255,0.40); margin: 0; font-family: var(--f-display); }
+
+    /* ── PAGINATION ── */
+    .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; flex-wrap: wrap; }
+    .page-btn { background: transparent; border: 1px solid rgba(255,255,255,0.20); color: rgba(255,255,255,0.70); padding: 8px 16px; border-radius: 8px; font-family: var(--f-display); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
+    .page-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.40); }
+    .page-btn:disabled { opacity: 0.30; cursor: not-allowed; }
+    .page-info { font-size: 12px; color: rgba(255,255,255,0.40); font-family: var(--f-display); }
 
     /* ── CONFIG ── */
-    .config-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
-    .config-desc { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.6; }
-    .config-section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .config-card { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .config-desc { color: rgba(255,255,255,0.45); font-size: 13px; margin: 0; line-height: 1.6; font-family: var(--f-display); }
+    .config-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.35); font-family: var(--f-display); }
     .methods-list { display: flex; flex-direction: column; gap: 8px; }
     .method-toggle { display: block; cursor: pointer; margin-bottom: 0; }
     .method-toggle.disabled { cursor: default; opacity: .6; }
     .method-toggle input { display: none; }
-    .method-toggle-body { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: rgba(0,0,0,.2); border: 2px solid; border-radius: 10px; transition: all .2s; }
+    .method-toggle-body { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; transition: all .2s; }
     .mt-icon { font-size: 22px; flex-shrink: 0; }
-    .method-toggle-body strong { display: block; font-size: 14px; color: var(--text); }
-    .method-toggle-body small { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .toggle-status { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; background: rgba(255,255,255,.05); color: var(--muted); flex-shrink: 0; }
-    .toggle-status.on { background: rgba(34,197,94,.15); color: #22c55e; }
+    .method-toggle-body strong { display: block; font-size: 14px; color: #fff; font-family: var(--f-display); }
+    .method-toggle-body small { display: block; font-size: 11px; color: rgba(255,255,255,0.40); margin-top: 2px; font-family: var(--f-display); }
+    .toggle-status { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.06); color: rgba(255,255,255,0.40); flex-shrink: 0; font-family: var(--f-display); letter-spacing: 0.06em; }
+    .toggle-status.on { background: rgba(34,197,94,.12); color: #4ade80; }
 
-    /* Métodos personalizados */
     .method-custom-item { display: flex; align-items: center; gap: 8px; }
-    .btn-del-method { background: transparent; border: 1px solid rgba(239,68,68,.3); color: #ef4444; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all .2s; }
-    .btn-del-method:hover { background: rgba(239,68,68,.15); }
+    .btn-del-method { background: transparent; border: 1px solid rgba(239,68,68,.30); color: #f87171; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 14px; flex-shrink: 0; transition: all .2s; }
+    .btn-del-method:hover { background: rgba(239,68,68,.12); }
 
-    /* Agregar método personalizado */
-    .add-custom-method { background: rgba(200,169,74,.04); border: 1px dashed rgba(200,169,74,.3); border-radius: 10px; padding: 16px; }
+    .add-custom-method { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; }
     .custom-method-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .emoji-picker-wrap { position: relative; flex-shrink: 0; }
-    .emoji-btn { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,.2); font-size: 22px; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; }
-    .emoji-btn:hover { border-color: var(--gold); background: rgba(200,169,74,.1); }
-    .emoji-grid { position: absolute; top: calc(100% + 6px); left: 0; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,.5); min-width: 200px; }
+    .emoji-btn { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: #1a1a1a; font-size: 22px; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; }
+    .emoji-btn:hover { border-color: rgba(255,255,255,0.35); }
+    .emoji-grid { position: absolute; top: calc(100% + 6px); left: 0; background: #141414; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,.6); min-width: 200px; }
     .emoji-opt { background: transparent; border: none; font-size: 20px; width: 32px; height: 32px; cursor: pointer; border-radius: 6px; transition: background .15s; }
-    .emoji-opt:hover { background: rgba(255,255,255,.1); }
-    .custom-name-input { flex: 1; min-width: 160px; background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; }
-    .custom-name-input:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
-    .btn-add-method { background: rgba(200,169,74,.15); border: 1px solid rgba(200,169,74,.4); color: var(--gold); padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .2s; }
-    .btn-add-method:hover { background: rgba(200,169,74,.25); }
+    .emoji-opt:hover { background: rgba(255,255,255,.08); }
+    .custom-name-input { flex: 1; min-width: 160px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; }
+    .custom-name-input:focus { border-color: rgba(255,255,255,0.40); }
+    .btn-add-method { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 11px; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: all .2s; }
+    .btn-add-method:hover { background: rgba(255,255,255,0.08); color: #fff; }
     .btn-add-method:disabled { opacity: .4; cursor: not-allowed; }
 
     /* ── MODAL ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
-    .modal-box { background: var(--bg); border: 1px solid var(--border); border-radius: 18px; width: 480px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.5); animation: slideUp .2s ease; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .modal-box { background: #0d0d0d; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; width: 480px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.6); animation: slideUp .2s ease; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 0; }
-    .modal-header h3 { margin: 0; font-size: 16px; color: var(--gold); }
-    .btn-close { background: transparent; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
-    .btn-close:hover { color: var(--text); background: rgba(255,255,255,.08); }
+    .modal-header h3 { margin: 0; font-size: 16px; color: #fff; font-family: var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; }
+    .btn-close { background: transparent; border: none; color: rgba(255,255,255,0.45); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+    .btn-close:hover { color: #fff; background: rgba(255,255,255,.08); }
 
     .type-toggle { display: flex; gap: 6px; padding: 16px 24px 0; }
-    .type-toggle button { flex: 1; padding: 10px; border-radius: 8px; border: 2px solid var(--border); background: transparent; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; transition: all .2s; }
-    .type-active-income { border-color: #22c55e !important; color: #22c55e !important; background: rgba(34,197,94,.1) !important; }
-    .type-active-expense { border-color: #ef4444 !important; color: #ef4444 !important; background: rgba(239,68,68,.1) !important; }
+    .type-toggle button { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: transparent; color: rgba(255,255,255,0.45); font-size: 13px; font-weight: 700; font-family: var(--f-display); cursor: pointer; transition: all .2s; }
+    .type-active-income { border-color: rgba(34,197,94,.45) !important; color: #4ade80 !important; background: rgba(34,197,94,.08) !important; }
+    .type-active-expense { border-color: rgba(239,68,68,.45) !important; color: #f87171 !important; background: rgba(239,68,68,.08) !important; }
 
     .modal-fields { display: flex; flex-direction: column; gap: 14px; padding: 16px 24px; }
     .field-row { display: flex; flex-direction: column; gap: 6px; }
-    .field-row label { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
-    .field-row input, .field-row select { background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 10px 12px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; }
-    .field-row input:focus, .field-row select:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
-    .input-money { display: flex; align-items: center; background: #ffffff; border: 1px solid rgba(0,0,0,.18); border-radius: 8px; overflow: hidden; }
-    .input-money span { padding: 0 12px; color: var(--brand-black); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(0,0,0,.12); background: #f5f3f0; }
-    .input-money input { border: none; background: transparent; flex: 1; color: var(--brand-black); }
+    .field-row label { font-size: 10px; color: rgba(255,255,255,0.40); font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; }
+    .field-row input, .field-row select { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: dark; }
+    .field-row input:focus, .field-row select:focus { border-color: rgba(255,255,255,0.40); }
+    .input-money { display: flex; align-items: center; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; overflow: hidden; }
+    .input-money span { padding: 0 12px; color: rgba(255,255,255,0.60); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(255,255,255,0.10); background: #141414; font-family: var(--f-display); }
+    .input-money input { border: none; background: transparent; flex: 1; color: #fff; }
 
-    /* Styled select for payment method */
     .select-wrap { position: relative; }
-    .method-select { appearance: none; -webkit-appearance: none; background: #ffffff; border: 1px solid rgba(0,0,0,.18); padding: 11px 40px 11px 14px; border-radius: 8px; color: var(--brand-black); font-size: 14px; outline: none; width: 100%; box-sizing: border-box; cursor: pointer; transition: border-color .2s; }
-    .method-select:focus { border-color: var(--brand-black); box-shadow: 0 0 0 2px rgba(0,0,0,.08); }
-    .method-select option { background: #ffffff; color: var(--brand-black); padding: 6px; }
-    .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; font-size: 14px; }
-    .no-methods-hint { background: rgba(200,169,74,.08); border: 1px dashed rgba(200,169,74,.3); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
-    .no-methods-hint strong { color: var(--gold); }
+    .method-select { appearance: none; -webkit-appearance: none; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 11px 40px 11px 14px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; cursor: pointer; color-scheme: dark; }
+    .method-select:focus { border-color: rgba(255,255,255,0.40); }
+    .method-select option { background: #1a1a1a; color: #fff; }
+    .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.35); pointer-events: none; font-size: 14px; }
+    .no-methods-hint { background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 8px; font-family: var(--f-display); }
+    .no-methods-hint strong { color: #fff; }
 
     .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 0 24px 20px; }
-    .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 13px; }
-    .btn-ghost:hover { background: rgba(255,255,255,.05); }
+    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.20); color: rgba(255,255,255,0.70); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; }
+    .btn-ghost:hover { background: rgba(255,255,255,.06); color: #fff; }
   `]
 })
 export class FinancesComponent implements OnInit {
   dashboard = signal<FinDashboard | null>(null);
   transactions = signal<FinTransaction[]>([]);
+  filterDeals = signal<FinFilterOptions['deals']>([]);
+  filterMethods = signal<string[]>([]);
+  currentPage = signal(1);
+  totalPages = signal(1);
+  totalItems = signal(0);
+  pageSize = 15;
   pendingDeals = signal<any[]>([]);
   showForm = signal(false);
   activeTab: 'transactions' | 'config' = 'transactions';
 
   filterFrom = '';
   filterTo = '';
+  filterMethod = '';
+  filterDealId = '';
   quickRange = 'all';
 
   // Payment methods config
@@ -564,7 +633,11 @@ export class FinancesComponent implements OnInit {
 
   newTx = this.emptyTx();
 
-  constructor(private fin: FinancesService, private toast: ToastService) {}
+  get isConcesionaria(): boolean {
+    return this.auth.user()?.role === 'concesionaria';
+  }
+
+  constructor(private fin: FinancesService, private auth: AuthService, private toast: ToastService) {}
 
   ngOnInit() {
     this.loadData();
@@ -580,6 +653,7 @@ export class FinancesComponent implements OnInit {
       date: new Date().toISOString().split('T')[0],
       deal_id: null as string | null,
       payment_method: 'efectivo',
+      referencia: '',
     };
   }
 
@@ -587,7 +661,44 @@ export class FinancesComponent implements OnInit {
     const from = this.filterFrom || undefined;
     const to = this.filterTo || undefined;
     this.fin.getDashboard(from, to).subscribe(d => this.dashboard.set(d));
-    this.fin.getTransactions(from, to).subscribe(t => this.transactions.set(t));
+    this.fin.getTransactions({
+      from, to,
+      page: this.currentPage(),
+      limit: this.pageSize,
+      payment_method: this.filterMethod || undefined,
+      deal_id: this.filterDealId || undefined,
+    }).subscribe(res => {
+      this.transactions.set(res.items);
+      this.totalItems.set(res.total);
+      this.totalPages.set(res.pages);
+      this.currentPage.set(res.page);
+    });
+    this.loadFilterOptions();
+  }
+
+  loadFilterOptions() {
+    const from = this.filterFrom || undefined;
+    const to = this.filterTo || undefined;
+    this.fin.getFilterOptions(from, to).subscribe(opts => {
+      this.filterDeals.set(opts.deals);
+      this.filterMethods.set(opts.methods);
+    });
+  }
+
+  onDateChange() {
+    this.currentPage.set(1);
+    this.loadData();
+  }
+
+  onFilterChange() {
+    this.currentPage.set(1);
+    this.loadData();
+  }
+
+  goPage(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+    this.loadData();
   }
 
   setRange(range: string) {
@@ -614,6 +725,9 @@ export class FinancesComponent implements OnInit {
       this.filterFrom = '';
       this.filterTo = '';
     }
+    this.filterMethod = '';
+    this.filterDealId = '';
+    this.currentPage.set(1);
     this.loadData();
   }
 
@@ -808,5 +922,12 @@ export class FinancesComponent implements OnInit {
 
   getMethodAmount(id: string): number {
     return Number(this.dashboard()?.byMethod?.[id] || 0);
+  }
+
+  linkLabel(tx: FinTransaction): string {
+    if (this.isConcesionaria) {
+      return tx.vehicle_label || tx.deal_title || '—';
+    }
+    return tx.deal_title || '—';
   }
 }

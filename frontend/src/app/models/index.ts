@@ -43,6 +43,8 @@ export interface User {
   panel_assistant_bg_color?: string;
   panel_assistant_btn_color?: string;
   panel_assistant_text_color?: string;
+  panel_assistant_font?: string;
+  panel_assistant_prompt?: string;
   slug?: string;
   description?: string;
   phone?: string;
@@ -72,6 +74,7 @@ export interface Auto {
   dealerName?: string;
   dealerSlug?: string;
   dealerLogoUrl?: string | null;
+  dealerPhone?: string | null;
   status?: AutoStatus;
   active?: boolean;
   google_analytics_id?: string;
@@ -411,13 +414,28 @@ export interface FinTransaction {
   user_id: string;
   deal_id?: string;
   deal_title?: string;
+  vehicle_label?: string;
   type: 'income' | 'expense';
   amount: number;
   description: string;
+  referencia?: string;
   category: string;
   payment_method?: string;
   date: string;
   created_at?: string;
+}
+
+export interface FinTransactionsPage {
+  items: FinTransaction[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+
+export interface FinFilterOptions {
+  deals: { id: string; title: string }[];
+  methods: string[];
 }
 
 export interface FinDashboard {

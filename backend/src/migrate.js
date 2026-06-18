@@ -719,6 +719,63 @@ async function migrate() {
       await conn27.end();
       console.log('Migración v31 (auto video) aplicada.');
     }
+
+    const v32Path = path.join(__dirname, '..', 'sql', 'migration-v32-fin-referencia.sql');
+    if (fs.existsSync(v32Path)) {
+      const v32 = fs.readFileSync(v32Path, 'utf8');
+      const conn32 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn32.query('USE tramites_vehiculares');
+      for (const stmt of v32.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn32.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn32.end();
+      console.log('Migración v32 (fin referencia) aplicada.');
+    }
+
+    const v33Path = path.join(__dirname, '..', 'sql', 'migration-v33-assistant-font.sql');
+    if (fs.existsSync(v33Path)) {
+      const v33 = fs.readFileSync(v33Path, 'utf8');
+      const conn33 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn33.query('USE tramites_vehiculares');
+      for (const stmt of v33.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn33.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn33.end();
+      console.log('Migración v33 (assistant font) aplicada.');
+    }
+
+    const v34Path = path.join(__dirname, '..', 'sql', 'migration-v34-assistant-prompt.sql');
+    if (fs.existsSync(v34Path)) {
+      const v34 = fs.readFileSync(v34Path, 'utf8');
+      const conn34 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn34.query('USE tramites_vehiculares');
+      for (const stmt of v34.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn34.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn34.end();
+      console.log('Migración v34 (assistant prompt) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

@@ -131,6 +131,65 @@ export async function createDealFromInquiry(inquiry, dealerUserId) {
   return dealId;
 }
 
+export async function createManualVentaDeal(dealerUserId, data) {
+  const {
+    clientName,
+    clientEmail,
+    clientPhone,
+    title,
+    autoId,
+    message,
+    estimatedValue,
+    stage = 'lead_nuevo',
+  } = data;
+
+  const contact = await findOrCreateContact(dealerUserId, {
+    name: clientName.trim(),
+    email: clientEmail?.trim() || null,
+    phone: clientPhone?.trim() || null,
+    source: 'manual',
+  });
+
+  let dealTitle = title?.trim() || '';
+  let auto_id = autoId || null;
+  let estValue = Number(estimatedValue) || 0;
+
+  if (auto_id) {
+    const auto = await get(
+      'SELECT id, make, model, year, price, special_price FROM autos WHERE id = ? AND user_id = ?',
+      [auto_id, dealerUserId],
+    );
+    if (!auto) throw new Error('Vehículo no encontrado en tu inventario');
+    if (!dealTitle) dealTitle = `${auto.make} ${auto.model} ${auto.year}`;
+    if (!estValue) estValue = Number(auto.special_price || auto.price || 0);
+  }
+
+  if (!dealTitle) dealTitle = 'Lead manual';
+
+  const dealId = uuid();
+  await run(
+    `INSERT INTO crm_deals (id, user_id, contact_id, deal_type, title, stage, ref_type, ref_id, auto_id, stage_changed_at, estimated_value, client_message)
+     VALUES (?, ?, ?, 'venta_auto', ?, ?, NULL, NULL, ?, NOW(), ?, ?)`,
+    [dealId, dealerUserId, contact.id, dealTitle, stage, auto_id, estValue, message?.trim() || null],
+  );
+
+  await run(
+    `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
+     VALUES (?, ?, ?, 'note', ?)`,
+    [uuid(), dealId, dealerUserId, 'Lead registrado manualmente'],
+  );
+
+  if (message?.trim()) {
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
+       VALUES (?, ?, ?, 'message', ?)`,
+      [uuid(), dealId, dealerUserId, message.trim()],
+    );
+  }
+
+  return dealId;
+}
+
 export function contactRow(row) {
   if (!row) return null;
   return {

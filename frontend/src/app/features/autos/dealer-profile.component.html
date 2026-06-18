@@ -52,7 +52,7 @@
       </div>
       <div class="dp-hero-actions">
         @if (d.phone) {
-          <a [href]="whatsappLink()" target="_blank" rel="noopener" class="dp-btn dp-btn-wa">Contactar por WhatsApp</a>
+          <button class="dp-btn dp-btn-wa" (click)="openWaModal($event)">Contactar por WhatsApp</button>
         }
         <button type="button" class="dp-btn dp-btn-share" (click)="shareDealer()">Compartir concesionaria</button>
       </div>
@@ -167,7 +167,7 @@
             </div>
           }
           @if (d.phone) {
-            <a [href]="whatsappLink()" target="_blank" class="dp-btn-wa-full">💬 Contactar por WhatsApp</a>
+            <button class="dp-btn-wa-full" (click)="openWaModal($event)">💬 Contactar por WhatsApp</button>
           }
         </div>
 
@@ -367,4 +367,11 @@
 
   </div>
   }
+}
+
+@if (showWaModal() && waModalData()) {
+  <app-whatsapp-lead-modal
+    [data]="waModalData()!"
+    (close)="showWaModal.set(false)"
+  />
 }

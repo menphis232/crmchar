@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
-import { createDealFromInquiry } from '../crm/helpers.js';
+import { createDealFromInquiry, findOrCreateContact, createManualVentaDeal } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
@@ -156,6 +156,98 @@ router.post('/inquiries', async (req, res) => {
     res.status(201).json({ id, status: 'nuevo' });
   } catch (err) {
     res.status(500).json({ error: 'Error al enviar mensaje' });
+  }
+});
+
+/**
+ * POST /concesionaria/whatsapp-lead
+ * Público — Captura de lead antes de abrir WhatsApp.
+ * Crea cuenta de cliente si se provee email + CRM lead.
+ */
+router.post('/whatsapp-lead', async (req, res) => {
+  try {
+    const { dealerSlug, clientName, clientEmail, clientPhone, autoId } = req.body;
+    if (!dealerSlug || !clientName) {
+      return res.status(400).json({ error: 'Datos incompletos' });
+    }
+
+    // Buscar concesionaria por slug
+    const dealer = await get("SELECT id, name, phone FROM users WHERE slug = ? AND role = 'concesionaria'", [dealerSlug]);
+    if (!dealer) return res.status(404).json({ error: 'Concesionaria no encontrada' });
+
+    // Auto-registro del cliente si hay email
+    if (clientEmail) {
+      const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail.toLowerCase()]);
+      if (!existingUser) {
+        const tempPassword = Math.random().toString(36).slice(-8);
+        const hash = bcrypt.hashSync(tempPassword, 10);
+        const userId = uuid();
+        await run(
+          'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
+          [userId, clientEmail.toLowerCase(), hash, 'cliente', clientName]
+        );
+        const html = `
+          <h2 style="color:#fff;font-size:20px;font-weight:500;">Hola ${clientName},</h2>
+          <p style="color:#a0aec0;font-size:15px;line-height:1.6;">Contactaste a <strong>${dealer.name}</strong> por WhatsApp a través de nuestra plataforma.</p>
+          <p style="color:#a0aec0;font-size:15px;line-height:1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento de tu consulta, subir documentos y chatear directamente.</p>
+          <div style="background:#0f1117;border:1px dashed #c8a94a;border-radius:8px;padding:20px;margin:30px 0;">
+            <p style="color:#a0aec0;font-size:13px;margin:0 0 10px 0;text-transform:uppercase;letter-spacing:1px;">Tus credenciales de acceso:</p>
+            <ul style="color:#c8a94a;font-size:16px;margin:0;padding-left:20px;">
+              <li style="margin-bottom:5px;"><strong>Email:</strong> <span style="color:#fff;">${clientEmail}</span></li>
+              <li><strong>Contraseña provisional:</strong> <span style="color:#fff;">${tempPassword}</span></li>
+            </ul>
+          </div>
+          <p style="color:#a0aec0;font-size:14px;text-align:center;">Por favor cambia tu contraseña en la sección de Ajustes al iniciar sesión.</p>
+        `;
+        try {
+          await sendEmail(clientEmail, 'Tu cuenta ha sido creada', `Hola ${clientName}, tu cuenta ha sido creada.`, html, dealer.id);
+        } catch(e) {
+          console.error('Error enviando correo de bienvenida:', e);
+        }
+      }
+    }
+
+    // Crear CRM lead en el panel de la concesionaria
+    let auto = null;
+    if (autoId) {
+      auto = await get("SELECT id, make, model, year, price FROM autos WHERE id = ? AND user_id = ?", [autoId, dealer.id]);
+    }
+    const leadTitle = auto
+      ? `Contacto WhatsApp — ${auto.make} ${auto.model} ${auto.year}`
+      : `Contacto WhatsApp — Consulta general`;
+
+    await createManualVentaDeal(dealer.id, {
+      clientName,
+      clientEmail: clientEmail || null,
+      clientPhone: clientPhone || null,
+      title: leadTitle,
+      autoId: auto?.id || null,
+      estimatedValue: auto ? Number(auto.price) : 0,
+      message: `Cliente contactó por WhatsApp desde ${auto ? `el vehículo ${auto.make} ${auto.model} ${auto.year}` : 'la página de la concesionaria'}.`,
+      stage: 'lead_nuevo',
+    });
+
+    // Notificación en tiempo real
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const notifId = uuid();
+        const notifTitle = 'Nuevo lead por WhatsApp';
+        const notifBody = `${clientName} quiere contactarte por WhatsApp.`;
+        await run(
+          `INSERT INTO notifications (id, user_id, type, title, body) VALUES (?, ?, 'nuevo_lead', ?, ?)`,
+          [notifId, dealer.id, notifTitle, notifBody]
+        );
+        io.to('user_' + dealer.id).emit('notification', {
+          id: notifId, type: 'nuevo_lead', title: notifTitle, body: notifBody, is_read: 0, created_at: new Date().toISOString()
+        });
+      }
+    } catch(e) { /* notif no crítica */ }
+
+    res.status(201).json({ ok: true, dealerPhone: dealer.phone });
+  } catch (err) {
+    console.error('whatsapp-lead error:', err);
+    res.status(500).json({ error: 'Error al procesar la solicitud' });
   }
 });
 

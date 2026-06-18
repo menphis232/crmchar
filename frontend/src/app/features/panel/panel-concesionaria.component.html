@@ -56,7 +56,6 @@
     <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation'); isMobileMenuOpen.set(false)">⭐ Reputación</button>
     <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
     <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">⚙️ Perfil</button>
-    <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
     <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">💰 Finanzas</button>
     <a routerLink="/autos" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Ver catálogo</a>
   </aside>
@@ -328,7 +327,7 @@
             <h4 class="section-sub">📁 Documentación del vehículo (uso interno)</h4>
             <span class="auto-private-docs-badge">No visible en la ficha pública</span>
           </div>
-          <p class="card-desc">Sube facturas, tarjeta de circulación, tenencias, pólizas u otros archivos. Solo tú y tu equipo los ven en el panel.</p>
+          <p class="card-desc">Sube facturas, refacturas, baja de placas, contrato de compra-venta u otros archivos. Solo tú y tu equipo los ven en el panel.</p>
 
           @if (editing()?.id) {
             <div class="form-row" style="align-items:flex-end;">
@@ -363,8 +362,10 @@
                       <span>{{ doc.fileName || 'Archivo' }}</span>
                       @if (doc.notes) { <em>{{ doc.notes }}</em> }
                     </div>
-                    <a class="btn-ghost small" [href]="doc.fileUrl" target="_blank" rel="noopener">Ver</a>
-                    <button type="button" class="btn-delete small" (click)="deletePrivateDocument(doc)">Eliminar</button>
+                    <div class="auto-private-doc-actions">
+                      <button type="button" class="doc-btn doc-btn-download" (click)="downloadPrivateDocument(doc)">⬇ Descargar</button>
+                      <button type="button" class="doc-btn doc-btn-delete" (click)="deletePrivateDocument(doc)">Eliminar</button>
+                    </div>
                   </li>
                 }
               </ul>
@@ -526,6 +527,17 @@
             </select>
           </div>
         </div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Fuente del asistente</label>
+            <select [(ngModel)]="panelAssistantFont">
+              @for (f of assistantFontOptions; track f.value) {
+                <option [value]="f.value" [style.font-family]="f.value">{{ f.label }}</option>
+              }
+            </select>
+            <small style="display:block; margin-top:4px; opacity:.6; font-size:11px;">Vista previa: <span [style.font-family]="panelAssistantFont">{{ panelAssistantName || 'VEGA' }} — Asistente del panel</span></small>
+          </div>
+        </div>
         <app-panel-color-palette
           [fields]="assistantColorFields"
           [colors]="assistantColors"
@@ -533,6 +545,25 @@
           (colorsChange)="applyAssistantColors($event)"
           (colorPicked)="saveAssistantColors()"
         ></app-panel-color-palette>
+
+        <div class="form-group" style="margin-top:18px;">
+          <label style="font-size:13px; font-weight:600; margin-bottom:6px; display:block;">
+            📝 Instrucciones personalizadas del asistente
+          </label>
+          <p class="card-desc" style="margin-bottom:8px; font-size:12px;">
+            Escribe aquí cómo quieres que se comporte tu asistente: su nombre real, la identidad de tu negocio, cómo debe responder, qué no debe decir, etc. Esto se agrega al inicio de cada conversación.
+          </p>
+          <textarea
+            [(ngModel)]="panelAssistantPrompt"
+            placeholder="Ej: Eres el asistente de Automotriz del Norte. Nuestro negocio se llama 'El Corral de Autos'. Siempre saluda con calidez y menciona nuestras promociones del mes. No menciones a la competencia. Si alguien pregunta por financiamiento, di que ofrecemos planes desde 6 hasta 60 meses."
+            rows="6"
+            maxlength="2000"
+            style="width:100%; box-sizing:border-box; background:#1a1a2e; color:#fff; border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:10px 12px; font-size:13px; font-family:inherit; resize:vertical; line-height:1.5;"
+          ></textarea>
+          <small style="display:flex; justify-content:flex-end; opacity:.5; font-size:11px; margin-top:3px;">
+            {{ panelAssistantPrompt.length }}/2000 caracteres
+          </small>
+        </div>
 
         <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
       </div>
@@ -543,40 +574,6 @@
       <app-pdf-designer></app-pdf-designer>
     }
 
-    <!-- ── AJUSTES CRM ── -->
-    @if (tab() === 'ajustes-crm') {
-      <div class="dash-card">
-        <h2 class="card-title">⚙️ Ajustes del CRM</h2>
-        <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
-        
-        <div class="crm-stages-list">
-          @for (stage of crmStages; track stage.id; let i = $index) {
-            <div class="crm-stage-row">
-              <span class="crm-stage-index">{{ i + 1 }}</span>
-              <input type="text" class="crm-stage-input" [(ngModel)]="stage.label" placeholder="Nombre de la etapa">
-              <div class="crm-stage-actions">
-                <button type="button" class="crm-stage-btn" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">
-                  <svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-                </button>
-                <button type="button" class="crm-stage-btn" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">
-                  <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
-                </button>
-                <button type="button" class="crm-stage-btn crm-stage-btn--delete" (click)="removeCrmStage(i)" title="Eliminar etapa">
-                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-        
-        <div class="crm-stages-footer">
-          <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
-          <button class="btn-copy" (click)="saveCrmStages()" [disabled]="isSavingStages" style="min-width:150px;">
-            {{ isSavingStages ? 'Guardando...' : 'Guardar Ajustes' }}
-          </button>
-        </div>
-      </div>
-    }
     <!-- ── FINANZAS ── -->
     @if (tab() === 'finanzas') {
       <app-finances />

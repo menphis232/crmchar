@@ -8,13 +8,14 @@ import { DealerProfile, Auto } from '../../models';
 import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.component';
 
 type DealerFilterTab = 'marca' | 'verificado' | 'estado';
 
 @Component({
   selector: 'app-dealer-profile',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent],
   templateUrl: './dealer-profile.component.html',
   styleUrl: './dealer-profile.component.css',
 })
@@ -24,6 +25,7 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   loading = signal(true);
   autosLoading = signal(true);
   error = signal('');
+  showWaModal = signal(false);
 
   searchQuery = signal('');
   selectedMakes = signal<Set<string>>(new Set());
@@ -399,11 +401,18 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  whatsappLink() {
+  waModalData = computed(() => {
     const d = this.dealer();
-    const phone = d?.phone?.replace(/\D/g, '');
-    if (!phone) return '#';
-    const text = encodeURIComponent(`Hola, te contacto desde el directorio. Quisiera información sobre sus vehículos.`);
-    return `https://wa.me/${phone}?text=${text}`;
+    if (!d) return null;
+    return {
+      dealerSlug: d.slug || '',
+      dealerPhone: d.phone || '',
+      dealerName: d.name || '',
+    };
+  });
+
+  openWaModal(e: Event) {
+    e.preventDefault();
+    this.showWaModal.set(true);
   }
 }
