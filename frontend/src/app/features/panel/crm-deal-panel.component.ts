@@ -146,14 +146,64 @@ import { ToastService } from '../../core/toast.service';
     .reply-msg { color: #4ade80 !important; font-family: var(--f-display) !important; }
 
     /* Activity */
-    .activity-item { border-bottom: 1px solid rgba(255,255,255,0.06) !important; }
-    .activity-item p { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
+    .activity-item {
+      background: #111 !important;
+      border: 1px solid rgba(255,255,255,0.08) !important;
+      border-left: 3px solid rgba(255,255,255,0.20) !important;
+      border-radius: 10px !important;
+      margin-bottom: 8px !important;
+      padding: 10px 14px !important;
+    }
+    .activity-item:hover { border-left-color: rgba(255,255,255,0.50) !important; background: #161616 !important; }
+    .activity-item p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
     .activity-item small { color: rgba(255,255,255,0.30) !important; font-family: var(--f-display) !important; }
+    .activity-type { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 10px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; }
 
     /* Chat */
-    .chat-container { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 12px !important; }
-    .message { font-family: var(--f-display) !important; font-size: 13px !important; color: rgba(255,255,255,0.70) !important; }
-    .chat-input { background: #161616 !important; border-top: 1px solid rgba(255,255,255,0.09) !important; }
+    .deal-chat { border-radius: 12px !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.10) !important; }
+    .chat-container { background: #0d0d0d !important; border-radius: 12px !important; }
+    .deal-panel .chat-messages { background: #0d0d0d !important; }
+
+    /* Mensajes del cliente */
+    .deal-panel .message {
+      background: #1e1e1e !important;
+      border: 1px solid rgba(255,255,255,0.09) !important;
+      color: rgba(255,255,255,0.80) !important;
+      border-radius: 10px !important;
+      font-family: var(--f-display) !important;
+      font-size: 13px !important;
+    }
+    .deal-panel .message.own {
+      background: #2a2a2a !important;
+      border-color: rgba(255,255,255,0.18) !important;
+      color: #ffffff !important;
+      align-self: flex-end !important;
+    }
+
+    /* Chat input bar */
+    .deal-panel .chat-input {
+      background: #111 !important;
+      border-top: 1px solid rgba(255,255,255,0.09) !important;
+      padding: 8px !important;
+    }
+    .deal-panel .chat-input input[type="text"] {
+      background: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border-radius: 8px !important;
+      font-family: var(--f-display) !important;
+    }
+
+    /* Template chips */
+    .template-chips .chip {
+      background: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: rgba(255,255,255,0.65) !important;
+      border-radius: 999px !important;
+      font-family: var(--f-display) !important;
+    }
+    .template-chips .chip:hover { background: #2a2a2a !important; color: #fff !important; border-color: rgba(255,255,255,0.35) !important; }
 
     /* Tasks */
     .task-row { background: #161616 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 8px !important; color: #fff !important; font-family: var(--f-display) !important; }
