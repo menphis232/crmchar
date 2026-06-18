@@ -16,7 +16,7 @@ import { ToastService } from '../../core/toast.service';
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
-    /* ══ DEAL PANEL — variables base ══ */
+    /* ══ DEAL PANEL — NEGRO TOTAL ══ */
     :host {
       --brand-black:  #ffffff;
       --brand-white:  #0a0a0a;
@@ -38,15 +38,18 @@ import { ToastService } from '../../core/toast.service';
     /* Overlay */
     .deal-panel-overlay { background: rgba(0,0,0,0.75) !important; backdrop-filter: blur(6px); }
 
-    /* Panel */
+    /* Panel — todo negro */
     .deal-panel {
-      background: #0a0a0a !important;
+      background: #000 !important;
       border-left: 1px solid rgba(255,255,255,0.10) !important;
       color: #ffffff !important;
       scrollbar-color: rgba(255,255,255,0.12) transparent;
       font-family: var(--f-display) !important;
     }
-    .deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12) !important; }
+    .deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }
+    .deal-panel-body { background: #000 !important; }
+    .deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
+    .deal-subsection { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; margin-bottom: 8px !important; }
 
     /* Header */
     .deal-panel-header {
@@ -169,11 +172,31 @@ import { ToastService } from '../../core/toast.service';
     /* Docs */
     .deal-doc-item { background: #161616 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
 
+    /* Payment */
+    .deal-payment-box,
+    .deal-payment-link-box { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 12px !important; }
+    .deal-payment-error { color: #ff6b6b !important; }
+    .deal-payment-link-label { color: rgba(255,255,255,0.50) !important; font-family: var(--f-display) !important; }
+    .deal-value-row { background: transparent !important; }
+
+    /* Docs */
+    .deal-doc-item { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
+    .deal-doc-item-top { background: transparent !important; }
+
+    /* Upload area */
+    .deal-upload-area,
+    [class*="upload"] { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
+
+    /* Cover ALL remaining white/cream backgrounds */
+    div:not([class*="vega"]):not([class*="toast"]) { color: inherit; }
+
     /* Typography catch-all */
-    p   { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
+    p      { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
     strong { color: #ffffff !important; font-family: var(--f-display) !important; }
-    label { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
-    small { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
+    h4     { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; font-size: 9px !important; letter-spacing: 0.22em !important; text-transform: uppercase !important; font-weight: 700 !important; }
+    label  { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
+    small  { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
+    a      { color: rgba(255,255,255,0.75) !important; }
   `],
 })
 export class CrmDealPanelComponent {
