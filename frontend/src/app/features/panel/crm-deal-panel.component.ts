@@ -15,6 +15,141 @@ import { ToastService } from '../../core/toast.service';
   imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
+  styles: [`
+    /* ══ DEAL PANEL — TEMA OSCURO ══ */
+    .deal-panel-overlay { background: rgba(0,0,0,0.70) !important; backdrop-filter: blur(4px); }
+
+    .deal-panel {
+      background: #0a0a0a !important;
+      border-left: 1px solid rgba(255,255,255,0.10) !important;
+      color: #ffffff !important;
+      scrollbar-color: rgba(255,255,255,0.12) transparent !important;
+    }
+    .deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12) !important; }
+
+    /* Header */
+    .deal-panel-header {
+      background: #0d0d0d !important;
+      border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+    }
+    .deal-panel-eyebrow { color: rgba(255,255,255,0.38) !important; font-family: var(--f-display) !important; font-size: 10px !important; letter-spacing: 0.18em !important; text-transform: uppercase !important; }
+    .deal-panel-header h3 { color: #ffffff !important; font-family: var(--f-display) !important; font-size: 18px !important; font-weight: 800 !important; letter-spacing: 0.04em !important; }
+    .deal-panel-close {
+      background: transparent !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: rgba(255,255,255,0.55) !important;
+      border-radius: 8px !important;
+    }
+    .deal-panel-close:hover { background: rgba(230,61,47,0.15) !important; border-color: #e63d2f !important; color: #e63d2f !important; }
+
+    /* Sections */
+    .deal-section { border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+    .deal-section h4 {
+      color: rgba(255,255,255,0.45) !important;
+      font-family: var(--f-display) !important;
+      font-size: 10px !important;
+      letter-spacing: 0.18em !important;
+      text-transform: uppercase !important;
+      font-weight: 700 !important;
+    }
+    .deal-section h4::before { background: rgba(255,255,255,0.25) !important; }
+
+    /* Contact card */
+    .deal-contact-card {
+      background: #141414 !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
+      border-radius: 12px !important;
+    }
+    .deal-contact-card p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; font-size: 14px !important; }
+    .deal-contact-card strong,
+    .deal-contact-card .link-name { color: #ffffff !important; font-family: var(--f-display) !important; font-size: 15px !important; font-weight: 700 !important; }
+    .deal-contact-card .link-name:hover { color: rgba(255,255,255,0.70) !important; }
+
+    /* Card desc */
+    .deal-panel .card-desc { color: rgba(255,255,255,0.45) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
+
+    /* Inputs / selects */
+    .deal-panel input,
+    .deal-panel textarea,
+    .deal-panel select,
+    .deal-section select {
+      background: #141414 !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      caret-color: #ffffff !important;
+      border-radius: 8px !important;
+      font-family: var(--f-display) !important;
+      font-size: 14px !important;
+      color-scheme: dark !important;
+    }
+    .deal-panel input::placeholder,
+    .deal-panel textarea::placeholder { color: rgba(255,255,255,0.28) !important; }
+    .deal-panel input:focus,
+    .deal-panel textarea:focus,
+    .deal-panel select:focus,
+    .deal-section select:focus {
+      border-color: rgba(255,255,255,0.45) !important;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.06) !important;
+    }
+    .deal-panel select option,
+    .deal-section select option { background: #141414 !important; color: #ffffff !important; }
+
+    /* Botones */
+    .deal-panel .btn-copy {
+      background: #ffffff !important; color: #000 !important; border-color: #ffffff !important; border-radius: 8px !important; font-family: var(--f-display) !important;
+    }
+    .deal-panel .btn-copy:hover { background: transparent !important; color: #ffffff !important; }
+    .deal-panel .btn-ghost {
+      color: rgba(255,255,255,0.65) !important; border-color: rgba(255,255,255,0.22) !important; background: transparent !important; border-radius: 8px !important; font-family: var(--f-display) !important;
+    }
+    .deal-panel .btn-ghost:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
+    .deal-panel .btn-delete { border-radius: 8px !important; font-family: var(--f-display) !important; }
+
+    /* Activity */
+    .deal-panel .activity-item { border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+    .deal-panel .activity-item p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
+    .deal-panel .activity-item small { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
+
+    /* Chat */
+    .deal-panel .chat-container { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 12px !important; }
+    .deal-panel .chat-messages { background: transparent !important; }
+    .deal-panel .message { font-family: var(--f-display) !important; font-size: 13px !important; }
+    .deal-panel .inquiry-msg { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; }
+    .deal-panel .reply-msg { color: #44bb66 !important; font-family: var(--f-display) !important; }
+    .deal-panel .chat-input { background: #141414 !important; border-top: 1px solid rgba(255,255,255,0.10) !important; border-radius: 0 0 12px 12px !important; }
+    .deal-panel .chat-input input { background: #1a1a1a !important; border-color: rgba(255,255,255,0.14) !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border-radius: 8px !important; font-family: var(--f-display) !important; }
+
+    /* Tasks */
+    .deal-panel .task-row { background: #141414 !important; border-color: rgba(255,255,255,0.10) !important; border-radius: 8px !important; color: #fff !important; font-family: var(--f-display) !important; }
+    .deal-panel .task-row .done { color: rgba(255,255,255,0.35) !important; }
+
+    /* Chips / badges */
+    .deal-panel .chip { border-radius: 999px !important; font-family: var(--f-display) !important; }
+    .deal-panel .section-sub { color: rgba(255,255,255,0.80) !important; font-family: var(--f-display) !important; font-size: 15px !important; }
+
+    /* Tracking code badge */
+    span[style*="var(--gold)"] { color: rgba(255,255,255,0.75) !important; border-color: rgba(255,255,255,0.20) !important; background: rgba(255,255,255,0.08) !important; }
+
+    /* Divider */
+    .deal-panel .divider { border-color: rgba(255,255,255,0.07) !important; }
+
+    /* Payment box */
+    .deal-payment-box { background: #141414 !important; border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 12px !important; }
+    .deal-payment-status { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; }
+    .deal-payment-error { color: #ff6b6b !important; font-family: var(--f-display) !important; }
+    .deal-payment-link-label { color: rgba(255,255,255,0.55) !important; font-family: var(--f-display) !important; }
+
+    /* Doc items */
+    .deal-doc-item { background: #141414 !important; border: 1px solid rgba(255,255,255,0.10) !important; border-radius: 10px !important; }
+    .deal-doc-item strong { color: #ffffff !important; font-family: var(--f-display) !important; }
+
+    /* General text */
+    .deal-panel strong { color: #ffffff !important; font-family: var(--f-display) !important; }
+    .deal-panel p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; }
+    .deal-panel label { color: rgba(255,255,255,0.45) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.10em !important; }
+    .deal-panel small { color: rgba(255,255,255,0.38) !important; font-family: var(--f-display) !important; }
+  `],
 })
 export class CrmDealPanelComponent {
   dealId = input<string | null>(null);
