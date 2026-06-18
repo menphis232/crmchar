@@ -317,18 +317,109 @@ import { ToastService } from '../../core/toast.service';
     .status-tag  { border-radius: 999px !important; }
 
     /* Payment */
-    .deal-payment-box { background: #161616 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 12px !important; }
-    .deal-payment-error { color: #ff6b6b !important; }
-    .deal-payment-link-label { color: rgba(255,255,255,0.50) !important; font-family: var(--f-display) !important; }
-
-    /* Docs */
-    .deal-doc-item { background: #161616 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
-
-    /* Payment */
-    .deal-payment-box,
-    .deal-payment-link-box { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 12px !important; }
-    .deal-payment-error { color: #ff6b6b !important; }
-    .deal-payment-link-label { color: rgba(255,255,255,0.50) !important; font-family: var(--f-display) !important; }
+    .deal-payment-box {
+      margin-top: 16px !important;
+      padding: 18px 20px !important;
+      background: #141414 !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
+      border-radius: 14px !important;
+      border-top: none !important;
+    }
+    .deal-payment-status {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 14px !important;
+      font-family: var(--f-display) !important;
+    }
+    .deal-payment-status > span {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 8px !important;
+      color: rgba(255,255,255,0.40) !important;
+      font-size: 11px !important;
+      letter-spacing: 0.16em !important;
+      text-transform: uppercase !important;
+      font-weight: 700 !important;
+    }
+    .deal-payment-status strong {
+      font-family: var(--f-display) !important;
+      font-size: 14px !important;
+      letter-spacing: 0.10em !important;
+      font-weight: 800 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      padding: 7px 14px !important;
+      border-radius: 999px !important;
+      width: fit-content !important;
+      text-transform: uppercase !important;
+    }
+    .deal-payment-status strong.pending {
+      color: #fbbf24 !important;
+      background: rgba(251,191,36,0.10) !important;
+      border: 1px solid rgba(251,191,36,0.22) !important;
+    }
+    .deal-payment-status strong.paid {
+      color: #4ade80 !important;
+      background: rgba(74,222,128,0.10) !important;
+      border: 1px solid rgba(74,222,128,0.22) !important;
+    }
+    .deal-payment-status .btn-ghost.small {
+      width: 100% !important;
+      justify-content: center !important;
+      padding: 11px 18px !important;
+      font-size: 11px !important;
+      letter-spacing: 0.14em !important;
+      text-transform: uppercase !important;
+      border-radius: 999px !important;
+      color: rgba(255,255,255,0.80) !important;
+      border: 1px solid rgba(255,255,255,0.25) !important;
+      background: transparent !important;
+      font-family: var(--f-display) !important;
+      font-weight: 700 !important;
+    }
+    .deal-payment-status .btn-ghost.small:hover {
+      background: rgba(255,255,255,0.08) !important;
+      color: #ffffff !important;
+      border-color: rgba(255,255,255,0.45) !important;
+    }
+    .deal-payment-link-box {
+      margin-top: 14px !important;
+      padding: 14px 16px !important;
+      background: #1a1a1a !important;
+      border: 1px solid rgba(255,255,255,0.09) !important;
+      border-radius: 12px !important;
+    }
+    .deal-payment-link-label {
+      color: rgba(255,255,255,0.50) !important;
+      font-family: var(--f-display) !important;
+      font-size: 12px !important;
+      margin-bottom: 10px !important;
+    }
+    .deal-payment-link-row {
+      display: flex !important;
+      gap: 8px !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+    }
+    .deal-payment-link-row input {
+      flex: 1 !important;
+      min-width: 0 !important;
+      font-size: 12px !important;
+      font-family: var(--f-display) !important;
+      background: #111 !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      color: rgba(255,255,255,0.75) !important;
+      border-radius: 8px !important;
+      padding: 8px 10px !important;
+    }
+    .deal-payment-error {
+      color: #ff6b6b !important;
+      font-family: var(--f-display) !important;
+      font-size: 12px !important;
+      margin-top: 10px !important;
+    }
     .deal-value-row { background: transparent !important; }
 
     /* Docs */
