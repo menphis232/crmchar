@@ -74,17 +74,9 @@ const uploadVideo = multer({
 
 const router = Router();
 
-const PUBLIC_BASE = (
-  process.env.API_PUBLIC_URL ||
-  process.env.FRONTEND_URL ||
-  ''
-).replace(/\/$/, '');
-
-function buildPublicUploadUrl(req, filename) {
-  if (PUBLIC_BASE) return `${PUBLIC_BASE}/uploads/${filename}`;
-  const host = req.get('host');
-  const protocol = req.protocol;
-  return `${protocol}://${host}/uploads/${filename}`;
+function buildPublicUploadUrl(_req, filename) {
+  // Ruta relativa: funciona en dev (proxy ng) y en prod (nginx) sin depender del dominio
+  return `/uploads/${filename}`;
 }
 
 router.post('/', authRequired, upload.single('file'), async (req, res) => {

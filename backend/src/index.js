@@ -17,6 +17,7 @@ import clientRoutes from './routes/client.js';
 import webhooksRoutes from './routes/webhooks.js';
 import aiRoutes from './routes/ai.js';
 import shareRoutes from './routes/share.js';
+import ogRoutes from './routes/og.js';
 import { testConnection } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -57,6 +58,7 @@ app.use('/api/payments', paymentsRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/og', ogRoutes);
 // Rutas cortas para compartir con OG tags
 app.use('/s', shareRoutes);   // /s/:id  → autos
 app.use('/sg', shareRoutes);  // /sg/gestores/:slug → gestores

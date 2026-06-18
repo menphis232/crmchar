@@ -36,9 +36,11 @@ export class MetaTagsService {
     }
   }
 
-  setDealerShareTags(dealer: Pick<DealerProfile, 'name' | 'logoUrl'>) {
+  setDealerShareTags(dealer: Pick<DealerProfile, 'name' | 'logoUrl' | 'slug'>) {
     const subtitle = dealer.name;
-    const image = toAbsoluteUrl(dealer.logoUrl);
+    const image = dealer.logoUrl && dealer.slug
+      ? toAbsoluteUrl(`/og/dealer/${dealer.slug}.jpg`)
+      : toAbsoluteUrl(dealer.logoUrl);
     const url = typeof window !== 'undefined' ? window.location.href : '';
 
     this.title.setTitle(subtitle);

@@ -161,7 +161,9 @@ async function buildDealerHtml(slug) {
   );
   if (!row) return null;
 
-  const imageUrl = absoluteUrl(row.logo_url || null);
+  const imageUrl = row.logo_url
+    ? `${SITE_BASE}/og/dealer/${row.slug}.jpg`
+    : null;
   const pageUrl  = `${SITE_BASE}/concesionarias/${row.slug}`;
   const shareUrl = `${SITE_BASE}/sc/${row.slug}`;
   const subtitle = row.name;

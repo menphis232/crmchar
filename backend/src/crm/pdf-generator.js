@@ -1,4 +1,26 @@
 import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+
+async function loadLogoBuffer(logoUrl) {
+  if (!logoUrl) return null;
+  if (logoUrl.startsWith('/uploads/')) {
+    const filePath = path.join(uploadDir, path.basename(logoUrl));
+    if (fs.existsSync(filePath)) return fs.readFileSync(filePath);
+    return null;
+  }
+  try {
+    const response = await fetch(logoUrl);
+    if (response.ok) return Buffer.from(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 /**
  * Generates a PDF Quote and pipes it to the provided writable stream (e.g., HTTP Response).
@@ -32,10 +54,9 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
       let logoLoaded = false;
       if (concesionaria?.logo_url) {
         try {
-          const response = await fetch(concesionaria.logo_url);
-          if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer();
-            doc.image(Buffer.from(arrayBuffer), 50, doc.y, { height: 40 });
+          const logoBuffer = await loadLogoBuffer(concesionaria.logo_url);
+          if (logoBuffer) {
+            doc.image(logoBuffer, 50, doc.y, { height: 40 });
             logoLoaded = true;
           }
         } catch (err) {

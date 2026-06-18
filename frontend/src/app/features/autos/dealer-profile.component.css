@@ -28,26 +28,31 @@
 }
 
 .dp-logo-frame {
-  width: 88px;
-  height: 88px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   overflow: hidden;
   border: 2px solid rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .dp-logo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   object-position: center;
   display: block;
 }
 
 .dp-logo-initials {
-  width: 88px;
-  height: 88px;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 2px solid rgba(255, 255, 255, 0.22);
@@ -55,7 +60,7 @@
   align-items: center;
   justify-content: center;
   font-family: var(--f-display);
-  font-size: 32px;
+  font-size: 36px;
   color: #fff;
   letter-spacing: 0.04em;
 }
@@ -1007,6 +1012,15 @@ a.dp-info-val:hover { color: rgb(120, 180, 255); }
 @media (max-width: 768px) {
   .dp-hero {
     padding: 96px 16px 24px;
+  }
+  .dp-logo-frame,
+  .dp-logo-initials {
+    width: 104px;
+    height: 104px;
+    padding: 14px;
+  }
+  .dp-logo-initials {
+    font-size: 32px;
   }
   .dp-hero-title {
     font-size: clamp(28px, 8vw, 72px);
