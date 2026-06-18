@@ -79,6 +79,10 @@
   flex-direction: column;
   overflow: hidden;
   animation: vegaSlideUp 0.25s ease;
+  /* CSS variables set from component */
+  --vega-bg:   #0f172a;
+  --vega-btn:  #4F46E5;
+  --vega-text: #ffffff;
 }
 
 @keyframes vegaSlideUp {
@@ -100,12 +104,14 @@
   font-family: var(--f-display);
   font-size: 14px;
   font-weight: 800;
+  color: var(--vega-text) !important;
 }
 
 .vega-header p {
   margin: 0;
   font-size: 12px;
   opacity: 0.8;
+  color: var(--vega-text) !important;
 }
 
 .vega-header-actions {
@@ -190,17 +196,17 @@
 }
 
 .vega-msg.user .vega-bubble {
-  background: #ffffff;
-  color: #111827;
+  background: var(--vega-btn);
+  color: var(--vega-text);
   border-bottom-right-radius: 4px;
   font-weight: 600;
 }
 
 .vega-msg.assistant .vega-bubble {
-  background: rgba(255, 255, 255, 0.95);
-  color: #111827;
+  background: rgba(255, 255, 255, 0.10);
+  color: var(--vega-text);
   border-bottom-left-radius: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .vega-time {
@@ -237,7 +243,8 @@
 
 .vega-hint {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--vega-text);
+  opacity: 0.5;
   text-align: center;
   margin: 0;
 }
@@ -245,7 +252,7 @@
 .vega-quick-asks button {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #fff;
+  color: var(--vega-text);
   font-size: 12px;
   padding: 8px 12px;
   border-radius: 8px;
@@ -263,10 +270,11 @@
   display: flex;
   gap: 8px;
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(0, 0, 0, 0.20);
   align-items: center;
 }
+.vega-time { color: var(--vega-text) !important; opacity: 0.40; }
 
 .vega-input-row input {
   flex: 1;
