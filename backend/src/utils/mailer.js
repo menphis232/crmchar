@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import { get } from '../db.js';
 
@@ -6,31 +9,116 @@ export const GLOBAL_EMAIL_LOGO_URL =
   process.env.GLOBAL_EMAIL_LOGO_URL
   || 'https://lirp.cdn-website.com/33edf426/dms3rep/multi/opt/LOGO+SITIO+WEB-1920w.png';
 
-const API_PUBLIC_BASE = (process.env.API_PUBLIC_URL || process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 
 const SPARTAN = "'Spartan', 'League Spartan', Helvetica, Arial, sans-serif";
+const EMAIL_LOGO_CID = 'email-logo@tramites';
 
-function toAbsoluteUrl(url) {
-  if (!url) return null;
-  if (url.startsWith('http://') || url.startsWith('https://')) return url;
-  const path = url.startsWith('/') ? url : `/${url}`;
-  return `${API_PUBLIC_BASE}${path}`;
+function getEmailPublicBase() {
+  const raw =
+    process.env.API_PUBLIC_URL
+    || process.env.PUBLIC_SITE_URL
+    || process.env.FRONTEND_URL
+    || 'https://central.tramitesvehicularesdemexico.com';
+  const base = raw.replace(/\/$/, '');
+  if (/localhost|127\.0\.0\.1/i.test(base)) {
+    return 'https://central.tramitesvehicularesdemexico.com';
+  }
+  return base;
 }
 
-function buildLogoHtml(logoUrl, isBranded = false) {
-  const src = toAbsoluteUrl(logoUrl) || GLOBAL_EMAIL_LOGO_URL;
+function resolveUploadPath(logoUrl) {
+  if (!logoUrl) return null;
+
+  if (logoUrl.startsWith('/uploads/')) {
+    return path.join(uploadDir, path.basename(logoUrl));
+  }
+
+  if (/^https?:\/\//i.test(logoUrl)) {
+    try {
+      const { pathname } = new URL(logoUrl);
+      if (pathname.startsWith('/uploads/')) {
+        return path.join(uploadDir, path.basename(pathname));
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function mimeForPath(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.png') return 'image/png';
+  if (ext === '.webp') return 'image/webp';
+  if (ext === '.gif') return 'image/gif';
+  return 'image/jpeg';
+}
+
+function toPublicAssetUrl(url) {
+  if (!url) return null;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      const parsed = new URL(url);
+      if (/localhost|127\.0\.0\.1/i.test(parsed.origin)) {
+        return `${getEmailPublicBase()}${parsed.pathname}`;
+      }
+    } catch {
+      return url;
+    }
+    return url;
+  }
+  const assetPath = url.startsWith('/') ? url : `/${url}`;
+  return `${getEmailPublicBase()}${assetPath}`;
+}
+
+/** Incrusta logos locales como CID; URLs externas se dejan absolutas. */
+export async function resolveLogoForEmail(logoUrl, isBranded) {
+  if (!isBranded) {
+    return {
+      htmlSrc: GLOBAL_EMAIL_LOGO_URL,
+      attachments: [],
+    };
+  }
+
+  const localPath = resolveUploadPath(logoUrl);
+  if (localPath && fs.existsSync(localPath)) {
+    return {
+      htmlSrc: `cid:${EMAIL_LOGO_CID}`,
+      attachments: [{
+        filename: path.basename(localPath),
+        path: localPath,
+        cid: EMAIL_LOGO_CID,
+        contentType: mimeForPath(localPath),
+      }],
+    };
+  }
+
+  if (logoUrl && /^https?:\/\//i.test(logoUrl)) {
+    return { htmlSrc: logoUrl, attachments: [] };
+  }
+
+  return {
+    htmlSrc: toPublicAssetUrl(logoUrl) || GLOBAL_EMAIL_LOGO_URL,
+    attachments: [],
+  };
+}
+
+function buildLogoHtml(htmlSrc, isBranded = false) {
   const alt = isBranded ? 'Logo' : 'Trámites Vehiculares de México';
 
   if (isBranded) {
     return `
       <div style="display:inline-block; padding:8px 0;">
-        <img src="${src}" alt="${alt}" style="max-height:72px; max-width:240px; display:block; margin:0 auto; object-fit:contain;">
+        <img src="${htmlSrc}" alt="${alt}" style="max-height:72px; max-width:240px; display:block; margin:0 auto; object-fit:contain;">
       </div>`;
   }
 
   return `
     <div style="display:inline-block; padding:4px 0;">
-      <img src="${src}" alt="${alt}" style="max-height:64px; max-width:280px; display:block; margin:0 auto; object-fit:contain;">
+      <img src="${htmlSrc}" alt="${alt}" style="max-height:64px; max-width:280px; display:block; margin:0 auto; object-fit:contain;">
     </div>`;
 }
 
@@ -44,8 +132,11 @@ export async function resolveEmailBranding(userId = null) {
   if (userId) {
     const user = await get('SELECT logo_url, name, role FROM users WHERE id = ?', [userId]);
     if (user?.logo_url) {
+      const logo = await resolveLogoForEmail(user.logo_url, true);
       return {
         logoUrl: user.logo_url,
+        logoHtmlSrc: logo.htmlSrc,
+        logoAttachments: logo.attachments,
         isBranded: true,
         companyName: user.name || 'Tu empresa',
         role: user.role,
@@ -53,8 +144,11 @@ export async function resolveEmailBranding(userId = null) {
     }
   }
 
+  const logo = await resolveLogoForEmail(GLOBAL_EMAIL_LOGO_URL, false);
   return {
     logoUrl: GLOBAL_EMAIL_LOGO_URL,
+    logoHtmlSrc: logo.htmlSrc,
+    logoAttachments: logo.attachments,
     isBranded: false,
     companyName: 'Trámites Vehiculares de México',
     role: null,
@@ -78,7 +172,7 @@ export function wrapEmailHtml(bodyHtml, branding) {
 <body style="margin:0;padding:0;background-color:#000000;">
   <div style="font-family:${SPARTAN};max-width:600px;margin:0 auto;background-color:#000000;padding:36px 28px 32px;">
     <div style="text-align:center;margin-bottom:28px;">
-      ${buildLogoHtml(branding.logoUrl, branding.isBranded)}
+      ${buildLogoHtml(branding.logoHtmlSrc, branding.isBranded)}
     </div>
 
     <div style="font-family:${SPARTAN};color:#ffffff;">
@@ -135,6 +229,7 @@ export async function sendEmail(to, subject, text, html, userId = null) {
       subject,
       text,
       html: finalHtml,
+      attachments: branding.logoAttachments,
     });
 
     console.log('Message sent: %s', info.messageId);
