@@ -4,8 +4,8 @@
   <p class="loading">Cargando...</p>
 } @else {
   @if (auto(); as a) {
-    @if (a.page_builder_config; as config) {
-      @if (config.blocks?.length) {
+    @if (isAutoPageConfig(a.page_builder_config)) {
+      @let config = a.page_builder_config!;
         <div class="dynamic-page" [style.font-family]="config.theme.fontFamily || 'Spartan'" [style.--p-theme]="config.theme.primaryColor || '#00d084'" [style.--p-text-color]="config.theme.buttonTextColor || '#1a1d24'">
           
           <!-- MAIN REGION (Contains everything not sidebar) -->
@@ -38,50 +38,11 @@
               @if (b.region !== 'sidebar' && b.type !== 'hero') {
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'gallery') {
-                    <div class="gallery">
-                      <div class="gallery-layout">
-                        @if (galleryItems().length) {
-                          <div class="gallery-thumbs-col">
-                            @for (item of galleryItems(); track $index) {
-                              @if (item.type === 'video') {
-                                <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
-                                  @if (item.poster) {
-                                    <img [src]="item.poster" alt="Video del vehículo">
-                                  } @else {
-                                    <span class="gallery-thumb-video-bg"></span>
-                                  }
-                                  <span class="gallery-thumb-play" aria-hidden="true">▶</span>
-                                </button>
-                              } @else {
-                                <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
-                              }
-                            }
-                          </div>
-                        }
-                        <div class="gallery-viewer">
-                          @if (currentGalleryItem(); as item) {
-                            @if (item.type === 'video') {
-                              @if (item.embedUrl) {
-                                <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                              } @else {
-                                <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
-                              }
-                            } @else {
-                              <img [src]="item.url" class="gallery-main" alt="Vehículo">
-                            }
-                          }
-                          @if (showGalleryNav()) {
-                            <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                              <svg lucideChevronLeft [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
-                            </button>
-                            <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                              <svg lucideChevronRight [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
-                            </button>
-                            <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
-                          }
-                        </div>
-                      </div>
-                    </div>
+                    <app-auto-galleria
+                      [items]="galleryItems()"
+                      [activeIndex]="activeGalleryIndex()"
+                      (activeIndexChange)="activeGalleryIndex.set($event)"
+                      [alt]="a.make + ' ' + a.model" />
                   }
 
                   @if (b.type === 'text') {
@@ -176,58 +137,17 @@
           </aside>
         </div>
       </div>
-      }
     } @else {
       <!-- VISTA CLÁSICA (DEFAULT) -->
       <div class="detail-page">
         <div class="detail-container">
           <div class="detail-main-col">
           <div class="detail-gallery-col">
-            <div class="gallery">
-              <div class="gallery-layout">
-                @if (galleryItems().length) {
-                  <div class="gallery-thumbs-col">
-                    @for (item of galleryItems(); track $index) {
-                      @if (item.type === 'video') {
-                        <button type="button" class="gallery-thumb gallery-thumb-video" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)">
-                          @if (item.poster) {
-                            <img [src]="item.poster" alt="Video del vehículo">
-                          } @else {
-                            <span class="gallery-thumb-video-bg"></span>
-                          }
-                          <span class="gallery-thumb-play" aria-hidden="true">▶</span>
-                        </button>
-                      } @else {
-                        <img [src]="item.url" [class.active]="activeGalleryIndex() === $index" (click)="setGalleryIndex($index)" alt="Miniatura">
-                      }
-                    }
-                  </div>
-                }
-
-                <div class="gallery-viewer">
-                  @if (currentGalleryItem(); as item) {
-                    @if (item.type === 'video') {
-                      @if (item.embedUrl) {
-                        <iframe [src]="safeEmbedUrl(item.embedUrl)" class="gallery-main gallery-video" title="Video del vehículo" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                      } @else {
-                        <video class="gallery-main gallery-video" [src]="item.url" [attr.poster]="item.poster || null" controls playsinline></video>
-                      }
-                    } @else {
-                      <img [src]="item.url" class="gallery-main" [alt]="a.make + ' ' + a.model">
-                    }
-                  }
-                  @if (showGalleryNav()) {
-                    <button type="button" class="gallery-nav gallery-nav-prev" (click)="prevGalleryItem()" aria-label="Anterior">
-                      <svg lucideChevronLeft [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
-                    </button>
-                    <button type="button" class="gallery-nav gallery-nav-next" (click)="nextGalleryItem()" aria-label="Siguiente">
-                      <svg lucideChevronRight [size]="20" [strokeWidth]="2.5" aria-hidden="true"></svg>
-                    </button>
-                    <span class="gallery-counter">{{ activeGalleryIndex() + 1 }} / {{ galleryItems().length }}</span>
-                  }
-                </div>
-              </div>
-            </div>
+            <app-auto-galleria
+              [items]="galleryItems()"
+              [activeIndex]="activeGalleryIndex()"
+              (activeIndexChange)="activeGalleryIndex.set($event)"
+              [alt]="a.make + ' ' + a.model" />
           </div>
 
           @if (a.description) {
@@ -269,22 +189,22 @@
 
               <div class="ds-specs">
                 <div class="ds-spec-row">
-                  <svg lucideCalendar class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                  <svg lucideCalendar class="ds-spec-icon" [size]="14" aria-hidden="true"></svg>
                   <span>{{ a.year }}</span>
                 </div>
                 <div class="ds-spec-row">
-                  <svg lucideGauge class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                  <svg lucideGauge class="ds-spec-icon" [size]="14" aria-hidden="true"></svg>
                   <span>{{ a.mileage | number }} km</span>
                 </div>
                 @if (a.dealerName) {
                   <div class="ds-spec-row">
-                    <svg lucideBuilding2 class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                    <svg lucideBuilding2 class="ds-spec-icon" [size]="14" aria-hidden="true"></svg>
                     <span>{{ a.dealerName }}</span>
                   </div>
                 }
                 @if (a.location) {
                   <div class="ds-spec-row">
-                    <svg lucideMapPin class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                    <svg lucideMapPin class="ds-spec-icon" [size]="14" aria-hidden="true"></svg>
                     <span>{{ a.location }}</span>
                   </div>
                 }

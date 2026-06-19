@@ -337,17 +337,15 @@
 
 .dealer-avatar-logo {
   padding: 0;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.08);
   border: none;
 }
 
 .dealer-avatar-logo img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   display: block;
-  padding: 7px;
-  box-sizing: border-box;
 }
 
 .dealer-label {

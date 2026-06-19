@@ -2,11 +2,12 @@ import {
   Component, EventEmitter, HostListener, Input, Output, signal,
 } from '@angular/core';
 import { SubscriptionBillingComponent } from './subscription-billing.component';
+import { ChangeCredentialsComponent } from './change-credentials.component';
 
 @Component({
   selector: 'app-panel-user-menu',
   standalone: true,
-  imports: [SubscriptionBillingComponent],
+  imports: [SubscriptionBillingComponent, ChangeCredentialsComponent],
   template: `
     <div class="panel-user-menu">
       @if (showName && name) {
@@ -24,6 +25,9 @@ import { SubscriptionBillingComponent } from './subscription-billing.component';
               <span>{{ email }}</span>
             }
           </div>
+          <button type="button" class="avatar-dropdown-item" (click)="openCredentials()">
+            🔑 Cambiar contraseña / correo
+          </button>
           @if (showBilling) {
             <button type="button" class="avatar-dropdown-item" (click)="openBilling()">
               💳 Suscripción y facturación
@@ -38,6 +42,10 @@ import { SubscriptionBillingComponent } from './subscription-billing.component';
 
     @if (billingOpen()) {
       <app-subscription-billing (closed)="billingOpen.set(false)" />
+    }
+
+    @if (credentialsOpen()) {
+      <app-change-credentials (closed)="credentialsOpen.set(false)" />
     }
   `,
   styles: [`
@@ -132,8 +140,9 @@ export class PanelUserMenuComponent {
   @Input() showName = false;
   @Output() logout = new EventEmitter<void>();
 
-  menuOpen = signal(false);
-  billingOpen = signal(false);
+  menuOpen         = signal(false);
+  billingOpen      = signal(false);
+  credentialsOpen  = signal(false);
 
   @HostListener('document:click')
   closeOnOutsideClick() {
@@ -148,6 +157,11 @@ export class PanelUserMenuComponent {
   openBilling() {
     this.menuOpen.set(false);
     this.billingOpen.set(true);
+  }
+
+  openCredentials() {
+    this.menuOpen.set(false);
+    this.credentialsOpen.set(true);
   }
 
   onLogout() {

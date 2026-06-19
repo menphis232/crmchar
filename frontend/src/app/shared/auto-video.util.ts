@@ -2,6 +2,36 @@ export type AutoGalleryItem =
   | { type: 'video'; url: string; embedUrl: string | null; poster?: string }
   | { type: 'image'; url: string };
 
+export type AutoGalleriaSlide = {
+  itemImageSrc: string;
+  thumbnailImageSrc: string;
+  type: 'image' | 'video';
+  url?: string;
+  embedUrl?: string | null;
+  poster?: string;
+};
+
+export function mapAutoGalleryToGalleriaSlides(items: AutoGalleryItem[]): AutoGalleriaSlide[] {
+  return items.map(item => {
+    if (item.type === 'video') {
+      const thumb = item.poster || item.url;
+      return {
+        type: 'video',
+        itemImageSrc: thumb,
+        thumbnailImageSrc: thumb,
+        url: item.url,
+        embedUrl: item.embedUrl,
+        poster: item.poster,
+      };
+    }
+    return {
+      type: 'image',
+      itemImageSrc: item.url,
+      thumbnailImageSrc: item.url,
+    };
+  });
+}
+
 export function parseVideoEmbedUrl(raw: string | null | undefined): string | null {
   if (!raw?.trim()) return null;
   const url = raw.trim();

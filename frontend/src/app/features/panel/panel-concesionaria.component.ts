@@ -724,6 +724,7 @@ export class PanelConcesionariaComponent implements OnInit {
   profileMapEmbedUrl = '';
   publicSlug = '';
   isUploadingLogo = false;
+  logoCropFile = signal<File | null>(null);
 
   get publicPageUrl(): string {
     return this.publicSlug ? `${window.location.origin}/concesionarias/${this.publicSlug}` : '';
@@ -803,7 +804,14 @@ export class PanelConcesionariaComponent implements OnInit {
   onLogoSelected(event: any) {
     const file = event.target.files[0];
     if (!file) return;
+    this.logoCropFile.set(file);
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  onLogoCropConfirmed(result: { blob: Blob; previewUrl: string }) {
+    const file = new File([result.blob], 'logo.jpg', { type: 'image/jpeg' });
     this.isUploadingLogo = true;
+    this.logoCropFile.set(null);
     this.uploadService.uploadFile(file).subscribe({
       next: (res: any) => {
         this.profileLogoUrl = res.url;
@@ -815,6 +823,10 @@ export class PanelConcesionariaComponent implements OnInit {
         this.message.set('Error al subir la imagen');
       }
     });
+  }
+
+  onLogoCropCancelled() {
+    this.logoCropFile.set(null);
   }
 
   savePageBuilder(config: any) {

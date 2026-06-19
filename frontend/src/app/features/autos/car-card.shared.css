@@ -27,10 +27,8 @@
 .dp-car-img-wrap {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 10;
   flex-shrink: 0;
   overflow: hidden;
-  background: #111;
 }
 
 .car-img,
