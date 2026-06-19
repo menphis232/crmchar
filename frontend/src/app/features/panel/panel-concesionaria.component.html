@@ -343,10 +343,53 @@
           <div class="form-group"><label>Kilometraje</label><input type="number" [(ngModel)]="form.mileage" placeholder="0"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Transmisión</label><input [(ngModel)]="form.transmission" placeholder="Automático"></div>
+          <div class="form-group">
+            <label>Transmisión</label>
+            <select [(ngModel)]="form.transmission" name="transmission">
+              <option value="Automático">Automático</option>
+              <option value="Manual">Manual</option>
+            </select>
+          </div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Ubicación</label><input [(ngModel)]="form.location" placeholder="Ciudad"></div>
+          <div class="form-group">
+            <label>Ubicación (Estado)</label>
+            <select [(ngModel)]="form.location" name="location">
+              <option value="">-- Seleccionar estado --</option>
+              <option>Aguascalientes</option>
+              <option>Baja California</option>
+              <option>Baja California Sur</option>
+              <option>Campeche</option>
+              <option>Chiapas</option>
+              <option>Chihuahua</option>
+              <option>Ciudad de México</option>
+              <option>Coahuila</option>
+              <option>Colima</option>
+              <option>Durango</option>
+              <option>Estado de México</option>
+              <option>Guanajuato</option>
+              <option>Guerrero</option>
+              <option>Hidalgo</option>
+              <option>Jalisco</option>
+              <option>Michoacán</option>
+              <option>Morelos</option>
+              <option>Nayarit</option>
+              <option>Nuevo León</option>
+              <option>Oaxaca</option>
+              <option>Puebla</option>
+              <option>Querétaro</option>
+              <option>Quintana Roo</option>
+              <option>San Luis Potosí</option>
+              <option>Sinaloa</option>
+              <option>Sonora</option>
+              <option>Tabasco</option>
+              <option>Tamaulipas</option>
+              <option>Tlaxcala</option>
+              <option>Veracruz</option>
+              <option>Yucatán</option>
+              <option>Zacatecas</option>
+            </select>
+          </div>
           <div class="form-group form-group-check">
             <label class="check-row">
               <input type="checkbox" [(ngModel)]="form.verified">
