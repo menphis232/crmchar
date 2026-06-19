@@ -1,4 +1,5 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, computed } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
@@ -132,6 +133,7 @@ export class PanelConcesionariaComponent implements OnInit {
     private toast: ToastService,
     private route: ActivatedRoute,
     private http: HttpClient,
+    private sanitizer: DomSanitizer,
   ) {}
 
   ngOnInit() {
@@ -164,6 +166,7 @@ export class PanelConcesionariaComponent implements OnInit {
       this.profilePhone = (u as any).phone || '';
       this.profileAddress = (u as any).address || '';
       this.profileMapEmbedUrl = (u as any).map_embed_url || '';
+      if (this.profileMapEmbedUrl) this.mapFoundLabel.set(this.profileAddress || 'Ubicación guardada');
       this.publicSlug = (u as any).slug || '';
       this.panelAssistantEnabled = u.panel_assistant_enabled !== 0 && u.panel_assistant_enabled !== false;
       this.panelAssistantName = u.panel_assistant_name || 'VEGA';
@@ -723,6 +726,14 @@ export class PanelConcesionariaComponent implements OnInit {
   profileAddress = '';
   profileMapEmbedUrl = '';
   publicSlug = '';
+  mapSearchQuery = '';
+  mapSearching = false;
+  mapSearchError = '';
+  mapFoundLabel = signal('');
+  mapPreviewUrl = computed((): SafeResourceUrl | null => {
+    if (!this.profileMapEmbedUrl) return null;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.profileMapEmbedUrl);
+  });
   isUploadingLogo = false;
   logoCropFile = signal<File | null>(null);
 
@@ -847,6 +858,37 @@ export class PanelConcesionariaComponent implements OnInit {
     }).subscribe({
       next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
       error: () => {}
+    });
+  }
+
+  searchAddress() {
+    const q = this.mapSearchQuery.trim();
+    if (!q) return;
+    this.mapSearching = true;
+    this.mapSearchError = '';
+    this.mapFoundLabel.set('');
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`;
+    this.http.get<any[]>(url, { headers: { 'Accept-Language': 'es' } }).subscribe({
+      next: (results) => {
+        this.mapSearching = false;
+        if (!results || results.length === 0) {
+          this.mapSearchError = 'No se encontró la dirección. Intenta con más detalles (ciudad, estado).';
+          return;
+        }
+        const r = results[0];
+        const lat = parseFloat(r.lat);
+        const lng = parseFloat(r.lon);
+        const delta = 0.008;
+        this.profileMapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+        this.mapFoundLabel.set(r.display_name);
+        if (!this.profileAddress) {
+          this.profileAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
+        }
+      },
+      error: () => {
+        this.mapSearching = false;
+        this.mapSearchError = 'Error al buscar. Verifica tu conexión.';
+      }
     });
   }
 
