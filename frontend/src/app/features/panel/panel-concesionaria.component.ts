@@ -867,25 +867,20 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
-  /** Converts any stored URL (Google Maps or OSM) to an OSM embed URL for preview */
+  /** Returns an embeddable URL for panel preview, or null if format is not recognized */
   private toOsmEmbedUrl(url: string): string | null {
     const s = url.trim();
     if (!s) return null;
     // Already an OSM embed
     if (s.includes('openstreetmap.org/export/embed')) return s;
-    // Google Maps with coordinates
+    // Google Maps embed with output=embed (safe, no X-Frame-Options issue)
+    if (s.includes('maps.google.com') && s.includes('output=embed')) return s;
+    if (s.includes('maps/embed')) return s;
+    // Google Maps URL with coordinates — convert to OSM
     const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (coordMatch) {
       const lat = parseFloat(coordMatch[1]);
       const lng = parseFloat(coordMatch[2]);
-      const delta = 0.008;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
-    }
-    // Google maps.google.com?q=lat,lng
-    const qCoord = s.match(/maps\.google\.com\/maps\?q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (qCoord) {
-      const lat = parseFloat(qCoord[1]);
-      const lng = parseFloat(qCoord[2]);
       const delta = 0.008;
       return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
     }
@@ -898,31 +893,45 @@ export class PanelConcesionariaComponent implements OnInit {
     this.mapSearching = true;
     this.mapSearchError = '';
     this.mapFoundLabel.set('');
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&addressdetails=1`;
-    this.http.get<any[]>(url, { headers: { 'Accept-Language': 'es' } }).subscribe({
+    // Simplify address: remove postal codes like "C.P. 12345" and take first 4 parts
+    const simplified = q
+      .replace(/C\.?P\.?\s*\d{5}/gi, '')
+      .split(',').slice(0, 4).join(',').trim();
+    const query = encodeURIComponent(simplified || q);
+    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&addressdetails=1&accept-language=es`;
+    this.http.get<any[]>(url).subscribe({
       next: (results) => {
         this.mapSearching = false;
-        if (!results || results.length === 0) {
-          this.mapSearchError = 'No se encontró la dirección. Intenta con más detalles (ciudad, estado).';
-          return;
-        }
-        const r = results[0];
-        const lat = parseFloat(r.lat);
-        const lng = parseFloat(r.lon);
-        const delta = 0.008;
-        const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
-        this.profileMapEmbedUrl = osmUrl;
-        this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
-        this.mapFoundLabel.set(r.display_name);
-        if (!this.profileAddress) {
-          this.profileAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
+        if (results && results.length > 0) {
+          const r = results[0];
+          const lat = parseFloat(r.lat);
+          const lng = parseFloat(r.lon);
+          const delta = 0.008;
+          const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+          this.profileMapEmbedUrl = osmUrl;
+          this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
+          this.mapFoundLabel.set(r.display_name);
+          if (!this.profileAddress) {
+            this.profileAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
+          }
+        } else {
+          // Fallback: use Google Maps embed (no API key needed with output=embed)
+          this.applyGoogleMapsEmbed(q);
         }
       },
       error: () => {
         this.mapSearching = false;
-        this.mapSearchError = 'Error al buscar. Verifica tu conexión.';
+        // Fallback: use Google Maps embed
+        this.applyGoogleMapsEmbed(q);
       }
     });
+  }
+
+  private applyGoogleMapsEmbed(address: string) {
+    const googleUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed&hl=es`;
+    this.profileMapEmbedUrl = googleUrl;
+    this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(googleUrl));
+    this.mapFoundLabel.set(address);
   }
 
   statusLabel = statusLabel;

@@ -160,8 +160,10 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   private toEmbedUrl(url: string): string | null {
     const s = url.trim();
     if (!s) return null;
-    // Already an embed URL
-    if (s.includes('maps/embed') || s.includes('maps?') && s.includes('output=embed')) return s;
+    // Already embeddable URLs (OSM, Google Maps embed)
+    if (s.includes('openstreetmap.org/export/embed')) return s;
+    if (s.includes('output=embed')) return s;
+    if (s.includes('maps/embed')) return s;
     if (s.includes('google.com/maps') || s.includes('goo.gl/maps') || s.includes('maps.google')) {
       // Extract coordinates @lat,lng from any Google Maps URL
       const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
