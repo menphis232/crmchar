@@ -848,6 +848,14 @@ a.dp-info-val:hover { color: rgb(120, 180, 255); }
   letter-spacing: 0.06em;
 }
 
+.dp-reviews-empty {
+  color: rgba(255,255,255,.4);
+  font-size: 14px;
+  font-family: var(--f-ui);
+  padding: 24px 0;
+  text-align: center;
+}
+
 .dp-review-text {
   font-family: var(--f-ui);
   font-size: 15px;

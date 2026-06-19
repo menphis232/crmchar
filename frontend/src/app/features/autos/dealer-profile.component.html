@@ -270,23 +270,22 @@
     </div>
     </div>
 
-    @if (d.reviews; as reviews) {
-      @if (reviews.length) {
-      <section class="dp-reviews">
-        <h2 class="dp-reviews-title">Reseñas de clientes</h2>
+    <section class="dp-reviews">
+      <h2 class="dp-reviews-title">Reseñas de clientes</h2>
 
-        @if (d.rating && d.rating > 0) {
-          <div class="dp-reviews-summary-block">
-            <div class="dp-reviews-score">{{ d.rating | number:'1.1-1' }}</div>
-            <div class="dp-reviews-summary-meta">
-              <div class="dp-reviews-stars-lg" [attr.aria-label]="d.rating + ' de 5'">{{ stars(d.rating) }}</div>
-              <p class="dp-reviews-summary">{{ d.reviewCount }} reseñas globales</p>
-            </div>
+      @if (d.rating && d.rating > 0) {
+        <div class="dp-reviews-summary-block">
+          <div class="dp-reviews-score">{{ d.rating | number:'1.1-1' }}</div>
+          <div class="dp-reviews-summary-meta">
+            <div class="dp-reviews-stars-lg" [attr.aria-label]="d.rating + ' de 5'">{{ stars(d.rating) }}</div>
+            <p class="dp-reviews-summary">{{ d.reviewCount }} reseñas globales</p>
           </div>
-        }
+        </div>
+      }
 
+      @if (d.reviews && d.reviews.length) {
         <ul class="dp-reviews-list">
-          @for (r of reviews; track r.id) {
+          @for (r of d.reviews; track r.id) {
             <li class="dp-review-item">
               <div class="dp-review-header">
                 <span class="dp-review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
@@ -299,9 +298,10 @@
             </li>
           }
         </ul>
-      </section>
+      } @else {
+        <p class="dp-reviews-empty">Aún no hay reseñas. ¡Sé el primero en opinar!</p>
       }
-    }
+    </section>
 
     <!-- ── AI CHATBOT (solo si hasAi) ── -->
     @if (d.hasAi) {
