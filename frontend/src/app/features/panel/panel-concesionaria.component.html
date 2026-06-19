@@ -681,6 +681,11 @@
             <p class="card-desc" style="margin-top:4px; font-size:11px; opacity:0.6;">
               Mapa guardado. Busca una nueva dirección si quieres cambiarlo.
             </p>
+          } @else if (profileMapEmbedUrl) {
+            <div style="margin-top:10px; padding:14px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); text-align:center;">
+              <p style="color:#fbbf24; font-size:13px; margin:0 0 8px;">⚠️ El mapa guardado usa un formato antiguo que no se puede previsualizar.</p>
+              <p style="color:rgba(255,255,255,0.5); font-size:12px; margin:0;">Escribe tu dirección arriba y presiona <strong>Buscar</strong> para actualizarlo.</p>
+            </div>
           }
         </div>
 

@@ -173,6 +173,9 @@ export class PanelConcesionariaComponent implements OnInit {
           this.mapFoundLabel.set(this.profileAddress || 'Ubicación guardada');
         }
       }
+      if (!this.mapSearchQuery && this.profileAddress) {
+        this.mapSearchQuery = this.profileAddress;
+      }
       this.publicSlug = (u as any).slug || '';
       this.panelAssistantEnabled = u.panel_assistant_enabled !== 0 && u.panel_assistant_enabled !== false;
       this.panelAssistantName = u.panel_assistant_name || 'VEGA';
