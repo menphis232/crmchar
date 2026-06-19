@@ -37,18 +37,16 @@
           <span class="dp-stat-val">{{ d.autosCount }}</span>
           <span class="dp-stat-lbl">Vehículos</span>
         </div>
-        @if (d.rating && d.rating > 0) {
-          <div class="dp-stat-sep"></div>
-          <div class="dp-stat">
-            <span class="dp-stat-val">{{ d.rating }}/5</span>
-            <span class="dp-stat-lbl">Calificación</span>
-          </div>
-          <div class="dp-stat-sep"></div>
-          <div class="dp-stat">
-            <span class="dp-stat-val">{{ d.reviewCount }}</span>
-            <span class="dp-stat-lbl">Reseñas</span>
-          </div>
-        }
+        <div class="dp-stat-sep"></div>
+        <div class="dp-stat">
+          <span class="dp-stat-val">{{ (d.rating && d.rating > 0) ? (d.rating + '/5') : '—' }}</span>
+          <span class="dp-stat-lbl">Calificación</span>
+        </div>
+        <div class="dp-stat-sep"></div>
+        <div class="dp-stat">
+          <span class="dp-stat-val">{{ d.reviewCount ?? 0 }}</span>
+          <span class="dp-stat-lbl">Reseñas</span>
+        </div>
       </div>
       <div class="dp-hero-actions">
         @if (d.phone) {
