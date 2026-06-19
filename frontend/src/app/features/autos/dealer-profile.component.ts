@@ -149,10 +149,42 @@ export class DealerProfileComponent implements OnInit, OnDestroy {
   });
 
   safeMapUrl = computed((): SafeResourceUrl | null => {
-    const url = this.dealer()?.mapEmbedUrl;
+    const raw = this.dealer()?.mapEmbedUrl;
+    if (!raw) return null;
+    const url = this.toEmbedUrl(raw);
     if (!url) return null;
     return this.sanitizer.bypassSecurityTrustResourceUrl(url);
   });
+
+  /** Converts any Google Maps URL variant to an embeddable iframe URL */
+  private toEmbedUrl(url: string): string | null {
+    const s = url.trim();
+    if (!s) return null;
+    // Already an embed URL
+    if (s.includes('maps/embed') || s.includes('maps?') && s.includes('output=embed')) return s;
+    if (s.includes('google.com/maps') || s.includes('goo.gl/maps') || s.includes('maps.google')) {
+      // Extract coordinates @lat,lng from any Google Maps URL
+      const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (coordMatch) {
+        const [, lat, lng] = coordMatch;
+        return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+      }
+      // Extract place name from /place/NAME
+      const placeMatch = s.match(/\/place\/([^/@?&]+)/);
+      if (placeMatch) {
+        const q = encodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+        return `https://maps.google.com/maps?q=${q}&output=embed`;
+      }
+      // Extract ?q= param
+      const qMatch = s.match(/[?&]q=([^&]+)/);
+      if (qMatch) {
+        return `https://maps.google.com/maps?q=${qMatch[1]}&output=embed`;
+      }
+    }
+    // Other valid https URLs (e.g. other embed providers)
+    if (s.startsWith('https://')) return s;
+    return null;
+  }
 
   constructor(
     private route: ActivatedRoute,

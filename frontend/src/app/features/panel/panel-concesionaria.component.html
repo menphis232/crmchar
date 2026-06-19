@@ -652,9 +652,12 @@
         </div>
 
         <div class="form-group" style="margin-bottom:16px;">
-          <label>URL Embed de Google Maps</label>
-          <input [(ngModel)]="profileMapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=...">
-          <p class="card-desc" style="margin-top:4px; font-size:11px;">En Google Maps &rarr; Compartir &rarr; Incorporar un mapa &rarr; copia la URL del atributo src del iframe.</p>
+          <label>URL de Google Maps</label>
+          <input [(ngModel)]="profileMapEmbedUrl" placeholder="Pega cualquier link de Google Maps aquí">
+          <p class="card-desc" style="margin-top:4px; font-size:11px;">
+            Puedes pegar cualquier URL de Google Maps (la que aparece en el navegador, o la del botón Compartir).
+            También funciona la URL de "Incorporar mapa" (iframe src).
+          </p>
         </div>
 
         <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
