@@ -1,9 +1,9 @@
-import { Component, input, output, signal, effect, inject, NgZone } from '@angular/core';
+import { Component, input, output, signal, effect, inject, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
 import { CrmService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate } from '../../models';
-import { io, Socket } from 'socket.io-client';
+import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
@@ -552,7 +552,7 @@ import { ToastService } from '../../core/toast.service';
     a      { color: rgba(255,255,255,0.75) !important; }
   `],
 })
-export class CrmDealPanelComponent {
+export class CrmDealPanelComponent implements OnDestroy {
   dealId = input<string | null>(null);
   stages = input<string[]>([]);
   stageLabels = input<Record<string, string>>({});
@@ -582,30 +582,44 @@ export class CrmDealPanelComponent {
   // Chat
   messages: any[] = [];
   newMessage = '';
-  socket!: Socket;
+  private joinedDealId: string | null = null;
+  private onReceiveMessage = (msg: any) => {
+    this.zone.run(() => {
+      if (this.deal() && msg.dealId === this.deal()!.id) {
+        if (!this.messages.some(m => m.id === msg.id)) {
+          this.messages.push(msg);
+          this.scrollToBottom();
+        }
+      }
+    });
+  };
 
   auth = inject(AuthService);
   toast = inject(ToastService);
+  private socketService = inject(SocketService);
 
   constructor(private crmService: CrmService, private http: HttpClient, private zone: NgZone) {
-    this.socket = io(environment.apiUrl.replace('/api', ''));
-    
-    this.socket.on('receive_message', (msg: any) => {
-      this.zone.run(() => {
-        if (this.deal() && msg.dealId === this.deal()!.id) {
-          if (!this.messages.some(m => m.id === msg.id)) {
-            this.messages.push(msg);
-            this.scrollToBottom();
-          }
-        }
-      });
-    });
-
     effect(() => {
       const id = this.dealId();
       if (id) this.loadDeal(id);
       else this.deal.set(null);
     });
+  }
+
+  private ensureSocket() {
+    const user = this.auth.user();
+    if (!user) return;
+    this.socketService.connect(user.id);
+    this.socketService.off('receive_message', this.onReceiveMessage);
+    this.socketService.on('receive_message', this.onReceiveMessage);
+  }
+
+  ngOnDestroy() {
+    this.socketService.off('receive_message', this.onReceiveMessage);
+    if (this.joinedDealId) {
+      this.socketService.emit('leave_deal', this.joinedDealId);
+      this.joinedDealId = null;
+    }
   }
 
   loadDeal(id: string) {
@@ -623,9 +637,14 @@ export class CrmDealPanelComponent {
   }
 
   loadMessages(id: string) {
+    this.ensureSocket();
     this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${id}/messages`).subscribe(res => {
       this.messages = res;
-      this.socket.emit('join_deal', id);
+      if (this.joinedDealId && this.joinedDealId !== id) {
+        this.socketService.emit('leave_deal', this.joinedDealId);
+      }
+      this.joinedDealId = id;
+      this.socketService.emit('join_deal', id);
       this.scrollToBottom();
     });
   }
@@ -641,7 +660,7 @@ export class CrmDealPanelComponent {
         this.messages.push({ dealId: d.id, ...saved });
         this.scrollToBottom();
       }
-      this.socket.emit('send_message', { dealId: d.id, ...saved });
+      this.socketService.emit('send_message', { dealId: d.id, ...saved });
     });
   }
 
@@ -660,7 +679,7 @@ export class CrmDealPanelComponent {
           this.messages.push({ dealId: d.id, ...saved });
           this.scrollToBottom();
         }
-        this.socket.emit('send_message', { dealId: d.id, ...saved });
+        this.socketService.emit('send_message', { dealId: d.id, ...saved });
       });
     });
   }

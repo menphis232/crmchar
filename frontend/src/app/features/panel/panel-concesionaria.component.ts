@@ -134,23 +134,21 @@ export class PanelConcesionariaComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.auth.getMe().subscribe();
     this.siteService.get('panel-concesionaria').subscribe(t => {
       this.panelTheme.set(t);
       this.themeService.applyPanel(t);
     });
     this.loadDashboard();
-    this.loadCrm();
-    this.loadAiInsights();
-    this.loadInventory();
+    this.loadCrmSummary();
+    this.scheduleAiInsights();
 
     this.route.queryParams.subscribe(params => {
       if (params['deal']) {
+        this.loadCrm();
         this.openDeal(params['deal']);
       }
     });
 
-    // Load profile fields from /auth/me
     this.auth.getMe().subscribe(res => {
       const u = res.user;
       if (u?.parent_id && u.permissions?.length) {
@@ -203,11 +201,27 @@ export class PanelConcesionariaComponent implements OnInit {
 
   setTab(t: Tab) {
     this.tab.set(t);
-    if (t === 'dashboard') { this.loadDashboard(); this.loadCrm(); }
+    if (t === 'dashboard') { this.loadDashboard(); this.loadCrmSummary(); }
     if (t === 'pipeline') this.loadCrm();
     if (t === 'inventory' || t === 'edit') this.loadInventory();
     if (t === 'reputation') this.loadReviews();
     if (t === 'plantillas') this.loadTemplates();
+  }
+
+  /** Solo métricas del dashboard (sin deals ni plantillas). */
+  loadCrmSummary() {
+    this.crmService.getDashboard().subscribe(d => this.crmDashboard.set(d));
+    this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
+  }
+
+  /** Carga diferida: insights IA tras pintar la UI. */
+  private scheduleAiInsights() {
+    const run = () => this.loadAiInsights();
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(run, { timeout: 3000 });
+    } else {
+      setTimeout(run, 1200);
+    }
   }
 
   loadDashboard() {
@@ -215,11 +229,11 @@ export class PanelConcesionariaComponent implements OnInit {
   }
 
   loadCrm() {
-    this.crmService.getDashboard().subscribe(d => this.crmDashboard.set(d));
-    this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
+    this.loadCrmSummary();
     this.loadDeals();
-    this.crmService.getTemplates().subscribe(t => this.templates.set(t));
-    this.loadAiInsights();
+    if (!this.templates().length) {
+      this.crmService.getTemplates().subscribe(t => this.templates.set(t));
+    }
   }
 
   loadAiInsights() {

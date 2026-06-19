@@ -102,12 +102,13 @@ router.get('/dashboard', async (req, res) => {
     ]);
 
     const byStage = {};
-    for (const s of stages) {
-      const row = await get(
-        'SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?',
-        [uid, dealType, s],
-      );
-      byStage[s] = row.c;
+    for (const s of stages) byStage[s] = 0;
+    const stageRows = await query(
+      'SELECT stage, COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? GROUP BY stage',
+      [uid, dealType],
+    );
+    for (const row of stageRows) {
+      byStage[row.stage] = row.c;
     }
 
     const totalCount = total.c || 0;
@@ -140,6 +141,8 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+const aiInsightsCache = new Map();
+
 router.get('/ai/insights', async (req, res) => {
   const gestorDefaultTips = [
     'Configura mensajes de bienvenida en WhatsApp con saludo, lista de requisitos y tiempo estimado; el primer contacto marca la confianza del cliente.',
@@ -152,8 +155,20 @@ router.get('/ai/insights', async (req, res) => {
     'Prepara una ficha comparativa (precio, kilometraje, garantía) antes de la negociación para generar confianza y acelerar el cierre.',
   ];
 
+  const sendInsights = (uid, insights) => {
+    const payload = insights.length > 0 ? insights : (req.user.role === 'concesionaria' ? concesionariaDefaultTips : gestorDefaultTips);
+    aiInsightsCache.set(uid, { date: new Date().toDateString(), insights: payload });
+    return res.json({ insights: payload });
+  };
+
   try {
     const uid = req.orgId;
+    const today = new Date().toDateString();
+    const cached = aiInsightsCache.get(uid);
+    if (cached?.date === today) {
+      return res.json({ insights: cached.insights });
+    }
+
     const role = req.user.role;
     const defaultTips = role === 'concesionaria' ? concesionariaDefaultTips : gestorDefaultTips;
     let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [uid]);
@@ -161,7 +176,7 @@ router.get('/ai/insights', async (req, res) => {
       user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
     }
     if (!user || !user.ai_provider || !user.ai_api_key) {
-      return res.json({ insights: defaultTips });
+      return sendInsights(uid, defaultTips);
     }
 
     const dealType = dealTypeForRole(role);
@@ -184,7 +199,7 @@ router.get('/ai/insights', async (req, res) => {
     const responseLevel = avgH === null ? 'sin_datos' : avgH > 12 ? 'mejorable' : avgH > 2 ? 'aceptable' : 'rapido';
 
     if (totalCount === 0) {
-      return res.json({ insights: defaultTips });
+      return sendInsights(uid, defaultTips);
     }
 
     let prompt = `Eres un coach de ventas motivador para gestorías vehiculares y concesionarias en México.
@@ -283,10 +298,11 @@ Devuelve EXACTAMENTE 3 tips accionables, numerados (1. 2. 3.), separados por sal
 
     const insights = generatedText.split('\n').map(l => l.trim()).filter(l => l.match(/^[1-3]\./)).map(l => l.replace(/^[1-3]\.\s*/, ''));
     const finalInsights = insights.length > 0 ? insights : generatedText.split('\n').filter(l => l.trim() !== '');
-    res.json({ insights: finalInsights.length > 0 ? finalInsights : defaultTips });
+    return sendInsights(uid, finalInsights.length > 0 ? finalInsights : defaultTips);
   } catch (err) {
     console.error('Error AI Insights:', err.message);
-    res.json({ insights: defaultTips });
+    const fallback = req.user.role === 'concesionaria' ? concesionariaDefaultTips : gestorDefaultTips;
+    return sendInsights(req.orgId, fallback);
   }
 });
 

@@ -1,5 +1,6 @@
 import express from 'express';
 import http from 'http';
+import compression from 'compression';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
@@ -38,6 +39,7 @@ startAutomationsCron();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: '*' }));
+app.use(compression());
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhooksRoutes);
 
 app.use(express.json());
@@ -78,33 +80,35 @@ app.use((err, _req, res, _next) => {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: '*' },
+  pingInterval: 25000,
+  pingTimeout: 20000,
+  maxHttpBufferSize: 1e6,
 });
 app.set('io', io);
 
+const isProd = process.env.NODE_ENV === 'production';
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log('New client connected:', socket.id);
+  if (!isProd) console.log('Socket connected:', socket.id);
   
   socket.on('identify', (userId) => {
     if (userId) {
       socket.join('user_' + userId);
-      console.log(`Socket ${socket.id} identified as user_${userId}`);
     }
   });
 
   socket.on('join_deal', (dealId) => {
-    socket.join(dealId);
-    console.log(`Socket ${socket.id} joined deal ${dealId}`);
+    if (dealId) socket.join(String(dealId));
+  });
+
+  socket.on('leave_deal', (dealId) => {
+    if (dealId) socket.leave(String(dealId));
   });
 
   socket.on('send_message', (data) => {
-    // Expected data: { dealId, message, senderId, senderName }
-    io.to(data.dealId).emit('receive_message', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    if (data?.dealId) io.to(String(data.dealId)).emit('receive_message', data);
   });
 });
 

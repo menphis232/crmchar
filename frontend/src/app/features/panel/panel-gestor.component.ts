@@ -125,16 +125,16 @@ export class PanelGestorComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.auth.getMe().subscribe();
     this.siteService.get('panel-gestor').subscribe(t => {
       this.panelTheme.set(t);
     });
     this.loadProfile();
-    this.loadCrm();
-    this.loadAiInsights();
+    this.loadCrmSummary();
+    this.scheduleAiInsights();
 
     this.route.queryParams.subscribe(params => {
       if (params['deal']) {
+        this.loadCrm();
         this.openDeal(params['deal']);
       }
     });
@@ -160,11 +160,39 @@ export class PanelGestorComponent implements OnInit {
 
   setTab(t: GestorTab) {
     this.tab.set(t);
-    if (t === 'dashboard' || t === 'pipeline') this.loadCrm();
+    if (t === 'dashboard') this.loadCrmSummary();
+    if (t === 'pipeline') this.loadCrm();
     if (t === 'plantillas') this.loadTemplates();
     if (t === 'automatizaciones') {
       this.syncCrmStagesFromDashboard();
       this.loadAutomations();
+    }
+  }
+
+  loadCrmSummary() {
+    this.crmService.getDashboard().subscribe(d => {
+      this.crmDashboard.set(d);
+      if (this.tab() === 'automatizaciones' || !this.crmStages.length) {
+        this.syncCrmStagesFromDashboard();
+      }
+    });
+    this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
+  }
+
+  private scheduleAiInsights() {
+    const run = () => this.loadAiInsights();
+    if (typeof requestIdleCallback !== 'undefined') {
+      requestIdleCallback(run, { timeout: 3000 });
+    } else {
+      setTimeout(run, 1200);
+    }
+  }
+
+  loadCrm() {
+    this.loadCrmSummary();
+    this.loadDeals();
+    if (!this.templates().length) {
+      this.crmService.getTemplates().subscribe(t => this.templates.set(t));
     }
   }
 
@@ -229,18 +257,6 @@ export class PanelGestorComponent implements OnInit {
     }
   }
 
-  loadCrm() {
-    this.crmService.getDashboard().subscribe(d => {
-      this.crmDashboard.set(d);
-      if (this.tab() === 'automatizaciones' || !this.crmStages.length) {
-        this.syncCrmStagesFromDashboard();
-      }
-    });
-    this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
-    this.loadDeals();
-    this.crmService.getTemplates().subscribe(t => this.templates.set(t));
-    this.loadAiInsights();
-  }
 
   loadAiInsights() {
     const today = new Date().toDateString();
