@@ -337,6 +337,8 @@ export interface CrmDocument {
   deal_id: string;
   file_name: string;
   file_url: string;
+  notes?: string | null;
+  doc_kind?: 'attachment' | 'cotizacion';
   created_at?: string;
 }
 

@@ -36,11 +36,19 @@ export class AuthService {
   }
 
   logout() {
+    const loginQuery = this.loginQueryAfterLogout();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.user.set(null);
     this.isLoggedIn.set(false);
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], loginQuery ? { queryParams: loginQuery } : undefined);
+  }
+
+  /** Login contextual al cerrar sesión desde un panel específico. */
+  private loginQueryAfterLogout(): { role: string } | null {
+    const path = this.router.url.split('?')[0];
+    if (path.startsWith('/panel/concesionaria')) return { role: 'concesionaria' };
+    return null;
   }
 
   getToken(): string | null {

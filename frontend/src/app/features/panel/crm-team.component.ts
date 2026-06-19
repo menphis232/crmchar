@@ -2,6 +2,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CrmService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 
 interface Employee {
   id?: string;
@@ -11,16 +12,41 @@ interface Employee {
   permissions: string[];
 }
 
+const GESTOR_MODULES = [
+  { id: 'dashboard', label: 'Resumen CRM', hint: 'Métricas y vista general del negocio' },
+  { id: 'pipeline', label: 'Embudo de venta', hint: 'Trámites organizados por etapas' },
+  { id: 'servicios', label: 'Servicios y precios', hint: 'Catálogo de trámites y tarifas' },
+  { id: 'plantillas', label: 'Plantillas de mensaje', hint: 'Respuestas rápidas para clientes' },
+  { id: 'pdf_designer', label: 'Cotizador PDF', hint: 'Diseño de cotizaciones en PDF' },
+  { id: 'finanzas', label: 'Finanzas', hint: 'Ingresos, gastos y reportes' },
+  { id: 'perfil', label: 'Perfil y ajustes', hint: 'Configuración, CRM y constructor web' },
+];
+
+const CONCESIONARIA_MODULES = [
+  { id: 'dashboard', label: 'Dashboard', hint: 'Métricas y vista general' },
+  { id: 'pipeline', label: 'Embudo de ventas', hint: 'Leads y negociaciones por etapa' },
+  { id: 'inventory', label: 'Inventario', hint: 'Listado de vehículos publicados' },
+  { id: 'edit', label: 'Editar/ publicar', hint: 'Alta y edición de vehículos' },
+  { id: 'reputation', label: 'Reputación', hint: 'Reseñas y calificación' },
+  { id: 'finanzas', label: 'Finanzas', hint: 'Ingresos, gastos y reportes' },
+  { id: 'asistente', label: 'Asistente IA', hint: 'Colores, nombre y prompt del bot de ayuda' },
+  { id: 'perfil', label: 'Perfil', hint: 'Datos públicos de la concesionaria' },
+];
+
 @Component({
   selector: 'app-crm-team',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  host: { '[class.theme-dark]': 'isConcesionaria' },
   template: `
     <div class="dash-card team-panel">
-      <h2 class="card-title">👥 Mi Equipo</h2>
+      <h2 class="card-title">
+        {{ panelTitle }}
+        @if (!showForm()) {
+          <button type="button" class="btn-copy small" (click)="openForm()">+ Nuevo empleado</button>
+        }
+      </h2>
       <p class="card-desc">Agrega colaboradores y elige qué secciones del panel pueden ver y usar.</p>
-
-      <button type="button" class="btn-copy team-add-btn" (click)="openForm()">+ Nuevo empleado</button>
 
       @if (message()) {
         <div class="team-alert" [class.error]="message().startsWith('Error') || message().startsWith('Faltan')">{{ message() }}</div>
@@ -29,18 +55,18 @@ interface Employee {
       @if (showForm()) {
         <div class="team-form-card">
           <h3 class="team-form-title">{{ editingId() ? 'Editar empleado' : 'Crear empleado' }}</h3>
-          <div class="team-form-grid">
+          <div class="form-row">
             <div class="form-group">
-              <label>Nombre</label>
-              <input [(ngModel)]="form.name" placeholder="Ej. Juan Pérez" />
+              <label for="team-name">Nombre</label>
+              <input id="team-name" [(ngModel)]="form.name" placeholder="Ej. Juan Pérez" />
             </div>
             <div class="form-group">
-              <label>Email</label>
-              <input [(ngModel)]="form.email" [disabled]="!!editingId()" placeholder="juan@gestoria.com" />
+              <label for="team-email">Email</label>
+              <input id="team-email" type="email" [(ngModel)]="form.email" [disabled]="!!editingId()" [placeholder]="emailPlaceholder" />
             </div>
             <div class="form-group">
-              <label>Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
-              <input type="password" [(ngModel)]="form.password" placeholder="••••••••" />
+              <label for="team-password">Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
+              <input id="team-password" type="password" [(ngModel)]="form.password" placeholder="••••••••" />
             </div>
           </div>
 
@@ -99,12 +125,13 @@ interface Employee {
             </div>
           </div>
         } @empty {
-          <div class="team-empty">
-            <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <p>Aún no tienes empleados</p>
-            <span>Crea el primero para que tu equipo acceda al panel con permisos limitados.</span>
-            <button type="button" class="btn-copy team-add-btn" (click)="openForm()">+ Nuevo empleado</button>
-          </div>
+          @if (!showForm()) {
+            <div class="team-empty">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <p class="team-empty-title">Aún no tienes empleados</p>
+              <p class="team-empty-hint">Crea el primero para que tu equipo acceda al panel con permisos limitados.</p>
+            </div>
+          }
         }
       </div>
     </div>
@@ -113,89 +140,276 @@ interface Employee {
     :host { display: block; }
 
     .dash-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-top: 3px solid var(--brand-black);
-      border-radius: 0;
+      background: var(--surface, #fff);
+      border: 1px solid var(--border, rgba(0,0,0,0.1));
+      border-top: 3px solid var(--brand-black, #000);
       padding: 28px 28px 24px;
-      margin-bottom: 20px;
-      box-shadow: var(--shadow-card);
+      margin-bottom: 0;
+      box-shadow: var(--shadow-card, 0 2px 12px rgba(0,0,0,0.06));
     }
 
     .card-title {
-      font-family: var(--f-display);
+      font-family: var(--f-display, 'Spartan', sans-serif);
       font-size: 18px;
       font-weight: 900;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
+    .card-title .btn-copy.small { margin-left: auto; }
+
     .card-desc {
-      font-family: var(--f-ui);
-      color: var(--muted);
+      font-family: var(--f-ui, 'Spartan', sans-serif);
+      color: var(--muted, #979797);
       font-size: 13px;
       margin-bottom: 16px;
       line-height: 1.5;
     }
 
-    .team-panel { margin-bottom: 0; }
+    .form-row {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
 
-    .team-add-btn {
-      margin-bottom: 20px;
+    .form-group {
+      flex: 1;
+      min-width: 130px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .btn-copy {
-      background: var(--brand-black);
-      color: #ffffff;
-      border: 2px solid var(--brand-black);
+      background: var(--brand-black, #000);
+      color: #fff;
+      border: 2px solid var(--brand-black, #000);
       padding: 10px 22px;
-      border-radius: 0;
       font-weight: 700;
-      font-family: var(--f-display);
+      font-family: var(--f-display, 'Spartan', sans-serif);
       font-size: 12px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: var(--transition);
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
+
+    .btn-copy.small { padding: 7px 14px; font-size: 11px; }
 
     .btn-copy:hover {
       background: transparent;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
     }
 
     .btn-ghost {
-      font-family: var(--f-display);
+      font-family: var(--f-display, 'Spartan', sans-serif);
       font-size: 12px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       background: transparent;
-      border: 2px solid var(--brand-black);
+      border: 2px solid var(--brand-black, #000);
       padding: 10px 20px;
-      border-radius: 0;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      cursor: pointer;
-      transition: var(--transition);
     }
 
     .btn-ghost:hover {
-      border-color: var(--brand-black);
-      color: #ffffff;
-      background: var(--brand-black);
+      background: var(--brand-black, #000);
+      color: #fff;
     }
+
+    /* ── Inputs tema claro (gestor) ── */
+    .team-form-card .form-group label {
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted, #979797);
+    }
+
+    .team-form-card .form-group input:not([type="checkbox"]):not([type="radio"]) {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px 14px;
+      background-color: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.14);
+      color: #000000;
+      -webkit-text-fill-color: #000000;
+      caret-color: #000000;
+      border-radius: 8px;
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .team-form-card .form-group input::placeholder {
+      color: #979797;
+      opacity: 1;
+    }
+
+    .team-form-card .form-group input:focus {
+      border-color: #000000;
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+    }
+
+    /* ── Tema oscuro concesionaria ── */
+    :host.theme-dark .dash-card {
+      background: #141414;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-top: 2px solid rgba(255, 255, 255, 0.28);
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+    }
+
+    :host.theme-dark .card-title { color: #ffffff; font-size: 20px; }
+    :host.theme-dark .card-desc { color: rgba(255, 255, 255, 0.45); font-size: 14px; }
+
+    :host.theme-dark .btn-copy {
+      background: #ffffff;
+      color: #000000;
+      border: 2px solid #ffffff;
+      border-radius: 8px;
+    }
+
+    :host.theme-dark .btn-copy:hover {
+      background: transparent;
+      color: #ffffff;
+      border-color: #ffffff;
+    }
+
+    :host.theme-dark .btn-ghost {
+      color: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 8px;
+    }
+
+    :host.theme-dark .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    :host.theme-dark .team-form-card {
+      background: #0d0d0d;
+      border-color: rgba(255, 255, 255, 0.10);
+      border-radius: 12px;
+    }
+
+    :host.theme-dark .team-form-title,
+    :host.theme-dark .team-perms-section h4,
+    :host.theme-dark .team-perm-label,
+    :host.theme-dark .member-info h4,
+    :host.theme-dark .team-empty-title {
+      color: #ffffff;
+    }
+
+    :host.theme-dark .team-perms-hint,
+    :host.theme-dark .team-perm-desc,
+    :host.theme-dark .member-info span,
+    :host.theme-dark .member-perm-empty,
+    :host.theme-dark .team-empty-hint {
+      color: rgba(255, 255, 255, 0.45);
+    }
+
+    :host.theme-dark .team-form-card .form-group label {
+      color: rgba(255, 255, 255, 0.50);
+    }
+
+    :host.theme-dark .team-form-card .form-group input:not([type="checkbox"]):not([type="radio"]) {
+      background-color: #111111;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      -webkit-text-fill-color: #ffffff;
+      caret-color: #ffffff;
+      color-scheme: dark;
+    }
+
+    :host.theme-dark .team-form-card .form-group input::placeholder {
+      color: rgba(255, 255, 255, 0.28);
+    }
+
+    :host.theme-dark .team-form-card .form-group input:focus {
+      background-color: #111111;
+      border-color: rgba(255, 255, 255, 0.45);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.06);
+    }
+
+    :host.theme-dark .team-form-card .form-group input:-webkit-autofill,
+    :host.theme-dark .team-form-card .form-group input:-webkit-autofill:focus {
+      -webkit-box-shadow: 0 0 0 1000px #111111 inset;
+      box-shadow: 0 0 0 1000px #111111 inset;
+      -webkit-text-fill-color: #ffffff;
+    }
+
+    :host.theme-dark .team-perm-option {
+      background: #111111;
+      border-color: rgba(255, 255, 255, 0.10);
+    }
+
+    :host.theme-dark .team-member-card {
+      background: #181818;
+      border-color: rgba(255, 255, 255, 0.10);
+    }
+
+    :host.theme-dark .member-perm-badge {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    :host.theme-dark .member-avatar {
+      background: #ffffff;
+      color: #000000;
+    }
+
+    :host.theme-dark .member-btn {
+      background: transparent;
+      border-color: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
+    :host.theme-dark .member-btn:hover {
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
+    }
+
+    :host.theme-dark .team-empty {
+      background: #0d0d0d;
+      border-color: rgba(255, 255, 255, 0.10);
+    }
+
+    :host.theme-dark .team-alert {
+      background: rgba(68, 187, 102, 0.10);
+      border-color: rgba(68, 187, 102, 0.30);
+      color: rgba(134, 239, 172, 0.95);
+    }
+
+    :host.theme-dark .team-alert.error {
+      background: rgba(239, 68, 68, 0.10);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
+    }
+
+    .team-panel { margin-bottom: 0; }
 
     .team-alert {
       padding: 10px 14px;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
+      background: rgba(34, 197, 94, 0.12);
+      border: 1px solid rgba(34, 197, 94, 0.35);
       border-radius: 8px;
       color: #166534;
       font-size: 13px;
@@ -203,88 +417,49 @@ interface Employee {
     }
 
     .team-alert.error {
-      background: #fef2f2;
-      border-color: #fecaca;
-      color: #b91c1c;
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #fca5a5;
     }
 
     .team-form-card {
       background: #faf9f7;
-      border: 1px solid rgba(0,0,0,.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 10px;
       padding: 20px;
       margin-bottom: 20px;
     }
 
     .team-form-title {
-      font-family: var(--f-display);
-      font-size: 16px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       margin: 0 0 16px;
     }
 
-    .team-form-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      margin-bottom: 16px;
-    }
-
-    .team-form-grid .form-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
-    }
-
-    .team-form-grid .form-group input {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 10px 12px;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,.14);
-      color: var(--brand-black);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: var(--f-ui);
-      outline: none;
-      transition: border-color .15s ease, box-shadow .15s ease;
-    }
-
-    .team-form-grid .form-group input:focus {
-      border-color: var(--brand-black);
-      box-shadow: 0 0 0 2px rgba(0,0,0,.06);
-    }
-
-    .team-form-grid .form-group input:disabled {
-      background: #f5f3f0;
-      color: var(--muted);
-    }
+    .team-form-card .form-group input:disabled { opacity: 0.55; }
 
     .team-perms-section {
       padding-top: 16px;
-      border-top: 1px solid rgba(0,0,0,.08);
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .team-perms-section h4 {
-      font-family: var(--f-display);
-      font-size: 14px;
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 13px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       margin: 0 0 4px;
     }
 
     .team-perms-hint {
       font-size: 13px;
-      color: var(--muted);
+      color: var(--muted, #979797);
       margin: 0 0 12px;
       line-height: 1.45;
     }
@@ -300,22 +475,19 @@ interface Employee {
       align-items: flex-start;
       gap: 10px;
       padding: 12px 14px;
-      background: #fff;
-      border: 1px solid rgba(0,0,0,.1);
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.10);
       border-radius: 8px;
       cursor: pointer;
-      transition: border-color .15s ease, box-shadow .15s ease;
+      transition: border-color 0.15s ease;
     }
 
-    .team-perm-option:hover {
-      border-color: var(--brand-black);
-      box-shadow: 0 0 0 1px rgba(0,0,0,.04);
-    }
+    .team-perm-option:hover { border-color: rgba(0, 0, 0, 0.25); }
 
     .team-perm-option input[type="checkbox"] {
       width: 18px;
       height: 18px;
-      accent-color: var(--brand-black);
+      accent-color: #000;
       flex-shrink: 0;
       cursor: pointer;
       margin-top: 2px;
@@ -331,13 +503,13 @@ interface Employee {
     .team-perm-label {
       font-size: 14px;
       font-weight: 700;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       line-height: 1.3;
     }
 
     .team-perm-desc {
       font-size: 12px;
-      color: var(--muted);
+      color: var(--muted, #979797);
       line-height: 1.35;
     }
 
@@ -347,7 +519,7 @@ interface Employee {
       gap: 8px;
       margin-top: 16px;
       padding-top: 16px;
-      border-top: 1px solid rgba(0,0,0,.08);
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     .team-list {
@@ -362,16 +534,13 @@ interface Employee {
       gap: 16px;
       align-items: center;
       background: #faf9f7;
-      border: 1px solid rgba(0,0,0,.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       border-radius: 10px;
       padding: 14px 16px;
-      transition: border-color .15s ease, box-shadow .15s ease;
+      transition: border-color 0.15s ease;
     }
 
-    .team-member-card:hover {
-      border-color: rgba(0,0,0,.14);
-      box-shadow: 0 2px 8px rgba(0,0,0,.04);
-    }
+    .team-member-card:hover { border-color: rgba(0, 0, 0, 0.14); }
 
     .member-main {
       display: flex;
@@ -384,29 +553,27 @@ interface Employee {
       width: 42px;
       height: 42px;
       border-radius: 50%;
-      background: var(--brand-black);
+      background: #000;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
       font-size: 13px;
-      font-family: var(--f-display);
+      font-family: var(--f-display, 'Spartan', sans-serif);
       flex-shrink: 0;
     }
 
-    .member-info {
-      min-width: 0;
-    }
+    .member-info { min-width: 0; }
 
     .member-info h4 {
       margin: 0 0 3px;
-      font-family: var(--f-display);
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: 0.03em;
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -414,7 +581,7 @@ interface Employee {
 
     .member-info span {
       font-size: 13px;
-      color: #555;
+      color: var(--muted, #979797);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -429,19 +596,20 @@ interface Employee {
     }
 
     .member-perm-badge {
-      background: #fff;
-      border: 1px solid rgba(0,0,0,.14);
-      color: var(--brand-black);
+      background: rgba(0, 0, 0, 0.04);
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      color: var(--brand-black, #000);
       padding: 5px 11px;
-      border-radius: 20px;
-      font-size: 12px;
+      border-radius: 999px;
+      font-size: 11px;
       font-weight: 700;
+      letter-spacing: 0.04em;
       white-space: nowrap;
     }
 
     .member-perm-empty {
       font-size: 12px;
-      color: var(--muted);
+      color: var(--muted, #979797);
       font-style: italic;
     }
 
@@ -456,15 +624,15 @@ interface Employee {
       align-items: center;
       gap: 5px;
       padding: 7px 12px;
-      border: 1px solid rgba(0,0,0,.12);
+      border: 1px solid rgba(0, 0, 0, 0.12);
       border-radius: 8px;
       background: #fff;
-      color: var(--brand-black);
+      color: var(--brand-black, #000);
       font-size: 12px;
       font-weight: 600;
-      font-family: var(--f-ui);
+      font-family: var(--f-ui, 'Spartan', sans-serif);
       cursor: pointer;
-      transition: background .15s ease, border-color .15s ease, color .15s ease;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
     .member-btn svg {
@@ -478,20 +646,20 @@ interface Employee {
     }
 
     .member-btn:hover {
-      background: var(--brand-black);
+      background: #000;
       color: #fff;
-      border-color: var(--brand-black);
+      border-color: #000;
     }
 
     .member-btn--delete {
-      color: #dc2626;
-      border-color: rgba(220,38,38,.25);
+      color: #f87171;
+      border-color: rgba(248, 113, 113, 0.35);
     }
 
     .member-btn--delete:hover {
       background: #dc2626;
       border-color: #dc2626;
-      color: #fff;
+      color: #ffffff;
     }
 
     .team-empty {
@@ -499,40 +667,42 @@ interface Employee {
       flex-direction: column;
       align-items: center;
       text-align: center;
-      padding: 48px 24px;
-      background: #faf9f7;
-      border: 1px dashed rgba(0,0,0,.12);
+      padding: 40px 24px 32px;
+      border: 1px dashed rgba(0, 0, 0, 0.12);
       border-radius: 10px;
-      color: var(--muted);
+      background: #faf9f7;
     }
 
     .team-empty svg {
       width: 36px;
       height: 36px;
-      stroke: rgba(0,0,0,.2);
+      stroke: rgba(0, 0, 0, 0.22);
       fill: none;
       stroke-width: 1.5;
       stroke-linecap: round;
       stroke-linejoin: round;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
-    .team-empty p {
+    .team-empty-title {
+      font-family: var(--f-display, 'Spartan', sans-serif);
       font-size: 15px;
-      font-weight: 700;
-      color: var(--brand-black);
-      margin: 0 0 6px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--brand-black, #000);
+      margin: 0 0 8px;
     }
 
-    .team-empty span {
+    .team-empty-hint {
       font-size: 13px;
-      line-height: 1.45;
-      max-width: 320px;
-      margin-bottom: 16px;
+      line-height: 1.5;
+      color: var(--muted, #979797);
+      max-width: 360px;
+      margin: 0;
     }
 
     @media (max-width: 800px) {
-      .team-form-grid { grid-template-columns: 1fr; }
       .team-perms-grid { grid-template-columns: 1fr; }
       .team-member-card {
         grid-template-columns: 1fr;
@@ -548,19 +718,28 @@ export class CrmTeamComponent implements OnInit {
   editingId = signal<string | null>(null);
   message = signal('');
 
-  availableModules = [
-    { id: 'dashboard', label: 'Resumen CRM', hint: 'Métricas y vista general del negocio' },
-    { id: 'pipeline', label: 'Embudo de venta', hint: 'Trámites organizados por etapas' },
-    { id: 'servicios', label: 'Servicios y precios', hint: 'Catálogo de trámites y tarifas' },
-    { id: 'plantillas', label: 'Plantillas de mensaje', hint: 'Respuestas rápidas para clientes' },
-    { id: 'pdf_designer', label: 'Cotizador PDF', hint: 'Diseño de cotizaciones en PDF' }
-  ];
+  availableModules = GESTOR_MODULES;
+  emailPlaceholder = 'juan@gestoria.com';
+  defaultPerms = ['dashboard', 'pipeline'];
+
+  get panelTitle(): string {
+    return this.auth.user()?.role === 'concesionaria' ? '👥 Roles y permisos' : '👥 Mi Equipo';
+  }
+
+  get isConcesionaria(): boolean {
+    return this.auth.user()?.role === 'concesionaria';
+  }
 
   form: Employee = { name: '', email: '', password: '', permissions: [] };
 
-  constructor(private crm: CrmService) {}
+  constructor(private crm: CrmService, private auth: AuthService) {}
 
   ngOnInit() {
+    const role = this.auth.user()?.role;
+    if (role === 'concesionaria') {
+      this.availableModules = CONCESIONARIA_MODULES;
+      this.emailPlaceholder = 'juan@concesionaria.com';
+    }
     this.loadTeam();
   }
 
@@ -573,7 +752,7 @@ export class CrmTeamComponent implements OnInit {
 
   openForm() {
     this.editingId.set(null);
-    this.form = { name: '', email: '', password: '', permissions: ['dashboard', 'pipeline'] };
+    this.form = { name: '', email: '', password: '', permissions: [...this.defaultPerms] };
     this.showForm.set(true);
     this.message.set('');
   }

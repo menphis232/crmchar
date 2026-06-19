@@ -24,8 +24,25 @@ import { RichTextEditorComponent } from '../../shared/rich-text-editor.component
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
 import { AmountTipDirective } from '../../shared/amount-tip.directive';
+import { CrmTeamComponent } from './crm-team.component';
+import {
+  LucideBot,
+  LucideFileText,
+  LucideFunnel,
+  LucideGrid2x2,
+  LucideLandmark,
+  LucideLayoutDashboard,
+  LucideList,
+  LucideSettings,
+  LucideSquarePen,
+  LucideStarCheck,
+  LucideUsers,
+} from '@lucide/angular';
 
-type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'pdf_designer' | 'page_builder' | 'finanzas';
+type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'asistente' | 'pdf_designer' | 'page_builder' | 'finanzas' | 'team';
+
+/** Módulos ocultos temporalmente en el panel concesionaria */
+const HIDDEN_MODULES = new Set(['plantillas']);
 
 const DEFAULT_AI_TIPS = [
   'Responde leads en menos de 2 horas con fotos del vehículo y opciones de financiamiento; la velocidad cierra ventas en concesionarias.',
@@ -46,7 +63,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })
@@ -136,7 +153,13 @@ export class PanelConcesionariaComponent implements OnInit {
     // Load profile fields from /auth/me
     this.auth.getMe().subscribe(res => {
       const u = res.user;
-      this.profileName = u.name || '';
+      if (u?.parent_id && u.permissions?.length) {
+        if (!u.permissions.includes('dashboard')) {
+          const visible = u.permissions.filter(p => !HIDDEN_MODULES.has(p));
+          if (visible.length) this.tab.set(visible[0] as Tab);
+        }
+      }
+      this.profileName = (u as any).dealer_name || u.name || '';
       this.profileLogoUrl = u.logo_url || '';
       this.profileDescription = (u as any).description || '';
       this.profilePhone = (u as any).phone || '';
@@ -168,6 +191,14 @@ export class PanelConcesionariaComponent implements OnInit {
       transmission: 'Automático', location: '', description: '', imageUrl: '', images: [],
       videoUrl: '', status: 'draft' as AutoStatus,
     };
+  }
+
+  hasPerm(mod: string): boolean {
+    if (HIDDEN_MODULES.has(mod)) return false;
+    const user = this.auth.user();
+    if (!user) return false;
+    if (!user.parent_id) return true;
+    return user.permissions?.includes(mod) || false;
   }
 
   setTab(t: Tab) {
@@ -608,6 +639,21 @@ export class PanelConcesionariaComponent implements OnInit {
   publicSlug = '';
   isUploadingLogo = false;
 
+  get publicPageUrl(): string {
+    return this.publicSlug ? `${window.location.origin}/concesionarias/${this.publicSlug}` : '';
+  }
+
+  copyPublicPageLink() {
+    if (!this.publicSlug) {
+      this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');
+      return;
+    }
+    navigator.clipboard.writeText(this.publicPageUrl).then(
+      () => this.toast.success('Enlace copiado al portapapeles'),
+      () => this.toast.error('No se pudo copiar el enlace'),
+    );
+  }
+
   panelAssistantEnabled = true;
   panelAssistantName = 'VEGA';
   panelAssistantPosition: 'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' = 'bottom-right';
@@ -649,7 +695,23 @@ export class PanelConcesionariaComponent implements OnInit {
   }
 
   saveAssistantColors() {
-    this.saveProfile();
+    this.saveAssistantConfig();
+  }
+
+  saveAssistantConfig() {
+    this.auth.updateMe({
+      panel_assistant_enabled: this.panelAssistantEnabled,
+      panel_assistant_name: this.panelAssistantName,
+      panel_assistant_position: this.panelAssistantPosition,
+      panel_assistant_bg_color: this.panelAssistantBgColor,
+      panel_assistant_btn_color: this.panelAssistantBtnColor,
+      panel_assistant_text_color: this.panelAssistantTextColor,
+      panel_assistant_font: this.panelAssistantFont,
+      panel_assistant_prompt: this.panelAssistantPrompt || null,
+    }).subscribe({
+      next: () => this.toast.success('Configuración del asistente guardada', 'Asistente IA'),
+      error: () => this.toast.error('No se pudo guardar el asistente'),
+    });
   }
 
   onLogoSelected(event: any) {
@@ -684,14 +746,6 @@ export class PanelConcesionariaComponent implements OnInit {
       phone: this.profilePhone || null,
       address: this.profileAddress || null,
       map_embed_url: this.profileMapEmbedUrl || null,
-      panel_assistant_enabled: this.panelAssistantEnabled,
-      panel_assistant_name: this.panelAssistantName,
-      panel_assistant_position: this.panelAssistantPosition,
-      panel_assistant_bg_color: this.panelAssistantBgColor,
-      panel_assistant_btn_color: this.panelAssistantBtnColor,
-      panel_assistant_text_color: this.panelAssistantTextColor,
-      panel_assistant_font: this.panelAssistantFont,
-      panel_assistant_prompt: this.panelAssistantPrompt || null,
     }).subscribe({
       next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
       error: () => {}

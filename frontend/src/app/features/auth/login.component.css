@@ -12,6 +12,10 @@
   background: var(--brand-black);
 }
 
+.login-page--concesionaria {
+  background: #000000;
+}
+
 .bg-particles {
   position: absolute;
   inset: 0;

@@ -33,7 +33,7 @@ interface TourStep {
 const TOUR_STEPS: Record<string, TourStep[]> = {
   gestor: [
     { emoji: '👋', title: '¡Bienvenido!', speech: '¡Hola! Soy tu asistente de panel. ¡Déjame mostrarte todo lo que puedes hacer aquí!', selector: '', mood: 'wave', gesture: 'bounce' },
-    { emoji: '📊', title: 'Panel CRM', speech: 'Tu Dashboard CRM muestra trámites activos, sin respuesta, tareas y conversión.', selector: '.dash-sidebar .dash-link:nth-of-type(1)', mood: 'excited', gesture: 'point' },
+    { emoji: '📊', title: 'Dashboard', speech: 'Tu Dashboard CRM muestra trámites activos, sin respuesta, tareas y conversión.', selector: '.dash-sidebar .dash-link:nth-of-type(2)', mood: 'excited', gesture: 'point' },
     { emoji: '🎯', title: 'Embudo de Ventas', speech: 'El Embudo Kanban: arrastra trámites entre etapas y chatea con clientes.', selector: '.dash-sidebar .dash-link:nth-of-type(2)', mood: 'happy', gesture: 'wiggle' },
     { emoji: '🛠', title: 'Servicios', speech: 'Define qué trámites ofreces con nombre, precio y tiempo estimado.', selector: '.dash-sidebar .dash-link:nth-of-type(3)', mood: 'excited', gesture: 'bounce' },
     { emoji: '💰', title: 'Finanzas', speech: 'Controla ingresos, gastos y exporta reportes CSV o PDF.', selector: '.dash-sidebar .dash-link:nth-of-type(4)', mood: 'happy', gesture: 'jump' },
@@ -41,7 +41,7 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
   ],
   concesionaria: [
     { emoji: '👋', title: '¡Bienvenido!', speech: '¡Hola! Te muestro tu panel de concesionaria.', selector: '', mood: 'wave', gesture: 'bounce' },
-    { emoji: '📊', title: 'Panel CRM', speech: 'Dashboard con leads activos, vehículos publicados y consultas.', selector: '.dash-sidebar .dash-link:nth-of-type(1)', mood: 'excited', gesture: 'point' },
+    { emoji: '📊', title: 'Dashboard', speech: 'Dashboard con leads activos, vehículos publicados y consultas.', selector: '.dash-sidebar .dash-link:nth-of-type(2)', mood: 'excited', gesture: 'point' },
     { emoji: '🎯', title: 'Embudo', speech: 'Kanban de ventas: sigue cada lead hasta el cierre.', selector: '.dash-sidebar .dash-link:nth-of-type(2)', mood: 'happy', gesture: 'wiggle' },
     { emoji: '🚗', title: 'Inventario', speech: 'Tu catálogo: publicados, borradores y dados de baja.', selector: '.dash-sidebar .dash-link:nth-of-type(3)', mood: 'excited', gesture: 'bounce' },
     { emoji: '🎉', title: '¡Listo!', speech: '¡Eso es todo! Escríbeme si necesitas ayuda.', selector: '', mood: 'happy', gesture: 'spin' },

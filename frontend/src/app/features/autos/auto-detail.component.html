@@ -181,6 +181,7 @@
       <!-- VISTA CLÁSICA (DEFAULT) -->
       <div class="detail-page">
         <div class="detail-container">
+          <div class="detail-main-col">
           <div class="detail-gallery-col">
             <div class="gallery">
               <div class="gallery-layout">
@@ -229,65 +230,75 @@
             </div>
           </div>
 
-          <aside class="detail-sidebar">
-            <div class="ds-tags">
-              <span class="ds-tag">Semi nuevo</span>
-              <span class="ds-tag">{{ a.make }}</span>
+          @if (a.description) {
+            <div class="detail-description detail-description-desktop rich-text-content">
+              <h3>Descripción</h3>
+              <div [innerHTML]="a.description"></div>
             </div>
+          }
+          </div>
 
-            <div class="ds-make">{{ a.make }}</div>
-            <h1 class="ds-model">{{ a.model }}</h1>
-
-            @if (a.verified) {
-              <div class="ds-verified">
-                <svg lucideBadgeCheck [size]="14" aria-hidden="true"></svg>
-                Verificado
+          <aside class="detail-sidebar-rail">
+            <div class="detail-sidebar-upper">
+              <div class="ds-tags">
+                <span class="ds-tag">Semi nuevo</span>
+                <span class="ds-tag">{{ a.make }}</span>
               </div>
-            }
 
-            <div class="ds-price-block">
-              @if (hasSpecialPrice(a)) {
-                <div class="ds-price-label">Precio normal</div>
-                <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
-                <div class="ds-price-label">Precio especial</div>
-                <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
-              } @else {
-                <div class="ds-price-label">Precio</div>
-                <div class="ds-price">{{ formatPrice(a.price) }}</div>
-              }
-            </div>
+              <div class="ds-make">{{ a.make }}</div>
+              <h1 class="ds-model">{{ a.model }}</h1>
 
-            <div class="ds-specs">
-              <div class="ds-spec-row">
-                <svg lucideCalendar class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
-                <span>{{ a.year }}</span>
-              </div>
-              <div class="ds-spec-row">
-                <svg lucideGauge class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
-                <span>{{ a.mileage | number }} km</span>
-              </div>
-              @if (a.dealerName) {
-                <div class="ds-spec-row">
-                  <svg lucideBuilding2 class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
-                  <span>{{ a.dealerName }}</span>
+              @if (a.verified) {
+                <div class="ds-verified">
+                  <svg lucideBadgeCheck [size]="14" aria-hidden="true"></svg>
+                  Verificado
                 </div>
               }
-              @if (a.location) {
+
+              <div class="ds-price-block">
+                @if (hasSpecialPrice(a)) {
+                  <div class="ds-price-label">Precio normal</div>
+                  <div class="ds-price-old">{{ formatPrice(a.price) }}</div>
+                  <div class="ds-price-label">Precio especial</div>
+                  <div class="ds-price">{{ formatPrice(a.specialPrice!) }}</div>
+                } @else {
+                  <div class="ds-price-label">Precio</div>
+                  <div class="ds-price">{{ formatPrice(a.price) }}</div>
+                }
+              </div>
+
+              <div class="ds-specs">
                 <div class="ds-spec-row">
-                  <svg lucideMapPin class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
-                  <span>{{ a.location }}</span>
+                  <svg lucideCalendar class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                  <span>{{ a.year }}</span>
                 </div>
-              }
-            </div>
+                <div class="ds-spec-row">
+                  <svg lucideGauge class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                  <span>{{ a.mileage | number }} km</span>
+                </div>
+                @if (a.dealerName) {
+                  <div class="ds-spec-row">
+                    <svg lucideBuilding2 class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                    <span>{{ a.dealerName }}</span>
+                  </div>
+                }
+                @if (a.location) {
+                  <div class="ds-spec-row">
+                    <svg lucideMapPin class="ds-spec-icon" [size]="18" aria-hidden="true"></svg>
+                    <span>{{ a.location }}</span>
+                  </div>
+                }
+              </div>
 
-            <div class="detail-actions">
-              <button type="button" class="btn-detail-outline" (click)="shareAuto()">
-                <svg lucideShare2 [size]="18" aria-hidden="true"></svg>
-                Compartir ficha
-              </button>
-            </div>
+              <div class="detail-actions">
+                <button type="button" class="btn-detail-outline" (click)="shareAuto()">
+                  <svg lucideShare2 [size]="18" aria-hidden="true"></svg>
+                  Compartir ficha
+                </button>
+              </div>
 
-            <button class="btn-whatsapp" style="cursor:pointer; border:none;" (click)="openWaModal($event)">Contactar por WhatsApp</button>
+              <button class="btn-whatsapp" style="cursor:pointer; border:none;" (click)="openWaModal($event)">Contactar por WhatsApp</button>
+            </div>
 
             <div class="dealer-card">
               @if (a.dealerSlug) {
@@ -319,29 +330,31 @@
               }
             </div>
 
-            <div class="inquiry-box" id="detail-inquiry">
-              <h3>¿Tienes preguntas?</h3>
-              @if (inquirySent()) {
-                <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
-              } @else {
-                <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre" class="inq-input">
-                <input [(ngModel)]="inquiry.clientEmail" placeholder="Email" class="inq-input">
-                <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
-                <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
-                @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
-                <button class="btn-inquiry" (click)="sendInquiry()">Enviar pregunta</button>
-              }
-            </div>
+            @if (a.description) {
+              <div class="detail-description detail-description-mobile rich-text-content" id="detail-description">
+                <h3>Descripción</h3>
+                <div [innerHTML]="a.description"></div>
+              </div>
+            }
 
-            <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
+            <div class="detail-sidebar-lower">
+              <div class="inquiry-box" id="detail-inquiry">
+                <h3>¿Tienes preguntas?</h3>
+                @if (inquirySent()) {
+                  <p class="success-inquiry">¡Mensaje enviado! La concesionaria te responderá pronto.</p>
+                } @else {
+                  <input [(ngModel)]="inquiry.clientName" placeholder="Tu nombre" class="inq-input">
+                  <input [(ngModel)]="inquiry.clientEmail" placeholder="Email" class="inq-input">
+                  <input [(ngModel)]="inquiry.clientPhone" placeholder="Teléfono (opcional)" class="inq-input">
+                  <textarea [(ngModel)]="inquiry.message" placeholder="Tu pregunta sobre este vehículo..." rows="3" class="inq-input"></textarea>
+                  @if (inquiryError()) { <p class="error-inquiry">{{ inquiryError() }}</p> }
+                  <button class="btn-inquiry" (click)="sendInquiry()">Enviar pregunta</button>
+                }
+              </div>
+
+              <a routerLink="/autos" class="btn-back">← Volver al catálogo</a>
+            </div>
           </aside>
-
-          @if (a.description) {
-            <div class="detail-description rich-text-content" id="detail-description">
-              <h3>Descripción</h3>
-              <div [innerHTML]="a.description"></div>
-            </div>
-          }
         </div>
       </div>
     }

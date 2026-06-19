@@ -73,39 +73,42 @@
           <h4>Valor estimado (MXN)</h4>
           <div class="deal-value-row">
             <input type="number" [(ngModel)]="estimatedValue" placeholder="0">
-            <button type="button" class="btn-copy small" (click)="saveNotes()">💾 Guardar</button>
+            <button type="button" class="deal-outline-btn" (click)="saveNotes()">Guardar</button>
           </div>
           
-          <div class="deal-payment-box">
-            <div class="deal-payment-status">
-              <span>Estado de Pago: 
-                <strong [class.paid]="d.paymentStatus === 'paid'" [class.pending]="d.paymentStatus !== 'paid'">
-                  {{ d.paymentStatus === 'paid' ? '✅ PAGADO' : '⏳ PENDIENTE' }}
-                </strong>
-              </span>
-              @if (d.paymentStatus !== 'paid') {
-                <button type="button" class="btn-ghost small" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
-                  {{ isGeneratingPayment() ? 'Generando...' : '💳 Cobrar en Línea' }}
-                </button>
+          @if (!isConcesionaria()) {
+            <div class="deal-payment-box">
+              <div class="deal-payment-status">
+                <span>Estado de Pago: 
+                  <strong [class.paid]="d.paymentStatus === 'paid'" [class.pending]="d.paymentStatus !== 'paid'">
+                    {{ d.paymentStatus === 'paid' ? '✅ PAGADO' : '⏳ PENDIENTE' }}
+                  </strong>
+                </span>
+                @if (d.paymentStatus !== 'paid') {
+                  <button type="button" class="btn-ghost small" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
+                    {{ isGeneratingPayment() ? 'Generando...' : '💳 Cobrar en Línea' }}
+                  </button>
+                }
+              </div>
+              
+              @if (paymentLink()) {
+                <div class="deal-payment-link-box">
+                  <p class="deal-payment-link-label">Link generado. Cópialo y envíalo al cliente:</p>
+                  <div class="deal-payment-link-row">
+                    <input type="text" readonly [value]="paymentLink()" #linkInput>
+                    <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
+                  </div>
+                </div>
+              }
+              @if (paymentError()) {
+                <p class="deal-payment-error">{{ paymentError() }}</p>
               }
             </div>
-            
-            @if (paymentLink()) {
-              <div class="deal-payment-link-box">
-                <p class="deal-payment-link-label">Link generado. Cópialo y envíalo al cliente:</p>
-                <div class="deal-payment-link-row">
-                  <input type="text" readonly [value]="paymentLink()" #linkInput>
-                  <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
-                </div>
-              </div>
-            }
-            @if (paymentError()) {
-              <p class="deal-payment-error">{{ paymentError() }}</p>
-            }
-          </div>
+          }
         </div>
 
         <!-- DOCUMENTOS DEL CLIENTE (OCR) -->
+        @if (!isConcesionaria()) {
         <div class="deal-section deal-subsection deal-subsection--ocr">
           <h4>Documentos del Cliente (OCR)</h4>
           @if (clientDocuments().length > 0) {
@@ -150,33 +153,30 @@
             <p class="card-desc">El cliente aún no ha subido documentos.</p>
           }
         </div>
+        }
 
         <!-- DOCUMENTOS (Phase 3.2) -->
-        <div class="deal-section deal-subsection">
-          <h4 class="deal-docs-header">
-            Documentos Adjuntos
-            <label class="btn-copy small" style="cursor:pointer; margin:0;" [class.disabled]="isUploading()">
+        <div class="deal-section deal-subsection deal-attach-section">
+          <div class="deal-attach-header">
+            <h4>Documentos Adjuntos</h4>
+            <label class="deal-outline-btn" [class.disabled]="isUploading()">
               <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
-              {{ isUploading() ? 'Subiendo...' : '📄 Subir Archivo' }}
+              {{ isUploading() ? 'Subiendo...' : '+ Subir archivo' }}
             </label>
-          </h4>
-          
+          </div>
+
           @if (documents().length > 0) {
-            <div style="display:flex; flex-direction:column; gap:8px;">
+            <div class="quote-doc-list">
               @for (doc of documents(); track doc.id) {
-                <div class="deal-doc-item deal-doc-item-row">
-                  <div class="deal-doc-link-wrap">
-                    <span class="deal-doc-icon">📎</span>
-                    <div>
-                      <a [href]="doc.file_url" target="_blank" class="deal-doc-link">
-                        {{ doc.file_name }}
-                      </a>
-                      <div class="card-desc">{{ doc.created_at | date:'short' }}</div>
-                    </div>
+                <div class="quote-doc-item">
+                  <div class="quote-doc-info">
+                    <strong>{{ doc.file_name }}</strong>
+                    <span class="card-desc">{{ doc.created_at | date:'short' }}</span>
                   </div>
-                  <button type="button" class="btn-ghost small" style="color:#ff4d4f; border-color:transparent; padding:4px;" title="Eliminar" (click)="deleteDocument(doc.id)">
-                    ✕
-                  </button>
+                  <div class="quote-doc-actions">
+                    <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
+                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">✕</button>
+                  </div>
                 </div>
               }
             </div>
@@ -185,50 +185,38 @@
           }
         </div>
 
-        <!-- COTIZACIONES (Phase 3.1) -->
+        <!-- PDF COTIZACIÓN (subir manual) -->
         @if (d.dealType === 'venta_auto') {
-          <div class="deal-section" style="background:rgba(200,169,74,0.05); border:1px solid var(--gold); border-radius:8px; padding:16px;">
-            <h4 style="color:var(--gold); margin-bottom:12px;">Cotizaciones PDF</h4>
-            
-            @if (quotes().length > 0) {
-              <div style="margin-bottom:16px;">
-                @for (q of quotes(); track q.id) {
-                  <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface); padding:8px 12px; margin-bottom:8px; border-radius:4px;">
-                    <div>
-                      <strong style="color:var(--mx-white); font-size:12px;">Folio: {{ q.id.split('-')[0] | uppercase }}</strong>
-                      <div style="font-size:10px; color:var(--muted);">Total: ${{ q.total | number }} | {{ q.created_at | date:'shortDate' }}</div>
+          <div class="deal-section deal-quote-upload">
+            <h4>Cotización PDF</h4>
+            <p class="card-desc">Sube el PDF de cotización para este cliente y agrega una nota.</p>
+
+            @if (quoteDocuments().length > 0) {
+              <div class="quote-doc-list">
+                @for (q of quoteDocuments(); track q.id) {
+                  <div class="quote-doc-item">
+                    <div class="quote-doc-info">
+                      <strong>{{ q.file_name }}</strong>
+                      @if (q.notes) {
+                        <p class="quote-doc-note">{{ q.notes }}</p>
+                      }
+                      <span class="card-desc">{{ q.created_at | date:'short' }}</span>
                     </div>
-                    <button type="button" class="btn-copy small" (click)="downloadQuote(q.id)">Descargar PDF</button>
+                    <button type="button" class="deal-outline-btn" (click)="downloadDocument(q)">Descargar PDF</button>
                   </div>
                 }
               </div>
             }
 
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                <div>
-                  <label class="card-desc">Enganche</label>
-                  <input type="number" [(ngModel)]="downPayment" placeholder="0">
-                </div>
-                <div>
-                  <label class="card-desc">Auto a cuenta</label>
-                  <input type="number" [(ngModel)]="tradeInValue" placeholder="0">
-                </div>
+            <div class="quote-upload-form">
+              <div class="form-group">
+                <label>Nota (opcional)</label>
+                <input type="text" [(ngModel)]="quoteNote" placeholder="Ej. Cotización con enganche 20%, plazo 36 meses">
               </div>
-              <div>
-                <label class="card-desc">Plazo (meses)</label>
-                <select [(ngModel)]="termMonths">
-                  <option value="0">Contado (0 meses)</option>
-                  <option value="12">12 meses</option>
-                  <option value="24">24 meses</option>
-                  <option value="36">36 meses</option>
-                  <option value="48">48 meses</option>
-                  <option value="60">60 meses</option>
-                </select>
-              </div>
-              <button type="button" class="btn-ghost small" style="margin-top:8px; border-color:var(--gold); color:var(--gold);" (click)="generateQuote()">
-                + Generar Nueva Cotización
-              </button>
+              <label class="deal-outline-btn" [class.disabled]="isUploadingQuote()">
+                <input type="file" accept="application/pdf,.pdf" style="display:none" (change)="uploadQuotePdf($event)" [disabled]="isUploadingQuote()">
+                {{ isUploadingQuote() ? 'Subiendo...' : '+ Subir PDF' }}
+              </label>
             </div>
           </div>
         }

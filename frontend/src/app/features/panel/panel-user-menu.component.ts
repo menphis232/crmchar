@@ -108,6 +108,20 @@ import { SubscriptionBillingComponent } from './subscription-billing.component';
     }
     .avatar-dropdown-item:hover { background: rgba(255,255,255,.06); }
     .avatar-dropdown-item.danger { color: #ff6b6b; }
+
+    :host-context(.sidebar-user-section) .panel-user-name {
+      color: rgba(255,255,255,0.75);
+      font-size: 12px;
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    :host-context(.sidebar-user-section) .avatar-dropdown {
+      left: 0;
+      right: auto;
+      min-width: 100%;
+    }
   `],
 })
 export class PanelUserMenuComponent {

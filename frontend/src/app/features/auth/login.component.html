@@ -1,5 +1,7 @@
-<div class="login-page">
-  <div class="bg-particles"></div>
+<div class="login-page" [class.login-page--concesionaria]="role() === 'concesionaria'">
+  @if (role() !== 'concesionaria') {
+    <div class="bg-particles"></div>
+  }
   <a routerLink="/autos" class="btn-back-top">← VOLVER AL INICIO</a>
 
   <div class="login-container">
@@ -96,7 +98,9 @@
           } @else if (role() !== 'admin' && role() !== 'cliente') {
             <button class="link-btn" (click)="mode.set('login')">¿Ya tienes cuenta? Inicia sesión</button>
           }
-          <button class="link-btn" (click)="mode.set('select')">← Cambiar perfil</button>
+          @if (!directRoleLogin()) {
+            <button class="link-btn" (click)="mode.set('select')">← Cambiar perfil</button>
+          }
         </div>
         }
       </div>

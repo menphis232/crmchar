@@ -984,7 +984,7 @@ router.get('/deals/:id/documents', async (req, res) => {
 router.post('/deals/:id/documents', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { fileName, fileUrl } = req.body;
+    const { fileName, fileUrl, notes, docKind } = req.body;
     
     if (!fileName || !fileUrl) {
       return res.status(400).json({ error: 'Faltan datos del documento' });
@@ -993,13 +993,14 @@ router.post('/deals/:id/documents', async (req, res) => {
     const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
+    const kind = docKind === 'cotizacion' ? 'cotizacion' : 'attachment';
     const docId = uuid();
     await run(`
-      INSERT INTO crm_documents (id, deal_id, user_id, file_name, file_url)
-      VALUES (?, ?, ?, ?, ?)
-    `, [docId, req.params.id, uid, fileName, fileUrl]);
+      INSERT INTO crm_documents (id, deal_id, user_id, file_name, file_url, notes, doc_kind)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [docId, req.params.id, uid, fileName, fileUrl, notes?.trim() || null, kind]);
 
-    res.status(201).json({ id: docId, fileName, fileUrl });
+    res.status(201).json({ id: docId, fileName, fileUrl, notes: notes?.trim() || null, doc_kind: kind });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al agregar documento' });

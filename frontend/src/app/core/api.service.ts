@@ -114,8 +114,13 @@ export class CrmService {
   getDocuments(dealId: string) {
     return this.http.get<CrmDocument[]>(`${this.base}/deals/${dealId}/documents`);
   }
-  addDocument(dealId: string, data: { fileName: string, fileUrl: string }) {
-    return this.http.post<CrmDocument>(`${this.base}/deals/${dealId}/documents`, data);
+  addDocument(dealId: string, data: { fileName: string; fileUrl: string; notes?: string; docKind?: 'attachment' | 'cotizacion' }) {
+    return this.http.post<CrmDocument>(`${this.base}/deals/${dealId}/documents`, {
+      fileName: data.fileName,
+      fileUrl: data.fileUrl,
+      notes: data.notes,
+      docKind: data.docKind,
+    });
   }
   deleteDocument(docId: string) {
     return this.http.delete(`${this.base}/documents/${docId}`);

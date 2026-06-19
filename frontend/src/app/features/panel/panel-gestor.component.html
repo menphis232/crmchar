@@ -36,7 +36,6 @@
 
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
-    <!-- Mobile User Section -->
     <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="profile()?.name || auth.user()?.name || ''"
@@ -50,8 +49,11 @@
       </div>
     </div>
 
+    @if (hasPerm('perfil')) {
+      <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">👤 Mi perfil</button>
+    }
     @if (hasPerm('dashboard')) {
-      <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Panel CRM</button>
+      <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Dashboard</button>
     }
     @if (hasPerm('pipeline')) {
       <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
@@ -68,7 +70,6 @@
       <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">💰 Finanzas</button>
     }
     @if (hasPerm('perfil')) {
-      <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">👤 Mi perfil</button>
       <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
       <button class="dash-link" [class.active]="tab() === 'automatizaciones'" (click)="setTab('automatizaciones'); isMobileMenuOpen.set(false)">🤖 Automatizaciones</button>
     }

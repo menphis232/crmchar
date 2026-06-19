@@ -1,5 +1,5 @@
-import { Component, Input, OnInit, signal, effect, HostListener } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, OnInit, signal, effect, HostListener } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AuthService } from '../core/auth.service';
 import { CrmService } from '../core/api.service';
@@ -8,7 +8,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
 @Component({
   selector: 'app-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, DatePipe, NgTemplateOutlet],
+  imports: [RouterLink, DatePipe, NgTemplateOutlet],
   template: `
     <nav id="main-nav">
       <a [href]="tvmMainSite" class="nav-logo">
@@ -33,12 +33,6 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
 
       <!-- Main Navigation Wrapper -->
       <div class="nav-wrapper" [class.mobile-open]="isMobileMenuOpen()">
-        @if (showLinks) {
-          <ul class="nav-links">
-            <li><a routerLink="/autos" routerLinkActive="active" (click)="closeMobileMenu()">Autos en Venta</a></li>
-            <li><a routerLink="/gestores" routerLinkActive="active" (click)="closeMobileMenu()">Gestores Autorizados</a></li>
-          </ul>
-        }
         <div class="nav-actions">
           @if (auth.isLoggedIn()) {
             <div class="desktop-bell">
@@ -47,7 +41,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
             <a [routerLink]="panelLink" class="btn-primary" (click)="closeMobileMenu()">Mi Panel</a>
             <button class="btn-text" (click)="logout()">Salir</button>
           } @else {
-            <a routerLink="/login" class="btn-text" (click)="closeMobileMenu()">👤 Iniciar Sesión</a>
+            <a [routerLink]="['/login']" [queryParams]="loginQueryParams" class="btn-text" (click)="closeMobileMenu()">👤 Iniciar Sesión</a>
           }
         </div>
       </div>
@@ -153,8 +147,6 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
   `]
 })
 export class NavComponent implements OnInit {
-  @Input() showLinks = true;
-
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
 
@@ -163,7 +155,7 @@ export class NavComponent implements OnInit {
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
 
-  constructor(public auth: AuthService, private crmService: CrmService) {
+  constructor(public auth: AuthService, private crmService: CrmService, private router: Router) {
     effect(() => {
       if (this.auth.isLoggedIn()) {
         this.loadNotifications();
@@ -175,6 +167,16 @@ export class NavComponent implements OnInit {
     if (this.auth.isLoggedIn()) {
       this.loadNotifications();
     }
+  }
+
+  get loginQueryParams(): { role?: string } {
+    if (this.isAutosContext()) return { role: 'concesionaria' };
+    return {};
+  }
+
+  private isAutosContext(): boolean {
+    const url = this.router.url.split('?')[0];
+    return url === '/' || url === '/autos' || url.startsWith('/autos/') || url.startsWith('/concesionarias/');
   }
 
   get panelLink(): string {

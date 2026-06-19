@@ -1,7 +1,9 @@
 <nav class="dash-nav">
   @if (auth.user()?.logo_url) {
-    <a routerLink="/autos" class="dash-logo">
-      <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+    <a routerLink="/autos" class="dash-logo dash-logo-dealer">
+      <span class="dash-logo-frame">
+        <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+      </span>
     </a>
   } @else {
     <a [href]="tvmMainSite" class="dash-logo">
@@ -36,7 +38,6 @@
 
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
-    <!-- Mobile User Section -->
     <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="auth.user()?.name || ''"
@@ -50,20 +51,73 @@
       </div>
     </div>
 
-    <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Panel CRM</button>
-    <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
-      🎯 Embudo de Ventas
-      @if (crmDashboard()?.totals?.active) {
-        <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
-      }
-    </button>
-    <button class="dash-link" [class.active]="tab() === 'inventory'" (click)="setTab('inventory'); isMobileMenuOpen.set(false)">🚗 Inventario</button>
-    <button class="dash-link" [class.active]="tab() === 'edit'" (click)="startNew(); isMobileMenuOpen.set(false)">✏️ Publicar / Editar</button>
-    <button class="dash-link" [class.active]="tab() === 'reputation'" (click)="setTab('reputation'); isMobileMenuOpen.set(false)">⭐ Reputación</button>
-    <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
-    <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">⚙️ Perfil</button>
-    <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">💰 Finanzas</button>
-    <a routerLink="/autos" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Ver catálogo</a>
+    @if (hasPerm('perfil')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">
+        <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Perfil
+      </button>
+    }
+    @if (hasPerm('dashboard')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">
+        <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Dashboard
+      </button>
+    }
+    @if (hasPerm('pipeline')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
+        <svg lucideFunnel [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Embudo de Ventas
+        @if (crmDashboard()?.totals?.active) {
+          <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
+        }
+      </button>
+    }
+    @if (hasPerm('inventory')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'inventory'" (click)="setTab('inventory'); isMobileMenuOpen.set(false)">
+        <svg lucideList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Inventario
+      </button>
+    }
+    @if (hasPerm('edit')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'edit'" (click)="startNew(); isMobileMenuOpen.set(false)">
+        <svg lucideSquarePen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Editar/ publicar
+      </button>
+    }
+    @if (hasPerm('reputation')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'reputation'" (click)="setTab('reputation'); isMobileMenuOpen.set(false)">
+        <svg lucideStarCheck [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Reputación
+      </button>
+    }
+    @if (hasPerm('plantillas')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">
+        <svg lucideFileText [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Plantillas
+      </button>
+    }
+    @if (hasPerm('finanzas')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">
+        <svg lucideLandmark [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Finanzas
+      </button>
+    }
+    @if (!auth.user()?.parent_id) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'team'" (click)="setTab('team'); isMobileMenuOpen.set(false)">
+        <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Roles y permisos
+      </button>
+    }
+    <a routerLink="/autos" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
+      <svg lucideGrid2x2 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Ver catálogo
+    </a>
+    @if (hasPerm('asistente')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'asistente'" (click)="setTab('asistente'); isMobileMenuOpen.set(false)">
+        <svg lucideBot [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Asistente IA
+      </button>
+    }
   </aside>
 
   <main class="dash-main">
@@ -78,7 +132,7 @@
     @if (message()) { <p class="success-msg banner-msg">{{ message() }}</p> }
 
     <!-- ── DASHBOARD ── -->
-    @if (tab() === 'dashboard') {
+    @if (tab() === 'dashboard' && hasPerm('dashboard')) {
       @if (dashboard(); as d) {
       <div class="stats-grid">
         <div class="stat-box">
@@ -142,10 +196,22 @@
           (openTaskDeal)="openDeal($event)"
         />
       }
+
+      @if (publicSlug) {
+        <div class="dash-card">
+          <h2 class="card-title">🔗 Compartir mi página</h2>
+          <p class="card-desc">Comparte este enlace para que los clientes vean tu inventario y te contacten.</p>
+          <div class="link-box">
+            <input class="link-input" [value]="publicPageUrl" readonly>
+            <button type="button" class="btn-copy" (click)="copyPublicPageLink()">Copiar link</button>
+            <a [routerLink]="['/concesionarias', publicSlug]" target="_blank" class="btn-copy small">Ver página</a>
+          </div>
+        </div>
+      }
     }
 
     <!-- ── PIPELINE ── -->
-    @if (tab() === 'pipeline' && crmDashboard(); as crm) {
+    @if (tab() === 'pipeline' && hasPerm('pipeline') && crmDashboard(); as crm) {
       <div class="dash-card kanban-wrap">
         <h2 class="card-title">🎯 Embudo de ventas</h2>
         <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
@@ -185,6 +251,7 @@
           [stageLabels]="crm.stageLabels"
           [templates]="templates()"
           [showReply]="true"
+          [isConcesionaria]="true"
           (closed)="selectedDealId.set(null)"
           (updated)="onDealUpdated()"
           (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
@@ -201,7 +268,7 @@
     }
 
     <!-- ── INVENTARIO ── -->
-    @if (tab() === 'inventory') {
+    @if (tab() === 'inventory' && hasPerm('inventory')) {
       <div class="dash-card">
         <h2 class="card-title">
           🚗 Mi Inventario
@@ -258,7 +325,7 @@
     }
 
     <!-- ── EDITAR / NUEVO ── -->
-    @if (tab() === 'edit') {
+    @if (tab() === 'edit' && hasPerm('edit')) {
       <div class="dash-card">
         <h2 class="card-title">{{ editing() ? '✏️ Editar vehículo' : '🚗 Nuevo vehículo' }}</h2>
         <div class="form-row">
@@ -398,7 +465,7 @@
     }
 
     <!-- ── REPUTACIÓN ── -->
-    @if (tab() === 'reputation') {
+    @if (tab() === 'reputation' && hasPerm('reputation')) {
       <div class="dash-card">
         <h2 class="card-title">⭐ Reputación — {{ reputation().rating }}/5 ({{ reputation().reviewCount }} reseñas)</h2>
         @for (r of reviews(); track r.id) {
@@ -414,7 +481,7 @@
     }
 
     <!-- ── PLANTILLAS ── -->
-    @if (tab() === 'plantillas') {
+    @if (tab() === 'plantillas' && hasPerm('plantillas')) {
       <div class="dash-card">
         <h2 class="card-title">📝 Plantillas de respuesta</h2>
         <p class="card-desc">Respuestas rápidas para tus leads.</p>
@@ -442,7 +509,7 @@
     }
 
     <!-- ── PDF DESIGNER ── -->
-    @if (tab() === 'pdf_designer') {
+    @if (tab() === 'pdf_designer' && hasPerm('perfil')) {
       <div class="dash-card">
         <h2 class="card-title">Diseñador de PDF (Cotizaciones)</h2>
         <p class="card-desc">Personaliza el diseño de los PDFs que envías a tus clientes desde el CRM.</p>
@@ -451,7 +518,7 @@
     }
 
     <!-- ── CONSTRUCTOR WEB ── -->
-    @if (tab() === 'page_builder') {
+    @if (tab() === 'page_builder' && hasPerm('perfil')) {
       <app-page-builder
         [config]="auth.user()?.page_builder_config || null"
         [profile]="{ brand: 'Marca', model: 'Modelo', year: 2024, price: 350000 }"
@@ -460,15 +527,16 @@
     }
 
     <!-- ── PERFIL ── -->
-    @if (tab() === 'perfil') {
+    @if (tab() === 'perfil' && hasPerm('perfil')) {
       <div class="dash-card">
-        <h2 class="card-title">⚙️ Mi Perfil Pública</h2>
+        <h2 class="card-title">Mi Perfil Público</h2>
         <p class="card-desc">Personaliza la información que los clientes verán en tu página pública y en tus cotizaciones PDF.</p>
 
         @if (publicSlug) {
           <div class="link-box" style="margin-bottom: 20px;">
-            <input class="link-input" [value]="'/concesionarias/' + publicSlug" readonly>
-            <a [routerLink]="['/concesionarias', publicSlug]" target="_blank" class="btn-copy small">&#x1F517; Ver mi página</a>
+            <input class="link-input" [value]="publicPageUrl" readonly>
+            <button type="button" class="btn-copy" (click)="copyPublicPageLink()">Copiar link</button>
+            <a [routerLink]="['/concesionarias', publicSlug]" target="_blank" class="btn-copy small">Ver mi página</a>
           </div>
         }
 
@@ -515,9 +583,16 @@
           }
         </div>
 
-        <hr class="divider">
-        <h3 class="section-sub" style="font-size:14px; margin-bottom:8px;">🤖 Asistente del Panel</h3>
-        <p class="card-desc" style="margin-bottom:12px;">Botón flotante de ayuda dentro de tu panel. Puedes ocultarlo si estorba.</p>
+        <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
+      </div>
+    }
+
+    <!-- ── ASISTENTE IA ── -->
+    @if (tab() === 'asistente' && hasPerm('asistente')) {
+      <div class="dash-card">
+        <h2 class="card-title">Asistente IA</h2>
+        <p class="card-desc">Configura el bot flotante de ayuda: colores, nombre, fuente e instrucciones personalizadas.</p>
+
         <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
           <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
           Mostrar asistente en el panel
@@ -558,10 +633,10 @@
 
         <div class="form-group" style="margin-top:18px;">
           <label style="font-size:13px; font-weight:600; margin-bottom:6px; display:block;">
-            📝 Instrucciones personalizadas del asistente
+            Instrucciones personalizadas
           </label>
           <p class="card-desc" style="margin-bottom:8px; font-size:12px;">
-            Escribe aquí cómo quieres que se comporte tu asistente: su nombre real, la identidad de tu negocio, cómo debe responder, qué no debe decir, etc. Esto se agrega al inicio de cada conversación.
+            Escribe aquí cómo quieres que se comporte tu asistente: identidad de tu negocio, tono de respuesta, qué no debe decir, etc.
           </p>
           <textarea
             [(ngModel)]="panelAssistantPrompt"
@@ -575,18 +650,22 @@
           </small>
         </div>
 
-        <button class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
+        <button class="btn-copy" (click)="saveAssistantConfig()">Guardar asistente</button>
       </div>
     }
 
     <!-- ── PDF DESIGNER ── -->
-    @if (tab() === 'pdf_designer') {
+    @if (tab() === 'pdf_designer' && hasPerm('perfil')) {
       <app-pdf-designer></app-pdf-designer>
     }
 
     <!-- ── FINANZAS ── -->
-    @if (tab() === 'finanzas') {
+    @if (tab() === 'finanzas' && hasPerm('finanzas')) {
       <app-finances />
+    }
+
+    @if (tab() === 'team' && !auth.user()?.parent_id) {
+      <app-crm-team></app-crm-team>
     }
   </main>
 </div>

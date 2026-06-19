@@ -13,6 +13,7 @@ import {
   activateUserSubscription,
   createActivationCheckout,
 } from '../utils/subscription-lifecycle.js';
+import { staffHasPerm } from '../utils/org-access.js';
 
 function getRegisterOrigin() {
   return getFrontendBase();
@@ -279,6 +280,46 @@ router.get('/me', authRequired, async (req, res) => {
       try { user.crm_stages = JSON.parse(user.crm_stages); } catch(e){}
     }
 
+    if (user.role === 'concesionaria' && user.parent_id) {
+      const org = await get(`
+        SELECT name, logo_url, slug, description, phone, address, map_embed_url, crm_stages,
+               panel_assistant_enabled, panel_assistant_name, panel_assistant_position,
+               panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color,
+               panel_assistant_font, panel_assistant_prompt, page_builder_config, pdf_settings
+        FROM users WHERE id = ?
+      `, [user.parent_id]);
+      if (org) {
+        user.dealer_name = org.name;
+        user.logo_url = org.logo_url;
+        user.slug = org.slug;
+        user.description = org.description;
+        user.phone = org.phone;
+        user.address = org.address;
+        user.map_embed_url = org.map_embed_url;
+        user.panel_assistant_enabled = org.panel_assistant_enabled;
+        user.panel_assistant_name = org.panel_assistant_name;
+        user.panel_assistant_position = org.panel_assistant_position;
+        user.panel_assistant_bg_color = org.panel_assistant_bg_color;
+        user.panel_assistant_btn_color = org.panel_assistant_btn_color;
+        user.panel_assistant_text_color = org.panel_assistant_text_color;
+        user.panel_assistant_font = org.panel_assistant_font;
+        user.panel_assistant_prompt = org.panel_assistant_prompt;
+        user.page_builder_config = org.page_builder_config;
+        user.pdf_settings = org.pdf_settings;
+        if (org.crm_stages) {
+          user.crm_stages = typeof org.crm_stages === 'string'
+            ? (() => { try { return JSON.parse(org.crm_stages); } catch { return user.crm_stages; } })()
+            : org.crm_stages;
+        }
+        if (user.pdf_settings && typeof user.pdf_settings === 'string') {
+          try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}
+        }
+        if (user.page_builder_config && typeof user.page_builder_config === 'string') {
+          try { user.page_builder_config = JSON.parse(user.page_builder_config); } catch(e){}
+        }
+      }
+    }
+
     res.json({ user, profile });
   } catch (err) {
     console.error(err);
@@ -288,6 +329,11 @@ router.get('/me', authRequired, async (req, res) => {
 
 router.patch('/me', authRequired, async (req, res) => {
   try {
+    const updateId = req.user.parent_id || req.user.id;
+    if (req.user.parent_id && !staffHasPerm(req, 'perfil')) {
+      return res.status(403).json({ error: 'No tienes permiso para editar el perfil' });
+    }
+
     const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, description, phone, address, map_embed_url, crm_stages } = req.body;
     
     const sets = [];
@@ -321,7 +367,7 @@ router.patch('/me', authRequired, async (req, res) => {
     if (crm_stages !== undefined) { sets.push('crm_stages = ?'); params.push(JSON.stringify(crm_stages)); }
     
     if (sets.length > 0) {
-      params.push(req.user.id);
+      params.push(updateId);
       await run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     }
     

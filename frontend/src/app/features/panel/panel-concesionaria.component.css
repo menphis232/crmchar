@@ -18,6 +18,44 @@
   background: #000 !important;
 }
 
+/* Logo de empresa en header — círculo como ficha pública */
+:host .dash-nav {
+  height: auto;
+  min-height: 84px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.dash-logo-dealer {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
+.dash-logo-frame {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.dash-logo-dealer .dash-brand-logo {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+  filter: none;
+}
+
 /* ══════════════════════════════════════════
    TIPOGRAFÍA — Spartan + tamaños más grandes
 ══════════════════════════════════════════ */
@@ -28,6 +66,26 @@
   font-size: 13px !important;
   letter-spacing: 0.08em !important;
   font-weight: 700 !important;
+}
+
+.dash-link-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-link-with-icon .kanban-count {
+  margin-left: auto;
+}
+
+.dash-link-icon {
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.dash-link.active .dash-link-icon,
+.dash-link:hover .dash-link-icon {
+  opacity: 1;
 }
 
 /* Cards */
@@ -676,3 +734,115 @@ select option { background: #111111; color: #ffffff; }
 }
 .modal-content h2.card-title { color: #ffffff !important; }
 .modal-content .card-desc    { color: rgba(255,255,255,0.45) !important; }
+
+/* ══════════════════════════════════════════
+   ROLES Y PERMISOS (app-crm-team)
+══════════════════════════════════════════ */
+app-crm-team {
+  --team-sub-bg: #0d0d0d;
+  --team-sub-border: rgba(255, 255, 255, 0.10);
+  --team-item-bg: #181818;
+  --team-perm-bg: #111111;
+  --team-badge-bg: rgba(255, 255, 255, 0.06);
+  --team-badge-border: rgba(255, 255, 255, 0.14);
+  --team-badge-text: rgba(255, 255, 255, 0.85);
+  --team-btn-bg: transparent;
+  --team-btn-border: rgba(255, 255, 255, 0.18);
+  --team-icon-color: rgba(255, 255, 255, 0.28);
+  --team-divider: rgba(255, 255, 255, 0.08);
+  --team-text: #ffffff;
+  --team-text-secondary: rgba(255, 255, 255, 0.45);
+  --team-input-bg: #111111;
+  --team-input-border: rgba(255, 255, 255, 0.14);
+  --team-input-focus-border: rgba(255, 255, 255, 0.45);
+  --team-input-focus-ring: rgba(255, 255, 255, 0.06);
+  --team-placeholder: rgba(255, 255, 255, 0.28);
+  --team-radius: 12px;
+}
+
+:host ::ng-deep app-crm-team .card-title {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  flex-wrap: wrap !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep app-crm-team .card-title .btn-copy.small {
+  margin-left: auto !important;
+}
+
+:host ::ng-deep app-crm-team .card-desc {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+:host ::ng-deep app-crm-team .btn-copy {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #ffffff !important;
+  border-radius: 8px !important;
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  padding: 7px 14px !important;
+}
+
+:host ::ng-deep app-crm-team .btn-copy:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+:host ::ng-deep app-crm-team .btn-ghost {
+  color: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+}
+
+:host ::ng-deep app-crm-team .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+}
+
+:host ::ng-deep app-crm-team .dash-card {
+  background: #141414 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7) !important;
+}
+
+:host ::ng-deep app-crm-team .team-alert {
+  background: rgba(68, 187, 102, 0.10) !important;
+  border-color: rgba(68, 187, 102, 0.30) !important;
+  color: rgba(134, 239, 172, 0.95) !important;
+}
+
+:host ::ng-deep app-crm-team .team-alert.error {
+  background: rgba(239, 68, 68, 0.10) !important;
+  border-color: rgba(239, 68, 68, 0.35) !important;
+  color: #fca5a5 !important;
+}
+
+:host ::ng-deep app-crm-team .member-avatar {
+  background: #ffffff !important;
+  color: #000000 !important;
+}
+
+:host ::ng-deep app-crm-team .team-perm-option:hover {
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+:host ::ng-deep app-crm-team .team-member-card:hover {
+  border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+:host ::ng-deep app-crm-team .member-btn:hover {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+}

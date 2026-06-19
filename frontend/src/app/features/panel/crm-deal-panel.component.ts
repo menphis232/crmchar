@@ -422,13 +422,123 @@ import { ToastService } from '../../core/toast.service';
     }
     .deal-value-row { background: transparent !important; }
 
-    /* Docs */
+    /* Docs + file cards */
+    .deal-attach-section {
+      padding: 18px 20px !important;
+    }
+    .deal-attach-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px !important;
+    }
+    .deal-attach-header h4 {
+      margin: 0 !important;
+      flex: 1;
+      min-width: 0;
+    }
+    .deal-outline-btn,
+    label.deal-outline-btn,
+    button.deal-outline-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0;
+      align-self: flex-start;
+      padding: 9px 16px !important;
+      background: transparent !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border: 1px solid rgba(255,255,255,0.35) !important;
+      border-radius: 999px !important;
+      font-family: var(--f-display) !important;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.14em !important;
+      text-transform: uppercase !important;
+      cursor: pointer !important;
+      margin: 0 !important;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .deal-outline-btn:hover,
+    label.deal-outline-btn:hover,
+    button.deal-outline-btn:hover {
+      background: rgba(255,255,255,0.10) !important;
+      border-color: rgba(255,255,255,0.60) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+    .deal-outline-btn.disabled,
+    label.deal-outline-btn.disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    .quote-doc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 0; }
+    .quote-doc-item {
+      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+      background: #111 !important; border: 1px solid rgba(255,255,255,0.10) !important;
+      border-radius: 10px !important; padding: 12px 14px;
+    }
+    .quote-doc-info { flex: 1; min-width: 0; }
+    .quote-doc-info strong { display: block; font-size: 13px !important; margin-bottom: 4px; }
+    .quote-doc-note { font-size: 12px !important; color: rgba(255,255,255,0.70) !important; margin: 0 0 4px; line-height: 1.4; }
+    .quote-doc-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .deal-doc-delete {
+      background: transparent !important;
+      border: none !important;
+      color: rgba(255,255,255,0.35) !important;
+      cursor: pointer !important;
+      padding: 8px 4px !important;
+      font-size: 14px !important;
+      line-height: 1 !important;
+    }
+    .deal-doc-delete:hover { color: #ff6b6b !important; }
+
+    .deal-quote-upload {
+      padding: 18px 20px !important;
+      margin: 8px 0 4px !important;
+      background: #141414 !important;
+      border: 1px solid rgba(255,255,255,0.10) !important;
+      border-radius: 14px !important;
+    }
+    .deal-quote-upload h4 {
+      margin: 0 0 8px !important;
+      color: rgba(255,255,255,0.55) !important;
+    }
+    .deal-quote-upload .card-desc {
+      margin: 0 0 16px !important;
+      line-height: 1.5 !important;
+    }
+    .deal-quote-upload .quote-doc-list {
+      margin-bottom: 14px !important;
+    }
+    .deal-quote-upload .form-group {
+      margin-bottom: 14px !important;
+    }
+    .deal-quote-upload .form-group label {
+      display: block !important;
+      margin-bottom: 8px !important;
+      color: rgba(255,255,255,0.50) !important;
+    }
+    .quote-upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      margin-top: 4px;
+    }
+
     .deal-doc-item { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
     .deal-doc-item-top { background: transparent !important; }
 
     /* Upload area */
-    .deal-upload-area,
-    [class*="upload"] { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
+    .deal-upload-area { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
 
     /* Cover ALL remaining white/cream backgrounds */
     div:not([class*="vega"]):not([class*="toast"]) { color: inherit; }
@@ -437,7 +547,7 @@ import { ToastService } from '../../core/toast.service';
     p      { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
     strong { color: #ffffff !important; font-family: var(--f-display) !important; }
     h4     { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; font-size: 9px !important; letter-spacing: 0.22em !important; text-transform: uppercase !important; font-weight: 700 !important; }
-    label  { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
+    label:not(.deal-outline-btn) { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
     small  { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
     a      { color: rgba(255,255,255,0.75) !important; }
   `],
@@ -449,6 +559,7 @@ export class CrmDealPanelComponent {
   templates = input<MessageTemplate[]>([]);
   showReply = input(false);
   whatsappNumber = input('');
+  isConcesionaria = input(false);
 
   closed = output<void>();
   updated = output<void>();
@@ -505,14 +616,7 @@ export class CrmDealPanelComponent {
       this.lostReason = d.lostReason || '';
       this.paymentLink.set('');
       this.paymentError.set('');
-      
-      this.downPayment = d.downPayment || 0;
-      this.tradeInValue = d.tradeInValue || 0;
-      this.termMonths = d.termMonths || 0;
 
-      if (d.dealType === 'venta_auto') {
-        this.loadQuotes(id);
-      }
       this.loadDocuments(id);
       this.loadMessages(id);
     });
@@ -675,47 +779,10 @@ export class CrmDealPanelComponent {
     return d.toISOString().slice(0, 16);
   }
 
-  // Phase 3.1: Quotes
-  quotes = signal<any[]>([]);
-  downPayment = 0;
-  tradeInValue = 0;
-  termMonths = 0;
-
-  loadQuotes(dealId: string) {
-    this.crmService.getQuotes(dealId).subscribe(qs => this.quotes.set(qs));
-  }
-
-  generateQuote() {
-    const d = this.deal();
-    if (!d) return;
-    
-    const payload = {
-      total: this.estimatedValue,
-      downPayment: this.downPayment,
-      tradeInValue: this.tradeInValue,
-      termMonths: Number(this.termMonths),
-      items: [
-        { description: 'Gestión de placas y engomado', price: 1500 },
-        { description: 'Seguro cobertura amplia (1er año)', price: 12000 }
-      ] // Demo items, in a real app this would be dynamic
-    };
-
-    this.crmService.createQuote(d.id, payload).subscribe(() => {
-      this.loadQuotes(d.id);
-      this.updated.emit();
-    });
-  }
-
-  downloadQuote(quoteId: string) {
-    this.crmService.downloadQuotePdf(quoteId).subscribe(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `cotizacion_${quoteId.split('-')[0]}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    });
-  }
+  // PDF cotización (subida manual)
+  quoteDocuments = signal<any[]>([]);
+  quoteNote = '';
+  isUploadingQuote = signal(false);
 
   documents = signal<any[]>([]);
   clientDocuments = signal<any[]>([]);
@@ -762,16 +829,24 @@ export class CrmDealPanelComponent {
   }
 
   loadDocuments(dealId: string) {
-    this.crmService.getDocuments(dealId).subscribe(docs => this.documents.set(docs));
-    this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => {
-      const parsedDocs = docs.map(d => {
-        if (typeof d.extracted_data === 'string') {
-          try { d.extracted_data = JSON.parse(d.extracted_data); } catch(e) {}
-        }
-        return d;
-      });
-      this.clientDocuments.set(parsedDocs);
+    this.crmService.getDocuments(dealId).subscribe(docs => {
+      const all = docs as any[];
+      this.quoteDocuments.set(all.filter(doc => doc.doc_kind === 'cotizacion'));
+      this.documents.set(all.filter(doc => doc.doc_kind !== 'cotizacion'));
     });
+    if (!this.isConcesionaria()) {
+      this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => {
+        const parsedDocs = docs.map(d => {
+          if (typeof d.extracted_data === 'string') {
+            try { d.extracted_data = JSON.parse(d.extracted_data); } catch(e) {}
+          }
+          return d;
+        });
+        this.clientDocuments.set(parsedDocs);
+      });
+    } else {
+      this.clientDocuments.set([]);
+    }
   }
 
   uploadDocument(event: Event) {
@@ -782,22 +857,83 @@ export class CrmDealPanelComponent {
     if (!d) return;
 
     this.isUploading.set(true);
-    this.uploadService.uploadFile(file).subscribe({
+    this.uploadService.uploadDocument(file).subscribe({
       next: (res) => {
         this.crmService.addDocument(d.id, {
-          fileName: file.name,
-          fileUrl: res.url
-        }).subscribe(() => {
-          this.loadDocuments(d.id);
-          this.isUploading.set(false);
-          this.updated.emit();
+          fileName: res.fileName || file.name,
+          fileUrl: res.url,
+          docKind: 'attachment',
+        }).subscribe({
+          next: () => {
+            this.loadDocuments(d.id);
+            this.isUploading.set(false);
+            this.updated.emit();
+          },
+          error: (e) => {
+            this.toast.error(e.error?.error || 'Error al guardar el documento');
+            this.isUploading.set(false);
+          },
         });
       },
-      error: () => {
-        alert('Error al subir el documento');
+      error: (e) => {
+        this.toast.error(e.error?.error || 'Error al subir el documento');
         this.isUploading.set(false);
-      }
+      },
     });
+  }
+
+  uploadQuotePdf(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const d = this.deal();
+    if (!d) return;
+
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      this.toast.error('Solo se permiten archivos PDF');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingQuote.set(true);
+    this.uploadService.uploadDocument(file).subscribe({
+      next: (res) => {
+        this.crmService.addDocument(d.id, {
+          fileName: res.fileName || file.name,
+          fileUrl: res.url,
+          notes: this.quoteNote.trim() || undefined,
+          docKind: 'cotizacion',
+        }).subscribe({
+          next: () => {
+            this.quoteNote = '';
+            this.loadDocuments(d.id);
+            this.isUploadingQuote.set(false);
+            this.updated.emit();
+            this.toast.success('PDF subido');
+            input.value = '';
+          },
+          error: (e) => {
+            this.toast.error(e.error?.error || 'Error al guardar el PDF');
+            this.isUploadingQuote.set(false);
+            input.value = '';
+          },
+        });
+      },
+      error: (e) => {
+        this.toast.error(e.error?.error || 'Error al subir el PDF');
+        this.isUploadingQuote.set(false);
+        input.value = '';
+      },
+    });
+  }
+
+  downloadDocument(doc: { file_url: string; file_name: string }) {
+    const a = document.createElement('a');
+    a.href = doc.file_url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.download = doc.file_name || 'cotizacion.pdf';
+    a.click();
   }
 
   deleteDocument(docId: string) {

@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
@@ -11,12 +12,13 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
 
   mode = signal<'select' | 'login' | 'register' | 'forgot'>('select');
   role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente'>('cliente');
+  directRoleLogin = signal(false);
   email = '';
   password = '';
   name = '';
@@ -24,7 +26,29 @@ export class LoginComponent {
   successMsg = signal('');
   loading = signal(false);
 
-  constructor(private auth: AuthService) {}
+  private querySub?: Subscription;
+
+  constructor(private auth: AuthService, private route: ActivatedRoute) {}
+
+  ngOnInit() {
+    this.querySub = this.route.queryParamMap.subscribe(params => {
+      this.applyRoleFromQuery(params.get('role'));
+    });
+  }
+
+  ngOnDestroy() {
+    this.querySub?.unsubscribe();
+  }
+
+  private applyRoleFromQuery(role: string | null) {
+    if (role === 'concesionaria' || role === 'gestor' || role === 'cliente') {
+      this.role.set(role);
+      this.mode.set('login');
+      this.directRoleLogin.set(true);
+    } else {
+      this.directRoleLogin.set(false);
+    }
+  }
 
   selectRole(r: 'gestor' | 'concesionaria' | 'cliente') {
     this.role.set(r);

@@ -33,17 +33,33 @@
   padding: 96px 16px 48px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
   box-sizing: border-box;
 }
 
 .detail-gallery-col,
-.detail-sidebar,
+.detail-main-col,
+.detail-sidebar-rail,
 .detail-description {
   width: 100%;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+.detail-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detail-sidebar-rail {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-sidebar-upper .btn-whatsapp {
+  margin-bottom: 12px;
 }
 
 /* ── GALLERY ── */
@@ -223,9 +239,17 @@
 }
 
 .detail-description {
-  margin-top: 32px;
-  padding-top: 28px;
+  margin-top: 0;
+  padding-top: 18px;
   border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.detail-description-desktop {
+  display: none;
+}
+
+.detail-sidebar-lower .inquiry-box {
+  margin-top: 0;
 }
 
 .detail-description h3 {
@@ -245,13 +269,11 @@
 }
 
 /* ── SIDEBAR ── */
-.detail-sidebar {
+.detail-sidebar-rail {
   background: transparent;
   border: none;
   padding: 0;
   height: fit-content;
-  position: static;
-  box-shadow: none;
   font-family: var(--f-display);
   letter-spacing: var(--display-letter-spacing);
 }
@@ -584,10 +606,16 @@
 .btn-back:hover { color: #fff; }
 
 @media (max-width: 900px) {
-  .detail-description {
-    margin-top: 0;
-    padding-top: 0;
-    border-top: none;
+  .detail-container {
+    gap: 18px;
+  }
+
+  .detail-description-mobile {
+    padding-top: 16px;
+  }
+
+  .dealer-card {
+    margin-bottom: 0;
   }
 }
 
@@ -595,22 +623,38 @@
   .detail-container {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 360px;
-    grid-template-areas:
-      "gallery sidebar"
-      "description sidebar";
+    grid-template-areas: "main sidebar";
     gap: 36px;
     padding: 110px 20px 60px;
     align-items: start;
   }
 
-  .detail-gallery-col { grid-area: gallery; }
-  .detail-sidebar {
+  .detail-main-col {
+    grid-area: main;
+    gap: 12px;
+  }
+
+  .detail-sidebar-rail {
     grid-area: sidebar;
     position: sticky;
     top: 100px;
-    padding-top: 4px;
+    align-self: start;
   }
-  .detail-description { grid-area: description; }
+
+  .detail-description-mobile {
+    display: none;
+  }
+
+  .detail-description-desktop {
+    display: block;
+    margin-top: 0;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .detail-description-desktop h3 {
+    margin-bottom: 10px;
+  }
 
   .gallery-layout {
     flex-direction: row;

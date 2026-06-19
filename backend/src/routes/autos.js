@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
+import { orgId, requireStaffPerm } from '../utils/org-access.js';
 
 const router = Router();
 
@@ -68,6 +69,10 @@ async function assertAutoOwner(autoId, userId) {
   return get('SELECT id FROM autos WHERE id = ? AND user_id = ?', [autoId, userId]);
 }
 
+function dealerId(req) {
+  return orgId(req);
+}
+
 router.get('/', async (req, res) => {
   try {
     const { make, minPrice, maxPrice } = req.query;
@@ -96,11 +101,12 @@ router.get('/filters/makes', async (_req, res) => {
   }
 });
 
-router.get('/me/inventory', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.get('/me/inventory', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('inventory'), async (req, res) => {
   try {
     const { status } = req.query;
+    const uid = dealerId(req);
     let sql = 'SELECT * FROM autos WHERE user_id = ?';
-    const params = [req.user.id];
+    const params = [uid];
     if (status) { sql += ' AND status = ?'; params.push(status); }
     sql += ' ORDER BY created_at DESC';
     const rows = await query(sql, params);
@@ -125,14 +131,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // Documentación privada del vehículo (solo panel concesionaria, no pública)
-router.get('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.get('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('inventory'), async (req, res) => {
   try {
-    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    const uid = dealerId(req);
+    const auto = await assertAutoOwner(req.params.id, uid);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
     const rows = await query(
       'SELECT * FROM auto_private_documents WHERE auto_id = ? AND user_id = ? ORDER BY created_at DESC',
-      [req.params.id, req.user.id],
+      [req.params.id, uid],
     );
     res.json(rows.map(privateDocRow));
   } catch (err) {
@@ -141,9 +148,10 @@ router.get('/:id/private-documents', authRequired, requireRole('concesionaria'),
   }
 });
 
-router.post('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.post('/:id/private-documents', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
-    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    const uid = dealerId(req);
+    const auto = await assertAutoOwner(req.params.id, uid);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
     const { label, fileUrl, fileName, notes } = req.body;
@@ -155,7 +163,7 @@ router.post('/:id/private-documents', authRequired, requireRole('concesionaria')
     await run(
       `INSERT INTO auto_private_documents (id, auto_id, user_id, label, file_url, file_name, notes)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, req.params.id, req.user.id, label.trim(), fileUrl.trim(), fileName || null, notes?.trim() || null],
+      [id, req.params.id, uid, label.trim(), fileUrl.trim(), fileName || null, notes?.trim() || null],
     );
 
     const row = await get('SELECT * FROM auto_private_documents WHERE id = ?', [id]);
@@ -166,14 +174,15 @@ router.post('/:id/private-documents', authRequired, requireRole('concesionaria')
   }
 });
 
-router.delete('/:id/private-documents/:docId', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.delete('/:id/private-documents/:docId', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
-    const auto = await assertAutoOwner(req.params.id, req.user.id);
+    const uid = dealerId(req);
+    const auto = await assertAutoOwner(req.params.id, uid);
     if (!auto) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
     const result = await run(
       'DELETE FROM auto_private_documents WHERE id = ? AND auto_id = ? AND user_id = ?',
-      [req.params.docId, req.params.id, req.user.id],
+      [req.params.docId, req.params.id, uid],
     );
     if (!result.affectedRows) return res.status(404).json({ error: 'Documento no encontrado' });
     res.json({ ok: true });
@@ -184,8 +193,9 @@ router.delete('/:id/private-documents/:docId', authRequired, requireRole('conces
 });
 
 
-router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
+    const uid = dealerId(req);
     const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl, verified } = req.body;
     if (!make || !model || !year || price == null || mileage == null) {
       return res.status(400).json({ error: 'Campos obligatorios incompletos' });
@@ -199,13 +209,15 @@ router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscr
     const parsedSpecial = specialPrice != null && specialPrice !== '' ? Number(specialPrice) : null;
     const validSpecial = parsedSpecial != null && parsedSpecial > 0 && parsedSpecial < Number(price) ? parsedSpecial : null;
 
+    const orgUser = await get('SELECT name FROM users WHERE id = ?', [uid]);
+
     await run(`
       INSERT INTO autos (id, user_id, make, model, year, price, special_price, verified, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      id, req.user.id, make, model, year, price, validSpecial, verified ? 1 : 0, mileage,
+      id, uid, make, model, year, price, validSpecial, verified ? 1 : 0, mileage,
       transmission || 'Automático', location || null, description || null,
-      mainImage, JSON.stringify(imgs), videoUrl?.trim() || null, dealerName || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
+      mainImage, JSON.stringify(imgs), videoUrl?.trim() || null, dealerName || orgUser?.name || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
     ]);
 
     const row = await get('SELECT * FROM autos WHERE id = ?', [id]);
@@ -216,9 +228,10 @@ router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscr
   }
 });
 
-router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
-    const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+    const uid = dealerId(req);
+    const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!existing) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
     const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, status, videoUrl, verified } = req.body;
@@ -247,7 +260,7 @@ router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubs
     `, [
       make, model, year, price, validSpecial, newVerified, mileage, transmission, location, description, imageUrl, imgs,
       newVideoUrl, newStatus, newStatus === 'published' ? 1 : 0,
-      req.params.id, req.user.id,
+      req.params.id, uid,
     ]);
 
     const row = await get('SELECT * FROM autos WHERE id = ?', [req.params.id]);
@@ -257,15 +270,16 @@ router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubs
   }
 });
 
-router.patch('/:id/status', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.patch('/:id/status', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
+    const uid = dealerId(req);
     const { status } = req.body;
     if (!['draft', 'published', 'baja'].includes(status)) {
       return res.status(400).json({ error: 'Estado inválido' });
     }
     const result = await run(
       'UPDATE autos SET status = ?, active = ? WHERE id = ? AND user_id = ?',
-      [status, status === 'published' ? 1 : 0, req.params.id, req.user.id]
+      [status, status === 'published' ? 1 : 0, req.params.id, uid]
     );
     if (!result.affectedRows) return res.status(404).json({ error: 'Vehículo no encontrado' });
     const row = await get('SELECT * FROM autos WHERE id = ?', [req.params.id]);
@@ -275,9 +289,10 @@ router.patch('/:id/status', authRequired, requireRole('concesionaria'), requireA
   }
 });
 
-router.delete('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.delete('/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
-    const result = await run('DELETE FROM autos WHERE id = ? AND user_id = ?', [req.params.id, req.user.id]);
+    const uid = dealerId(req);
+    const result = await run('DELETE FROM autos WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!result.affectedRows) return res.status(404).json({ error: 'Vehículo no encontrado' });
     res.json({ ok: true });
   } catch (err) {

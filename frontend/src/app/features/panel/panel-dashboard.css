@@ -135,6 +135,25 @@ body {
   top: calc(var(--nav-h) + 20px);
 }
 
+.sidebar-user-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  flex-shrink: 0;
+}
+.sidebar-user-section .panel-user-menu {
+  width: 100%;
+  justify-content: space-between;
+}
+.sidebar-user-section strong {
+  font-size: 13px;
+  color: rgba(255,255,255,0.85);
+  font-family: var(--f-display);
+}
+
 .dash-link {
   padding: 12px 14px;
   color: rgba(255,255,255,0.5);
@@ -2618,3 +2637,25 @@ select option {
   }
 }
 
+/* app-crm-team — variables tema claro (gestor); concesionaria las sobrescribe */
+app-crm-team {
+  --team-sub-bg: #faf9f7;
+  --team-sub-border: rgba(0, 0, 0, 0.08);
+  --team-item-bg: #faf9f7;
+  --team-perm-bg: #ffffff;
+  --team-badge-bg: rgba(0, 0, 0, 0.04);
+  --team-badge-border: rgba(0, 0, 0, 0.12);
+  --team-badge-text: var(--brand-black);
+  --team-btn-bg: #ffffff;
+  --team-btn-border: rgba(0, 0, 0, 0.12);
+  --team-icon-color: rgba(0, 0, 0, 0.22);
+  --team-divider: rgba(0, 0, 0, 0.08);
+  --team-text: var(--brand-black);
+  --team-text-secondary: var(--muted);
+  --team-input-bg: #ffffff;
+  --team-input-border: rgba(0, 0, 0, 0.14);
+  --team-input-focus-border: var(--brand-black);
+  --team-input-focus-ring: rgba(0, 0, 0, 0.08);
+  --team-placeholder: var(--brand-grey);
+  --team-radius: 10px;
+}

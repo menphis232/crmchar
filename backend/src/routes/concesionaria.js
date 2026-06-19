@@ -3,15 +3,16 @@ import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
+import { orgId, requireStaffPerm } from '../utils/org-access.js';
 import { createDealFromInquiry, findOrCreateContact, createManualVentaDeal } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 const router = Router();
 
-router.get('/me/dashboard', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.get('/me/dashboard', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('dashboard'), async (req, res) => {
   try {
-    const uid = req.user.id;
+    const uid = orgId(req);
     const [published, draft, baja, inquiriesNew, reviews] = await Promise.all([
       get("SELECT COUNT(*) as c FROM autos WHERE user_id = ? AND status = 'published'", [uid]),
       get("SELECT COUNT(*) as c FROM autos WHERE user_id = ? AND status = 'draft'", [uid]),
@@ -32,8 +33,9 @@ router.get('/me/dashboard', authRequired, requireRole('concesionaria'), requireA
   }
 });
 
-router.get('/me/inquiries', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.get('/me/inquiries', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('pipeline'), async (req, res) => {
   try {
+    const uid = orgId(req);
     const rows = await query(`
       SELECT i.id, i.client_name as clientName, i.client_email as clientEmail,
              i.client_phone as clientPhone, i.message, i.status, i.reply,
@@ -41,20 +43,21 @@ router.get('/me/inquiries', authRequired, requireRole('concesionaria'), requireA
       FROM auto_inquiries i
       JOIN autos a ON a.id = i.auto_id
       WHERE i.user_id = ? ORDER BY i.created_at DESC
-    `, [req.user.id]);
+    `, [uid]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Error al cargar mensajes' });
   }
 });
 
-router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('pipeline'), async (req, res) => {
   try {
+    const uid = orgId(req);
     const { reply, status } = req.body;
     const result = await run(`
       UPDATE auto_inquiries SET reply = COALESCE(?, reply), status = COALESCE(?, status)
       WHERE id = ? AND user_id = ?
-    `, [reply, status || 'respondido', req.params.id, req.user.id]);
+    `, [reply, status || 'respondido', req.params.id, uid]);
     if (!result.affectedRows) return res.status(404).json({ error: 'Mensaje no encontrado' });
     res.json({ ok: true });
   } catch (err) {
@@ -62,13 +65,14 @@ router.patch('/me/inquiries/:id', authRequired, requireRole('concesionaria'), re
   }
 });
 
-router.get('/me/reviews', authRequired, requireRole('concesionaria'), requireActiveSubscription, async (req, res) => {
+router.get('/me/reviews', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('reputation'), async (req, res) => {
   try {
+    const uid = orgId(req);
     const rows = await query(`
       SELECT id, author, rating, comment, created_at as createdAt
       FROM concesionaria_reviews WHERE user_id = ? ORDER BY created_at DESC
-    `, [req.user.id]);
-    const agg = await get('SELECT AVG(rating) as avg, COUNT(*) as count FROM concesionaria_reviews WHERE user_id = ?', [req.user.id]);
+    `, [uid]);
+    const agg = await get('SELECT AVG(rating) as avg, COUNT(*) as count FROM concesionaria_reviews WHERE user_id = ?', [uid]);
     res.json({
       reviews: rows,
       rating: agg.avg ? Number(Number(agg.avg).toFixed(1)) : 0,
