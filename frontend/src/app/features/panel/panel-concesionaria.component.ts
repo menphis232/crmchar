@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -166,7 +166,13 @@ export class PanelConcesionariaComponent implements OnInit {
       this.profilePhone = (u as any).phone || '';
       this.profileAddress = (u as any).address || '';
       this.profileMapEmbedUrl = (u as any).map_embed_url || '';
-      if (this.profileMapEmbedUrl) this.mapFoundLabel.set(this.profileAddress || 'Ubicación guardada');
+      if (this.profileMapEmbedUrl) {
+        const embedUrl = this.toOsmEmbedUrl(this.profileMapEmbedUrl);
+        if (embedUrl) {
+          this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl));
+          this.mapFoundLabel.set(this.profileAddress || 'Ubicación guardada');
+        }
+      }
       this.publicSlug = (u as any).slug || '';
       this.panelAssistantEnabled = u.panel_assistant_enabled !== 0 && u.panel_assistant_enabled !== false;
       this.panelAssistantName = u.panel_assistant_name || 'VEGA';
@@ -730,10 +736,7 @@ export class PanelConcesionariaComponent implements OnInit {
   mapSearching = false;
   mapSearchError = '';
   mapFoundLabel = signal('');
-  mapPreviewUrl = computed((): SafeResourceUrl | null => {
-    if (!this.profileMapEmbedUrl) return null;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(this.profileMapEmbedUrl);
-  });
+  mapPreviewUrl = signal<SafeResourceUrl | null>(null);
   isUploadingLogo = false;
   logoCropFile = signal<File | null>(null);
 
@@ -861,6 +864,31 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
+  /** Converts any stored URL (Google Maps or OSM) to an OSM embed URL for preview */
+  private toOsmEmbedUrl(url: string): string | null {
+    const s = url.trim();
+    if (!s) return null;
+    // Already an OSM embed
+    if (s.includes('openstreetmap.org/export/embed')) return s;
+    // Google Maps with coordinates
+    const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[2]);
+      const delta = 0.008;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+    }
+    // Google maps.google.com?q=lat,lng
+    const qCoord = s.match(/maps\.google\.com\/maps\?q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (qCoord) {
+      const lat = parseFloat(qCoord[1]);
+      const lng = parseFloat(qCoord[2]);
+      const delta = 0.008;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+    }
+    return null;
+  }
+
   searchAddress() {
     const q = this.mapSearchQuery.trim();
     if (!q) return;
@@ -879,7 +907,9 @@ export class PanelConcesionariaComponent implements OnInit {
         const lat = parseFloat(r.lat);
         const lng = parseFloat(r.lon);
         const delta = 0.008;
-        this.profileMapEmbedUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+        const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+        this.profileMapEmbedUrl = osmUrl;
+        this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
         this.mapFoundLabel.set(r.display_name);
         if (!this.profileAddress) {
           this.profileAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
