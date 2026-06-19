@@ -37,6 +37,7 @@ function autoRow(row) {
     dealerSlug: row.dealer_slug || null,
     dealerLogoUrl: row.dealer_logo_url || null,
     dealerPhone: row.dealer_phone || null,
+    whatsapp: row.whatsapp || null,
     status: row.status || 'published',
     active: row.status === 'published',
     googleAnalyticsId: row.google_analytics_id || null,
@@ -196,7 +197,7 @@ router.delete('/:id/private-documents/:docId', authRequired, requireRole('conces
 router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscription, requireStaffPerm('edit'), async (req, res) => {
   try {
     const uid = dealerId(req);
-    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl, verified } = req.body;
+    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, dealerName, status, videoUrl, verified, whatsapp } = req.body;
     if (!make || !model || !year || price == null || mileage == null) {
       return res.status(400).json({ error: 'Campos obligatorios incompletos' });
     }
@@ -212,12 +213,13 @@ router.post('/', authRequired, requireRole('concesionaria'), requireActiveSubscr
     const orgUser = await get('SELECT name FROM users WHERE id = ?', [uid]);
 
     await run(`
-      INSERT INTO autos (id, user_id, make, model, year, price, special_price, verified, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO autos (id, user_id, make, model, year, price, special_price, verified, mileage, transmission, location, description, image_url, images, video_url, dealer_name, status, active, whatsapp)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, uid, make, model, year, price, validSpecial, verified ? 1 : 0, mileage,
       transmission || 'Automático', location || null, description || null,
       mainImage, JSON.stringify(imgs), videoUrl?.trim() || null, dealerName || orgUser?.name || req.user.name, carStatus, carStatus === 'published' ? 1 : 0,
+      whatsapp?.trim() || null,
     ]);
 
     const row = await get('SELECT * FROM autos WHERE id = ?', [id]);
@@ -234,7 +236,7 @@ router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubs
     const existing = await get('SELECT * FROM autos WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!existing) return res.status(404).json({ error: 'Vehículo no encontrado' });
 
-    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, status, videoUrl, verified } = req.body;
+    const { make, model, year, price, specialPrice, mileage, transmission, location, description, imageUrl, images, status, videoUrl, verified, whatsapp } = req.body;
     const imgs = images ? JSON.stringify(images) : (typeof existing.images === 'string' ? existing.images : JSON.stringify(existing.images || []));
     const newStatus = status ?? existing.status ?? 'published';
     const newVideoUrl = videoUrl !== undefined ? (videoUrl?.trim() || null) : existing.video_url;
@@ -249,17 +251,19 @@ router.put('/:id', authRequired, requireRole('concesionaria'), requireActiveSubs
 
     const newVerified = verified !== undefined ? (verified ? 1 : 0) : existing.verified;
 
+    const newWhatsapp = whatsapp !== undefined ? (whatsapp?.trim() || null) : existing.whatsapp;
+
     await run(`
       UPDATE autos SET
         make = COALESCE(?, make), model = COALESCE(?, model), year = COALESCE(?, year),
         price = COALESCE(?, price), special_price = ?, verified = ?, mileage = COALESCE(?, mileage),
         transmission = COALESCE(?, transmission), location = COALESCE(?, location),
         description = COALESCE(?, description), image_url = COALESCE(?, image_url),
-        images = ?, video_url = ?, status = ?, active = ?
+        images = ?, video_url = ?, status = ?, active = ?, whatsapp = ?
       WHERE id = ? AND user_id = ?
     `, [
       make, model, year, price, validSpecial, newVerified, mileage, transmission, location, description, imageUrl, imgs,
-      newVideoUrl, newStatus, newStatus === 'published' ? 1 : 0,
+      newVideoUrl, newStatus, newStatus === 'published' ? 1 : 0, newWhatsapp,
       req.params.id, uid,
     ]);
 

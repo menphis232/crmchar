@@ -77,6 +77,7 @@ export interface Auto {
   dealerSlug?: string;
   dealerLogoUrl?: string | null;
   dealerPhone?: string | null;
+  whatsapp?: string | null;
   status?: AutoStatus;
   active?: boolean;
   google_analytics_id?: string;

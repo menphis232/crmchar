@@ -365,14 +365,30 @@
           </div>
           
           @if (form.images?.length) {
-            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px;">
-              @for (img of form.images; track $index) {
-                <div style="position:relative; border: 1px solid var(--border); border-radius:8px; background:var(--surface); width:90px; height:70px; overflow:hidden; flex-shrink:0; margin-bottom: 12px;">
-                  <img [src]="img" style="width:100%; height:100%; object-fit:cover; display:block; border-radius:8px;">
-                  <button class="btn-delete small" style="position:absolute; top:4px; right:4px; width:20px; height:20px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%; font-size:11px; line-height:1; background:rgba(0,0,0,.7); border:none; color:#fff; cursor:pointer;" (click)="removeCarImage($index)">✕</button>
+            <p class="card-desc" style="font-size:11px; margin:6px 0 8px;">
+              Arrastra para reordenar · La primera es la <strong>Portada</strong>
+            </p>
+            <div class="img-sort-grid"
+                 (dragover)="$event.preventDefault()"
+                 (drop)="onImageDrop($event)">
+              @for (img of form.images; track img) {
+                <div class="img-sort-item"
+                     [class.img-sort-item--cover]="$index === 0"
+                     [class.img-sort-item--dragging]="dragIdx === $index"
+                     [class.img-sort-item--over]="dragOverIdx === $index"
+                     draggable="true"
+                     (dragstart)="onImageDragStart($event, $index)"
+                     (dragenter)="onImageDragEnter($event, $index)"
+                     (dragleave)="onImageDragLeave()"
+                     (drop)="onImageDropItem($event, $index)">
+                  <img [src]="img" class="img-sort-thumb" [alt]="'Foto ' + ($index + 1)">
                   @if ($index === 0) {
-                    <div style="position:absolute; bottom:0; left:0; right:0; background:var(--gold); color:#000; font-size:9px; padding:2px 4px; font-weight:bold; text-align:center; white-space:nowrap;">Portada</div>
+                    <span class="img-sort-cover-badge">★ Portada</span>
                   }
+                  <button class="img-sort-del" type="button"
+                          (click)="removeCarImage($index)"
+                          aria-label="Eliminar foto">✕</button>
+                  <span class="img-sort-handle" title="Arrastra para mover">⠿</span>
                 </div>
               }
             </div>
@@ -380,6 +396,16 @@
             <p class="card-desc" style="font-size:12px;">Sube o añade URLs para mostrar una galería. La primera será la portada.</p>
           }
         </div>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>WhatsApp específico de este vehículo (opcional)</label>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">
+            Si lo dejas vacío, se usará el número global de la concesionaria para el botón "Contactar por WhatsApp".
+          </p>
+          <input [(ngModel)]="form.whatsapp" name="whatsapp"
+                 placeholder="Ej: 5215512345678  (con código de país, sin + ni espacios)"
+                 style="font-family: monospace;" />
+        </div>
+
         <div class="form-group" style="margin-bottom:16px;">
           <label>Video del vehículo (opcional)</label>
           <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se muestra en la galería del detalle público (primera diapositiva). YouTube, Vimeo o archivo MP4/WebM.</p>
@@ -745,3 +771,11 @@
 <app-panel-subscription-lock />
 
 <app-ai-assistant panelRole="concesionaria" />
+
+@if (cropCurrentFile()) {
+  <app-image-cropper-modal
+    [imageFile]="cropCurrentFile()"
+    [aspect]="GALLERY_ASPECT"
+    (cropped)="onCropConfirmed($event)"
+    (cancelled)="onCropCancelled()" />
+}

@@ -2,12 +2,12 @@ import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { NavComponent } from '../../shared/nav.component';
+import { AutoGalleriaComponent } from '../../shared/auto-galleria.component';
 import { CAR_LUCIDE_ICONS } from '../../shared/car-lucide-icons';
 import { AutosService, ConcesionariaService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
-import { Auto } from '../../models';
+import { Auto, PageBuilderConfig } from '../../models';
 import { buildAutoGalleryItems } from '../../shared/auto-video.util';
 import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
@@ -18,12 +18,11 @@ import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.com
 @Component({
   selector: 'app-auto-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent, ...CAR_LUCIDE_ICONS],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent, AutoGalleriaComponent, ...CAR_LUCIDE_ICONS],
   templateUrl: './auto-detail.component.html',
   styleUrl: './auto-detail.component.css',
 })
 export class AutoDetailComponent implements OnInit, OnDestroy {
-  private sanitizer = inject(DomSanitizer);
   private metaTags = inject(MetaTagsService);
   private toast = inject(ToastService);
 
@@ -40,8 +39,6 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
     const a = this.auto();
     return a ? buildAutoGalleryItems(a) : [];
   });
-
-  currentGalleryItem = computed(() => this.galleryItems()[this.activeGalleryIndex()] ?? null);
 
   constructor(
     private route: ActivatedRoute,
@@ -66,45 +63,23 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
     this.metaTags.reset();
   }
 
-  setGalleryIndex(index: number) {
-    this.activeGalleryIndex.set(index);
-  }
-
-  safeEmbedUrl(embedUrl: string | null | undefined): SafeResourceUrl | null {
-    if (!embedUrl) return null;
-    return this.sanitizer.bypassSecurityTrustResourceUrl(embedUrl);
-  }
-
-  showGalleryNav(): boolean {
-    return this.galleryItems().length > 1;
-  }
-
-  prevGalleryItem() {
-    const items = this.galleryItems();
-    if (items.length <= 1) return;
-    const idx = this.activeGalleryIndex();
-    this.activeGalleryIndex.set(idx <= 0 ? items.length - 1 : idx - 1);
-  }
-
-  nextGalleryItem() {
-    const items = this.galleryItems();
-    if (items.length <= 1) return;
-    const idx = this.activeGalleryIndex();
-    this.activeGalleryIndex.set(idx >= items.length - 1 ? 0 : idx + 1);
-  }
-
   formatPrice(price: number) {
     return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(price);
   }
 
   hasSpecialPrice = hasSpecialPrice;
 
+  /** Solo usar layout personalizado si incluye galería (plantilla de auto, no de gestor). */
+  isAutoPageConfig(config?: PageBuilderConfig | null): boolean {
+    return !!config?.blocks?.some(b => b.type === 'gallery');
+  }
+
   waModalData = computed(() => {
     const a = this.auto();
     if (!a) return null;
     return {
       dealerSlug: a.dealerSlug || '',
-      dealerPhone: a.dealerPhone || '',
+      dealerPhone: a.whatsapp?.trim() || a.dealerPhone || '',
       dealerName: a.dealerName || '',
       autoId: a.id,
       autoLabel: `${a.make} ${a.model} ${a.year}`,

@@ -215,7 +215,7 @@ router.post('/whatsapp-lead', async (req, res) => {
     // Crear CRM lead en el panel de la concesionaria
     let auto = null;
     if (autoId) {
-      auto = await get("SELECT id, make, model, year, price FROM autos WHERE id = ? AND user_id = ?", [autoId, dealer.id]);
+      auto = await get("SELECT id, make, model, year, price, whatsapp FROM autos WHERE id = ? AND user_id = ?", [autoId, dealer.id]);
     }
     const leadTitle = auto
       ? `Contacto WhatsApp — ${auto.make} ${auto.model} ${auto.year}`
@@ -249,7 +249,9 @@ router.post('/whatsapp-lead', async (req, res) => {
       }
     } catch(e) { /* notif no crítica */ }
 
-    res.status(201).json({ ok: true, dealerPhone: dealer.phone });
+    // Auto's whatsapp takes priority over dealer's global phone
+    const resolvedPhone = (auto?.whatsapp?.trim()) || dealer.phone;
+    res.status(201).json({ ok: true, dealerPhone: resolvedPhone });
   } catch (err) {
     console.error('whatsapp-lead error:', err);
     res.status(500).json({ error: 'Error al procesar la solicitud' });

@@ -25,6 +25,7 @@ import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
 import { AmountTipDirective } from '../../shared/amount-tip.directive';
 import { CrmTeamComponent } from './crm-team.component';
+import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
 import {
   LucideBot,
   LucideFileText,
@@ -63,7 +64,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })
@@ -187,7 +188,7 @@ export class PanelConcesionariaComponent implements OnInit {
     return {
       make: '', model: '', year: new Date().getFullYear(), price: 0, specialPrice: null as number | null, verified: false, mileage: 0,
       transmission: 'Automático', location: '', description: '', imageUrl: '', images: [],
-      videoUrl: '', status: 'draft' as AutoStatus,
+      videoUrl: '', whatsapp: '', status: 'draft' as AutoStatus,
     };
   }
 
@@ -422,30 +423,101 @@ export class PanelConcesionariaComponent implements OnInit {
   isUploadingCarImages = false;
   isUploadingVideo = false;
 
+  // Crop queue: files pending user crop
+  cropQueue = signal<File[]>([]);
+  cropCurrentFile = signal<File | null>(null);
+  readonly GALLERY_ASPECT = 3 / 2; // 102×68px — misma proporción de la galería
+
   onCarImagesSelected(event: any) {
     const files = Array.from(event.target.files) as File[];
+    (event.target as HTMLInputElement).value = '';
     if (!files.length) return;
-    this.isUploadingCarImages = true;
-    
-    const uploads = files.map(file => {
-      return new Promise<string>((resolve, reject) => {
-        this.uploadService.uploadFile(file).subscribe({
-          next: (res: any) => resolve(res.url),
-          error: (err) => reject(err)
-        });
-      });
-    });
+    // Push all files into the queue; open first one
+    this.cropQueue.set(files);
+    this.cropCurrentFile.set(files[0]);
+  }
 
-    Promise.all(uploads).then(urls => {
-      if (!this.form.images) this.form.images = [];
-      this.form.images.push(...urls);
-      if (this.form.images.length > 0) this.form.imageUrl = this.form.images[0];
-      this.isUploadingCarImages = false;
-      this.toast.success('Fotos subidas correctamente', '¡Éxito!');
-    }).catch(() => {
-      this.isUploadingCarImages = false;
-      this.toast.error('Error al subir algunas fotos', 'Error');
+  onCropConfirmed(result: CropResult) {
+    const queue = this.cropQueue();
+    const originalName = queue[0]?.name ?? 'photo.jpg';
+    this.cropCurrentFile.set(null);
+
+    const file = new File([result.blob], originalName, { type: 'image/jpeg' });
+    this.isUploadingCarImages = true;
+
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res: any) => {
+        if (!this.form.images) this.form.images = [];
+        this.form.images = [...this.form.images, res.url];
+        if (this.form.images.length === 1) this.form.imageUrl = res.url;
+        this.isUploadingCarImages = false;
+        const remaining = queue.slice(1);
+        this.cropQueue.set(remaining);
+        if (remaining.length > 0) {
+          this.cropCurrentFile.set(remaining[0]);
+        } else {
+          this.toast.success('Fotos subidas correctamente', '¡Éxito!');
+        }
+      },
+      error: (err: any) => {
+        this.isUploadingCarImages = false;
+        const msg = err?.error?.error || err?.statusText || 'Error desconocido';
+        this.toast.error(`No se pudo subir la foto: ${msg}`, 'Error');
+        const remaining = queue.slice(1);
+        this.cropQueue.set(remaining);
+        if (remaining.length > 0) this.cropCurrentFile.set(remaining[0]);
+      },
     });
+  }
+
+  onCropCancelled() {
+    const queue = this.cropQueue();
+    const remaining = queue.slice(1);
+    this.cropCurrentFile.set(null);
+    this.cropQueue.set(remaining);
+    if (remaining.length > 0) this.cropCurrentFile.set(remaining[0]);
+  }
+
+  // ── Drag & drop reordering ──
+  dragIdx     = -1;
+  dragOverIdx = -1;
+
+  onImageDragStart(e: DragEvent, idx: number) {
+    this.dragIdx = idx;
+    e.dataTransfer!.effectAllowed = 'move';
+    e.dataTransfer!.setData('text/plain', String(idx));
+  }
+
+  onImageDragEnter(e: DragEvent, idx: number) {
+    e.preventDefault();
+    this.dragOverIdx = idx;
+  }
+
+  onImageDragLeave() {
+    this.dragOverIdx = -1;
+  }
+
+  onImageDropItem(e: DragEvent, toIdx: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.moveImage(this.dragIdx, toIdx);
+  }
+
+  onImageDrop(e: DragEvent) {
+    e.preventDefault();
+    this.dragIdx = -1;
+    this.dragOverIdx = -1;
+  }
+
+  private moveImage(from: number, to: number) {
+    if (from === to || from < 0 || !this.form.images) return;
+    const imgs = [...this.form.images];
+    const [item] = imgs.splice(from, 1);
+    imgs.splice(to, 0, item);
+    this.form.images = imgs;
+    this.form.imageUrl = imgs[0];
+    this.dragIdx = -1;
+    this.dragOverIdx = -1;
   }
 
   addManualImageUrl() {
