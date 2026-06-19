@@ -4,6 +4,7 @@ import { sendEmail } from './mailer.js';
 import { getFrontendBase } from './frontend-url.js';
 
 const MAX_PAYMENT_FAILURES = 3;
+export const STRIPE_TRIAL_DAYS = 7;
 
 export function stripeRefId(value) {
   if (!value) return null;
@@ -29,21 +30,51 @@ export function roleDisplayName(role) {
   return 'Tu cuenta';
 }
 
-export async function createActivationCheckout(user, stripe, priceId) {
-  const origin = getFrontendBase();
+/** Checkout completado: pago inmediato o trial sin cargo inicial */
+export function isSubscriptionSessionComplete(session) {
+  if (session.mode !== 'subscription' || !session.metadata?.user_id) return false;
+  return session.payment_status === 'paid' || session.payment_status === 'no_payment_required';
+}
+
+export function buildSubscriptionCheckoutParams({
+  userId,
+  role,
+  email,
+  priceId,
+  origin,
+  withTrial = false,
+  customerId = null,
+}) {
   const params = {
     mode: 'subscription',
     payment_method_types: ['card'],
     line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(user.email)}`,
-    metadata: { user_id: user.id, role: user.role },
+    cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(email)}`,
+    metadata: { user_id: userId, role },
   };
-  if (user.stripe_customer_id) {
-    params.customer = user.stripe_customer_id;
-  } else {
-    params.customer_email = user.email;
+  if (withTrial) {
+    params.subscription_data = { trial_period_days: STRIPE_TRIAL_DAYS };
   }
+  if (customerId) {
+    params.customer = customerId;
+  } else {
+    params.customer_email = email;
+  }
+  return params;
+}
+
+export async function createActivationCheckout(user, stripe, priceId, { withTrial = false } = {}) {
+  const origin = getFrontendBase();
+  const params = buildSubscriptionCheckoutParams({
+    userId: user.id,
+    role: user.role,
+    email: user.email,
+    priceId,
+    origin,
+    withTrial,
+    customerId: user.stripe_customer_id || null,
+  });
   const session = await stripe.checkout.sessions.create(params);
   await run('UPDATE users SET stripe_checkout_session_id = ? WHERE id = ?', [session.id, user.id]);
   return session.url;

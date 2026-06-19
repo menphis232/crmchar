@@ -6,6 +6,7 @@ import {
   activateUserSubscription,
   handlePaymentFailed,
   stripeRefId,
+  isSubscriptionSessionComplete,
 } from '../utils/subscription-lifecycle.js';
 
 const router = Router();
@@ -35,13 +36,13 @@ router.post('/stripe', async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        if (session.mode === 'subscription' && session.metadata?.user_id && session.payment_status === 'paid') {
+        if (isSubscriptionSessionComplete(session)) {
           await activateUserSubscription(
             session.metadata.user_id,
             session.customer,
             session.subscription,
           );
-          console.log(`Usuario ${session.metadata.user_id} activado tras pago de suscripción.`);
+          console.log(`Usuario ${session.metadata.user_id} activado tras checkout de suscripción (${session.payment_status}).`);
         }
         break;
       }
@@ -65,7 +66,7 @@ router.post('/stripe', async (req, res) => {
             [subId],
           );
           console.log(`Suscripción ${subId} en estado ${subscription.status}. Usuario desactivado.`);
-        } else if (subscription.status === 'active' && !subscription.cancel_at_period_end) {
+        } else if (['active', 'trialing'].includes(subscription.status) && !subscription.cancel_at_period_end) {
           await run(
             "UPDATE users SET status = 'active', payment_failed_count = 0 WHERE stripe_subscription_id = ?",
             [subId],

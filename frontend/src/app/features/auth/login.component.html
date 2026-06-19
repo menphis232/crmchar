@@ -68,6 +68,11 @@
             <label>Nombre comercial</label>
             <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
           </div>
+          @if (role() === 'gestor' || role() === 'concesionaria') {
+            <p style="color: #48bb78; font-size: 13px; text-align: center; margin: 0 0 16px; background: rgba(72,187,120,0.1); padding: 10px; border-radius: 6px;">
+              🎁 7 días de prueba gratis. Solo necesitas registrar tu tarjeta en Stripe.
+            </p>
+          }
         }
 
         <div class="form-group">

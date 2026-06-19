@@ -12,6 +12,9 @@ import {
   sendActivationEmailByEmail,
   activateUserSubscription,
   createActivationCheckout,
+  buildSubscriptionCheckoutParams,
+  isSubscriptionSessionComplete,
+  STRIPE_TRIAL_DAYS,
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
 
@@ -73,15 +76,16 @@ router.post('/register', async (req, res) => {
           initialStatus = 'pending_payment';
           const origin = getRegisterOrigin();
           const stripe = new Stripe(admin.stripe_secret_key);
-          const session = await stripe.checkout.sessions.create({
-            mode: 'subscription',
-            payment_method_types: ['card'],
-            line_items: [{ price: admin.stripe_price_id, quantity: 1 }],
-            success_url: `${origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${origin}/registro-pendiente?email=${encodeURIComponent(email.toLowerCase())}`,
-            customer_email: email.toLowerCase(),
-            metadata: { user_id: userId, role },
-          });
+          const session = await stripe.checkout.sessions.create(
+            buildSubscriptionCheckoutParams({
+              userId,
+              role,
+              email: email.toLowerCase(),
+              priceId: admin.stripe_price_id,
+              origin,
+              withTrial: true,
+            }),
+          );
           stripeCheckoutUrl = session.url;
           stripeSessionId = session.id;
         } catch (stripeErr) {

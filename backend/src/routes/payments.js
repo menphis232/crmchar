@@ -5,6 +5,7 @@ import { v4 as uuid } from 'uuid';
 import {
   getPlatformStripeAdmin,
   activateUserSubscription,
+  isSubscriptionSessionComplete,
 } from '../utils/subscription-lifecycle.js';
 
 const router = Router();
@@ -69,15 +70,15 @@ router.post('/confirm-subscription', async (req, res) => {
     const stripe = new Stripe(admin.stripe_secret_key);
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
-    if (session.payment_status === 'paid' && session.mode === 'subscription') {
+    if (isSubscriptionSessionComplete(session)) {
       const userId = session.metadata?.user_id;
       if (userId) {
         await activateUserSubscription(userId, session.customer, session.subscription);
-        return res.json({ success: true });
+        return res.json({ success: true, trial: session.payment_status === 'no_payment_required' });
       }
       return res.status(400).json({ error: 'Sesión sin metadata de usuario' });
     }
-    return res.status(400).json({ error: 'El pago de la suscripción no se ha completado' });
+    return res.status(400).json({ error: 'La suscripción no se ha completado' });
   } catch (err) {
     console.error('Stripe Subscription Confirm Error:', err);
     res.status(500).json({ error: 'Error interno al confirmar la suscripción' });

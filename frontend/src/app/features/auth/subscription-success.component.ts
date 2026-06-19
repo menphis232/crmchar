@@ -16,7 +16,7 @@ import { AuthService } from '../../core/auth.service';
         
         @if (loading()) {
           <div style="font-size: 40px; margin-bottom: 20px;">⏳</div>
-          <h2 style="color: var(--mx-white); font-family: var(--f-display); margin-bottom: 10px;">Verificando pago...</h2>
+          <h2 style="color: var(--mx-white); font-family: var(--f-display); margin-bottom: 10px;">Verificando suscripción...</h2>
           <p style="color: var(--muted); font-size: 14px;">Por favor espera, estamos activando tu cuenta.</p>
         } @else if (error()) {
           <div style="font-size: 40px; margin-bottom: 20px;">❌</div>
@@ -26,7 +26,13 @@ import { AuthService } from '../../core/auth.service';
         } @else {
           <div style="font-size: 40px; margin-bottom: 20px;">✅</div>
           <h2 style="color: var(--mx-green); font-family: var(--f-display); margin-bottom: 10px;">¡Cuenta Activada!</h2>
-          <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">Tu pago ha sido confirmado y tu cuenta ya está activa.</p>
+          <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px;">
+            @if (isTrial()) {
+              Tu prueba gratuita de 7 días ha comenzado. Ya puedes usar tu panel.
+            } @else {
+              Tu suscripción ha sido confirmada y tu cuenta ya está activa.
+            }
+          </p>
           <a routerLink="/login" class="btn-copy" style="display: inline-block; text-decoration: none;">INGRESAR AL PANEL</a>
         }
 
@@ -37,6 +43,7 @@ import { AuthService } from '../../core/auth.service';
 export class SubscriptionSuccessComponent implements OnInit {
   loading = signal(true);
   error = signal('');
+  isTrial = signal(false);
 
   constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router, private auth: AuthService) {}
 
@@ -50,9 +57,10 @@ export class SubscriptionSuccessComponent implements OnInit {
         return;
       }
 
-      this.http.post<{success: boolean, error?: string}>(`${environment.apiUrl}/payments/confirm-subscription`, { session_id: sessionId })
+      this.http.post<{success: boolean, trial?: boolean, error?: string}>(`${environment.apiUrl}/payments/confirm-subscription`, { session_id: sessionId })
         .subscribe({
-          next: () => {
+          next: (res) => {
+            this.isTrial.set(!!res.trial);
             this.loading.set(false);
             if (this.auth.isLoggedIn()) {
               this.auth.getMe().subscribe();
