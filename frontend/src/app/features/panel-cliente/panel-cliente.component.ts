@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { UploadService } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
@@ -43,6 +44,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   auth = inject(AuthService);
   http = inject(HttpClient);
+  uploadService = inject(UploadService);
   toast = inject(ToastService);
   zone = inject(NgZone);
 
@@ -197,25 +199,49 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  onDocSelected(docType: string, event: any) {
-    const file = event.target.files[0];
+  onDocSelected(docType: string, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
+
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Usa una foto (JPG, PNG, WebP) o un PDF.', 'Formato no válido');
+      input.value = '';
+      return;
+    }
+
     this.uploadingDocType.set(docType);
-    const formData = new FormData();
-    formData.append('file', file);
-    this.http.post<{ url: string }>(`${environment.apiUrl}/upload`, formData).subscribe({
+    const upload$ = isPdf
+      ? this.uploadService.uploadDocument(file)
+      : this.uploadService.uploadFile(file);
+
+    upload$.subscribe({
       next: res => {
         const dealId = this.selectedDeal()?.id;
         if (!dealId) return;
         this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/documents`, {
           documentType: docType,
           fileUrl: res.url,
-        }).subscribe(newDoc => {
-          this.documents.update(docs => [newDoc, ...docs]);
-          this.uploadingDocType.set(null);
+        }).subscribe({
+          next: newDoc => {
+            this.documents.update(docs => [newDoc, ...docs]);
+            this.uploadingDocType.set(null);
+            input.value = '';
+          },
+          error: () => {
+            this.uploadingDocType.set(null);
+            this.toast.error('No se pudo registrar el documento.', 'Error');
+            input.value = '';
+          },
         });
       },
-      error: () => this.uploadingDocType.set(null),
+      error: (e) => {
+        this.uploadingDocType.set(null);
+        this.toast.error(e.error?.error || 'Error al subir archivo', 'Error');
+        input.value = '';
+      },
     });
   }
 

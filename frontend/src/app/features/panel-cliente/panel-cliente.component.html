@@ -278,7 +278,7 @@
               <div class="client-docs">
                 <div class="client-docs-intro">
                   <h3>Documentos requeridos</h3>
-                  <p>Sube los archivos que te solicitó tu gestoría para avanzar con el trámite.</p>
+                  <p>Sube fotos o PDF de los archivos que te solicitó tu gestoría para avanzar con el trámite.</p>
                 </div>
                 <div class="client-docs-list">
                   @for (doc of selectedDeal().required_documents; track doc) {
@@ -297,8 +297,8 @@
                       <div>
                         @if (!getDocStatus(doc)) {
                           <label class="btn-copy small" [class.loading]="uploadingDocType() === doc">
-                            <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*">
-                            {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir foto' }}
+                            <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*,.pdf,application/pdf">
+                            {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir archivo' }}
                           </label>
                         } @else {
                           <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-ghost small">Ver archivo</a>
