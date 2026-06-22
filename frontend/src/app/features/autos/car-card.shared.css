@@ -212,3 +212,10 @@
   color: rgba(255, 255, 255, 0.45);
   flex-shrink: 0;
 }
+
+@media (max-width: 768px) {
+  .car-card h3.car-model,
+  .dp-car-card h3.dp-car-model {
+    padding-top: 5px;
+  }
+}
