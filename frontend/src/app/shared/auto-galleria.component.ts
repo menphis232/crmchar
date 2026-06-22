@@ -102,7 +102,8 @@ import { AutoGalleryItem, mapAutoGalleryToGalleriaSlides } from './auto-video.ut
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 420px;
+      max-height: 100%;
+      align-self: start;
       overflow-y: auto;
       scrollbar-width: thin;
       scrollbar-color: rgba(255,255,255,.2) transparent;
@@ -156,13 +157,14 @@ import { AutoGalleryItem, mapAutoGalleryToGalleriaSlides } from './auto-video.ut
       pointer-events: none;
     }
 
-    /* ── Imagen principal ── */
+    /* ── Imagen principal (proporción 3:2 = mismo recorte al subir) ── */
     .ag-main {
       grid-column: 2;
       grid-row: 1;
       position: relative;
       width: 100%;
-      height: 420px;
+      aspect-ratio: 3 / 2;
+      height: auto;
       border-radius: 8px;
       overflow: hidden;
       background: rgba(255,255,255,.04);
@@ -184,7 +186,7 @@ import { AutoGalleryItem, mapAutoGalleryToGalleriaSlides } from './auto-video.ut
     .ag-img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain;
       object-position: center;
       display: block;
     }
@@ -250,7 +252,8 @@ import { AutoGalleryItem, mapAutoGalleryToGalleriaSlides } from './auto-video.ut
       .ag-main {
         grid-column: 1;
         grid-row: 1;
-        height: 240px;
+        aspect-ratio: 3 / 2;
+        height: auto;
       }
 
       .ag-thumbs {
