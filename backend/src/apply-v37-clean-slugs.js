@@ -2,11 +2,11 @@
  * Limpia slugs viejos con sufijo -fdf786 (primeros 6 chars del id).
  * Ej: jlr-insurgente-fdf786 → jlr-insurgente
  */
-import { get, run, all } from './db.js';
+import { get, run, query } from './db.js';
 import { slugify, uniqueUserSlug, uniqueGestorSlug, stripIdSuffix } from './utils/slug.js';
 
 async function main() {
-  const dealers = await all(
+  const dealers = await query(
     "SELECT id, slug FROM users WHERE role = 'concesionaria' AND slug IS NOT NULL AND slug != ''",
   );
   for (const u of dealers) {
@@ -20,7 +20,7 @@ async function main() {
     }
   }
 
-  const gestors = await all('SELECT id, user_id, slug FROM gestores WHERE slug IS NOT NULL AND slug != \'\'');
+  const gestors = await query('SELECT id, user_id, slug FROM gestores WHERE slug IS NOT NULL AND slug != \'\'');
   for (const g of gestors) {
     const base = stripIdSuffix(g.slug, g.user_id);
     if (base === g.slug) continue;
