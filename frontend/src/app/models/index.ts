@@ -28,6 +28,7 @@ export interface User {
     layout: string[];
     primaryColor?: string;
     footerText?: string;
+    logoUrl?: string | null;
   };
   google_analytics_id?: string;
   stripe_secret_key?: string;

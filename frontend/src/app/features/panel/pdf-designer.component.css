@@ -219,6 +219,75 @@
   margin-bottom: 20px;
 }
 
+.preview-logo-img {
+  max-height: 48px;
+  max-width: 220px;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.pdf-logo-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.pdf-logo-preview-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  margin-bottom: 8px;
+}
+
+.pdf-logo-preview-img {
+  max-height: 56px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.pdf-logo-source {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 12px;
+}
+
+.pdf-logo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pdf-logo-upload-btn {
+  cursor: pointer;
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.btn-ghost.small {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
 .mock-logo {
   font-size: 24px;
   font-weight: bold;

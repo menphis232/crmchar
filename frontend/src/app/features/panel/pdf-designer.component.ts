@@ -1,9 +1,11 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
+import { UploadService } from '../../core/api.service';
 import { ColorPickerComponent } from '../../shared/color-picker.component';
+import { TVM_LOGO_URL } from '../../shared/brand.constants';
 
 export interface PdfBlockDef {
   id: string;
@@ -29,12 +31,29 @@ const DEFAULT_BLOCKS: PdfBlockDef[] = [
 })
 export class PdfDesignerComponent implements OnInit {
   auth = inject(AuthService);
-  
+  uploadService = inject(UploadService);
+
+  readonly tvmLogoUrl = TVM_LOGO_URL;
+
   blocks = signal<PdfBlockDef[]>([...DEFAULT_BLOCKS]);
   primaryColor = signal('#c8a94a');
   footerText = signal('Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.');
+  pdfLogoUrl = signal<string | null>(null);
   isSaving = signal(false);
+  isUploadingLogo = signal(false);
   message = signal('');
+
+  previewLogoUrl = computed(() => {
+    return this.pdfLogoUrl()
+      || this.auth.user()?.logo_url
+      || TVM_LOGO_URL;
+  });
+
+  previewLogoSource = computed((): 'pdf' | 'profile' | 'tvm' => {
+    if (this.pdfLogoUrl()) return 'pdf';
+    if (this.auth.user()?.logo_url) return 'profile';
+    return 'tvm';
+  });
 
   ngOnInit() {
     this.loadSettings();
@@ -50,6 +69,9 @@ export class PdfDesignerComponent implements OnInit {
       }
       if (user.pdf_settings.footerText) {
         this.footerText.set(user.pdf_settings.footerText);
+      }
+      if (user.pdf_settings.logoUrl) {
+        this.pdfLogoUrl.set(user.pdf_settings.logoUrl);
       }
       if (user.pdf_settings.layout && Array.isArray(user.pdf_settings.layout)) {
         // Reorder DEFAULT_BLOCKS based on layout array
@@ -75,15 +97,46 @@ export class PdfDesignerComponent implements OnInit {
     this.blocks.set(currentBlocks);
   }
 
+  onPdfLogoSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !file.type.startsWith('image/')) {
+      this.message.set('Selecciona una imagen (JPG, PNG o WebP).');
+      setTimeout(() => this.message.set(''), 3000);
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingLogo.set(true);
+    this.uploadService.uploadFile(file).subscribe({
+      next: res => {
+        this.pdfLogoUrl.set(res.url);
+        this.isUploadingLogo.set(false);
+        input.value = '';
+      },
+      error: () => {
+        this.isUploadingLogo.set(false);
+        this.message.set('Error al subir el logo.');
+        setTimeout(() => this.message.set(''), 3000);
+        input.value = '';
+      },
+    });
+  }
+
+  clearPdfLogo() {
+    this.pdfLogoUrl.set(null);
+  }
+
   save() {
     this.isSaving.set(true);
     const layout = this.blocks().map(b => b.id);
-    
+
     this.auth.updateMe({
       pdf_settings: {
         layout,
         primaryColor: this.primaryColor(),
-        footerText: this.footerText()
+        footerText: this.footerText(),
+        logoUrl: this.pdfLogoUrl(),
       }
     }).subscribe({
       next: () => {

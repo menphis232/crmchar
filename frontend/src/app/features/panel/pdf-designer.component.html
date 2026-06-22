@@ -20,6 +20,34 @@
     </div>
 
     <div class="settings-section">
+      <div class="form-group pdf-logo-group">
+        <label>Logo para cotizaciones PDF</label>
+        <p class="pdf-logo-hint">
+          Opcional. Si no subes uno aquí, se usará el logo de tu perfil; si tampoco tienes, el de Trámites Vehiculares de México.
+        </p>
+        <div class="pdf-logo-preview-box">
+          <img [src]="previewLogoUrl()" alt="Vista previa del logo PDF" class="pdf-logo-preview-img">
+        </div>
+        <p class="pdf-logo-source">
+          @if (previewLogoSource() === 'pdf') {
+            Usando logo personalizado para PDF.
+          } @else if (previewLogoSource() === 'profile') {
+            Usando logo de tu perfil.
+          } @else {
+            Usando logo global de Trámites Vehiculares de México.
+          }
+        </p>
+        <div class="pdf-logo-actions">
+          <label class="btn btn-ghost small pdf-logo-upload-btn" [class.loading]="isUploadingLogo()">
+            <input type="file" accept="image/*" style="display:none" (change)="onPdfLogoSelected($event)">
+            {{ isUploadingLogo() ? 'Subiendo...' : (pdfLogoUrl() ? 'Cambiar logo PDF' : 'Subir logo PDF') }}
+          </label>
+          @if (pdfLogoUrl()) {
+            <button type="button" class="btn btn-ghost small" (click)="clearPdfLogo()">Usar logo del perfil</button>
+          }
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Color Principal</label>
         <app-color-picker [value]="primaryColor()" (valueChange)="primaryColor.set($event)"></app-color-picker>
@@ -48,9 +76,9 @@
         
         @if (block.id === 'header') {
           <div class="preview-block block-header">
-            <div class="mock-logo">TRÁMITES <span [style.color]="primaryColor()">VEHICULARES</span> .mx</div>
+            <img [src]="previewLogoUrl()" alt="Logo" class="preview-logo-img">
             <div class="mock-contact">
-              Concesionaria Autorizada<br>contacto&#64;tramitesvehiculares.mx
+              {{ auth.user()?.name || 'Concesionaria Autorizada' }}<br>{{ auth.user()?.email || 'contacto@tramitesvehiculares.mx' }}
             </div>
           </div>
         }

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+const TVM_LOGO_PATH = path.join(__dirname, '..', 'assets', 'tvm-logo.png');
 
 async function loadLogoBuffer(logoUrl) {
   if (!logoUrl) return null;
@@ -19,6 +20,25 @@ async function loadLogoBuffer(logoUrl) {
   } catch {
     return null;
   }
+  return null;
+}
+
+async function resolvePdfLogoBuffer(concesionaria) {
+  const settings = concesionaria?.pdf_settings || {};
+  const candidates = [
+    settings.logoUrl,
+    concesionaria?.logo_url,
+  ].filter(Boolean);
+
+  for (const logoUrl of candidates) {
+    const logoBuffer = await loadLogoBuffer(logoUrl);
+    if (logoBuffer) return logoBuffer;
+  }
+
+  if (fs.existsSync(TVM_LOGO_PATH)) {
+    return fs.readFileSync(TVM_LOGO_PATH);
+  }
+
   return null;
 }
 
@@ -52,16 +72,14 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
   const blocks = {
     header: async () => {
       let logoLoaded = false;
-      if (concesionaria?.logo_url) {
-        try {
-          const logoBuffer = await loadLogoBuffer(concesionaria.logo_url);
-          if (logoBuffer) {
-            doc.image(logoBuffer, 50, doc.y, { height: 40 });
-            logoLoaded = true;
-          }
-        } catch (err) {
-          console.warn('Could not load logo URL:', concesionaria.logo_url, err.message);
+      try {
+        const logoBuffer = await resolvePdfLogoBuffer(concesionaria);
+        if (logoBuffer) {
+          doc.image(logoBuffer, 50, doc.y, { height: 40 });
+          logoLoaded = true;
         }
+      } catch (err) {
+        console.warn('Could not load PDF logo:', err.message);
       }
 
       if (!logoLoaded) {
