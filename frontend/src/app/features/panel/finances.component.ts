@@ -1,6 +1,29 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  LucideArrowDown,
+  LucideArrowUp,
+  LucideBarChart3,
+  LucideCalendar,
+  LucideChevronLeft,
+  LucideChevronRight,
+  LucideClipboardList,
+  LucideCreditCard,
+  LucideFileText,
+  LucideInbox,
+  LucidePin,
+  LucidePlus,
+  LucideSave,
+  LucideScale,
+  LucideSettings,
+  LucideTrash2,
+  LucideTrendingDown,
+  LucideTrendingUp,
+  LucideTriangleAlert,
+  LucideWallet,
+  LucideX,
+} from '@lucide/angular';
 import { FinancesService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
@@ -10,25 +33,31 @@ import { formatMoney } from '../../shared/format-amount.util';
 @Component({
   selector: 'app-finances',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe],
+  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe, LucideWallet, LucideBarChart3, LucideFileText, LucidePlus, LucideTrendingUp, LucideTrendingDown, LucideScale, LucideCalendar, LucideCreditCard, LucideClipboardList, LucideSettings, LucideX, LucideInbox, LucideTrash2, LucideSave, LucideTriangleAlert, LucideArrowUp, LucideArrowDown, LucideChevronLeft, LucideChevronRight],
   template: `
     <div class="fin-wrap">
 
       <!-- ── HEADER ── -->
       <div class="fin-header">
         <div>
-          <h2 class="fin-title">💰 Módulo de Finanzas</h2>
+          <h2 class="fin-title fin-title-with-icon">
+            <svg lucideWallet [size]="22" aria-hidden="true"></svg>
+            Módulo de Finanzas
+          </h2>
           <p class="fin-sub">Controla tus ingresos y gastos en un solo lugar</p>
         </div>
         <div class="fin-header-actions">
-          <button class="btn-export csv" (click)="doExportCsv()" title="Exportar CSV">
-            <span>📊</span> Exportar CSV
+          <button class="btn-export csv btn-with-icon" (click)="doExportCsv()" title="Exportar CSV">
+            <svg lucideBarChart3 [size]="16" aria-hidden="true"></svg>
+            Exportar CSV
           </button>
-          <button class="btn-export pdf" (click)="doExportPdf()" title="Exportar PDF">
-            <span>📄</span> Exportar PDF
+          <button class="btn-export pdf btn-with-icon" (click)="doExportPdf()" title="Exportar PDF">
+            <svg lucideFileText [size]="16" aria-hidden="true"></svg>
+            Exportar PDF
           </button>
-          <button class="btn-new" (click)="openForm()">
-            <span>＋</span> Nueva transacción
+          <button class="btn-new btn-with-icon" (click)="openForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Nueva transacción
           </button>
         </div>
       </div>
@@ -74,7 +103,7 @@ import { formatMoney } from '../../shared/format-amount.util';
       @if (dashboard()) {
         <div class="stats-grid">
           <div class="stat-card income-card">
-            <div class="stat-icon">📈</div>
+            <div class="stat-icon fin-stat-icon"><svg lucideTrendingUp [size]="22" aria-hidden="true"></svg></div>
             <div class="stat-body">
               <span class="stat-label">Ingresos Totales</span>
               @let inc = fmt(dashboard()!.totalIncome);
@@ -84,7 +113,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             </div>
           </div>
           <div class="stat-card expense-card">
-            <div class="stat-icon">📉</div>
+            <div class="stat-icon fin-stat-icon"><svg lucideTrendingDown [size]="22" aria-hidden="true"></svg></div>
             <div class="stat-body">
               <span class="stat-label">Gastos Totales</span>
               @let exp = fmt(dashboard()!.totalExpense);
@@ -94,7 +123,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             </div>
           </div>
           <div class="stat-card balance-card" [class.negative]="dashboard()!.netBalance < 0">
-            <div class="stat-icon">⚖️</div>
+            <div class="stat-icon fin-stat-icon"><svg lucideScale [size]="22" aria-hidden="true"></svg></div>
             <div class="stat-body">
               <span class="stat-label">Balance Neto</span>
               @let bal = fmt(dashboard()!.netBalance, true);
@@ -105,7 +134,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             </div>
           </div>
           <div class="stat-card month-card">
-            <div class="stat-icon">📅</div>
+            <div class="stat-icon fin-stat-icon"><svg lucideCalendar [size]="22" aria-hidden="true"></svg></div>
             <div class="stat-body">
               <span class="stat-label">Balance Mes Actual</span>
               @let mon = fmt(dashboard()!.monthBalance, true);
@@ -120,7 +149,10 @@ import { formatMoney } from '../../shared/format-amount.util';
         <!-- Desglose por método de pago -->
         @if (dashboard()!.byMethod && hasMethodData()) {
           <div class="method-breakdown">
-            <h3 class="section-title">💳 Ingresos por método de cobro</h3>
+            <h3 class="section-title fin-section-with-icon">
+              <svg lucideCreditCard [size]="18" aria-hidden="true"></svg>
+              Ingresos por método de cobro
+            </h3>
             <div class="method-pills">
               @for (m of allMethods; track m.id) {
                 @if (getMethodAmount(m.id) > 0) {
@@ -141,8 +173,14 @@ import { formatMoney } from '../../shared/format-amount.util';
 
       <!-- ── TABS ── -->
       <div class="tab-bar">
-        <button [class.tab-active]="activeTab === 'transactions'" (click)="activeTab = 'transactions'">📋 Transacciones</button>
-        <button [class.tab-active]="activeTab === 'config'" (click)="activeTab = 'config'; loadPaymentMethods()">⚙️ Métodos de Pago</button>
+        <button class="fin-tab-with-icon" [class.tab-active]="activeTab === 'transactions'" (click)="activeTab = 'transactions'">
+          <svg lucideClipboardList [size]="16" aria-hidden="true"></svg>
+          Transacciones
+        </button>
+        <button class="fin-tab-with-icon" [class.tab-active]="activeTab === 'config'" (click)="activeTab = 'config'; loadPaymentMethods()">
+          <svg lucideSettings [size]="16" aria-hidden="true"></svg>
+          Métodos de Pago
+        </button>
       </div>
 
       <!-- ── TABLA DE TRANSACCIONES ── -->
@@ -186,16 +224,21 @@ import { formatMoney } from '../../shared/format-amount.util';
                       (mouseleave)="hideTip()">{{ ta.display }}</span>
                   </td>
                   <td>
-                    <button class="btn-del" (click)="deleteTx(tx.id)" title="Eliminar">✕</button>
+                    <button class="btn-del" (click)="deleteTx(tx.id)" title="Eliminar">
+                      <svg lucideX [size]="14" aria-hidden="true"></svg>
+                    </button>
                   </td>
                 </tr>
               } @empty {
                 <tr>
                   <td colspan="8" class="empty-state">
                     <div class="empty-inner">
-                      <span class="empty-icon">📭</span>
+                      <span class="empty-icon"><svg lucideInbox [size]="28" aria-hidden="true"></svg></span>
                       <p>No hay transacciones en este período.</p>
-                      <button class="btn-new small" (click)="openForm()">+ Registrar primera transacción</button>
+                      <button class="btn-new small btn-with-icon" (click)="openForm()">
+                        <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                        Registrar primera transacción
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -206,9 +249,15 @@ import { formatMoney } from '../../shared/format-amount.util';
 
         @if (totalPages() > 1 || totalItems() > 0) {
           <div class="pagination">
-            <button type="button" class="page-btn" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">← Anterior</button>
+            <button type="button" class="page-btn btn-with-icon" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">
+              <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg>
+              Anterior
+            </button>
             <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }} · {{ totalItems() }} registros</span>
-            <button type="button" class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">Siguiente →</button>
+            <button type="button" class="page-btn btn-with-icon" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">
+              Siguiente
+              <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+            </button>
           </div>
         }
       }
@@ -216,7 +265,10 @@ import { formatMoney } from '../../shared/format-amount.util';
       <!-- ── CONFIG MÉTODOS DE PAGO ── -->
       @if (activeTab === 'config') {
         <div class="config-card">
-          <h3 class="section-title">⚙️ Métodos de pago</h3>
+          <h3 class="section-title fin-section-with-icon">
+            <svg lucideSettings [size]="18" aria-hidden="true"></svg>
+            Métodos de pago
+          </h3>
           <p class="config-desc">Activa o desactiva métodos predefinidos y crea métodos personalizados. Stripe siempre está disponible desde webhooks automáticos.</p>
 
           <!-- Métodos predefinidos -->
@@ -271,7 +323,9 @@ import { formatMoney } from '../../shared/format-amount.util';
                       </span>
                     </div>
                   </label>
-                  <button class="btn-del-method" (click)="removeCustomMethod(m.id)" title="Eliminar método">🗑</button>
+                  <button class="btn-del-method" (click)="removeCustomMethod(m.id)" title="Eliminar método">
+                    <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
+                  </button>
                 </div>
               }
             </div>
@@ -279,7 +333,10 @@ import { formatMoney } from '../../shared/format-amount.util';
 
           <!-- Agregar método personalizado -->
           <div class="add-custom-method">
-            <div class="config-section-label" style="margin-bottom: 10px;">➕ Agregar método personalizado</div>
+            <div class="config-section-label fin-section-with-icon" style="margin-bottom: 10px;">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agregar método personalizado
+            </div>
             <div class="custom-method-form">
               <div class="emoji-picker-wrap">
                 <button class="emoji-btn" (click)="showEmojiPicker = !showEmojiPicker">{{ newMethodIcon || '💰' }}</button>
@@ -304,8 +361,9 @@ import { formatMoney } from '../../shared/format-amount.util';
           </div>
 
           <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); display:flex; justify-content:flex-end;">
-            <button class="btn-new" (click)="savePaymentMethods()" [disabled]="savingMethods">
-              {{ savingMethods ? 'Guardando...' : '💾 Guardar configuración' }}
+            <button class="btn-new btn-with-icon" (click)="savePaymentMethods()" [disabled]="savingMethods">
+              <svg lucideSave [size]="16" aria-hidden="true"></svg>
+              {{ savingMethods ? 'Guardando...' : 'Guardar configuración' }}
             </button>
           </div>
         </div>
@@ -316,17 +374,29 @@ import { formatMoney } from '../../shared/format-amount.util';
         <div class="modal-overlay" (click)="closeForm()">
           <div class="modal-box" (click)="$event.stopPropagation()">
             <div class="modal-header">
-              <h3>{{ newTx.type === 'income' ? '📈 Registrar Ingreso' : '📉 Registrar Gasto' }}</h3>
-              <button class="btn-close" (click)="closeForm()">✕</button>
+              <h3 class="fin-section-with-icon">
+                @if (newTx.type === 'income') {
+                  <svg lucideTrendingUp [size]="18" aria-hidden="true"></svg>
+                  Registrar Ingreso
+                } @else {
+                  <svg lucideTrendingDown [size]="18" aria-hidden="true"></svg>
+                  Registrar Gasto
+                }
+              </h3>
+              <button class="btn-close" (click)="closeForm()" aria-label="Cerrar">
+                <svg lucideX [size]="18" aria-hidden="true"></svg>
+              </button>
             </div>
 
             <!-- Tipo -->
             <div class="type-toggle">
-              <button [class.type-active-income]="newTx.type === 'income'" (click)="newTx.type = 'income'">
-                ↑ Ingreso
+              <button class="btn-with-icon" [class.type-active-income]="newTx.type === 'income'" (click)="newTx.type = 'income'">
+                <svg lucideArrowUp [size]="14" aria-hidden="true"></svg>
+                Ingreso
               </button>
-              <button [class.type-active-expense]="newTx.type === 'expense'" (click)="newTx.type = 'expense'">
-                ↓ Gasto
+              <button class="btn-with-icon" [class.type-active-expense]="newTx.type === 'expense'" (click)="newTx.type = 'expense'">
+                <svg lucideArrowDown [size]="14" aria-hidden="true"></svg>
+                Gasto
               </button>
             </div>
 
@@ -363,13 +433,14 @@ import { formatMoney } from '../../shared/format-amount.util';
                       @for (m of formMethods(); track m.id) {
                         <option [ngValue]="m.id">{{ m.icon }} {{ m.label }}</option>
                       }
-                      <option ngValue="general">📌 General</option>
+                      <option ngValue="general">General</option>
                     </select>
                     <span class="select-arrow">▾</span>
                   </div>
                 } @else {
-                  <div class="no-methods-hint">
-                    <span>⚠️</span> No tienes métodos configurados. Ve a <strong>⚙️ Métodos de Pago</strong> para activar algunos.
+                  <div class="no-methods-hint fin-section-with-icon">
+                    <svg lucideTriangleAlert [size]="14" aria-hidden="true"></svg>
+                    No tienes métodos configurados. Ve a <strong>Métodos de Pago</strong> para activar algunos.
                   </div>
                 }
               </div>
@@ -844,7 +915,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
     this.fin.savePaymentMethods(toSave).subscribe({
       next: () => {
         this.savingMethods = false;
-        this.toast.success('La configuración de métodos de pago fue guardada.', '✅ Configuración guardada');
+        this.toast.success('La configuración de métodos de pago fue guardada.', 'Configuración guardada');
       },
       error: () => {
         this.savingMethods = false;
@@ -896,7 +967,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
         this.loadData();
         this.toast.success(
           txType === 'income' ? 'Ingreso registrado correctamente.' : 'Gasto registrado correctamente.',
-          txType === 'income' ? '📈 Ingreso guardado' : '📉 Gasto guardado'
+          txType === 'income' ? 'Ingreso guardado' : 'Gasto guardado'
         );
       },
       error: () => this.toast.error('No se pudo guardar la transacción.', 'Error')
@@ -922,7 +993,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.filterMethod || undefined,
       this.filterDealId || undefined,
     ), '_blank');
-    this.toast.info('Exportando con los filtros actuales (fecha, método y trámite).', '📊 Exportando CSV');
+    this.toast.info('Exportando con los filtros actuales (fecha, método y trámite).', 'Exportando CSV');
   }
 
   doExportPdf() {
@@ -932,16 +1003,16 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.filterMethod || undefined,
       this.filterDealId || undefined,
     ), '_blank');
-    this.toast.info('Generando PDF con los filtros actuales.', '📄 Exportando PDF');
+    this.toast.info('Generando PDF con los filtros actuales.', 'Exportando PDF');
   }
 
   methodLabel(method: string): string {
     const labels: Record<string, string> = {
-      stripe: '⚡ Stripe',
-      efectivo: '💵 Efectivo',
-      transferencia: '🏦 Transferencia',
-      mercadopago: '💳 MercadoPago',
-      general: '📌 General',
+      stripe: 'Stripe',
+      efectivo: 'Efectivo',
+      transferencia: 'Transferencia',
+      mercadopago: 'MercadoPago',
+      general: 'General',
     };
     if (labels[method]) return labels[method];
     // Check custom methods

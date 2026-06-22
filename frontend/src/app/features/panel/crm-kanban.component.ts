@@ -1,5 +1,13 @@
 import { Component, input, output, signal, PLATFORM_ID, inject, effect, ElementRef, viewChildren } from '@angular/core';
 import { isPlatformBrowser, DecimalPipe } from '@angular/common';
+import {
+  LucideBanknote,
+  LucideChevronLeft,
+  LucideChevronRight,
+  LucideClock,
+  LucideLightbulb,
+  LucidePlus,
+} from '@lucide/angular';
 import { CrmDeal } from '../../models';
 
 export interface KanbanStage { id: string; label: string; }
@@ -7,7 +15,7 @@ export interface KanbanStage { id: string; label: string; }
 @Component({
   selector: 'app-crm-kanban',
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, LucideLightbulb, LucideChevronLeft, LucideChevronRight, LucideBanknote, LucideClock, LucidePlus],
   templateUrl: './crm-kanban.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`

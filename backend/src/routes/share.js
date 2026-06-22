@@ -190,4 +190,22 @@ router.get('/concesionarias/:slug', async (req, res) => {
   }
 });
 
+// Catálogo /autos — HTML con OG para crawlers (WhatsApp, Facebook, etc.)
+router.get('/catalog/autos', (_req, res) => {
+  const pageUrl = `${SITE_BASE}/autos`;
+  const description = 'Explora seminuevos verificados de concesionarias en todo México.';
+  const imageUrl = `${SITE_BASE}/og/autos.jpg`;
+
+  const html = buildHtml({
+    tagline: AUTO_TAGLINE,
+    subtitle: description,
+    shareUrl: pageUrl,
+    pageUrl,
+    imgMeta: buildImageMeta(imageUrl, AUTO_TAGLINE),
+  });
+
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.send(html);
+});
+
 export default router;

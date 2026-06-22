@@ -1,7 +1,10 @@
+import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
+import { sendEmail } from '../utils/mailer.js';
 import {
-  dealTypeForRole, mapInquiryStatus, mapSolicitudStatus, templateCategoryForRole,
+  dealTypeForRole, mapDealStageToSolicitudStatus, mapInquiryStatus, mapSolicitudStatus, templateCategoryForRole,
 } from './stages.js';
 
 const DEFAULT_TEMPLATES = {
@@ -184,6 +187,130 @@ export async function createManualVentaDeal(dealerUserId, data) {
       `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
        VALUES (?, ?, ?, 'message', ?)`,
       [uuid(), dealId, dealerUserId, message.trim()],
+    );
+  }
+
+  return dealId;
+}
+
+export async function ensureClientUser({ clientName, clientEmail, gestorUserId, gestorName, serviceName }) {
+  if (!clientEmail?.trim()) return;
+  const email = clientEmail.trim().toLowerCase();
+  const existingUser = await get('SELECT id FROM users WHERE email = ?', [email]);
+  if (existingUser) return;
+
+  const tempPassword = Math.random().toString(36).slice(-8);
+  const hash = bcrypt.hashSync(tempPassword, 10);
+  const userId = uuid();
+  await run(
+    'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
+    [userId, email, hash, 'cliente', clientName.trim()],
+  );
+
+  const tramiteLabel = serviceName || 'Trámite vehicular';
+  const html = `
+    <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName.trim()},</h2>
+    <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Tu gestor <strong>${gestorName || 'asignado'}</strong> registró tu trámite de <strong>${tramiteLabel}</strong> en nuestra plataforma.</p>
+    <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento, chatear con tu gestor y subir documentos.</p>
+    <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
+      <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
+      <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
+        <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${email}</span></li>
+        <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
+      </ul>
+    </div>
+    <p style="color: #a0aec0; font-size: 14px; text-align: center;">Por favor cambia tu contraseña en la sección de Ajustes al iniciar sesión.</p>
+  `;
+  try {
+    await sendEmail(email, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html, gestorUserId);
+  } catch (e) {
+    console.error('Error enviando correo de bienvenida al cliente:', e);
+  }
+}
+
+export async function createManualTramiteDeal(gestorUserId, data) {
+  const {
+    clientName,
+    clientEmail,
+    clientPhone,
+    title,
+    serviceName,
+    location,
+    message,
+    estimatedValue,
+    stage = 'nuevo',
+  } = data;
+
+  const gestor = await get('SELECT id, name FROM gestores WHERE user_id = ?', [gestorUserId]);
+  if (!gestor) throw new Error('Perfil de gestor no encontrado');
+
+  let dealTitle = title?.trim() || serviceName?.trim() || '';
+  let estValue = Number(estimatedValue) || 0;
+
+  if (serviceName?.trim()) {
+    const service = await get(
+      'SELECT name, price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
+      [gestor.id, serviceName.trim()],
+    );
+    if (!service) throw new Error('Servicio no encontrado en tu catálogo');
+    if (!dealTitle) dealTitle = service.name;
+    if (!estValue) estValue = Number(service.price || 0);
+  }
+
+  if (!dealTitle) dealTitle = 'Trámite manual';
+
+  await ensureClientUser({
+    clientName: clientName.trim(),
+    clientEmail,
+    gestorUserId,
+    gestorName: gestor.name,
+    serviceName: dealTitle,
+  });
+
+  const contact = await findOrCreateContact(gestorUserId, {
+    name: clientName.trim(),
+    email: clientEmail?.trim() || null,
+    phone: clientPhone?.trim() || null,
+    source: 'manual',
+  });
+
+  const solicitudId = uuid();
+  const solStatus = mapDealStageToSolicitudStatus(stage);
+  await run(
+    `INSERT INTO solicitudes (id, gestor_id, client_name, service_name, location, client_email, client_phone, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      solicitudId, gestor.id, clientName.trim(), dealTitle,
+      location?.trim() || null,
+      clientEmail?.trim()?.toLowerCase() || null,
+      clientPhone?.trim() || null,
+      solStatus,
+    ],
+  );
+
+  const dealId = uuid();
+  const trackingCode = crypto.randomBytes(4).toString('hex').toUpperCase();
+  await run(
+    `INSERT INTO crm_deals (id, user_id, contact_id, deal_type, title, stage, ref_type, ref_id, tracking_code, stage_changed_at, estimated_value, client_message)
+     VALUES (?, ?, ?, 'tramite', ?, ?, 'solicitud', ?, ?, NOW(), ?, ?)`,
+    [dealId, gestorUserId, contact.id, dealTitle, stage, solicitudId, trackingCode, estValue, message?.trim() || null],
+  );
+
+  try {
+    await run('UPDATE solicitudes SET deal_id = ? WHERE id = ?', [dealId, solicitudId]);
+  } catch { /* column optional until migration */ }
+
+  await run(
+    `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
+     VALUES (?, ?, ?, 'note', ?)`,
+    [uuid(), dealId, gestorUserId, 'Trámite registrado manualmente'],
+  );
+
+  if (message?.trim()) {
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
+       VALUES (?, ?, ?, 'message', ?)`,
+      [uuid(), dealId, gestorUserId, message.trim()],
     );
   }
 

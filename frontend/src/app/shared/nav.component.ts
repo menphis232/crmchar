@@ -171,12 +171,18 @@ export class NavComponent implements OnInit {
 
   get loginQueryParams(): { role?: string } {
     if (this.isAutosContext()) return { role: 'concesionaria' };
+    if (this.isGestoresContext()) return { role: 'gestor' };
     return {};
   }
 
   private isAutosContext(): boolean {
     const url = this.router.url.split('?')[0];
     return url === '/' || url === '/autos' || url.startsWith('/autos/') || url.startsWith('/concesionarias/');
+  }
+
+  private isGestoresContext(): boolean {
+    const url = this.router.url.split('?')[0];
+    return url === '/gestores' || url.startsWith('/gestores/');
   }
 
   get panelLink(): string {

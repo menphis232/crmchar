@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, computed, OnDestroy, HostListener } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,6 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
   styleUrl: './gestores-list.component.css',
 })
 export class GestoresListComponent implements OnInit, OnDestroy {
-  // Data
   gestores = signal<Gestor[]>([]);
   states = signal<StateFilter[]>([]);
   loading = signal(true);
@@ -26,26 +25,26 @@ export class GestoresListComponent implements OnInit, OnDestroy {
   private readonly previewPageKey = 'gestores';
   private unsubscribePreview?: () => void;
 
-  // Filters
   searchQuery = signal('');
   selectedStates = signal<Set<string>>(new Set());
   minRating = signal(0);
   filtersOpen = signal(false);
-  stateSectionOpen = signal(false);
-  ratingSectionOpen = signal(true);
+  filterTab = signal<'estado' | 'calificacion'>('estado');
+
+  pendingStates = signal<Set<string>>(new Set());
+  pendingRating = signal(0);
+
   stateSearch = signal('');
   stateShowAll = signal(false);
   readonly FILTER_PREVIEW_LIMIT = 8;
 
-  // Pagination
   readonly PAGE_SIZE = 9;
   currentPage = signal(1);
 
-  // Search debounce
   private searchSubject = new Subject<string>();
   private destroy$ = new Subject<void>();
+  private ignoreNextDocClick = false;
 
-  // Computed: filter + search client-side
   filteredGestores = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
     const states = this.selectedStates();
@@ -74,12 +73,6 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     Array.from({ length: this.totalPages() }, (_, i) => i + 1)
   );
 
-  selectedStatesArray = computed(() => [...this.selectedStates()]);
-
-  activeFilterCount = computed(() =>
-    this.selectedStates().size + (this.minRating() > 0 ? 1 : 0)
-  );
-
   filteredStates = computed(() => {
     const q = this.stateSearch().toLowerCase().trim();
     const list = this.states();
@@ -92,15 +85,11 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     if (this.stateShowAll() || this.stateSearch().trim() || list.length <= this.FILTER_PREVIEW_LIMIT) {
       return list;
     }
-    const selected = this.selectedStates();
+    const selected = this.pendingStates();
     const preview = list.slice(0, this.FILTER_PREVIEW_LIMIT);
     const extras = list.filter(s => selected.has(s.state) && !preview.some(p => p.state === s.state));
     return [...preview, ...extras];
   });
-
-  hiddenStatesCount = computed(() =>
-    Math.max(0, this.filteredStates().length - this.visibleStates().length)
-  );
 
   constructor(
     private gestoresService: GestoresService,
@@ -130,7 +119,6 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     this.gestoresService.getStates().subscribe(s => this.states.set(s));
     this.loadGestores();
 
-    // Debounce search input
     this.searchSubject.pipe(
       debounceTime(300),
       distinctUntilChanged(),
@@ -166,42 +154,62 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     this.searchSubject.next(query);
   }
 
-  onStateToggle(state: string, checked: boolean) {
-    const current = new Set(this.selectedStates());
-    if (checked) current.add(state);
-    else current.delete(state);
-    this.selectedStates.set(current);
-    this.currentPage.set(1);
-  }
-
-  isStateSelected(state: string): boolean {
-    return this.selectedStates().has(state);
-  }
-
-  onRatingChange(rating: number) {
-    this.minRating.set(rating);
-    this.currentPage.set(1);
-  }
-
   clearFilters() {
     this.searchQuery.set('');
     this.selectedStates.set(new Set());
     this.minRating.set(0);
     this.stateSearch.set('');
     this.stateShowAll.set(false);
+    this.syncPendingFilters();
     this.currentPage.set(1);
   }
 
-  toggleFiltersPanel() {
-    this.filtersOpen.update(v => !v);
+  toggleFiltersPanel(event?: Event) {
+    event?.stopPropagation();
+    const opening = !this.filtersOpen();
+    if (opening) {
+      this.syncPendingFilters();
+      this.ignoreNextDocClick = true;
+    }
+    this.filtersOpen.set(opening);
   }
 
-  toggleStateSection() {
-    this.stateSectionOpen.update(v => !v);
+  setFilterTab(tab: 'estado' | 'calificacion') {
+    this.filterTab.set(tab);
   }
 
-  toggleRatingSection() {
-    this.ratingSectionOpen.update(v => !v);
+  syncPendingFilters() {
+    this.pendingStates.set(new Set(this.selectedStates()));
+    this.pendingRating.set(this.minRating());
+  }
+
+  applyPendingFilters() {
+    this.selectedStates.set(new Set(this.pendingStates()));
+    this.minRating.set(this.pendingRating());
+    this.filtersOpen.set(false);
+    this.currentPage.set(1);
+  }
+
+  clearPendingFilters() {
+    this.pendingStates.set(new Set());
+    this.pendingRating.set(0);
+    this.stateSearch.set('');
+    this.stateShowAll.set(false);
+  }
+
+  selectAllStates() {
+    this.pendingStates.set(new Set());
+  }
+
+  togglePendingState(state: string) {
+    const s = new Set(this.pendingStates());
+    if (s.has(state)) s.delete(state);
+    else s.add(state);
+    this.pendingStates.set(s);
+  }
+
+  isPendingStateSelected(state: string): boolean {
+    return this.pendingStates().has(state);
   }
 
   onStateSearchChange(q: string) {
@@ -209,13 +217,21 @@ export class GestoresListComponent implements OnInit, OnDestroy {
     this.stateShowAll.set(!!q.trim());
   }
 
+  @HostListener('document:click', ['$event'])
+  closeFiltersOnOutsideClick(event: MouseEvent) {
+    if (this.ignoreNextDocClick) {
+      this.ignoreNextDocClick = false;
+      return;
+    }
+    const target = event.target as HTMLElement;
+    if (!target.closest('.filters-dropdown-wrap') && this.filtersOpen()) {
+      this.filtersOpen.set(false);
+    }
+  }
+
   goToPage(page: number) {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  get hasActiveFilters(): boolean {
-    return !!this.searchQuery() || this.selectedStates().size > 0 || this.minRating() > 0;
   }
 }

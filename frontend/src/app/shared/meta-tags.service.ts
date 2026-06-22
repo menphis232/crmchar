@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { Auto, DealerProfile } from '../models';
-import { AUTO_SHARE_TAGLINE } from './brand.constants';
+import { AUTO_SHARE_TAGLINE, AUTO_CATALOG_OG_IMAGE } from './brand.constants';
 import { getAutoPrimaryImageUrl, getAutoShareSubtitle, toAbsoluteUrl } from './auto-share.util';
 
 @Injectable({ providedIn: 'root' })
@@ -64,6 +64,30 @@ export class MetaTagsService {
       this.meta.updateTag({ name: 'twitter:image', content: image });
     } else {
       this.meta.removeTag("name='twitter:image'");
+    }
+  }
+
+  setAutosListTags() {
+    const description = 'Explora seminuevos verificados de concesionarias en todo México.';
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const image = toAbsoluteUrl(AUTO_CATALOG_OG_IMAGE);
+
+    this.title.setTitle(AUTO_SHARE_TAGLINE);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.setOg('og:title', AUTO_SHARE_TAGLINE);
+    this.setOg('og:description', description);
+    this.setOg('og:url', url);
+    this.setOg('og:type', 'website');
+    this.setOg('og:site_name', 'Trámites Vehiculares de México');
+    if (image) {
+      this.setOg('og:image', image);
+      this.setOg('og:image:alt', AUTO_SHARE_TAGLINE);
+    }
+    this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
+    this.meta.updateTag({ name: 'twitter:title', content: AUTO_SHARE_TAGLINE });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+    if (image) {
+      this.meta.updateTag({ name: 'twitter:image', content: image });
     }
   }
 

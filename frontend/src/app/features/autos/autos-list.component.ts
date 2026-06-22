@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, OnDestroy, HostListener } from '@angular/core';
+import { Component, OnInit, signal, computed, OnDestroy, HostListener, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -10,6 +10,7 @@ import { PreviewThemeService } from '../../core/preview-theme.service';
 import { hasSpecialPrice, effectivePrice } from '../../shared/auto-price.util';
 import { Auto, MakeFilter, SiteSettings } from '../../models';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { MetaTagsService } from '../../shared/meta-tags.service';
 
 @Component({
   selector: 'app-autos-list',
@@ -19,6 +20,8 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
   styleUrl: './autos-list.component.css',
 })
 export class AutosListComponent implements OnInit, OnDestroy {
+  private metaTags = inject(MetaTagsService);
+
   // Data
   autos = signal<Auto[]>([]);
   makes = signal<MakeFilter[]>([]);
@@ -182,6 +185,8 @@ export class AutosListComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
+    this.metaTags.setAutosListTags();
+
     const previewMode = this.route.snapshot.queryParamMap.get('preview') === '1';
     if (previewMode) {
       this.isPreview.set(true);
@@ -212,6 +217,7 @@ export class AutosListComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.metaTags.reset();
     this.unsubscribePreview?.();
     this.destroy$.next();
     this.destroy$.complete();

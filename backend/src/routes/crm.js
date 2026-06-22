@@ -7,7 +7,7 @@ import { requireActiveSubscription } from '../middleware/subscription.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
-  createManualVentaDeal,
+  createManualVentaDeal, createManualTramiteDeal,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -348,35 +348,54 @@ router.get('/deals', async (req, res) => {
 
 router.post('/deals', async (req, res) => {
   try {
-    if (req.user.role !== 'concesionaria') {
-      return res.status(403).json({ error: 'Solo concesionarias pueden crear leads manuales de venta' });
+    const role = req.user.role;
+    if (!['concesionaria', 'gestor'].includes(role)) {
+      return res.status(403).json({ error: 'No autorizado para crear trámites o leads manuales' });
     }
 
     const uid = req.orgId;
-    const { clientName, clientEmail, clientPhone, title, autoId, message, estimatedValue, stage } = req.body;
+    const {
+      clientName, clientEmail, clientPhone, title, autoId, serviceName, location,
+      message, estimatedValue, stage,
+    } = req.body;
 
     if (!clientName?.trim()) {
       return res.status(400).json({ error: 'El nombre del cliente es obligatorio' });
     }
 
     const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
-    const allowedStages = stagesForRole('concesionaria', userRow?.crm_stages);
-    const dealStage = stage || initialStageForRole('concesionaria');
+    const allowedStages = stagesForRole(role, userRow?.crm_stages);
+    const dealStage = stage || initialStageForRole(role);
     const isCustom = dealStage.startsWith('etapa_');
     if (!allowedStages.includes(dealStage) && !isCustom) {
       return res.status(400).json({ error: 'Etapa inválida' });
     }
 
-    const dealId = await createManualVentaDeal(uid, {
-      clientName,
-      clientEmail,
-      clientPhone,
-      title,
-      autoId,
-      message,
-      estimatedValue,
-      stage: dealStage,
-    });
+    let dealId;
+    if (role === 'concesionaria') {
+      dealId = await createManualVentaDeal(uid, {
+        clientName,
+        clientEmail,
+        clientPhone,
+        title,
+        autoId,
+        message,
+        estimatedValue,
+        stage: dealStage,
+      });
+    } else {
+      dealId = await createManualTramiteDeal(uid, {
+        clientName,
+        clientEmail,
+        clientPhone,
+        title,
+        serviceName,
+        location,
+        message,
+        estimatedValue,
+        stage: dealStage,
+      });
+    }
 
     const row = await get(`
       SELECT d.*,

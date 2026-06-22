@@ -1,13 +1,14 @@
 import {
   Component, EventEmitter, HostListener, Input, Output, signal,
 } from '@angular/core';
+import { LucideCreditCard, LucideKeyRound } from '@lucide/angular';
 import { SubscriptionBillingComponent } from './subscription-billing.component';
 import { ChangeCredentialsComponent } from './change-credentials.component';
 
 @Component({
   selector: 'app-panel-user-menu',
   standalone: true,
-  imports: [SubscriptionBillingComponent, ChangeCredentialsComponent],
+  imports: [SubscriptionBillingComponent, ChangeCredentialsComponent, LucideKeyRound, LucideCreditCard],
   template: `
     <div class="panel-user-menu">
       @if (showName && name) {
@@ -25,12 +26,14 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
               <span>{{ email }}</span>
             }
           </div>
-          <button type="button" class="avatar-dropdown-item" (click)="openCredentials()">
-            🔑 Cambiar contraseña / correo
+          <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openCredentials()">
+            <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
+            Cambiar contraseña / correo
           </button>
           @if (showBilling) {
-            <button type="button" class="avatar-dropdown-item" (click)="openBilling()">
-              💳 Suscripción y facturación
+            <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openBilling()">
+              <svg lucideCreditCard [size]="14" aria-hidden="true"></svg>
+              Suscripción y facturación
             </button>
           }
           <button type="button" class="avatar-dropdown-item danger" (click)="onLogout()">
@@ -104,7 +107,9 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
     .avatar-dropdown-header strong { color: #fff; font-size: 14px; }
     .avatar-dropdown-header span { color: rgba(255,255,255,.45); font-size: 12px; }
     .avatar-dropdown-item {
-      display: block;
+      display: flex;
+      align-items: center;
+      gap: 8px;
       width: 100%;
       text-align: left;
       background: transparent;

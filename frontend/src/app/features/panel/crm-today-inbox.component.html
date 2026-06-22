@@ -1,10 +1,16 @@
 @if (hasItems()) {
   <div class="dash-card today-inbox">
-    <h2 class="card-title">📅 Bandeja de hoy</h2>
+    <h2 class="card-title card-title-with-icon">
+      <svg lucideCalendarDays [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+      Bandeja de hoy
+    </h2>
     <p class="card-desc" style="margin-bottom:4px;">Acciones prioritarias para tus trámites y leads.</p>
 
     @if (inbox().overdueTasks.length) {
-      <h4 class="inbox-section-title warn">⚠️ Tareas vencidas ({{ inbox().overdueTasks.length }})</h4>
+      <h4 class="inbox-section-title warn inbox-section-with-icon">
+        <svg lucideTriangleAlert [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+        Tareas vencidas ({{ inbox().overdueTasks.length }})
+      </h4>
       @for (t of inbox().overdueTasks; track t.id) {
         <button type="button" class="inbox-row stalled" (click)="openTaskDeal.emit(t.dealId)">
           <span style="font-weight:600;color:var(--mx-white);">{{ t.title }}</span>
@@ -14,7 +20,10 @@
     }
 
     @if (inbox().todayTasks.length) {
-      <h4 class="inbox-section-title">📌 Tareas de hoy ({{ inbox().todayTasks.length }})</h4>
+      <h4 class="inbox-section-title inbox-section-with-icon">
+        <svg lucidePin [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+        Tareas de hoy ({{ inbox().todayTasks.length }})
+      </h4>
       @for (t of inbox().todayTasks; track t.id) {
         <button type="button" class="inbox-row" (click)="openTaskDeal.emit(t.dealId)">
           <span style="font-weight:600;color:var(--mx-white);">{{ t.title }}</span>
@@ -24,7 +33,10 @@
     }
 
     @if (inbox().uncontactedDeals.length) {
-      <h4 class="inbox-section-title">🔔 Sin primera respuesta ({{ inbox().uncontactedDeals.length }})</h4>
+      <h4 class="inbox-section-title inbox-section-with-icon">
+        <svg lucideBell [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+        Sin primera respuesta ({{ inbox().uncontactedDeals.length }})
+      </h4>
       @for (d of inbox().uncontactedDeals; track d.id) {
         <button type="button" class="inbox-row" (click)="openDeal.emit(d)">
           <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
@@ -34,7 +46,10 @@
     }
 
     @if (inbox().stalledDeals.length) {
-      <h4 class="inbox-section-title warn">🛑 Estancados +2 días ({{ inbox().stalledDeals.length }})</h4>
+      <h4 class="inbox-section-title warn inbox-section-with-icon">
+        <svg lucideOctagonAlert [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+        Estancados +2 días ({{ inbox().stalledDeals.length }})
+      </h4>
       @for (d of inbox().stalledDeals; track d.id) {
         <button type="button" class="inbox-row stalled" (click)="openDeal.emit(d)">
           <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
@@ -45,7 +60,13 @@
   </div>
 } @else {
   <div class="dash-card today-inbox">
-    <h2 class="card-title">📅 Bandeja de hoy</h2>
-    <p class="empty" style="padding:20px 0;">✅ ¡Al día! No hay tareas urgentes ni leads pendientes.</p>
+    <h2 class="card-title card-title-with-icon">
+      <svg lucideCalendarDays [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+      Bandeja de hoy
+    </h2>
+    <p class="empty empty-with-icon" style="padding:20px 0;">
+      <svg lucideCircleCheck [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+      ¡Al día! No hay tareas urgentes ni leads pendientes.
+    </p>
   </div>
 }

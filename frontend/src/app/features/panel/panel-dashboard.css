@@ -806,10 +806,10 @@ select option {
 .link-name { background: none; border: none; color: var(--brand-black); cursor: pointer; font-weight: 700; padding: 0; font-size: 14px; transition: var(--transition); text-decoration: underline; }
 .link-name:hover { color: var(--brand-blue); }
 
-.custom-block { padding: 14px 18px; border-radius: 10px; margin-bottom: 12px; font-family: var(--f-ui); font-size: 14px; }
-.custom-block.banner { background: var(--gold-dim); border: 1px solid rgba(200,169,74,0.3); color: var(--gold); }
-.custom-block.notice { background: #f0ede9; border-left: 4px solid var(--gold); color: var(--mx-white); }
-.custom-block.html { background: var(--surface-2); border: 1px solid var(--border); }
+.custom-block { padding: 14px 18px; border-radius: 10px; margin-bottom: 12px; font-family: var(--f-ui); font-size: 14px; line-height: 1.5; }
+.custom-block.banner { background: rgba(200,169,74,0.12); border: 1px solid rgba(200,169,74,0.35); color: #e8d08a; }
+.custom-block.notice { background: rgba(200,169,74,0.10); border: 1px solid rgba(200,169,74,0.28); border-left: 4px solid var(--gold); color: rgba(255,255,255,0.85); }
+.custom-block.html { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.82); }
 
 .block-editor { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; padding: 12px; background: var(--surface); border-radius: 0; border: 1px solid var(--border); box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
 .block-editor input { flex: 1; min-width: 150px; }
@@ -2637,7 +2637,28 @@ select option {
   }
 }
 
-/* app-crm-team — variables tema claro (gestor); concesionaria las sobrescribe */
+/* Lucide icon helpers (panel) */
+.card-title-with-icon { display: flex; align-items: center; gap: 8px; }
+.card-title-icon { flex-shrink: 0; opacity: 0.9; }
+.btn-with-icon { display: inline-flex; align-items: center; gap: 6px; }
+.btn-with-icon svg { flex-shrink: 0; }
+.deal-meta-with-icon { display: inline-flex; align-items: center; gap: 6px; }
+.deal-status-with-icon { display: inline-flex; align-items: center; gap: 6px; }
+.inbox-section-with-icon svg,
+.empty-with-icon svg,
+.card-title-with-icon svg {
+  stroke: currentColor;
+}
+.empty-with-icon { display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+.kanban-hint-with-icon { display: flex; align-items: flex-start; gap: 8px; }
+.kanban-scroll-hint-with-icon { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+.kanban-meta-with-icon { display: inline-flex; align-items: center; gap: 4px; }
+.task-row-icon { display: flex; align-items: center; gap: 8px; }
+.chip-ai { background: linear-gradient(45deg, #FF6B6B, #4ECDC4) !important; color: white !important; border: none !important; }
+.deal-applied-label { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #34d399; margin: 0; justify-content: center; width: 100%; }
+.fin-title-with-icon, .fin-tab-with-icon, .fin-section-with-icon { display: inline-flex; align-items: center; gap: 8px; }
+.fin-stat-icon { display: flex; align-items: center; justify-content: center; opacity: 0.9; }
+
 app-crm-team {
   --team-sub-bg: #faf9f7;
   --team-sub-border: rgba(0, 0, 0, 0.08);

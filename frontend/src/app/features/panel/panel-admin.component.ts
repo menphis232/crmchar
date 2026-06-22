@@ -12,15 +12,39 @@ import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.com
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { PanelUserMenuComponent } from './panel-user-menu.component';
+import {
+  LucideBarChart3,
+  LucideBot,
+  LucideBuilding2,
+  LucideCar,
+  LucideCircleCheck,
+  LucideCreditCard,
+  LucideEye,
+  LucideGlobe,
+  LucideLock,
+  LucideMessageCircle,
+  LucidePalette,
+  LucidePaperclip,
+  LucideSave,
+  LucideSearch,
+  LucideSettings,
+  LucideTriangleAlert,
+  LucideUser,
+  LucideUsers,
+  LucideWrench,
+  LucideX,
+  LucideZap,
+} from '@lucide/angular';
 
 type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye],
   templateUrl: './panel-admin.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
 export class PanelAdminComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -294,9 +318,21 @@ export class PanelAdminComponent implements OnInit {
     const f = this.userFilter();
     const role = f === 'all' ? undefined : f;
     this.adminService.getManagedUsers(role).subscribe({
-      next: u => this.managedUsers.set(u),
+      next: u => {
+        this.managedUsers.set(u);
+        const selected = this.selectedUser();
+        if (u.length && (!selected || !u.some(x => x.id === selected.id))) {
+          this.selectUser(u[0]);
+        } else if (!u.length) {
+          this.selectedUser.set(null);
+        }
+      },
       error: e => this.message.set(e.error?.error || 'No se pudieron cargar los usuarios'),
     });
+  }
+
+  userInitials(name?: string) {
+    return (name || 'U').split(' ').filter(Boolean).map(w => w[0]).join('').slice(0, 2).toUpperCase();
   }
 
   selectUser(u: ManagedUser) {

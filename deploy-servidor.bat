@@ -30,7 +30,7 @@ echo '=== [3/5] Contenedores activos ==='; ^
 docker ps --format 'table {{.Names}}\t{{.Status}}'; ^
 echo ''; ^
 echo '=== [4/5] Reiniciando backend ==='; ^
-docker-compose restart tramites-backend 2>/dev/null || docker compose restart tramites-backend 2>/dev/null || docker restart tramites-backend; ^
+docker compose restart tramites-backend 2>/dev/null || docker-compose restart tramites-backend 2>/dev/null || docker restart tramites-backend; ^
 echo ''; ^
 echo '=== [5/6] Migraciones ==='; ^
 docker exec tramites-backend node apply-v23.js 2>/dev/null || echo 'v23 ok'; ^

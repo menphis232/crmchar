@@ -11,6 +11,7 @@ import {
   OnChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { LucideCheck, LucideZoomIn, LucideZoomOut } from '@lucide/angular';
 
 export interface CropResult {
   blob: Blob;
@@ -20,7 +21,7 @@ export interface CropResult {
 @Component({
   selector: 'app-image-cropper-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LucideZoomOut, LucideZoomIn, LucideCheck],
   template: `
     <div class="crop-overlay" (click)="cancel()">
       <div class="crop-card" (click)="$event.stopPropagation()">
@@ -43,18 +44,21 @@ export interface CropResult {
         </div>
 
         <div class="crop-zoom-row">
-          <span class="crop-zoom-icon">🔍−</span>
+          <span class="crop-zoom-icon"><svg lucideZoomOut [size]="16" aria-hidden="true"></svg></span>
           <input type="range" class="crop-zoom-slider"
             [min]="zoomMin" [max]="zoomMax" [step]="0.01"
             [ngModel]="zoom()" (ngModelChange)="setZoom($event)" />
-          <span class="crop-zoom-icon">🔍+</span>
+          <span class="crop-zoom-icon"><svg lucideZoomIn [size]="16" aria-hidden="true"></svg></span>
         </div>
 
         <div class="crop-hint">Arrastra para reposicionar · Rueda del ratón o slider para acercar/alejar</div>
 
         <div class="crop-actions">
           <button class="crop-btn-cancel" type="button" (click)="cancel()">Cancelar</button>
-          <button class="crop-btn-confirm" type="button" (click)="confirm()">✔ Usar esta foto</button>
+          <button class="crop-btn-confirm btn-with-icon" type="button" (click)="confirm()">
+            <svg lucideCheck [size]="16" aria-hidden="true"></svg>
+            Usar esta foto
+          </button>
         </div>
       </div>
     </div>

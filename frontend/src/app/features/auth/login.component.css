@@ -12,6 +12,7 @@
   background: var(--brand-black);
 }
 
+.login-page--portal,
 .login-page--concesionaria {
   background: #000000;
 }

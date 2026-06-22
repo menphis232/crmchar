@@ -21,6 +21,7 @@ import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.com
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { MEXICO_STATES } from '../../shared/mexico-states';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -29,16 +30,36 @@ import { CrmTeamComponent } from './crm-team.component';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
 import {
   LucideBot,
+  LucideCamera,
+  LucideCar,
+  LucideDownload,
   LucideFileText,
+  LucideFolderOpen,
   LucideFunnel,
+  LucideGlobe,
+  LucideGripVertical,
   LucideGrid2x2,
+  LucideImage,
   LucideLandmark,
   LucideLayoutDashboard,
+  LucideLightbulb,
+  LucideLink,
   LucideList,
+  LucideMapPin,
+  LucidePaperclip,
+  LucidePlus,
+  LucideSave,
+  LucideSearch,
   LucideSettings,
+  LucideSparkles,
   LucideSquarePen,
+  LucideStar,
   LucideStarCheck,
+  LucideTrash2,
+  LucideTriangleAlert,
   LucideUsers,
+  LucideVideo,
+  LucideX,
 } from '@lucide/angular';
 
 type Tab = 'dashboard' | 'pipeline' | 'inventory' | 'edit' | 'reputation' | 'plantillas' | 'perfil' | 'asistente' | 'pdf_designer' | 'page_builder' | 'finanzas' | 'team';
@@ -65,13 +86,14 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })
 export class PanelConcesionariaComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  readonly mexicoStates = MEXICO_STATES;
 
   isMobileMenuOpen = signal(false);
   tab = signal<Tab>('dashboard');
@@ -628,11 +650,20 @@ export class PanelConcesionariaComponent implements OnInit {
     });
   }
 
-  privateDocIcon(fileName?: string | null): string {
+  privateDocKind(fileName?: string | null): 'pdf' | 'image' | 'file' {
     const name = (fileName || '').toLowerCase();
-    if (name.endsWith('.pdf')) return '📄';
-    if (/\.(jpg|jpeg|png|webp|gif)$/.test(name)) return '🖼️';
-    return '📎';
+    if (name.endsWith('.pdf')) return 'pdf';
+    if (/\.(jpg|jpeg|png|webp|gif)$/.test(name)) return 'image';
+    return 'file';
+  }
+
+  readonly reviewStarSlots = [1, 2, 3, 4, 5];
+
+  stripEmojis(text: string): string {
+    return (text || '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   downloadPrivateDocument(doc: AutoPrivateDocument) {

@@ -1,6 +1,22 @@
 import { Component, input, output, signal, effect, inject, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
+import {
+  LucideCircle,
+  LucideCircleCheck,
+  LucideCreditCard,
+  LucideHourglass,
+  LucideMail,
+  LucideMessageCircle,
+  LucidePaperclip,
+  LucidePhone,
+  LucidePlus,
+  LucideSend,
+  LucideSparkles,
+  LucideTimer,
+  LucideUser,
+  LucideX,
+} from '@lucide/angular';
 import { CrmService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate } from '../../models';
 import { SocketService } from '../../core/socket.service';
@@ -12,7 +28,7 @@ import { ToastService } from '../../core/toast.service';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`

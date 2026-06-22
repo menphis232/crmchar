@@ -15,7 +15,9 @@
             }
           </div>
         </div>
-        <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">✕</button>
+        <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">
+          <svg lucideX [size]="18" aria-hidden="true"></svg>
+        </button>
       </div>
 
       <!-- ── BODY ── -->
@@ -26,21 +28,23 @@
           <h4>Contacto</h4>
           <div class="deal-contact-card">
             @if (d.contact?.id) {
-              <button type="button" class="link-name" (click)="openContact.emit(d.contact!.id!)">
-                👤 {{ d.contact?.name }}
+              <button type="button" class="link-name deal-meta-with-icon" (click)="openContact.emit(d.contact!.id!)">
+                <svg lucideUser [size]="14" aria-hidden="true"></svg>
+                {{ d.contact?.name }}
               </button>
             } @else {
               <strong class="deal-contact-name">{{ d.contact?.name }}</strong>
             }
             @if (d.contact?.email) {
-              <p>✉️ {{ d.contact?.email }}</p>
+              <p class="deal-meta-with-icon"><svg lucideMail [size]="14" aria-hidden="true"></svg> {{ d.contact?.email }}</p>
             }
             @if (d.contact?.phone) {
-              <p>📞 {{ d.contact?.phone }}</p>
+              <p class="deal-meta-with-icon"><svg lucidePhone [size]="14" aria-hidden="true"></svg> {{ d.contact?.phone }}</p>
             }
             @if (d.contact?.whatsapp || d.contact?.phone) {
-              <a [href]="whatsappLink()" target="_blank" class="btn-copy small" style="margin-top:8px;align-self:flex-start;">
-                💬 WhatsApp
+              <a [href]="whatsappLink()" target="_blank" class="btn-copy small deal-meta-with-icon" style="margin-top:8px;align-self:flex-start;">
+                <svg lucideMessageCircle [size]="14" aria-hidden="true"></svg>
+                WhatsApp
               </a>
             }
           </div>
@@ -64,7 +68,10 @@
             </select>
           }
           @if (d.firstResponseAt) {
-            <p class="card-desc" style="margin-top:8px;">⏱️ 1ª respuesta: {{ d.firstResponseAt | date:'short' }}</p>
+            <p class="card-desc deal-meta-with-icon" style="margin-top:8px;">
+              <svg lucideTimer [size]="14" aria-hidden="true"></svg>
+              1ª respuesta: {{ d.firstResponseAt | date:'short' }}
+            </p>
           }
         </div>
 
@@ -79,14 +86,21 @@
           @if (!isConcesionaria()) {
             <div class="deal-payment-box">
               <div class="deal-payment-status">
-                <span>Estado de Pago: 
-                  <strong [class.paid]="d.paymentStatus === 'paid'" [class.pending]="d.paymentStatus !== 'paid'">
-                    {{ d.paymentStatus === 'paid' ? '✅ PAGADO' : '⏳ PENDIENTE' }}
+                <span>Estado de Pago:
+                  <strong class="deal-status-with-icon" [class.paid]="d.paymentStatus === 'paid'" [class.pending]="d.paymentStatus !== 'paid'">
+                    @if (d.paymentStatus === 'paid') {
+                      <svg lucideCircleCheck [size]="14" aria-hidden="true"></svg>
+                      PAGADO
+                    } @else {
+                      <svg lucideHourglass [size]="14" aria-hidden="true"></svg>
+                      PENDIENTE
+                    }
                   </strong>
                 </span>
                 @if (d.paymentStatus !== 'paid') {
-                  <button type="button" class="btn-ghost small" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
-                    {{ isGeneratingPayment() ? 'Generando...' : '💳 Cobrar en Línea' }}
+                  <button type="button" class="btn-ghost small btn-with-icon" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
+                    <svg lucideCreditCard [size]="14" aria-hidden="true"></svg>
+                    {{ isGeneratingPayment() ? 'Generando...' : 'Cobrar en Línea' }}
                   </button>
                 }
               </div>
@@ -126,7 +140,10 @@
                   </div>
                   @if (doc.extracted_data) {
                     <div class="deal-ocr-block">
-                      <p class="deal-ocr-label">✨ Datos Extraídos:</p>
+                      <p class="deal-ocr-label deal-meta-with-icon">
+                        <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                        Datos Extraídos:
+                      </p>
                       <div class="deal-ocr-data">
                         @for (item of doc.extracted_data | keyvalue; track item.key) {
                           <div class="deal-ocr-row">
@@ -140,7 +157,10 @@
                           Aplicar a Nota Interna
                         </button>
                       } @else {
-                        <p style="font-size:11px; color:#34d399; margin:0; text-align:center;">✓ Datos aplicados</p>
+                        <p class="deal-applied-label">
+                          <svg lucideCircleCheck [size]="12" aria-hidden="true"></svg>
+                          Datos aplicados
+                        </p>
                       }
                     </div>
                   } @else {
@@ -159,9 +179,10 @@
         <div class="deal-section deal-subsection deal-attach-section">
           <div class="deal-attach-header">
             <h4>Documentos Adjuntos</h4>
-            <label class="deal-outline-btn" [class.disabled]="isUploading()">
+            <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploading()">
               <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
-              {{ isUploading() ? 'Subiendo...' : '+ Subir archivo' }}
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              {{ isUploading() ? 'Subiendo...' : 'Subir archivo' }}
             </label>
           </div>
 
@@ -175,7 +196,9 @@
                   </div>
                   <div class="quote-doc-actions">
                     <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
-                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">✕</button>
+                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
+                      <svg lucideX [size]="14" aria-hidden="true"></svg>
+                    </button>
                   </div>
                 </div>
               }
@@ -213,9 +236,10 @@
                 <label>Nota (opcional)</label>
                 <input type="text" [(ngModel)]="quoteNote" placeholder="Ej. Cotización con enganche 20%, plazo 36 meses">
               </div>
-              <label class="deal-outline-btn" [class.disabled]="isUploadingQuote()">
+              <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploadingQuote()">
                 <input type="file" accept="application/pdf,.pdf" style="display:none" (change)="uploadQuotePdf($event)" [disabled]="isUploadingQuote()">
-                {{ isUploadingQuote() ? 'Subiendo...' : '+ Subir PDF' }}
+                <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                {{ isUploadingQuote() ? 'Subiendo...' : 'Subir PDF' }}
               </label>
             </div>
           </div>
@@ -244,7 +268,10 @@
           <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px;">
             <input type="text" [(ngModel)]="taskTitle" placeholder="Ej: Llamar al cliente">
             <input type="datetime-local" [(ngModel)]="taskDue" [value]="taskDue || defaultTaskDue()">
-            <button type="button" class="btn-ghost small" (click)="addTask()">+ Agendar tarea</button>
+            <button type="button" class="btn-ghost small btn-with-icon" style="margin-top:12px;" (click)="addTask()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agendar tarea
+            </button>
           </div>
         </div>
 
@@ -254,7 +281,10 @@
             <h4>Mensaje del cliente</h4>
             <p class="inquiry-msg">"{{ d.clientMessage }}"</p>
             @if (d.clientReply) {
-              <p class="reply-msg">✓ Respondido: {{ d.clientReply }}</p>
+              <p class="reply-msg deal-meta-with-icon">
+                <svg lucideCircleCheck [size]="14" aria-hidden="true"></svg>
+                Respondido: {{ d.clientReply }}
+              </p>
             }
           </div>
         }
@@ -268,15 +298,24 @@
                 @for (t of templates(); track t.id) {
                   <button type="button" class="chip" (click)="applyTemplate(t)">{{ t.name }}</button>
                 }
-                <button type="button" class="chip" style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; border: none;" (click)="generateAIReply()">✨ Generar Respuesta IA</button>
+                <button type="button" class="chip chip-ai btn-with-icon" (click)="generateAIReply()">
+                  <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                  Generar Respuesta IA
+                </button>
               </div>
             } @else {
               <div class="template-chips">
-                <button type="button" class="chip" style="background: linear-gradient(45deg, #FF6B6B, #4ECDC4); color: white; border: none;" (click)="generateAIReply()">✨ Generar Respuesta IA</button>
+                <button type="button" class="chip chip-ai btn-with-icon" (click)="generateAIReply()">
+                  <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                  Generar Respuesta IA
+                </button>
               </div>
             }
             <textarea [(ngModel)]="replyText" rows="3" placeholder="Escribe tu respuesta..."></textarea>
-            <button type="button" class="btn-copy small" style="margin-top:8px;" (click)="sendReply()">📤 Enviar respuesta</button>
+            <button type="button" class="btn-copy small btn-with-icon" style="margin-top:8px;" (click)="sendReply()">
+              <svg lucideSend [size]="14" aria-hidden="true"></svg>
+              Enviar respuesta
+            </button>
           </div>
         }
 
@@ -295,7 +334,10 @@
                     {{ msg.message }}
                     @if (msg.file_url) {
                       <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
-                        <a [href]="msg.file_url" target="_blank" style="color: inherit; text-decoration: underline;">📎 Ver Documento</a>
+                        <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
+                          <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
+                          Ver Documento
+                        </a>
                       </div>
                     }
                   </div>
@@ -303,7 +345,9 @@
               }
             </div>
             <div class="chat-input">
-              <button type="button" class="btn-ghost small" (click)="fileInput.click()">📎</button>
+              <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
+                <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
+              </button>
               <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
               <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
               <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>

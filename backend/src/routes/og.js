@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import path from 'path';
 import { get } from '../db.js';
-import { generateDealerOgImage } from '../utils/og-image.js';
+import { generateDealerOgImage, generateAutosOgImage } from '../utils/og-image.js';
 
 const router = Router();
 
@@ -17,6 +17,22 @@ router.get('/dealer/:slug.jpg', async (req, res) => {
     }
 
     const filePath = await generateDealerOgImage(row.logo_url, row.slug);
+    if (!filePath) {
+      return res.status(404).type('text/plain').send('No se pudo generar la imagen');
+    }
+
+    res.set('Content-Type', 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.sendFile(path.resolve(filePath));
+  } catch (err) {
+    console.error(err);
+    res.status(500).type('text/plain').send('Error al generar imagen OG');
+  }
+});
+
+router.get('/autos.jpg', async (_req, res) => {
+  try {
+    const filePath = await generateAutosOgImage();
     if (!filePath) {
       return res.status(404).type('text/plain').send('No se pudo generar la imagen');
     }

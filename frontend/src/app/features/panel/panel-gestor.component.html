@@ -1,7 +1,9 @@
 <nav class="dash-nav">
   @if (auth.user()?.logo_url) {
-    <a routerLink="/autos" class="dash-logo">
-      <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+    <a routerLink="/gestores" class="dash-logo dash-logo-dealer">
+      <span class="dash-logo-frame">
+        <img [src]="auth.user()?.logo_url" alt="Logo" class="dash-brand-logo" />
+      </span>
     </a>
   } @else {
     <a [href]="tvmMainSite" class="dash-logo">
@@ -50,42 +52,78 @@
     </div>
 
     @if (hasPerm('perfil')) {
-      <button class="dash-link" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">👤 Mi perfil</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">
+        <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Perfil
+      </button>
     }
     @if (hasPerm('dashboard')) {
-      <button class="dash-link" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">📊 Dashboard</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">
+        <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Dashboard
+      </button>
     }
     @if (hasPerm('pipeline')) {
-      <button class="dash-link" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
-        📋 Embudo de Ventas
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
+        <svg lucideFunnel [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Embudo de Ventas
         @if (crmDashboard()?.totals?.active) {
           <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
         }
       </button>
     }
     @if (hasPerm('servicios')) {
-      <button class="dash-link" [class.active]="tab() === 'servicios'" (click)="setTab('servicios'); isMobileMenuOpen.set(false)">🛠 Servicios</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'servicios'" (click)="setTab('servicios'); isMobileMenuOpen.set(false)">
+        <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Servicios
+      </button>
     }
     @if (hasPerm('finanzas')) {
-      <button class="dash-link" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">💰 Finanzas</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'finanzas'" (click)="setTab('finanzas'); isMobileMenuOpen.set(false)">
+        <svg lucideLandmark [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Finanzas
+      </button>
     }
     @if (hasPerm('perfil')) {
-      <button class="dash-link" [class.active]="tab() === 'ajustes-crm'" (click)="setTab('ajustes-crm'); isMobileMenuOpen.set(false)">⚙️ Ajustes CRM</button>
-      <button class="dash-link" [class.active]="tab() === 'automatizaciones'" (click)="setTab('automatizaciones'); isMobileMenuOpen.set(false)">🤖 Automatizaciones</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'automatizaciones'" (click)="setTab('automatizaciones'); isMobileMenuOpen.set(false)">
+        <svg lucideBot [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Automatizaciones
+      </button>
+    }
+    @if (hasPerm('asistente')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'asistente'" (click)="setTab('asistente'); isMobileMenuOpen.set(false)">
+        <svg lucideBot [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Asistente IA
+      </button>
     }
     @if (hasPerm('plantillas')) {
-      <button class="dash-link" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">📝 Plantillas</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">
+        <svg lucideFileText [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Plantillas
+      </button>
     }
     @if (hasPerm('pdf_designer')) {
-      <button class="dash-link" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer'); isMobileMenuOpen.set(false)">📄 PDF Cotización</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'pdf_designer'" (click)="setTab('pdf_designer'); isMobileMenuOpen.set(false)">
+        <svg lucideFileText [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        PDF Cotización
+      </button>
     }
     @if (hasPerm('perfil')) {
-      <button class="dash-link" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">🎨 Constructor Web</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">
+        <svg lucidePalette [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Constructor Web
+      </button>
     }
     @if (!auth.user()?.parent_id) {
-      <button class="dash-link" [class.active]="tab() === 'team'" (click)="setTab('team'); isMobileMenuOpen.set(false)">👥 Mi Equipo</button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'team'" (click)="setTab('team'); isMobileMenuOpen.set(false)">
+        <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Mi Equipo
+      </button>
     }
-    <a routerLink="/gestores" class="dash-link" (click)="isMobileMenuOpen.set(false)">🌐 Directorio público</a>
+    <a routerLink="/gestores" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
+      <svg lucideGlobe [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Directorio público
+    </a>
   </aside>
 
   <main class="dash-main">
@@ -134,7 +172,12 @@
 
       <!-- AI Insights — visible aunque el dashboard CRM tarde o falle -->
       <div class="dash-card ai-insights-card">
-        <h2 class="card-title ai-insights-title">🤖 Análisis IA Comercial</h2>
+        <h2 class="card-title ai-insights-title">
+          <span class="dash-link-with-icon ai-insights-title-row">
+            <svg lucideSparkles [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+            <span>Análisis IA Comercial</span>
+          </span>
+        </h2>
         @if (isAiLoading()) {
           <p class="card-desc">Generando recomendaciones prácticas para tu negocio...</p>
         } @else if (aiInsights().length === 0) {
@@ -143,7 +186,10 @@
           <p class="card-desc">Tips para mejorar tus ventas y la atención a tus clientes:</p>
           <ul class="ai-insights-list">
             @for (insight of aiInsights(); track $index) {
-              <li>{{ insight }}</li>
+              <li class="ai-insight-row">
+                <svg lucideLightbulb [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                <span>{{ stripEmojis(insight) }}</span>
+              </li>
             }
           </ul>
         }
@@ -151,6 +197,13 @@
 
       @if (crmDashboard(); as crm) {
       @if (todayInbox(); as inbox) {
+        <div class="dash-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+          <p class="card-desc" style="margin:0;">Registra clientes que llegaron por teléfono, referido o presencial.</p>
+          <button type="button" class="btn-nuevo-lead btn-with-icon" (click)="openManualLeadForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Nuevo trámite
+          </button>
+        </div>
         <app-crm-today-inbox
           [inbox]="inbox"
           [stageLabels]="crm.stageLabels"
@@ -160,12 +213,18 @@
       }
 
       <div class="dash-card">
-        <h2 class="card-title">📎 Tu Ficha Pública</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideLink [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Tu Ficha Pública
+        </h2>
         <p class="card-desc">Comparte este enlace con tus clientes para que puedan encontrarte.</p>
         @if (profile(); as p) {
           <div class="link-box">
             <input class="link-input" [value]="'/gestores/' + p.slug" readonly>
-            <button class="btn-copy" (click)="copyLink()">📋 Copiar link</button>
+            <button class="btn-copy btn-with-icon" (click)="copyLink()">
+              <svg lucideCopy [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+              Copiar link
+            </button>
           </div>
         }
       </div>
@@ -175,8 +234,11 @@
     <!-- ── PIPELINE ── -->
     @if (tab() === 'pipeline' && crmDashboard(); as crm) {
       <div class="dash-card kanban-wrap">
-        <h2 class="card-title">📋 Pipeline de trámites</h2>
-        <p class="card-desc">Sigue cada trámite desde la solicitud hasta completado.</p>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideFunnel [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Embudo de ventas
+        </h2>
+        <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
         <div class="pipeline-filters">
           <div class="pipeline-filter-field pipeline-filter-search">
             <label for="gestor-pipeline-search">Buscar</label>
@@ -192,13 +254,20 @@
             </select>
           </div>
           <button type="button" class="btn-copy pipeline-filter-btn" (click)="loadDeals()">Buscar</button>
+          <button type="button" class="btn-nuevo-lead btn-with-icon" (click)="openManualLeadForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Nuevo trámite
+          </button>
         </div>
         <app-crm-kanban
           [stages]="crm.stages"
           [stageLabels]="crm.stageLabels"
           [deals]="deals()"
+          [showValue]="true"
+          [editable]="true"
           (dealSelect)="selectedDealId.set($event.id)"
           (stageChange)="onStageChange($event)"
+          (stagesChange)="onStagesChange($event)"
         />
       </div>
 
@@ -227,13 +296,19 @@
     <!-- ── SERVICIOS ── -->
     @if (tab() === 'servicios' && profile(); as p) {
       <div class="dash-card">
-        <h2 class="card-title">🛠 Catálogo de servicios</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideWrench [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Catálogo de servicios
+        </h2>
         <p class="card-desc">Define tus trámites con precio y tiempo estimado.</p>
         @for (s of p.services; track s.id) {
           <div class="inbox-item">
             <div class="inbox-info">
               <h4>{{ s.name }}</h4>
-              <p>⏱️ {{ s.timeEstimate }} — ${{ s.price | number }} MXN</p>
+              <p class="deal-meta-with-icon">
+                <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+                {{ s.timeEstimate }} — ${{ s.price | number }} MXN
+              </p>
               @if (s.required_documents?.length) {
                 <p style="font-size:11px; color:var(--muted); margin-top:4px;">Requisitos: {{ s.required_documents?.join(', ') }}</p>
               }
@@ -264,126 +339,246 @@
           <input [(ngModel)]="newService.requiredDocumentsStr" placeholder="Ej: INE, Tarjeta de Circulación, Factura">
           <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas en blanco, se pedirá por defecto: INE, Tarjeta de Circulación, Factura de Origen.</p>
         </div>
-        <button class="btn-copy" (click)="addService()">+ Agregar servicio</button>
+        <button class="btn-copy btn-with-icon" (click)="addService()">
+          <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+          Agregar servicio
+        </button>
       </div>
     }
 
     <!-- ── PERFIL ── -->
-    @if (tab() === 'perfil' && profile(); as p) {
+    @if (tab() === 'perfil' && hasPerm('perfil') && profile(); as p) {
       <div class="dash-card">
-        <h2 class="card-title">👤 Mi Perfil Público</h2>
-        @if (!editBio()) {
-          <p style="color:var(--text);font-size:14px;line-height:1.6;margin-bottom:16px;">{{ p.bio || 'Sin descripción aún.' }}</p>
-          <button class="btn-ghost" (click)="editBio.set(true)">✏️ Editar descripción</button>
-        } @else {
-          <div class="form-group">
-            <label>Descripción pública</label>
-            <textarea [(ngModel)]="bio" rows="5" placeholder="Cuéntale a tus clientes sobre ti y tus servicios..."></textarea>
-          </div>
-          
-          <div class="form-group" style="margin-top:16px;">
-            <label>Logo de la Empresa (Opcional)</label>
-            <div style="display:flex; gap:10px; align-items:center;">
-              <input type="file" accept="image/*" (change)="onLogoSelected($event)" #logoInput style="display:none">
-              <button class="btn-ghost small" (click)="logoInput.click()">Subir Imagen</button>
-              @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
-            </div>
-            <p class="card-desc" style="margin-top:4px; font-size:11px;">Sube una imagen (png, jpg, webp). Este logo se mostrará en las cotizaciones y documentos PDF.</p>
-            @if (profileLogoUrl) {
-              <div style="margin-top:12px; padding:12px; background:var(--surface); border-radius:8px; display:inline-block; position:relative;">
-                <img [src]="profileLogoUrl" style="max-height:60px; max-width:100%; object-fit:contain;" alt="Vista previa del logo">
-                <button class="btn-delete small" style="position:absolute; top:-10px; right:-10px;" (click)="profileLogoUrl = ''">X</button>
-              </div>
-            }
-          </div>
+        <h2 class="card-title">Mi Perfil Público</h2>
+        <p class="card-desc">Personaliza la información que los clientes verán en tu ficha pública y en tus cotizaciones PDF. El tema visual de tu página se configura en <strong>Constructor Web</strong>.</p>
 
-          <div class="form-group" style="margin-top:16px;">
-            <label>ID de Google Analytics (Opcional)</label>
-            <input type="text" [(ngModel)]="googleAnalyticsId" placeholder="Ej. G-XXXXXXX" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-            <p class="card-desc" style="margin-top:4px; font-size:11px;">Añade tu ID de seguimiento de GA4 para medir visitas en tu página pública.</p>
-          </div>
-
-          <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
-            <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">💳 Pagos en Línea (Stripe)</h3>
-            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tus llaves de Stripe para poder generar links de cobro a tus clientes.</p>
-            
-            <div class="form-group" style="margin-bottom:12px;">
-              <label>Stripe Public Key</label>
-              <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-            </div>
-            <div class="form-group">
-              <label>Stripe Secret Key</label>
-              <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_test_..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-            </div>
-          </div>
-
-          <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
-            <h3 style="color:var(--brand-black); font-size:14px; margin-bottom:12px; font-weight:800;">🎨 Diseño del Chatbot Público</h3>
-            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Personaliza los colores del asistente virtual en tu página pública. La IA usa la configuración global del administrador.</p>
-            <h4 style="color:var(--brand-black); font-size:12px; margin-top:20px; margin-bottom:8px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em;">🤖 Asistente del Panel</h4>
-            <p class="card-desc" style="margin-bottom:12px; font-size:12px;">Personaliza el botón flotante de ayuda dentro de tu panel (no afecta el chatbot público).</p>
-            <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-              <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
-              Mostrar asistente en el panel
-            </label>
-            <div class="form-row" style="margin-bottom:12px;">
-              <div class="form-group">
-                <label>Nombre del asistente</label>
-                <input [(ngModel)]="panelAssistantName" placeholder="Ej: VEGA, Ana, Mi Asistente" maxlength="50">
-              </div>
-              <div class="form-group">
-                <label>Posición en pantalla</label>
-                <select [(ngModel)]="panelAssistantPosition">
-                  <option value="bottom-right">Abajo derecha</option>
-                  <option value="bottom-left">Abajo izquierda</option>
-                  <option value="top-right">Arriba derecha</option>
-                  <option value="top-left">Arriba izquierda</option>
-                </select>
-              </div>
-            </div>
-            <app-panel-color-palette
-              [fields]="designColorFields"
-              [colors]="designColors"
-              hint="Elige el elemento a personalizar y selecciona un color. Se guarda automáticamente."
-              (colorsChange)="applyDesignColors($event)"
-              (colorPicked)="saveDesignColors()"
-            ></app-panel-color-palette>
-          </div>
-
-          <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
-            <h3 style="color:var(--gold); font-size:14px; margin-bottom:12px;">&#x1F4CD; Dirección y Mapa</h3>
-            <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Esta información aparece en tu ficha pública y permite a los clientes ubicarte fácilmente.</p>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label>Teléfono</label>
-                <input type="text" [(ngModel)]="gestorPhone" placeholder="Ej: +52 55 1234 5678" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-              </div>
-              <div class="form-group">
-                <label>Dirección física</label>
-                <input type="text" [(ngModel)]="gestorAddress" placeholder="Calle, Núm, Colonia, Ciudad" style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-              </div>
-            </div>
-
-            <div class="form-group" style="margin-top:12px;">
-              <label>URL Embed de Google Maps</label>
-              <input type="text" [(ngModel)]="gestorMapEmbedUrl" placeholder="https://www.google.com/maps/embed?pb=..." style="width:100%; padding:8px; border-radius:8px; border:1px solid var(--border); background:#fff; color:var(--brand-black);">
-              <p class="card-desc" style="margin-top:4px; font-size:11px;">En Google Maps &rarr; Compartir &rarr; Incorporar un mapa &rarr; copia la URL del atributo <code>src</code> del iframe.</p>
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button class="btn-copy" (click)="saveBio()">Guardar</button>
-            <button class="btn-ghost" (click)="editBio.set(false)">Cancelar</button>
+        @if (publicSlug) {
+          <div class="link-box" style="margin-bottom: 20px;">
+            <input class="link-input" [value]="publicShareUrl" readonly>
+            <button type="button" class="btn-copy" (click)="copyPublicPageLink()">Copiar link</button>
+            <a [routerLink]="['/gestores', publicSlug]" target="_blank" class="btn-copy small">Ver mi página</a>
           </div>
         }
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Logo de la Empresa</label>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se mostrará en el header del panel, tu página pública y cotizaciones PDF. Se recortará en círculo 1:1.</p>
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+            @if (profileLogoUrl) {
+              <div class="dash-logo-frame" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.28);flex-shrink:0;">
+                <img [src]="profileLogoUrl" style="width:100%;height:100%;object-fit:cover;" alt="Logo actual">
+              </div>
+            }
+            <input type="file" accept="image/*" (change)="onLogoSelected($event)" #logoInput style="display:none">
+            <button type="button" class="btn-ghost small btn-with-icon" (click)="logoInput.click()">
+              @if (profileLogoUrl) {
+                <svg lucideSquarePen [size]="14" aria-hidden="true"></svg>
+                Cambiar logo
+              } @else {
+                <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                Subir logo
+              }
+            </button>
+            @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
+            @if (profileLogoUrl && !isUploadingLogo) {
+              <button type="button" class="btn-delete small" (click)="profileLogoUrl = ''">Quitar</button>
+            }
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Nombre comercial</label>
+          <input [(ngModel)]="profileName" placeholder="Ej: Gestoría Pérez">
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Descripción pública</label>
+          <textarea [(ngModel)]="bio" rows="5" placeholder="Cuéntale a tus clientes sobre ti y tus servicios..."></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Estado</label>
+          <select [(ngModel)]="gestorState">
+            <option value="">— Seleccionar estado —</option>
+            @for (st of mexicoStates; track st) {
+              <option [value]="st">{{ st }}</option>
+            }
+          </select>
+          <p class="card-desc" style="font-size:11px; margin-top:4px;">Se muestra en tu página pública y en el directorio de gestores.</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Teléfono / WhatsApp</label>
+            <input [(ngModel)]="gestorPhone" placeholder="Ej: +52 55 1234 5678">
+          </div>
+          <div class="form-group">
+            <label>Dirección</label>
+            <input [(ngModel)]="gestorAddress" placeholder="Calle, Núm, Colonia, Ciudad">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px;">
+          <label>Ubicación en el mapa</label>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <input [(ngModel)]="mapSearchQuery"
+                   (keydown.enter)="searchAddress()"
+                   placeholder="Ej: Av. Chapultepec 123, Guadalajara, Jalisco"
+                   style="flex:1;">
+            <button type="button" class="btn-copy btn-with-icon"
+                    style="white-space:nowrap; padding:8px 14px; font-size:13px;"
+                    (click)="searchAddress()"
+                    [disabled]="mapSearching">
+              <svg lucideSearch [size]="14" aria-hidden="true"></svg>
+              {{ mapSearching ? 'Buscando…' : 'Buscar' }}
+            </button>
+          </div>
+          @if (mapSearchError) {
+            <p style="color:#f87171; font-size:12px; margin-top:6px;">{{ mapSearchError }}</p>
+          }
+          @if (mapFoundLabel()) {
+            <p class="map-found-label">
+              <svg lucideMapPin [size]="14" aria-hidden="true"></svg>
+              {{ mapFoundLabel() }}
+            </p>
+          }
+          @if (mapPreviewUrl()) {
+            <div style="margin-top:10px; border-radius:10px; overflow:hidden; height:200px;">
+              <iframe [src]="mapPreviewUrl()!"
+                      width="100%" height="200"
+                      style="border:0; display:block;"
+                      loading="lazy"></iframe>
+            </div>
+          } @else if (gestorMapEmbedUrl) {
+            <div style="margin-top:10px; padding:14px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); text-align:center;">
+              <p class="map-warning-label">
+                <svg lucideTriangleAlert [size]="14" aria-hidden="true"></svg>
+                El mapa guardado usa un formato antiguo que no se puede previsualizar.
+              </p>
+              <p style="color:rgba(255,255,255,0.5); font-size:12px; margin:0;">Escribe tu dirección arriba y presiona <strong>Buscar</strong> para actualizarlo.</p>
+            </div>
+          }
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+          <h3 class="section-sub card-title-with-icon">
+            <svg lucideCreditCard [size]="16" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Pagos en Línea (Stripe)
+          </h3>
+          <p class="card-desc" style="margin-bottom:16px; font-size:12px;">Configura tus llaves de Stripe para generar links de cobro a tus clientes.</p>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Stripe Public Key</label>
+            <input type="text" [(ngModel)]="stripePublicKey" placeholder="pk_test_...">
+          </div>
+          <div class="form-group">
+            <label>Stripe Secret Key</label>
+            <input type="password" [(ngModel)]="stripeSecretKey" placeholder="sk_test_...">
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label>ID de Google Analytics (Opcional)</label>
+          <input type="text" [(ngModel)]="googleAnalyticsId" placeholder="Ej. G-XXXXXXX">
+          <p class="card-desc" style="margin-top:4px; font-size:11px;">Añade tu ID de seguimiento de GA4 para medir visitas en tu página pública.</p>
+        </div>
+
+        <button type="button" class="btn-copy" (click)="saveProfile()">Guardar Cambios</button>
+      </div>
+    }
+
+    @if (logoCropFile()) {
+      <app-image-cropper-modal
+        [imageFile]="logoCropFile()!"
+        [aspect]="1"
+        (cropped)="onLogoCropConfirmed($event)"
+        (cancelled)="onLogoCropCancelled()"
+      />
+    }
+
+    <!-- ── ASISTENTE IA ── -->
+    @if (tab() === 'asistente' && hasPerm('asistente')) {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Asistente IA
+        </h2>
+        <p class="card-desc">Configura el bot flotante del panel y los colores del chatbot en tu página pública.</p>
+
+        <h3 class="section-sub" style="margin-top:8px;">Asistente del panel</h3>
+        <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
+          Mostrar asistente en el panel
+        </label>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Nombre del asistente</label>
+            <input [(ngModel)]="panelAssistantName" placeholder="Ej: VEGA" maxlength="50">
+          </div>
+          <div class="form-group">
+            <label>Posición</label>
+            <select [(ngModel)]="panelAssistantPosition">
+              <option value="bottom-right">Abajo derecha</option>
+              <option value="bottom-left">Abajo izquierda</option>
+              <option value="top-right">Arriba derecha</option>
+              <option value="top-left">Arriba izquierda</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:12px;">
+          <div class="form-group">
+            <label>Fuente del asistente</label>
+            <select [(ngModel)]="panelAssistantFont">
+              @for (f of assistantFontOptions; track f.value) {
+                <option [value]="f.value" [style.font-family]="f.value">{{ f.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <app-panel-color-palette
+          [fields]="assistantColorFields"
+          [colors]="assistantColors"
+          hint="Colores del asistente flotante dentro del panel."
+          (colorsChange)="applyAssistantColors($event)"
+          (colorPicked)="saveAssistantConfig()"
+        ></app-panel-color-palette>
+
+        <div class="form-group" style="margin-top:18px;">
+          <label style="font-size:13px; font-weight:600; margin-bottom:6px; display:block;">Instrucciones personalizadas</label>
+          <textarea
+            [(ngModel)]="panelAssistantPrompt"
+            placeholder="Ej: Eres el asistente de Gestoría Pérez. Responde con calidez y menciona tus servicios de trámites vehiculares..."
+            rows="5"
+            maxlength="2000"
+            style="width:100%; box-sizing:border-box; resize:vertical; line-height:1.5;"
+          ></textarea>
+          <small style="display:flex; justify-content:flex-end; opacity:.5; font-size:11px; margin-top:3px;">
+            {{ panelAssistantPrompt.length }}/2000 caracteres
+          </small>
+        </div>
+
+        <hr class="divider">
+
+        <h3 class="section-sub">Chatbot en tu página pública</h3>
+        <p class="card-desc" style="margin-bottom:12px; font-size:12px;">Personaliza los colores del asistente virtual que ven tus clientes en tu ficha pública.</p>
+        <app-panel-color-palette
+          [fields]="chatbotColorFields"
+          [colors]="chatbotColors"
+          hint="Colores del chatbot flotante en /gestores/tu-slug."
+          (colorsChange)="applyChatbotColors($event)"
+          (colorPicked)="saveAssistantConfig()"
+        ></app-panel-color-palette>
+
+        <button type="button" class="btn-copy" style="margin-top:16px;" (click)="saveAssistantConfig()">Guardar asistente</button>
       </div>
     }
 
     <!-- ── PLANTILLAS ── -->
     @if (tab() === 'plantillas') {
       <div class="dash-card">
-        <h2 class="card-title">📝 Plantillas de mensaje</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideFileText [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Plantillas de mensaje
+        </h2>
         <p class="card-desc">Crea respuestas rápidas para usar en el pipeline.</p>
         @for (t of templates(); track t.id) {
           <div class="block-editor">
@@ -432,43 +627,13 @@
       </app-page-builder>
     }
 
-    <!-- ── AJUSTES CRM ── -->
-    @if (tab() === 'ajustes-crm') {
-      <div class="dash-card">
-        <h2 class="card-title">⚙️ Ajustes del CRM</h2>
-        <p class="card-desc">Personaliza las etapas de tu embudo de ventas. Los cambios afectarán cómo se muestra tu pipeline y cómo lo ven tus clientes al rastrear.</p>
-        
-        <div class="crm-stages-list">
-          @for (stage of crmStages; track stage.id; let i = $index) {
-            <div class="crm-stage-row">
-              <span class="crm-stage-index">{{ i + 1 }}</span>
-              <input type="text" class="crm-stage-input" [(ngModel)]="stage.label" placeholder="Nombre de la etapa">
-              <div class="crm-stage-actions">
-                <button type="button" class="crm-stage-btn" (click)="moveCrmStageUp(i)" [disabled]="i === 0" title="Subir">
-                  <svg viewBox="0 0 24 24"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
-                </button>
-                <button type="button" class="crm-stage-btn" (click)="moveCrmStageDown(i)" [disabled]="i === crmStages.length - 1" title="Bajar">
-                  <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
-                </button>
-                <button type="button" class="crm-stage-btn crm-stage-btn--delete" (click)="removeCrmStage(i)" title="Eliminar etapa">
-                  <svg viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-        
-        <div class="crm-stages-footer">
-          <button class="btn-ghost" (click)="addCrmStage()">+ Añadir nueva etapa</button>
-          <button class="btn-copy" (click)="saveCrmStages()">Guardar Ajustes</button>
-        </div>
-      </div>
-    }
-
     <!-- ── AUTOMATIZACIONES ── -->
     @if (tab() === 'automatizaciones') {
       <div class="dash-card">
-        <h2 class="card-title">🤖 Automatizaciones de Embudo</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Automatizaciones de Embudo
+        </h2>
         <p class="card-desc">Haz que el CRM trabaje por ti. Configura reglas para enviar correos automáticos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
 
         <div class="automation-guide">
@@ -556,12 +721,99 @@
         </div>
         
         <div style="margin-top:15px;">
-          <button type="button" class="btn-copy" (click)="addAutomation()">+ Crear automatización</button>
+          <button type="button" class="btn-copy btn-with-icon" (click)="addAutomation()">
+            <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+            Crear automatización
+          </button>
         </div>
       </div>
     }
   </main>
 </div>
+
+@if (showManualLeadForm()) {
+  <div class="modal-overlay" (click)="closeManualLeadForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="closeManualLeadForm()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <h2 class="card-title" style="margin-bottom:8px;">+ Nuevo trámite manual</h2>
+      <p class="card-desc" style="margin-bottom:20px;">Registra un cliente con su trámite. Si incluyes email, se creará su cuenta de seguimiento.</p>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gl-name">Nombre del cliente *</label>
+          <input id="gl-name" [(ngModel)]="manualLead.clientName" placeholder="Ej. Juan Pérez">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gl-email">Email</label>
+          <input id="gl-email" type="email" [(ngModel)]="manualLead.clientEmail" placeholder="correo@ejemplo.com">
+        </div>
+        <div class="form-group">
+          <label for="gl-phone">Teléfono / WhatsApp</label>
+          <input id="gl-phone" type="tel" [(ngModel)]="manualLead.clientPhone" placeholder="55 1234 5678">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gl-service">Trámite / servicio</label>
+          <select id="gl-service" [(ngModel)]="manualLead.serviceName" (ngModelChange)="onManualLeadServiceChange()">
+            <option value="">— Sin servicio específico —</option>
+            @for (s of manualLeadServices(); track s.name) {
+              <option [value]="s.name">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="gl-value">Valor estimado (MXN)</label>
+          <input id="gl-value" type="number" [(ngModel)]="manualLead.estimatedValue" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gl-location">Estado</label>
+          <select id="gl-location" [(ngModel)]="manualLead.location">
+            <option value="">— Seleccionar estado —</option>
+            @for (st of mexicoStates; track st) {
+              <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </div>
+        @if (crmDashboard(); as crm) {
+          <div class="form-group">
+            <label for="gl-stage">Etapa inicial</label>
+            <select id="gl-stage" [(ngModel)]="manualLead.stage">
+              @for (s of crm.stages; track s) {
+                <option [value]="s">{{ crm.stageLabels[s] || s }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gl-title">Título del trámite</label>
+          <input id="gl-title" [(ngModel)]="manualLead.title" placeholder="Ej. Cambio de propietario">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group" style="flex:1 1 100%;">
+          <label for="gl-notes">Notas / mensaje del cliente</label>
+          <textarea id="gl-notes" rows="3" [(ngModel)]="manualLead.message" placeholder="¿Qué necesita? ¿Cómo llegó el contacto?"></textarea>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
+        <button type="button" class="btn-ghost" (click)="closeManualLeadForm()">Cancelar</button>
+        <button type="button" class="btn-copy" (click)="saveManualLead()" [disabled]="savingManualLead()">
+          {{ savingManualLead() ? 'Guardando...' : 'Crear trámite' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- Bloqueo por suscripción pendiente / desactivada -->
 <app-panel-subscription-lock />

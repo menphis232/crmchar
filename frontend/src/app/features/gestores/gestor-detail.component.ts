@@ -3,6 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { NavComponent } from '../../shared/nav.component';
+import { WhatsappIconComponent } from '../../shared/whatsapp-icon.component';
 import { GestoresService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { Gestor } from '../../models';
@@ -10,16 +11,20 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
+import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
+import { MEXICO_STATES } from '../../shared/mexico-states';
 
 @Component({
   selector: 'app-gestor-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappIconComponent, ...GESTOR_LUCIDE_ICONS],
   templateUrl: './gestor-detail.component.html',
   styleUrl: './gestor-detail.component.css',
 })
 export class GestorDetailComponent implements OnInit {
   private toast = inject(ToastService);
+
+  readonly mexicoStates = MEXICO_STATES;
 
   gestor = signal<Gestor | null>(null);
   loading = signal(true);
@@ -64,9 +69,10 @@ export class GestorDetailComponent implements OnInit {
   }
 
   stars(rating: number) {
-    const full = Math.max(0, Math.min(5, Math.round(rating)));
-    return '★'.repeat(full) + '☆'.repeat(5 - full);
+    return Math.max(0, Math.min(5, Math.round(rating)));
   }
+
+  starIndexes = [1, 2, 3, 4, 5];
 
   sendSolicitud() {
     const g = this.gestor();

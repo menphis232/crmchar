@@ -3,244 +3,164 @@
 }
 <app-nav />
 
-<header class="catalog-header gestores-header">
-  <div class="header-content">
-    <span class="header-eyebrow">RED CERTIFICADA</span>
-    <h1 class="catalog-title themed-title">{{ theme().pageTitle || 'DIRECTORIO DE GESTORES' }}</h1>
-    <p class="subtitle themed-subtitle">{{ theme().pageSubtitle || 'Encuentra expertos certificados para realizar tus trámites vehiculares.' }}</p>
-  </div>
-</header>
+<div class="gestores-page">
+  <section class="gestores-hero">
+    <h1 class="gestores-hero-title themed-title">{{ theme().pageTitle || 'DIRECTORIO DE GESTORES' }}</h1>
+  </section>
 
-<!-- Search Bar -->
-<div class="search-bar-wrap">
-  <div class="search-bar-inner">
-    <div class="search-input-wrap">
-      <span class="search-icon">🔍</span>
-      <input
-        id="gestores-search"
-        type="text"
-        class="search-input"
-        placeholder="Buscar por nombre, ciudad o estado..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="onSearch($event)"
-      />
-      @if (searchQuery()) {
-        <button class="search-clear" (click)="onSearch('')" title="Limpiar búsqueda">✕</button>
-      }
-    </div>
-    <div class="results-count">
-      <span class="count-num">{{ filteredGestores().length }}</span>
-      <span class="count-label">gestores encontrados</span>
-    </div>
-  </div>
-</div>
+  <div class="catalog-container">
+    <div class="gestores-toolbar">
+      <div class="gestores-search-row">
+        <input
+          id="gestores-search"
+          type="text"
+          class="gestores-search-input"
+          placeholder="Buscar por nombre, ciudad o estado..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearch($event)"
+        />
 
-<div class="catalog-container">
-  <button type="button" class="filters-mobile-toggle" (click)="toggleFiltersPanel()">
-    {{ filtersOpen() ? 'Ocultar filtros' : 'Mostrar filtros' }}
-    @if (activeFilterCount() > 0) {
-      <span class="filters-mobile-badge">{{ activeFilterCount() }}</span>
-    }
-  </button>
+        <div class="filters-dropdown-wrap">
+          <button
+            type="button"
+            class="filters-trigger"
+            [class.is-open]="filtersOpen()"
+            (click)="toggleFiltersPanel($event)"
+            [attr.aria-expanded]="filtersOpen()"
+          >
+            <svg class="filters-trigger-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 5h18l-7 8v5l-4 2v-7L3 5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            <span>Filtros</span>
+            <svg class="filters-trigger-chevron" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
 
-  <!-- Sidebar Filters -->
-  <aside class="filters" [class.filters-open]="filtersOpen()">
-    <div class="filters-header">
-      <span class="filters-title">FILTROS</span>
-      @if (hasActiveFilters) {
-        <button type="button" class="clear-filters-btn" (click)="clearFilters()">Limpiar</button>
-      }
-    </div>
-
-    <!-- Estado / Ciudad -->
-    <div class="filter-group" [class.is-open]="stateSectionOpen()">
-      <button type="button" class="filter-group-toggle" (click)="toggleStateSection()">
-        <span class="filter-group-toggle-label green">
-          <span class="filter-icon">📍</span> CIUDAD / ESTADO
-          @if (selectedStates().size > 0) {
-            <span class="filter-section-badge">{{ selectedStates().size }}</span>
-          }
-        </span>
-        <span class="filter-chevron" [class.open]="stateSectionOpen()">▼</span>
-      </button>
-      @if (stateSectionOpen()) {
-        <div class="filter-group-body">
-          @if (states().length > FILTER_PREVIEW_LIMIT) {
-            <input
-              type="search"
-              class="filter-search-input"
-              placeholder="Buscar estado o ciudad..."
-              [ngModel]="stateSearch()"
-              (ngModelChange)="onStateSearchChange($event)"
-            />
-          }
-          <div class="filter-options filter-options-list">
-            @for (s of visibleStates(); track s.state) {
-              <label class="filter-label" [class.active]="isStateSelected(s.state)">
-                <input
-                  type="checkbox"
-                  class="filter-checkbox"
-                  [checked]="isStateSelected(s.state)"
-                  (change)="onStateToggle(s.state, $any($event.target).checked)"
-                />
-                <span class="filter-label-text">{{ s.state }}</span>
-                <span class="filter-count">{{ s.count }}</span>
-              </label>
-            } @empty {
-              <p class="filter-empty-hint">Ningún estado coincide con tu búsqueda.</p>
-            }
-          </div>
-          @if (hiddenStatesCount() > 0) {
-            <button type="button" class="filter-more-btn" (click)="stateShowAll.set(true)">
-              Ver {{ hiddenStatesCount() }} más
-            </button>
-          } @else if (stateShowAll() && filteredStates().length > FILTER_PREVIEW_LIMIT && !stateSearch()) {
-            <button type="button" class="filter-more-btn" (click)="stateShowAll.set(false)">
-              Ver menos
-            </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Calificación -->
-    <div class="filter-group" [class.is-open]="ratingSectionOpen()">
-      <button type="button" class="filter-group-toggle" (click)="toggleRatingSection()">
-        <span class="filter-group-toggle-label green">
-          <span class="filter-icon">⭐</span> CALIFICACIÓN
-          @if (minRating() > 0) {
-            <span class="filter-section-badge">1</span>
-          }
-        </span>
-        <span class="filter-chevron" [class.open]="ratingSectionOpen()">▼</span>
-      </button>
-      @if (ratingSectionOpen()) {
-        <div class="filter-group-body">
-          <div class="filter-options">
-            <label class="filter-label" [class.active]="minRating() === 0">
-              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(0)" [checked]="minRating() === 0" />
-              <span class="filter-label-text">Todas</span>
-            </label>
-            <label class="filter-label" [class.active]="minRating() === 4">
-              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(4)" [checked]="minRating() === 4" />
-              <span class="filter-label-text">⭐ 4+ estrellas</span>
-            </label>
-            <label class="filter-label" [class.active]="minRating() === 5">
-              <input type="radio" name="rating" class="filter-checkbox" (change)="onRatingChange(5)" [checked]="minRating() === 5" />
-              <span class="filter-label-text">⭐ 5 estrellas</span>
-            </label>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Active filters chips -->
-    @if (hasActiveFilters) {
-      <div class="active-filters">
-        @if (searchQuery()) {
-          <span class="filter-chip">
-            🔍 "{{ searchQuery() }}"
-            <button type="button" (click)="onSearch('')">✕</button>
-          </span>
-        }
-        @for (state of selectedStatesArray(); track state) {
-          <span class="filter-chip">
-            📍 {{ state }}
-            <button type="button" (click)="onStateToggle(state, false)">✕</button>
-          </span>
-        }
-        @if (minRating() > 0) {
-          <span class="filter-chip">
-            ⭐ {{ minRating() }}+ estrellas
-            <button type="button" (click)="onRatingChange(0)">✕</button>
-          </span>
-        }
-      </div>
-    }
-  </aside>
-
-  <!-- Main Grid -->
-  <main class="agent-grid-wrap">
-    @if (loading()) {
-      <div class="loading-grid">
-        @for (i of [1,2,3,4,5,6]; track i) {
-          <div class="skeleton-card">
-            <div class="skeleton-banner"></div>
-            <div class="skeleton-avatar"></div>
-            <div class="skeleton-line short"></div>
-            <div class="skeleton-line"></div>
-          </div>
-        }
-      </div>
-    } @else if (filteredGestores().length === 0) {
-      <div class="empty-state">
-        <div class="empty-icon">🔍</div>
-        <h3 class="empty-title">Sin resultados</h3>
-        <p class="empty-desc">No encontramos gestores con esos criterios.<br>Intenta cambiar los filtros.</p>
-        <button class="empty-clear-btn" (click)="clearFilters()">Limpiar filtros</button>
-      </div>
-    } @else {
-      <div class="agent-grid">
-        @for (g of paginatedGestores(); track g.id) {
-          <a [routerLink]="['/gestores', g.slug]" class="agent-card">
-            <div class="card-banner-wrap">
-              <img [src]="g.bannerUrl || 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600&auto=format&fit=crop'" class="agent-banner" alt="Banner">
-              <div class="card-banner-overlay"></div>
-            </div>
-            <div class="card-body">
-              <img [src]="g.photoUrl || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop'" class="agent-img" [alt]="g.name">
-              <h3 class="agent-name">{{ g.name }}</h3>
-              <div class="agent-location">📍 {{ g.location }}</div>
-              <div class="agent-stats">
-                <div class="stat-item">
-                  <span class="stat-val">⭐ {{ g.rating }}/5</span>
-                  @if (g.reviewCount) {
-                    <span class="stat-sub">({{ g.reviewCount }} reseñas)</span>
-                  }
-                </div>
-                <div class="stat-sep"></div>
-                <div class="stat-item">
-                  <span class="stat-val">{{ g.tramitesCount | number }}</span>
-                  <span class="stat-sub">Trámites</span>
-                </div>
+          @if (filtersOpen()) {
+            <div class="filters-panel" (click)="$event.stopPropagation()">
+              <div class="filters-tabs">
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'estado'" (click)="setFilterTab('estado')">Estado</button>
+                <button type="button" class="filters-tab" [class.active]="filterTab() === 'calificacion'" (click)="setFilterTab('calificacion')">Calificación</button>
               </div>
-              <div class="btn-view">VER PERFIL →</div>
+
+              <div class="filters-panel-body">
+                @if (filterTab() === 'estado') {
+                  <input
+                    type="search"
+                    class="filters-panel-search"
+                    placeholder="Buscar estado o ciudad..."
+                    [ngModel]="stateSearch()"
+                    (ngModelChange)="onStateSearchChange($event)"
+                  />
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingStates().size === 0" (click)="selectAllStates()">Todos</button>
+                    @for (s of visibleStates(); track s.state) {
+                      <button type="button" class="filters-list-item" [class.active]="isPendingStateSelected(s.state)" (click)="togglePendingState(s.state)">
+                        {{ s.state }} ({{ s.count }})
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (filterTab() === 'calificacion') {
+                  <div class="filters-list">
+                    <button type="button" class="filters-list-item" [class.active]="pendingRating() === 0" (click)="pendingRating.set(0)">Todas</button>
+                    <button type="button" class="filters-list-item" [class.active]="pendingRating() === 4" (click)="pendingRating.set(4)">4+ estrellas</button>
+                    <button type="button" class="filters-list-item" [class.active]="pendingRating() === 5" (click)="pendingRating.set(5)">5 estrellas</button>
+                  </div>
+                }
+              </div>
+
+              <div class="filters-panel-footer">
+                <button type="button" class="filters-clear-link" (click)="clearPendingFilters()">Limpiar filtros</button>
+                <button type="button" class="filters-apply-btn" (click)="applyPendingFilters()">Aplicar</button>
+              </div>
             </div>
-          </a>
-        }
+          }
+        </div>
       </div>
 
-      <!-- Pagination -->
-      @if (totalPages() > 1) {
-        <nav class="pagination" aria-label="Paginación">
-          <button
-            class="page-btn page-arrow"
-            [disabled]="currentPage() === 1"
-            (click)="goToPage(currentPage() - 1)"
-            aria-label="Página anterior"
-          >‹</button>
+      <p class="gestores-results-count">{{ filteredGestores().length }} gestores encontrados</p>
+    </div>
 
-          @for (page of pages(); track page) {
-            <button
-              class="page-btn"
-              [class.active]="page === currentPage()"
-              (click)="goToPage(page)"
-              [attr.aria-current]="page === currentPage() ? 'page' : null"
-            >{{ page }}</button>
+    <main class="agent-grid-wrap">
+      @if (loading()) {
+        <div class="loading-grid">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="skeleton-card">
+              <div class="skeleton-banner"></div>
+              <div class="skeleton-avatar"></div>
+              <div class="skeleton-line short"></div>
+              <div class="skeleton-line"></div>
+            </div>
           }
+        </div>
+      } @else if (filteredGestores().length === 0) {
+        <div class="empty-state">
+          <div class="empty-icon">🔍</div>
+          <h3 class="empty-title">Sin resultados</h3>
+          <p class="empty-desc">No encontramos gestores con esos criterios.<br>Intenta cambiar los filtros.</p>
+          <button class="empty-clear-btn" (click)="clearFilters()">Limpiar filtros</button>
+        </div>
+      } @else {
+        <div class="agent-grid">
+          @for (g of paginatedGestores(); track g.id) {
+            <a [routerLink]="['/gestores', g.slug]" class="agent-card">
+              <div class="card-banner-wrap">
+                <img [src]="g.bannerUrl || 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600&auto=format&fit=crop'" class="agent-banner" alt="Banner">
+                <div class="card-banner-overlay"></div>
+              </div>
+              <div class="card-body">
+                <img [src]="g.photoUrl || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop'" class="agent-img" [alt]="g.name">
+                <h3 class="agent-name">{{ g.name }}</h3>
+                <div class="agent-location">{{ g.location }}</div>
+                <div class="agent-stats">
+                  <div class="stat-item">
+                    <span class="stat-val">⭐ {{ g.rating }}/5</span>
+                    @if (g.reviewCount) {
+                      <span class="stat-sub">({{ g.reviewCount }} reseñas)</span>
+                    }
+                  </div>
+                  <div class="stat-sep"></div>
+                  <div class="stat-item">
+                    <span class="stat-val">{{ g.tramitesCount | number }}</span>
+                    <span class="stat-sub">Trámites</span>
+                  </div>
+                </div>
+                <div class="btn-view">VER PERFIL →</div>
+              </div>
+            </a>
+          }
+        </div>
 
-          <button
-            class="page-btn page-arrow"
-            [disabled]="currentPage() === totalPages()"
-            (click)="goToPage(currentPage() + 1)"
-            aria-label="Página siguiente"
-          >›</button>
+        @if (totalPages() > 1) {
+          <nav class="pagination" aria-label="Paginación de gestores">
+            <button
+              class="page-btn page-nav"
+              [disabled]="currentPage() === 1"
+              (click)="goToPage(currentPage() - 1)"
+              aria-label="Página anterior"
+            >‹</button>
 
-          <span class="page-info">
-            Página {{ currentPage() }} de {{ totalPages() }}
-          </span>
-        </nav>
+            @for (page of pages(); track page) {
+              <button
+                class="page-btn page-num"
+                [class.active]="page === currentPage()"
+                (click)="goToPage(page)"
+                [attr.aria-current]="page === currentPage() ? 'page' : null"
+              >{{ page }}</button>
+            }
+
+            <button
+              class="page-btn page-nav"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToPage(currentPage() + 1)"
+              aria-label="Página siguiente"
+            >›</button>
+          </nav>
+        }
       }
-    }
-  </main>
+    </main>
+  </div>
 </div>

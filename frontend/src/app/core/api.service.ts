@@ -65,6 +65,8 @@ export class CrmService {
     clientPhone?: string;
     title?: string;
     autoId?: string;
+    serviceName?: string;
+    location?: string;
     message?: string;
     estimatedValue?: number;
     stage?: string;

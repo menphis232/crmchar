@@ -22,12 +22,19 @@
           [style.backgroundColor]="btnColor()"
           [style.color]="textColor()">
           <div>
-            <h4>🤖 {{ assistantName() }}</h4>
+            <h4 class="vega-title-with-icon">
+              <svg lucideBot [size]="16" aria-hidden="true"></svg>
+              {{ assistantName() }}
+            </h4>
             <p>Te ayudo a usar tu panel.</p>
           </div>
           <div class="vega-header-actions">
-            <button type="button" class="vega-icon-btn" (click)="startTour()" title="Ver tour">🗺️</button>
-            <button type="button" class="vega-icon-btn" (click)="closePanel()" title="Cerrar">✕</button>
+            <button type="button" class="vega-icon-btn" (click)="startTour()" title="Ver tour" aria-label="Ver tour">
+              <svg lucideMap [size]="16" aria-hidden="true"></svg>
+            </button>
+            <button type="button" class="vega-icon-btn" (click)="closePanel()" title="Cerrar" aria-label="Cerrar">
+              <svg lucideX [size]="16" aria-hidden="true"></svg>
+            </button>
           </div>
         </div>
 
@@ -82,9 +89,12 @@
             placeholder="Escribe tu pregunta..."
             (keyup.enter)="sendMessage()"
             [disabled]="isLoading() || isTourActive()">
-          <button type="button" (click)="sendMessage()"
+          <button type="button" class="vega-send-btn" (click)="sendMessage()"
             [disabled]="!inputValue.trim() || isLoading() || isTourActive()"
-            [style.color]="btnColor()">➤</button>
+            [style.color]="btnColor()"
+            aria-label="Enviar">
+            <svg lucideSend [size]="16" aria-hidden="true"></svg>
+          </button>
         </div>
       </div>
     }
@@ -94,9 +104,12 @@
       [style.background]="btnColor()"
       [style.color]="textColor()">
       @if (isChatOpen() || isTourActive()) {
-        ✕
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
       } @else {
-        💬 {{ assistantName() }}
+        <span class="vega-toggle-label">
+          <svg lucideMessageCircle [size]="16" aria-hidden="true"></svg>
+          {{ assistantName() }}
+        </span>
       }
     </button>
   </div>

@@ -2,19 +2,40 @@ import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone } from '
 import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import {
+  LucideArrowLeft,
+  LucideCar,
+  LucideCheck,
+  LucideClipboardList,
+  LucideFileText,
+  LucideInbox,
+  LucideKeyRound,
+  LucideLayoutDashboard,
+  LucideMapPin,
+  LucideMessageCircle,
+  LucidePaperclip,
+  LucideSettings,
+  LucideUser,
+} from '@lucide/angular';
 
 @Component({
   selector: 'app-panel-cliente',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, CurrencyPipe, RouterLink],
+  imports: [
+    CommonModule, FormsModule, DatePipe, CurrencyPipe,
+    PanelUserMenuComponent,
+    LucideLayoutDashboard, LucideClipboardList, LucideSettings, LucideCar, LucideInbox,
+    LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle, LucideFileText,
+    LucidePaperclip, LucideKeyRound, LucideUser,
+  ],
   templateUrl: './panel-cliente.component.html',
-  styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css']
+  styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
 })
 export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -22,7 +43,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   auth = inject(AuthService);
   http = inject(HttpClient);
-  router = inject(Router);
   toast = inject(ToastService);
   zone = inject(NgZone);
 
@@ -35,32 +55,24 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   documents = signal<any[]>([]);
   uploadingDocType = signal<string | null>(null);
 
-  // Chat
   messages = signal<any[]>([]);
   newMessage = '';
   socket!: Socket;
   chatLoading = signal(false);
   uploadingFile = signal(false);
 
-  // Stats computed from deals
   totalDeals = computed(() => this.deals().length);
   activeDeals = computed(() => this.deals().filter(d => !this.isTerminalStage(d)).length);
   completedDeals = computed(() => this.deals().filter(d => {
     const stages = this.pipelineStages(d);
-    const idx = this.stageIndex(d);
     const last = stages[stages.length - 1];
     return d.stage === 'completado' || d.stage === 'vendido' || (last && d.stage === last.id && last.id !== 'perdido');
   }).length);
 
-  // Ajustes
-  currentPassword = '';
-  newPassword = '';
-  confirmPassword = '';
-  pwdLoading = signal(false);
-  pwdSuccess = signal('');
-  pwdError = signal('');
-
   ngOnInit() {
+    document.documentElement.style.setProperty('--bg', '#000000');
+    document.documentElement.style.setProperty('--panel-bg', '#000000');
+    document.body.style.backgroundColor = '#000000';
     this.loadDeals();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
@@ -85,15 +97,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
     this.socket.on('notification', (notif: any) => {
       this.zone.run(() => {
-        const toast = this.toast;
-        if (toast) {
-          toast.info(notif.body, notif.title, () => {
-            if (notif.ref_id) {
-              const d = this.deals().find(x => x.id === notif.ref_id);
-              if (d) this.openDeal(d);
-            }
-          });
-        }
+        this.toast.info(notif.body, notif.title, () => {
+          if (notif.ref_id) {
+            const d = this.deals().find(x => x.id === notif.ref_id);
+            if (d) this.openDeal(d);
+          }
+        });
       });
     });
   }
@@ -109,7 +118,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.deals.set(res);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false)
+      error: () => this.loading.set(false),
     });
   }
 
@@ -125,10 +134,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.chatLoading.set(false);
         this.scrollToBottom();
       },
-      error: () => this.chatLoading.set(false)
+      error: () => this.chatLoading.set(false),
     });
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
-      next: docs => this.documents.set(docs)
+      next: docs => this.documents.set(docs),
     });
   }
 
@@ -148,16 +157,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.newMessage = '';
 
     this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/messages`, { message: txt }).subscribe(saved => {
-      // Optimistic update for the sender
       this.messages.update(msgs => {
-        // Only append if it's not already there (in case socket was faster)
         if (!msgs.find(m => m.id === saved.id)) {
           return [...msgs, { dealId, ...saved }];
         }
         return msgs;
       });
       this.scrollToBottom();
-      
       this.socket.emit('send_message', { dealId, ...saved });
     });
   }
@@ -173,8 +179,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         const dealId = this.selectedDeal()?.id;
         if (!dealId) return;
         this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/messages`, {
-          message: `📎 Documento adjunto: ${file.name}`,
-          fileUrl: res.url
+          message: `Documento adjunto: ${file.name}`,
+          fileUrl: res.url,
         }).subscribe(saved => {
           this.messages.update(msgs => {
             if (!msgs.find(m => m.id === saved.id)) {
@@ -187,7 +193,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
           this.uploadingFile.set(false);
         });
       },
-      error: () => this.uploadingFile.set(false)
+      error: () => this.uploadingFile.set(false),
     });
   }
 
@@ -203,49 +209,18 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         if (!dealId) return;
         this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/documents`, {
           documentType: docType,
-          fileUrl: res.url
+          fileUrl: res.url,
         }).subscribe(newDoc => {
           this.documents.update(docs => [newDoc, ...docs]);
           this.uploadingDocType.set(null);
         });
       },
-      error: () => this.uploadingDocType.set(null)
+      error: () => this.uploadingDocType.set(null),
     });
   }
 
   getDocStatus(docType: string) {
     return this.documents().find(d => d.document_type === docType);
-  }
-
-  updatePassword() {
-    this.pwdError.set('');
-    this.pwdSuccess.set('');
-
-    if (!this.newPassword || this.newPassword.length < 6) {
-      this.pwdError.set('La nueva contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (this.newPassword !== this.confirmPassword) {
-      this.pwdError.set('Las contraseñas no coinciden.');
-      return;
-    }
-    this.pwdLoading.set(true);
-    this.http.patch<{ success: boolean }>(`${environment.apiUrl}/auth/change-password`, {
-      currentPassword: this.currentPassword || undefined,
-      newPassword: this.newPassword
-    }).subscribe({
-      next: () => {
-        this.pwdSuccess.set('¡Contraseña actualizada con éxito! Ahora puedes iniciar sesión con tu nueva clave.');
-        this.currentPassword = '';
-        this.newPassword = '';
-        this.confirmPassword = '';
-        this.pwdLoading.set(false);
-      },
-      error: (err) => {
-        this.pwdError.set(err.error?.error || 'Ocurrió un error. Intenta de nuevo.');
-        this.pwdLoading.set(false);
-      }
-    });
   }
 
   pipelineStages(deal: any): { id: string; label: string }[] {

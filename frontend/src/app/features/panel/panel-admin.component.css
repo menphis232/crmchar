@@ -7,6 +7,7 @@
 :host {
   display: block;
   background: #000;
+  min-height: 100vh;
   /* Sobreescribir variables de texto para que los inline styles hereden blanco */
   --text:     #ffffff;
   --mx-white: #ffffff;
@@ -16,9 +17,15 @@
 
 .dash-container {
   background: #000 !important;
+  min-height: calc(100vh - 84px);
 }
 
-/* Logo de empresa en header ? c�rculo como ficha p�blica */
+.dash-main {
+  flex: 1;
+  min-height: calc(100vh - 84px);
+}
+
+/* Logo de empresa en header ? c?rculo como ficha p?blica */
 :host .dash-nav {
   height: auto;
   min-height: 84px;
@@ -57,10 +64,10 @@
 }
 
 /* ??????????????????????????????????????????
-   TIPOGRAF�A ? Spartan + tama�os m�s grandes
+   TIPOGRAF?A ? Spartan + tama?os m?s grandes
 ?????????????????????????????????????????? */
 
-/* Sidebar / men� */
+/* Sidebar / men? */
 .dash-link {
   font-family: var(--f-display) !important;
   font-size: 13px !important;
@@ -97,7 +104,7 @@
   font-weight: 400 !important;
 }
 
-/* T�tulos del panel (sin negrita) */
+/* T?tulos del panel (sin negrita) */
 :host ::ng-deep .fin-title,
 :host ::ng-deep .section-title,
 :host ::ng-deep .section-sub,
@@ -257,7 +264,7 @@
 :host ::ng-deep .kanban-days,
 :host ::ng-deep .kanban-value { font-family: var(--f-display) !important; font-size: 12px !important; }
 
-/* Secci�n sub */
+/* Secci?n sub */
 .section-sub,
 :host ::ng-deep .section-sub {
   font-family: var(--f-display) !important;
@@ -292,7 +299,7 @@
   font-size: 12px !important;
 }
 
-/* Rese�as */
+/* Rese?as */
 .review-card p { font-family: var(--f-display) !important; font-size: 14px !important; }
 .review-author  { font-family: var(--f-display) !important; font-size: 13px !important; }
 
@@ -378,7 +385,7 @@
 }
 
 /* ??????????????????????????????????????????
-   BOT�N + NUEVO LEAD (sutil)
+   BOT?N + NUEVO LEAD (sutil)
 ?????????????????????????????????????????? */
 .btn-nuevo-lead {
   background: transparent;
@@ -612,7 +619,7 @@ select option { background: #111111; color: #ffffff; }
   border-radius: 999px !important;
 }
 
-/* Tarjetas ? gris m�s claro que la columna */
+/* Tarjetas ? gris m?s claro que la columna */
 .kanban-card,
 :host ::ng-deep .kanban-card {
   background: #242424 !important;
@@ -671,7 +678,7 @@ select option { background: #111111; color: #ffffff; }
   color: #ffffff !important;
 }
 
-/* Bot�n ? avanzar etapa */
+/* Bot?n ? avanzar etapa */
 :host ::ng-deep .kanban-next {
   background: rgba(255,255,255,0.10) !important;
   border: 1px solid rgba(255,255,255,0.22) !important;
@@ -744,7 +751,7 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep select option { background: #111111; color: #ffffff; }
 
 /* ??????????????????????????????????????????
-   DOCUMENTACI�N PRIVADA DEL VEH�CULO
+   DOCUMENTACI?N PRIVADA DEL VEH?CULO
 ?????????????????????????????????????????? */
 .auto-private-docs {
   background: #0d0d0d !important;
@@ -786,27 +793,6 @@ select option { background: #111111; color: #ffffff; }
 .empty { color: rgba(255,255,255,0.30) !important; }
 .section-sub { color: rgba(255,255,255,0.80) !important; }
 .panel-welcome { color: rgba(255,255,255,0.45) !important; }
-
-.custom-block.notice {
-  background: rgba(200, 169, 74, 0.10) !important;
-  border: 1px solid rgba(200, 169, 74, 0.28) !important;
-  border-left: 4px solid #c8a94a !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
-}
-.custom-block.banner {
-  background: rgba(200, 169, 74, 0.12) !important;
-  border: 1px solid rgba(200, 169, 74, 0.35) !important;
-  color: #e8d08a !important;
-  -webkit-text-fill-color: #e8d08a !important;
-}
-.custom-block.html {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  color: rgba(255, 255, 255, 0.82) !important;
-  -webkit-text-fill-color: rgba(255, 255, 255, 0.82) !important;
-}
-
 .link-name { color: rgba(255,255,255,0.75) !important; }
 .link-name:hover { color: #ffffff !important; }
 .inquiry-msg { color: rgba(255,255,255,0.75) !important; }
@@ -1086,4 +1072,153 @@ app-crm-team {
   color: rgba(255,255,255,.55);
   pointer-events: none;
   line-height: 1;
+}
+
+/* ?? Gesti�n de usuarios (admin) ?? */
+.users-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: 20px;
+  align-items: start;
+  min-height: 420px;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(70vh, 640px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.user-row {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px !important;
+  text-align: left;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.user-row:hover {
+  transform: none !important;
+}
+
+.user-row.selected {
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  background: #1a1a1a !important;
+  box-shadow: inset 3px 0 0 rgba(255, 255, 255, 0.55) !important;
+}
+
+.user-row-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.user-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.user-row-body strong {
+  font-weight: 400;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-row-body .user-meta {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.user-role-badge.gestor {
+  border-color: rgba(96, 165, 250, 0.35);
+  color: rgba(147, 197, 253, 0.95);
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.user-role-badge.concesionaria {
+  border-color: rgba(200, 169, 74, 0.35);
+  color: rgba(200, 169, 74, 0.95);
+  background: rgba(200, 169, 74, 0.10);
+}
+
+.user-editor {
+  border-radius: 12px !important;
+  min-height: 360px;
+}
+
+.user-editor h3,
+.user-editor h4 {
+  font-weight: 400 !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff !important;
+}
+
+.user-editor-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.45);
+  min-height: 360px;
+}
+
+.user-editor-placeholder svg {
+  opacity: 0.35;
+}
+
+.user-editor-placeholder p {
+  margin: 0;
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .users-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .users-list {
+    max-height: none;
+  }
 }

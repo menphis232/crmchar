@@ -1,6 +1,7 @@
 import { Component, output, signal, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { LucideKeyRound, LucideMail, LucideSettings, LucideX } from '@lucide/angular';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
@@ -10,23 +11,30 @@ type Tab = 'password' | 'email';
 @Component({
   selector: 'app-change-credentials',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LucideSettings, LucideX, LucideMail, LucideKeyRound],
   template: `
     <div class="cc-overlay" (click)="closed.emit()">
       <div class="cc-modal" (click)="$event.stopPropagation()">
 
         <div class="cc-header">
-          <span class="cc-title">⚙️ Mi cuenta</span>
-          <button class="cc-close" type="button" (click)="closed.emit()">✕</button>
+          <span class="cc-title cc-title-with-icon">
+            <svg lucideSettings [size]="18" aria-hidden="true"></svg>
+            Mi cuenta
+          </span>
+          <button class="cc-close" type="button" (click)="closed.emit()" aria-label="Cerrar">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
         </div>
 
         <!-- Tabs -->
         <div class="cc-tabs">
-          <button class="cc-tab" [class.cc-tab--active]="tab() === 'email'" type="button" (click)="tab.set('email')">
-            ✉️ Cambiar correo
+          <button class="cc-tab cc-tab-with-icon" [class.cc-tab--active]="tab() === 'email'" type="button" (click)="tab.set('email')">
+            <svg lucideMail [size]="14" aria-hidden="true"></svg>
+            Cambiar correo
           </button>
-          <button class="cc-tab" [class.cc-tab--active]="tab() === 'password'" type="button" (click)="tab.set('password')">
-            🔑 Cambiar contraseña
+          <button class="cc-tab cc-tab-with-icon" [class.cc-tab--active]="tab() === 'password'" type="button" (click)="tab.set('password')">
+            <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
+            Cambiar contraseña
           </button>
         </div>
 
@@ -93,6 +101,12 @@ type Tab = 'password' | 'email';
       padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.08);
     }
     .cc-title { color: #fff; font-size: 15px; font-weight: 700; }
+    .cc-title-with-icon, .cc-tab-with-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cc-tab-with-icon { justify-content: center; }
     .cc-close {
       background: transparent; border: none; color: rgba(255,255,255,.45);
       font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px;

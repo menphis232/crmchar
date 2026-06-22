@@ -1,8 +1,8 @@
-<div class="login-page" [class.login-page--concesionaria]="role() === 'concesionaria'">
-  @if (role() !== 'concesionaria') {
+<div class="login-page" [class.login-page--portal]="role() === 'concesionaria' || role() === 'gestor'">
+  @if (role() !== 'concesionaria' && role() !== 'gestor') {
     <div class="bg-particles"></div>
   }
-  <a routerLink="/autos" class="btn-back-top">← VOLVER AL INICIO</a>
+  <a [routerLink]="backHomeLink()" class="btn-back-top">← VOLVER AL INICIO</a>
 
   <div class="login-container">
     <div class="login-logo">
@@ -68,9 +68,9 @@
             <label>Nombre comercial</label>
             <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
           </div>
-          @if (role() === 'gestor' || role() === 'concesionaria') {
+          @if (role() === 'concesionaria' || role() === 'gestor') {
             <p style="color: #48bb78; font-size: 13px; text-align: center; margin: 0 0 16px; background: rgba(72,187,120,0.1); padding: 10px; border-radius: 6px;">
-              🎁 7 días de prueba gratis. Solo necesitas registrar tu tarjeta en Stripe.
+              Empieza hoy tu PRUEBA GRATIS de 7 días
             </p>
           }
         }

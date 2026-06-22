@@ -364,7 +364,9 @@
           @for (img of b.data.images; track $index) {
             <div class="gallery-thumb-row">
               <img [src]="img" alt="Imagen galería">
-              <button type="button" class="thumb-remove" (click)="removeGalleryImage(b, $index)" title="Quitar">✕</button>
+              <button type="button" class="thumb-remove" (click)="removeGalleryImage(b, $index)" title="Quitar" aria-label="Quitar">
+                <svg lucideX [size]="12" aria-hidden="true"></svg>
+              </button>
             </div>
           }
         }

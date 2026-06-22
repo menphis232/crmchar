@@ -11,14 +11,13 @@ import { Auto, PageBuilderConfig } from '../../models';
 import { buildAutoGalleryItems } from '../../shared/auto-video.util';
 import { hasSpecialPrice } from '../../shared/auto-price.util';
 import { AUTO_SHARE_TAGLINE } from '../../shared/brand.constants';
-import { getAutoShareSubtitle } from '../../shared/auto-share.util';
+import { buildAutoWhatsappMessage, getAutoShareSubtitle } from '../../shared/auto-share.util';
 import { MetaTagsService } from '../../shared/meta-tags.service';
-import { WhatsappLeadModalComponent } from '../../shared/whatsapp-lead-modal.component';
 
 @Component({
   selector: 'app-auto-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, WhatsappLeadModalComponent, AutoGalleriaComponent, ...CAR_LUCIDE_ICONS],
+  imports: [NavComponent, RouterLink, DecimalPipe, FormsModule, AutoGalleriaComponent, ...CAR_LUCIDE_ICONS],
   templateUrl: './auto-detail.component.html',
   styleUrl: './auto-detail.component.css',
 })
@@ -31,7 +30,6 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
   loading = signal(true);
   inquirySent = signal(false);
   inquiryError = signal('');
-  showWaModal = signal(false);
 
   inquiry = { clientName: '', clientEmail: '', clientPhone: '', message: '' };
 
@@ -74,21 +72,17 @@ export class AutoDetailComponent implements OnInit, OnDestroy {
     return !!config?.blocks?.some(b => b.type === 'gallery');
   }
 
-  waModalData = computed(() => {
-    const a = this.auto();
-    if (!a) return null;
-    return {
-      dealerSlug: a.dealerSlug || '',
-      dealerPhone: a.whatsapp?.trim() || a.dealerPhone || '',
-      dealerName: a.dealerName || '',
-      autoId: a.id,
-      autoLabel: `${a.make} ${a.model} ${a.year}`,
-    };
-  });
-
-  openWaModal(e: Event) {
+  openWhatsapp(e: Event) {
     e.preventDefault();
-    this.showWaModal.set(true);
+    const a = this.auto();
+    if (!a) return;
+    const phone = (a.whatsapp?.trim() || a.dealerPhone || '').replace(/\D/g, '');
+    if (!phone) {
+      this.toast.error('Este vehículo no tiene número de WhatsApp configurado.');
+      return;
+    }
+    const text = encodeURIComponent(buildAutoWhatsappMessage(a));
+    window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
   }
 
   dealerInitials(name?: string) {

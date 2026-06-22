@@ -99,12 +99,20 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.vega-header h4 {
+.vega-header h4,
+.vega-title-with-icon {
   margin: 0 0 4px;
   font-family: var(--f-display);
   font-size: 14px;
   font-weight: 800;
   color: var(--vega-text) !important;
+}
+
+.vega-title-with-icon,
+.vega-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .vega-header p {

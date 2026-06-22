@@ -21,10 +21,12 @@
                   <div class="profile-info">
                     <img [src]="g.photoUrl" class="profile-img" [alt]="g.name">
                     <h1 class="profile-name">{{ b.data.title }}</h1>
-                    <div class="profile-location">📍 {{ b.data.subtitle }}</div>
-                    @if (b.data.buttonText) {
-                      <button class="preview-btn" style="margin-top:20px; background:var(--p-theme); border:none; padding:12px 24px; border-radius:6px; font-weight:bold; cursor:pointer;" [style.color]="b.data.buttonTextColor || '#1a1d24'" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
-                    }
+                    <div class="profile-hero-actions">
+                      <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ b.data.subtitle }}</div>
+                      @if (b.data.buttonText) {
+                        <button type="button" class="preview-btn" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
+                      }
+                    </div>
                   </div>
                 </header>
               }
@@ -56,7 +58,7 @@
                         <div class="service-item">
                           <div>
                             <div class="service-name">{{ s.name }}</div>
-                            <div class="service-time">⏱️ {{ s.timeEstimate }}</div>
+                            <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                           </div>
                           @if (b.data.showPrices) {
                             <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
@@ -72,7 +74,11 @@
                       @for (r of g.reviews; track r.id) {
                         <article class="review-item">
                           <div class="review-header">
-                            <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+                            <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">
+                              @for (i of starIndexes; track i) {
+                                <svg lucideStar [size]="14" class="review-star" [class.review-star-filled]="i <= stars(r.rating)" aria-hidden="true"></svg>
+                              }
+                            </span>
                             <span class="review-author">{{ r.author }}</span>
                           </div>
                           <p class="review-text">{{ r.comment }}</p>
@@ -97,80 +103,82 @@
           </div>
 
           <!-- SIDEBAR REGION -->
-          <aside>
+          <aside class="detail-sidebar-rail">
+            <a routerLink="/gestores" class="btn-back btn-back-top"><svg lucideArrowLeft [size]="14" aria-hidden="true"></svg> Volver al directorio</a>
             @for (b of config.blocks; track b.id) {
               @if (b.region === 'sidebar') {
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'tracker') {
-                    <div class="contact-card track-card" style="margin-bottom: 20px;">
-                      <h3 style="color: var(--gold);">{{ b.data.title }}</h3>
-                      <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">
-                        {{ b.data.subtitle }}
-                      </p>
-                      <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
-                        <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" style="text-transform: uppercase;">
-                        <button type="button" class="btn-submit" [disabled]="trackLoading()" (click)="trackDeal()">
+                    <div class="contact-card track-card">
+                      <h3>{{ b.data.title }}</h3>
+                      <p>{{ b.data.subtitle }}</p>
+                      <div class="solicitud-form">
+                        <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" class="inq-input" style="text-transform: uppercase;">
+                        <button type="button" class="btn-submit btn-inquiry" [disabled]="trackLoading()" (click)="trackDeal()">
                           {{ trackLoading() ? 'Buscando...' : 'Buscar' }}
                         </button>
                       </div>
                       
                       @if (trackResult()) {
-                        <div style="margin-top: 15px; padding: 15px; background: rgba(200, 169, 74, 0.1); border: 1px solid var(--gold); border-radius: 6px; text-align: left;">
-                          <strong style="color: var(--mx-white); font-size: 14px;">{{ trackResult()?.title }}</strong>
-                          <p style="color: var(--gold); font-weight: bold; margin: 8px 0;">{{ trackResult()?.stageLabel }}</p>
-                          <p style="font-size: 11px; color: var(--muted);">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
+                        <div class="track-result">
+                          <strong class="track-result-title">{{ trackResult()?.title }}</strong>
+                          <p class="track-result-stage">{{ trackResult()?.stageLabel }}</p>
+                          <p class="track-result-date">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
                         </div>
                       }
                       @if (trackError()) {
-                        <div style="margin-top: 15px; padding: 10px; background: rgba(255, 77, 79, 0.1); border: 1px solid #ff4d4f; border-radius: 6px; color: #ff4d4f; font-size: 13px;">
-                          {{ trackError() }}
-                        </div>
+                        <div class="track-error">{{ trackError() }}</div>
                       }
                     </div>
                   }
 
                   @if (b.type === 'form') {
-                    <div class="contact-card" id="dynamic-form-section" style="margin-bottom: 20px;">
+                    <div class="inquiry-box" id="dynamic-form-section">
                       <h3>{{ b.data.title }}</h3>
                       <p>{{ b.data.subtitle }}</p>
                       @if (!solicitudSent()) {
                         <div class="solicitud-form">
-                          <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *">
-                          <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email">
-                          <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp">
-                          <select [(ngModel)]="solicitudForm.serviceName">
+                          <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *" class="inq-input">
+                          <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email" class="inq-input">
+                          <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp" class="inq-input">
+                          <select [(ngModel)]="solicitudForm.serviceName" class="inq-input">
                             <option value="">Trámite que necesitas *</option>
                             @for (s of g.services; track s.id) {
                               <option [value]="s.name">{{ s.name }}</option>
                             }
                           </select>
-                          <input [(ngModel)]="solicitudForm.location" placeholder="Ubicación">
-                          <button type="button" class="btn-submit" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
+                          <select [(ngModel)]="solicitudForm.location" class="inq-input">
+                            <option value="">Estado *</option>
+                            @for (st of mexicoStates; track st) {
+                              <option [value]="st">{{ st }}</option>
+                            }
+                          </select>
+                          <button type="button" class="btn-submit btn-inquiry" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
                         </div>
                       } @else {
                         <p class="success-text">¡Solicitud enviada! Te contactaremos pronto.</p>
                       }
-                      <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp" style="margin-top:15px; display:block;">💬 WhatsApp directo</a>
-                      <div class="schedule" style="margin-top:15px;">Horario: {{ g.schedule }}</div>
+                      <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp"><app-whatsapp-icon [size]="18" /> WhatsApp directo</a>
+                      <div class="schedule">Horario: {{ g.schedule }}</div>
                     </div>
                   }
                 </div>
               }
             }
-            <button class="btn-share" (click)="shareGestor()" style="display:block; width:100%; margin-bottom:12px;">🔗 Compartir perfil</button>
-            <a routerLink="/gestores" class="btn-back">← Volver al directorio</a>
+            <button type="button" class="btn-detail-outline btn-share" (click)="shareGestor()"><svg lucideShare2 [size]="18" aria-hidden="true"></svg> Compartir perfil</button>
           </aside>
         </div>
       </div>
       }
     } @else {
       <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
+      <div class="detail-page">
       <header class="profile-header">
         <img [src]="g.bannerUrl" class="profile-banner" alt="Banner">
         <div class="profile-info">
           <img [src]="g.photoUrl" class="profile-img" [alt]="g.name">
           <h1 class="profile-name">{{ g.name }}</h1>
-          <div class="profile-location">📍 {{ g.location }}</div>
+          <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location }}</div>
 
           <div class="profile-stats">
             <div class="ps-item"><div class="ps-val">{{ g.rating }}/5</div><div class="ps-lbl">ESTRELLAS ({{ g.reviewCount }})</div></div>
@@ -189,7 +197,7 @@
               <div class="service-item">
                 <div>
                   <div class="service-name">{{ s.name }}</div>
-                  <div class="service-time">⏱️ {{ s.timeEstimate }}</div>
+                  <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                 </div>
                 <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
               </div>
@@ -202,7 +210,11 @@
               @for (r of g.reviews; track r.id) {
                 <article class="review-item">
                   <div class="review-header">
-                    <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+                    <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">
+                      @for (i of starIndexes; track i) {
+                        <svg lucideStar [size]="14" class="review-star" [class.review-star-filled]="i <= stars(r.rating)" aria-hidden="true"></svg>
+                      }
+                    </span>
                     <span class="review-author">{{ r.author }}</span>
                   </div>
                   <p class="review-text">{{ r.comment }}</p>
@@ -215,74 +227,77 @@
           }
         </div>
 
-        <aside>
-          <div class="contact-card track-card" style="margin-bottom: 20px;">
-            <h3 style="color: var(--gold);">Rastrea tu Trámite</h3>
-            <p style="font-size: 13px; color: var(--muted); margin-bottom: 15px;">
-              Ingresa tu código de seguimiento para conocer el estatus actual.
-            </p>
-            <div class="solicitud-form" style="display: flex; flex-direction: column; gap: 8px;">
-              <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" style="text-transform: uppercase;">
-              <button type="button" class="btn-submit" [disabled]="trackLoading()" (click)="trackDeal()">
+        <aside class="detail-sidebar-rail">
+          <a routerLink="/gestores" class="btn-back btn-back-top"><svg lucideArrowLeft [size]="14" aria-hidden="true"></svg> Volver al directorio</a>
+
+          <div class="contact-card track-card">
+            <h3>Rastrea tu Trámite</h3>
+            <p>Ingresa tu código de seguimiento para conocer el estatus actual.</p>
+            <div class="solicitud-form">
+              <input [(ngModel)]="trackCode" placeholder="Ej: A1B2C3D4" class="inq-input" style="text-transform: uppercase;">
+              <button type="button" class="btn-submit btn-inquiry" [disabled]="trackLoading()" (click)="trackDeal()">
                 {{ trackLoading() ? 'Buscando...' : 'Buscar' }}
               </button>
             </div>
             
             @if (trackResult()) {
-              <div style="margin-top: 15px; padding: 15px; background: rgba(200, 169, 74, 0.1); border: 1px solid var(--gold); border-radius: 6px; text-align: left;">
-                <strong style="color: var(--mx-white); font-size: 14px;">{{ trackResult()?.title }}</strong>
-                <p style="color: var(--gold); font-weight: bold; margin: 8px 0;">{{ trackResult()?.stageLabel }}</p>
-                <p style="font-size: 11px; color: var(--muted);">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
+              <div class="track-result">
+                <strong class="track-result-title">{{ trackResult()?.title }}</strong>
+                <p class="track-result-stage">{{ trackResult()?.stageLabel }}</p>
+                <p class="track-result-date">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
               </div>
             }
             @if (trackError()) {
-              <div style="margin-top: 15px; padding: 10px; background: rgba(255, 77, 79, 0.1); border: 1px solid #ff4d4f; border-radius: 6px; color: #ff4d4f; font-size: 13px;">
-                {{ trackError() }}
-              </div>
+              <div class="track-error">{{ trackError() }}</div>
             }
           </div>
 
-          <div class="contact-card">
+          <div class="inquiry-box">
             <h3>¿Necesitas ayuda?</h3>
             <p>Cotiza tu trámite sin compromiso.</p>
 
             @if (g.phone) {
               <div class="gestor-contact-row">
-                <span>📞</span>
+                <span class="gestor-contact-icon"><svg lucidePhone [size]="16" aria-hidden="true"></svg></span>
                 <a [href]="'tel:' + g.phone" class="gestor-contact-link">{{ g.phone }}</a>
               </div>
             }
             @if (g.address) {
               <div class="gestor-contact-row">
-                <span>📍</span>
+                <span class="gestor-contact-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg></span>
                 <span class="gestor-contact-text">{{ g.address }}</span>
               </div>
             }
 
             @if (!solicitudSent()) {
               <div class="solicitud-form">
-                <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *">
-                <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email">
-                <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp">
-                <select [(ngModel)]="solicitudForm.serviceName">
+                <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *" class="inq-input">
+                <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email" class="inq-input">
+                <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp" class="inq-input">
+                <select [(ngModel)]="solicitudForm.serviceName" class="inq-input">
                   <option value="">Trámite que necesitas *</option>
                   @for (s of g.services; track s.id) {
                     <option [value]="s.name">{{ s.name }}</option>
                   }
                 </select>
-                <input [(ngModel)]="solicitudForm.location" placeholder="Ubicación">
-                <button type="button" class="btn-submit" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
+                <select [(ngModel)]="solicitudForm.location" class="inq-input">
+                  <option value="">Estado *</option>
+                  @for (st of mexicoStates; track st) {
+                    <option [value]="st">{{ st }}</option>
+                  }
+                </select>
+                <button type="button" class="btn-submit btn-inquiry" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
               </div>
             } @else {
               <p class="success-text">¡Solicitud enviada! Te contactaremos pronto.</p>
             }
-            <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp">💬 WhatsApp directo</a>
+            <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp"><app-whatsapp-icon [size]="18" /> WhatsApp directo</a>
             <div class="schedule">Horario: {{ g.schedule }}</div>
           </div>
 
           @if (safeMapUrl) {
             <div class="gestor-map-card">
-              <div class="gestor-map-title">📍 Ubicación</div>
+              <div class="gestor-map-title"><svg lucideMapPin [size]="14" class="gestor-map-title-icon" aria-hidden="true"></svg> Ubicación</div>
               <div class="gestor-map-wrap">
                 <iframe
                   [src]="safeMapUrl"
@@ -295,9 +310,9 @@
             </div>
           }
 
-          <button class="btn-share" (click)="shareGestor()" style="display:block; width:100%; margin-bottom:12px;">🔗 Compartir perfil</button>
-          <a routerLink="/gestores" class="btn-back">← Volver al directorio</a>
+          <button type="button" class="btn-detail-outline btn-share" (click)="shareGestor()"><svg lucideShare2 [size]="18" aria-hidden="true"></svg> Compartir perfil</button>
         </aside>
+      </div>
       </div>
     }
   }
@@ -310,9 +325,9 @@
               [style.background]="gestor()?.chatbot_btn_color || '#4F46E5'" 
               [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
         @if (chatOpen) {
-          ✕
+          <svg lucideX [size]="18" aria-hidden="true"></svg>
         } @else {
-          💬 Asistente Virtual
+          <svg lucideMessageCircle [size]="18" aria-hidden="true"></svg> Asistente Virtual
         }
       </button>
       
@@ -321,7 +336,7 @@
           <div class="chatbot-header" 
                [style.backgroundColor]="gestor()?.chatbot_btn_color || '#4F46E5'"
                [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
-            <h4>🤖 Asistente de {{ gestor()?.name }}</h4>
+            <h4><svg lucideBot [size]="16" class="chatbot-title-icon" aria-hidden="true"></svg> Asistente de {{ gestor()?.name }}</h4>
             <p>Te ayudo a iniciar tu trámite en minutos.</p>
           </div>
           <div class="chatbot-messages" id="chatbot-messages">
@@ -339,8 +354,11 @@
             }
             @if (leadCreated) {
               <div class="chat-success-banner">
-                ✅ ¡Tu solicitud fue registrada exitosamente!<br>
-                <small>Revisa tu correo — te enviamos tus credenciales de acceso para dar seguimiento.</small>
+                <svg lucideCircleCheck [size]="16" class="chat-success-icon" aria-hidden="true"></svg>
+                <div>
+                  ¡Tu solicitud fue registrada exitosamente!
+                  <small>Revisa tu correo — te enviamos tus credenciales de acceso para dar seguimiento.</small>
+                </div>
               </div>
             }
           </div>
@@ -349,10 +367,11 @@
               <input type="text" [(ngModel)]="chatMessage" 
                      placeholder="Escribe tu nombre, correo, teléfono..." 
                      (keyup.enter)="sendChatMessage()">
-              <button (click)="sendChatMessage()" 
-                      [style.color]="gestor()?.chatbot_btn_color || '#4F46E5'">➤</button>
+              <button type="button" (click)="sendChatMessage()" [style.color]="gestor()?.chatbot_btn_color || '#4F46E5'">
+                <svg lucideSend [size]="18" aria-hidden="true"></svg>
+              </button>
             } @else {
-              <p class="chat-done-msg">Conversación finalizada. ¡Hasta pronto! 👋</p>
+              <p class="chat-done-msg">Conversación finalizada. ¡Hasta pronto!</p>
             }
           </div>
         </div>

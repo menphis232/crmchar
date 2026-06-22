@@ -1,8 +1,9 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
@@ -20,11 +21,38 @@ import { ToastService } from '../../core/toast.service';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
+import { ImageCropperModalComponent } from '../../shared/image-cropper-modal.component';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { MEXICO_STATES } from '../../shared/mexico-states';
+import {
+  LucideBot,
+  LucideCamera,
+  LucideClock,
+  LucideCopy,
+  LucideCreditCard,
+  LucideFileText,
+  LucideFunnel,
+  LucideGlobe,
+  LucideLandmark,
+  LucideLayoutDashboard,
+  LucideLightbulb,
+  LucideLink,
+  LucideMapPin,
+  LucidePalette,
+  LucidePlus,
+  LucideSearch,
+  LucideSettings,
+  LucideSparkles,
+  LucideSquarePen,
+  LucideTriangleAlert,
+  LucideUsers,
+  LucideWrench,
+  LucideX,
+} from '@lucide/angular';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'ajustes-crm' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
 const DEFAULT_AI_TIPS = [
   'Configura mensajes de bienvenida en WhatsApp con saludo, lista de requisitos y tiempo estimado; el primer contacto marca la confianza del cliente.',
@@ -52,14 +80,18 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent
+    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX,
   ],
   templateUrl: './panel-gestor.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
 })
 export class PanelGestorComponent implements OnInit {
+  private sanitizer = inject(DomSanitizer);
+
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  readonly mexicoStates = MEXICO_STATES;
 
   tab = signal<GestorTab>('dashboard');
   profile = signal<Gestor | null>(null);
@@ -72,8 +104,10 @@ export class PanelGestorComponent implements OnInit {
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   filterStage = '';
-  editBio = signal(false);
   bio = '';
+  profileName = '';
+  gestorState = '';
+  publicSlug = '';
   googleAnalyticsId = '';
   stripePublicKey = '';
   stripeSecretKey = '';
@@ -88,9 +122,17 @@ export class PanelGestorComponent implements OnInit {
   panelAssistantBgColor = '#0f172a';
   panelAssistantBtnColor = '#4F46E5';
   panelAssistantTextColor = '#FFFFFF';
+  panelAssistantFont = 'Spartan';
+  panelAssistantPrompt = '';
   gestorPhone = '';
   gestorAddress = '';
   gestorMapEmbedUrl = '';
+  mapSearchQuery = '';
+  mapSearching = false;
+  mapSearchError = '';
+  mapFoundLabel = signal('');
+  mapPreviewUrl = signal<SafeResourceUrl | null>(null);
+  logoCropFile = signal<File | null>(null);
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   isAiLoading = signal(false);
   message = signal('');
@@ -101,9 +143,22 @@ export class PanelGestorComponent implements OnInit {
   readonly automationVariables = AUTOMATION_VARIABLES;
   isMobileMenuOpen = signal(false);
 
-  // CRM Stages Settings
   crmStages: { id: string, label: string }[] = [];
-  isSavingStages = false;
+
+  showManualLeadForm = signal(false);
+  savingManualLead = signal(false);
+  manualLeadServices = signal<{ name: string; price: number }[]>([]);
+  manualLead = {
+    clientName: '',
+    clientEmail: '',
+    clientPhone: '',
+    serviceName: '',
+    location: '',
+    title: '',
+    message: '',
+    estimatedValue: '' as string | number,
+    stage: 'nuevo',
+  };
 
   constructor(
     public auth: AuthService,
@@ -200,9 +255,14 @@ export class PanelGestorComponent implements OnInit {
     this.gestoresService.getMyProfile().subscribe(p => {
       this.profile.set(p);
       this.bio = p.bio || '';
+      this.profileName = p.name || '';
+      this.gestorState = p.state || p.location || '';
+      this.publicSlug = p.slug || '';
       this.gestorPhone = p.phone || '';
       this.gestorAddress = p.address || '';
       this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
+      const embed = this.toOsmEmbedUrl(this.gestorMapEmbedUrl);
+      this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
     this.auth.getMe().subscribe(res => {
       this.profileLogoUrl = res.user.logo_url || '';
@@ -237,10 +297,31 @@ export class PanelGestorComponent implements OnInit {
       this.panelAssistantBgColor = res.user.panel_assistant_bg_color || '#0f172a';
       this.panelAssistantBtnColor = res.user.panel_assistant_btn_color || '#4F46E5';
       this.panelAssistantTextColor = res.user.panel_assistant_text_color || '#FFFFFF';
+      this.panelAssistantFont = res.user.panel_assistant_font || 'Spartan';
+      this.panelAssistantPrompt = res.user.panel_assistant_prompt || '';
       this.crmStages = Array.isArray(res.user.crm_stages) && res.user.crm_stages.length > 0
         ? [...res.user.crm_stages]
         : [...DEFAULT_GESTOR_STAGES];
     });
+  }
+
+  get publicPageUrl(): string {
+    return this.publicSlug ? `${window.location.origin}/gestores/${this.publicSlug}` : '';
+  }
+
+  get publicShareUrl(): string {
+    return this.publicSlug ? `${window.location.origin}/sg/${this.publicSlug}` : '';
+  }
+
+  copyPublicPageLink() {
+    if (!this.publicSlug) {
+      this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');
+      return;
+    }
+    navigator.clipboard.writeText(this.publicShareUrl).then(
+      () => this.toast.success('Enlace copiado al portapapeles'),
+      () => this.toast.error('No se pudo copiar el enlace'),
+    );
   }
 
   syncCrmStagesFromDashboard() {
@@ -328,10 +409,90 @@ export class PanelGestorComponent implements OnInit {
     });
   }
 
+  onStagesChange(stages: { id: string; label: string }[]) {
+    this.auth.updateMe({ crm_stages: stages }).subscribe({
+      next: () => {
+        this.toast.success('Etapas guardadas');
+        this.crmStages = [...stages];
+        this.loadCrm();
+      },
+      error: () => this.toast.error('Error al guardar etapas'),
+    });
+  }
+
   openDeal(id: string) {
     this.selectedDealId.set(id);
     this.selectedContactId.set(null);
     if (this.tab() !== 'pipeline') this.tab.set('pipeline');
+  }
+
+  openManualLeadForm() {
+    this.manualLead = {
+      clientName: '',
+      clientEmail: '',
+      clientPhone: '',
+      serviceName: '',
+      location: '',
+      title: '',
+      message: '',
+      estimatedValue: '',
+      stage: 'nuevo',
+    };
+    const services = this.profile()?.services?.map(s => ({ name: s.name, price: s.price })) ?? [];
+    if (services.length) {
+      this.manualLeadServices.set(services);
+    } else {
+      this.gestoresService.getMyProfile().subscribe(p => {
+        this.profile.set(p);
+        this.manualLeadServices.set(p.services?.map(s => ({ name: s.name, price: s.price })) ?? []);
+      });
+    }
+    this.showManualLeadForm.set(true);
+  }
+
+  closeManualLeadForm() {
+    this.showManualLeadForm.set(false);
+  }
+
+  onManualLeadServiceChange() {
+    const service = this.manualLeadServices().find(s => s.name === this.manualLead.serviceName);
+    if (!service) return;
+    this.manualLead.title = service.name;
+    if (service.price) this.manualLead.estimatedValue = service.price;
+  }
+
+  saveManualLead() {
+    if (!this.manualLead.clientName.trim()) {
+      this.toast.warning('El nombre del cliente es obligatorio');
+      return;
+    }
+    this.savingManualLead.set(true);
+    const estimatedValue = this.manualLead.estimatedValue !== ''
+      ? Number(this.manualLead.estimatedValue)
+      : undefined;
+    this.crmService.createDeal({
+      clientName: this.manualLead.clientName.trim(),
+      clientEmail: this.manualLead.clientEmail.trim() || undefined,
+      clientPhone: this.manualLead.clientPhone.trim() || undefined,
+      serviceName: this.manualLead.serviceName || undefined,
+      location: this.manualLead.location.trim() || undefined,
+      title: this.manualLead.title.trim() || undefined,
+      message: this.manualLead.message.trim() || undefined,
+      estimatedValue,
+      stage: this.manualLead.stage || 'nuevo',
+    }).subscribe({
+      next: (deal) => {
+        this.savingManualLead.set(false);
+        this.showManualLeadForm.set(false);
+        this.toast.success('Trámite registrado');
+        this.loadCrm();
+        this.openDeal(deal.id);
+      },
+      error: (e) => {
+        this.savingManualLead.set(false);
+        this.toast.error(e.error?.error || 'Error al crear trámite');
+      },
+    });
   }
 
   onDealUpdated() {
@@ -349,20 +510,184 @@ export class PanelGestorComponent implements OnInit {
   profileLogoUrl = '';
   isUploadingLogo = false;
 
-  onLogoSelected(event: any) {
-    const file = event.target.files[0];
+  onLogoSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    this.logoCropFile.set(file);
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  onLogoCropConfirmed(result: { blob: Blob; previewUrl: string }) {
+    const file = new File([result.blob], 'logo.jpg', { type: 'image/jpeg' });
     this.isUploadingLogo = true;
+    this.logoCropFile.set(null);
     this.uploadService.uploadFile(file).subscribe({
-      next: (res: any) => {
+      next: (res: { url: string }) => {
         this.profileLogoUrl = res.url;
         this.isUploadingLogo = false;
-        this.message.set('Logo subido correctamente, no olvides guardar.');
+        this.saveProfile();
       },
       error: () => {
         this.isUploadingLogo = false;
         this.message.set('Error al subir la imagen');
-      }
+      },
+    });
+  }
+
+  onLogoCropCancelled() {
+    this.logoCropFile.set(null);
+  }
+
+  saveProfile() {
+    this.gestoresService.updateProfile({
+      bio: this.bio,
+      location: this.gestorState || undefined,
+      state: this.gestorState || undefined,
+      phone: this.gestorPhone || undefined,
+      address: this.gestorAddress || undefined,
+      mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
+    }).subscribe({
+      next: p => {
+        this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });
+        this.auth.updateMe({
+          name: this.profileName || undefined,
+          logo_url: this.profileLogoUrl,
+          google_analytics_id: this.googleAnalyticsId,
+          stripe_secret_key: this.stripeSecretKey,
+          stripe_public_key: this.stripePublicKey,
+        }).subscribe({
+          next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
+          error: () => this.toast.error('No se pudo guardar el perfil'),
+        });
+      },
+      error: () => this.toast.error('No se pudo guardar el perfil'),
+    });
+  }
+
+  readonly assistantFontOptions = [
+    { value: 'Spartan', label: 'Spartan (actual)' },
+    { value: 'Inter', label: 'Inter' },
+    { value: 'Montserrat', label: 'Montserrat' },
+    { value: 'Poppins', label: 'Poppins' },
+    { value: 'Roboto', label: 'Roboto' },
+    { value: 'Open Sans', label: 'Open Sans' },
+    { value: 'Arial', label: 'Arial' },
+    { value: 'Georgia', label: 'Georgia' },
+  ];
+
+  readonly chatbotColorFields: ColorPaletteFieldDef[] = [
+    { key: 'chatbotBg', label: 'Chatbot público · Fondo' },
+    { key: 'chatbotBtn', label: 'Chatbot público · Botón' },
+    { key: 'chatbotText', label: 'Chatbot público · Texto' },
+  ];
+
+  readonly assistantColorFields: ColorPaletteFieldDef[] = [
+    { key: 'bg', label: 'Asistente panel · Fondo' },
+    { key: 'btn', label: 'Asistente panel · Botón' },
+    { key: 'text', label: 'Asistente panel · Texto' },
+  ];
+
+  get chatbotColors(): Record<string, string> {
+    return {
+      chatbotBg: this.chatbotBgColor,
+      chatbotBtn: this.chatbotBtnColor,
+      chatbotText: this.chatbotTextColor,
+    };
+  }
+
+  get assistantColors(): Record<string, string> {
+    return {
+      bg: this.panelAssistantBgColor,
+      btn: this.panelAssistantBtnColor,
+      text: this.panelAssistantTextColor,
+    };
+  }
+
+  applyChatbotColors(map: Record<string, string>) {
+    if (map['chatbotBg']) this.chatbotBgColor = map['chatbotBg'];
+    if (map['chatbotBtn']) this.chatbotBtnColor = map['chatbotBtn'];
+    if (map['chatbotText']) this.chatbotTextColor = map['chatbotText'];
+  }
+
+  applyAssistantColors(map: Record<string, string>) {
+    if (map['bg']) this.panelAssistantBgColor = map['bg'];
+    if (map['btn']) this.panelAssistantBtnColor = map['btn'];
+    if (map['text']) this.panelAssistantTextColor = map['text'];
+  }
+
+  saveAssistantConfig() {
+    this.auth.updateMe({
+      chatbot_bg_color: this.chatbotBgColor,
+      chatbot_btn_color: this.chatbotBtnColor,
+      chatbot_text_color: this.chatbotTextColor,
+      panel_assistant_enabled: this.panelAssistantEnabled,
+      panel_assistant_name: this.panelAssistantName,
+      panel_assistant_position: this.panelAssistantPosition,
+      panel_assistant_bg_color: this.panelAssistantBgColor,
+      panel_assistant_btn_color: this.panelAssistantBtnColor,
+      panel_assistant_text_color: this.panelAssistantTextColor,
+      panel_assistant_font: this.panelAssistantFont,
+      panel_assistant_prompt: this.panelAssistantPrompt || null,
+    }).subscribe({
+      next: () => this.toast.success('Configuración del asistente guardada', 'Asistente IA'),
+      error: () => this.toast.error('No se pudo guardar el asistente'),
+    });
+  }
+
+  private toOsmEmbedUrl(url: string): string | null {
+    const s = url.trim();
+    if (!s) return null;
+    if (s.includes('openstreetmap.org/export/embed')) return s;
+    if (s.includes('maps.google.com') && s.includes('output=embed')) return s;
+    if (s.includes('maps/embed')) return s;
+    const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1]);
+      const lng = parseFloat(coordMatch[2]);
+      const delta = 0.008;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+    }
+    return null;
+  }
+
+  searchAddress() {
+    const q = this.mapSearchQuery.trim();
+    if (!q) return;
+    this.mapSearching = true;
+    this.mapSearchError = '';
+    this.mapFoundLabel.set('');
+    const simplified = q
+      .replace(/C\.?P\.?\s*\d{5}/gi, '')
+      .split(',').slice(0, 4).join(',').trim();
+    const query = encodeURIComponent(simplified || q);
+    const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&addressdetails=1&accept-language=es`;
+    this.http.get<{ lat: string; lon: string; display_name: string }[]>(url).subscribe({
+      next: (results) => {
+        this.mapSearching = false;
+        if (results?.length) {
+          const r = results[0];
+          const lat = parseFloat(r.lat);
+          const lng = parseFloat(r.lon);
+          const delta = 0.008;
+          const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+          this.gestorMapEmbedUrl = osmUrl;
+          this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
+          this.mapFoundLabel.set(r.display_name);
+        } else {
+          this.mapSearchError = 'No se encontró la dirección. Intenta con calle, colonia y ciudad.';
+        }
+      },
+      error: () => {
+        this.mapSearching = false;
+        this.mapSearchError = 'Error al buscar la dirección. Intenta de nuevo.';
+      },
+    });
+  }
+
+  savePageBuilderConfig(config: unknown) {
+    this.auth.updateMe({ page_builder_config: config }).subscribe(() => {
+      this.message.set('Diseño de página guardado exitosamente');
+      setTimeout(() => this.message.set(''), 3000);
     });
   }
 
@@ -375,131 +700,6 @@ export class PanelGestorComponent implements OnInit {
     if (this.aiConfigs.length === 0) {
       this.addAiConfig();
     }
-  }
-
-  saveBio() {
-    this.gestoresService.updateProfile({
-      bio: this.bio,
-      phone: this.gestorPhone || undefined,
-      address: this.gestorAddress || undefined,
-      mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
-    }).subscribe({
-      next: p => {
-        this.profile.set({ ...this.profile()!, ...p });
-
-          this.auth.updateMe({
-            name: this.profile()?.name,
-            logo_url: this.profileLogoUrl,
-            google_analytics_id: this.googleAnalyticsId,
-            stripe_secret_key: this.stripeSecretKey,
-            stripe_public_key: this.stripePublicKey,
-            chatbot_bg_color: this.chatbotBgColor,
-            chatbot_btn_color: this.chatbotBtnColor,
-            chatbot_text_color: this.chatbotTextColor,
-            panel_assistant_enabled: this.panelAssistantEnabled,
-            panel_assistant_name: this.panelAssistantName,
-            panel_assistant_position: this.panelAssistantPosition,
-            panel_assistant_bg_color: this.panelAssistantBgColor,
-            panel_assistant_btn_color: this.panelAssistantBtnColor,
-            panel_assistant_text_color: this.panelAssistantTextColor,
-        }).subscribe(() => {
-          this.editBio.set(false);
-          this.message.set('Perfil actualizado exitosamente');
-        });
-      },
-      error: () => this.message.set('Error al actualizar el perfil'),
-    });
-  }
-
-  savePageBuilderConfig(config: any) {
-    this.auth.updateMe({ page_builder_config: config }).subscribe(() => {
-      this.message.set('Diseño de página guardado exitosamente');
-      setTimeout(() => this.message.set(''), 3000);
-    });
-  }
-
-  readonly designColorFields: ColorPaletteFieldDef[] = [
-    { key: 'chatbotBg', label: 'Chatbot · Fondo' },
-    { key: 'chatbotBtn', label: 'Chatbot · Botones' },
-    { key: 'chatbotText', label: 'Chatbot · Texto' },
-    { key: 'assistantBg', label: 'Asistente · Fondo' },
-    { key: 'assistantBtn', label: 'Asistente · Botón' },
-    { key: 'assistantText', label: 'Asistente · Texto' },
-  ];
-
-  get designColors(): Record<string, string> {
-    return {
-      chatbotBg: this.chatbotBgColor,
-      chatbotBtn: this.chatbotBtnColor,
-      chatbotText: this.chatbotTextColor,
-      assistantBg: this.panelAssistantBgColor,
-      assistantBtn: this.panelAssistantBtnColor,
-      assistantText: this.panelAssistantTextColor,
-    };
-  }
-
-  applyDesignColors(map: Record<string, string>) {
-    if (map['chatbotBg']) this.chatbotBgColor = map['chatbotBg'];
-    if (map['chatbotBtn']) this.chatbotBtnColor = map['chatbotBtn'];
-    if (map['chatbotText']) this.chatbotTextColor = map['chatbotText'];
-    if (map['assistantBg']) this.panelAssistantBgColor = map['assistantBg'];
-    if (map['assistantBtn']) this.panelAssistantBtnColor = map['assistantBtn'];
-    if (map['assistantText']) this.panelAssistantTextColor = map['assistantText'];
-  }
-
-  saveDesignColors() {
-    this.auth.updateMe({
-      chatbot_bg_color: this.chatbotBgColor,
-      chatbot_btn_color: this.chatbotBtnColor,
-      chatbot_text_color: this.chatbotTextColor,
-      panel_assistant_bg_color: this.panelAssistantBgColor,
-      panel_assistant_btn_color: this.panelAssistantBtnColor,
-      panel_assistant_text_color: this.panelAssistantTextColor,
-    }).subscribe({
-      next: () => this.message.set('Colores guardados'),
-      error: () => this.message.set('Error al guardar colores'),
-    });
-  }
-
-  // CRM Stages Settings Methods
-  addCrmStage() {
-    this.crmStages.push({ id: `etapa_${Date.now()}`, label: 'Nueva Etapa' });
-  }
-
-  removeCrmStage(index: number) {
-    if (this.crmStages.length <= 2) {
-      alert('Debes tener al menos 2 etapas.');
-      return;
-    }
-    this.crmStages.splice(index, 1);
-  }
-
-  moveCrmStageUp(index: number) {
-    if (index === 0) return;
-    const temp = this.crmStages[index];
-    this.crmStages[index] = this.crmStages[index - 1];
-    this.crmStages[index - 1] = temp;
-  }
-
-  moveCrmStageDown(index: number) {
-    if (index === this.crmStages.length - 1) return;
-    const temp = this.crmStages[index];
-    this.crmStages[index] = this.crmStages[index + 1];
-    this.crmStages[index + 1] = temp;
-  }
-
-  saveCrmStages() {
-    this.isSavingStages = true;
-    this.auth.updateMe({ crm_stages: this.crmStages }).subscribe({
-      next: () => {
-        this.isSavingStages = false;
-        this.toast.success('Las etapas del embudo de ventas han sido actualizadas.', '¡Guardado!');
-        this.loadCrm();
-      },
-      error: () => {
-        this.isSavingStages = false;
-      }
-    });
   }
 
   addService() {
@@ -535,6 +735,13 @@ export class PanelGestorComponent implements OnInit {
 
   deleteTemplate(id: string) {
     this.crmService.deleteTemplate(id).subscribe(() => this.loadTemplates());
+  }
+
+  stripEmojis(text: string): string {
+    return (text || '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   initials(name?: string) {

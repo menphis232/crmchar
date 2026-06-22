@@ -8,7 +8,9 @@
           <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Contacto 360°</p>
           <h3>{{ c360.contact.name }}</h3>
         </div>
-        <button type="button" class="deal-panel-close" (click)="closed.emit()">✕</button>
+        <button type="button" class="deal-panel-close" (click)="closed.emit()" aria-label="Cerrar">
+          <svg lucideX [size]="18" aria-hidden="true"></svg>
+        </button>
       </div>
 
       <!-- BODY -->
@@ -19,10 +21,10 @@
           <h4>Información</h4>
           <div class="deal-contact-card">
             @if (c360.contact.email) {
-              <p>✉️ {{ c360.contact.email }}</p>
+              <p class="deal-meta-with-icon"><svg lucideMail [size]="14" aria-hidden="true"></svg> {{ c360.contact.email }}</p>
             }
             @if (c360.contact.phone) {
-              <p>📞 {{ c360.contact.phone }}</p>
+              <p class="deal-meta-with-icon"><svg lucidePhone [size]="14" aria-hidden="true"></svg> {{ c360.contact.phone }}</p>
             }
             @if (c360.contact.notes) {
               <p class="inquiry-msg">{{ c360.contact.notes }}</p>
@@ -49,8 +51,13 @@
           <div class="deal-section">
             <h4>Tareas</h4>
             @for (t of c360.tasks; track t.id) {
-              <div class="activity-item" [class.done]="t.completed">
-                <span>{{ t.completed ? '✅' : '○' }} {{ t.title }}</span>
+              <div class="activity-item task-row-icon" [class.done]="t.completed">
+                @if (t.completed) {
+                  <svg lucideCircleCheck [size]="14" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideCircle [size]="14" aria-hidden="true"></svg>
+                }
+                <span>{{ t.title }}</span>
                 <span class="review-author">{{ t.dueAt | date:'short' }}</span>
               </div>
             }

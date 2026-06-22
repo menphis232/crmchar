@@ -3,6 +3,7 @@ import {
   Component, ElementRef, EventEmitter, OnDestroy, Output, ViewChild, signal,
 } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
+import { LucideX } from '@lucide/angular';
 import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 import { BillingService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
@@ -12,7 +13,7 @@ import { BillingInvoice, BillingPaymentMethod, BillingSummary } from '../../mode
 @Component({
   selector: 'app-subscription-billing',
   standalone: true,
-  imports: [CommonModule, DecimalPipe],
+  imports: [CommonModule, DecimalPipe, LucideX],
   template: `
     <div class="billing-overlay" (click)="onOverlayClick($event)">
       <div class="billing-modal" (click)="$event.stopPropagation()">
@@ -21,7 +22,9 @@ import { BillingInvoice, BillingPaymentMethod, BillingSummary } from '../../mode
             <h2>Suscripción y facturación</h2>
             <p>Gestiona tu plan, facturas y métodos de pago</p>
           </div>
-          <button type="button" class="billing-close" (click)="closed.emit()" aria-label="Cerrar">✕</button>
+          <button type="button" class="billing-close" (click)="closed.emit()" aria-label="Cerrar">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
         </div>
 
         @if (loading()) {

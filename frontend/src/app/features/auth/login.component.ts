@@ -50,6 +50,10 @@ export class LoginComponent implements OnInit, OnDestroy {
     }
   }
 
+  backHomeLink(): string {
+    return this.role() === 'gestor' ? '/gestores' : '/autos';
+  }
+
   selectRole(r: 'gestor' | 'concesionaria' | 'cliente') {
     this.role.set(r);
     this.mode.set('login');

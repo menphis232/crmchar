@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { LucidePlus, LucideUsers } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 
@@ -19,7 +20,8 @@ const GESTOR_MODULES = [
   { id: 'plantillas', label: 'Plantillas de mensaje', hint: 'Respuestas rápidas para clientes' },
   { id: 'pdf_designer', label: 'Cotizador PDF', hint: 'Diseño de cotizaciones en PDF' },
   { id: 'finanzas', label: 'Finanzas', hint: 'Ingresos, gastos y reportes' },
-  { id: 'perfil', label: 'Perfil y ajustes', hint: 'Configuración, CRM y constructor web' },
+  { id: 'asistente', label: 'Asistente IA', hint: 'Colores, nombre y prompt del bot de ayuda' },
+  { id: 'perfil', label: 'Perfil', hint: 'Datos públicos, logo y mapa' },
 ];
 
 const CONCESIONARIA_MODULES = [
@@ -36,14 +38,18 @@ const CONCESIONARIA_MODULES = [
 @Component({
   selector: 'app-crm-team',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LucideUsers, LucidePlus],
   host: { '[class.theme-dark]': 'isConcesionaria' },
   template: `
     <div class="dash-card team-panel">
-      <h2 class="card-title">
+      <h2 class="card-title card-title-with-icon">
+        <svg lucideUsers [size]="20" class="card-title-icon" aria-hidden="true"></svg>
         {{ panelTitle }}
         @if (!showForm()) {
-          <button type="button" class="btn-copy small" (click)="openForm()">+ Nuevo empleado</button>
+          <button type="button" class="btn-copy small btn-with-icon" (click)="openForm()">
+            <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+            Nuevo empleado
+          </button>
         }
       </h2>
       <p class="card-desc">Agrega colaboradores y elige qué secciones del panel pueden ver y usar.</p>
@@ -723,7 +729,7 @@ export class CrmTeamComponent implements OnInit {
   defaultPerms = ['dashboard', 'pipeline'];
 
   get panelTitle(): string {
-    return this.auth.user()?.role === 'concesionaria' ? '👥 Roles y permisos' : '👥 Mi Equipo';
+    return this.auth.user()?.role === 'concesionaria' ? 'Roles y permisos' : 'Mi Equipo';
   }
 
   get isConcesionaria(): boolean {

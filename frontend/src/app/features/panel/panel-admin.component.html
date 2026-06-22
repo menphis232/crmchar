@@ -14,37 +14,63 @@
       }
     </button>
 
-    <!-- Desktop Avatar & Logout -->
+    <!-- Desktop Avatar Menu -->
     <div class="desktop-only">
-      <span>Super Admin</span>
-      <div class="avatar">{{ initials() }}</div>
-      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-      </button>
+      <app-panel-user-menu
+        [name]="'Super Admin'"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials()"
+        [showName]="true"
+        [showBilling]="false"
+        (logout)="auth.logout()"
+      />
     </div>
   </div>
 </nav>
 
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
-    <!-- Mobile User Section -->
     <div class="mobile-only sidebar-user-section">
-      <div class="avatar">{{ initials() }}</div>
+      <app-panel-user-menu
+        [name]="'Super Admin'"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials()"
+        [showBilling]="false"
+        (logout)="auth.logout()"
+      />
       <div style="flex:1;">
         <strong>Super Admin</strong>
       </div>
-      <button class="btn-icon-danger" (click)="auth.logout()" title="Salir">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-      </button>
     </div>
 
-    <button class="dash-link" [class.active]="tab() === 'stats'" (click)="tab.set('stats'); loadAnalytics(); isMobileMenuOpen.set(false)">📊 Estadísticas</button>
-    <button class="dash-link" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers(); isMobileMenuOpen.set(false)">👥 Usuarios</button>
-    <button class="dash-link" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">🎨 Página Autos</button>
-    <button class="dash-link" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme'); isMobileMenuOpen.set(false)">🎨 Página Gestores</button>
-    <button class="dash-link" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor'); isMobileMenuOpen.set(false)">🛠 Panel Gestor</button>
-    <button class="dash-link" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria'); isMobileMenuOpen.set(false)">🛠 Panel Concesionaria</button>
-    <button class="dash-link" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">⚙️ Configuración Global</button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'stats'" (click)="tab.set('stats'); loadAnalytics(); isMobileMenuOpen.set(false)">
+      <svg lucideBarChart3 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Estadísticas
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers(); isMobileMenuOpen.set(false)">
+      <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Usuarios
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">
+      <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Página Autos
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'gestores-theme'" (click)="tab.set('gestores-theme'); isMobileMenuOpen.set(false)">
+      <svg lucidePalette [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Página Gestores
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'panel-gestor'" (click)="tab.set('panel-gestor'); isMobileMenuOpen.set(false)">
+      <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Panel Gestor
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'panel-concesionaria'" (click)="tab.set('panel-concesionaria'); isMobileMenuOpen.set(false)">
+      <svg lucideBuilding2 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Panel Concesionaria
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">
+      <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Configuración Global
+    </button>
   </aside>
 
   <main class="dash-main">
@@ -53,7 +79,10 @@
     @if (tab() === 'stats') {
       @if (stats(); as s) {
         <div class="dash-card">
-          <h2 class="card-title">📊 Resumen de la plataforma</h2>
+          <h2 class="card-title card-title-with-icon">
+            <svg lucideBarChart3 [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Resumen de la plataforma
+          </h2>
           <p class="card-desc">Usuarios, inventario y actividad interna del sistema.</p>
           <div class="stats-grid">
             <div class="stat-box"><div class="stat-num">{{ s.totals.gestores }}</div><div class="stat-label">GESTORES</div></div>
@@ -65,7 +94,10 @@
       }
 
       <div class="dash-card ga-admin-card">
-        <h2 class="card-title">🌐 Tráfico del sitio (Google Analytics)</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideGlobe [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Tráfico del sitio (Google Analytics)
+        </h2>
         <p class="card-desc">Conecta tu cuenta de Google Analytics para ver visitas, dispositivos y páginas más vistas. El ID de medición se usa en todo el sitio público.</p>
 
         @if (gaMsg()) {
@@ -78,10 +110,16 @@
           @if (analyticsConfig(); as cfg) {
           <div class="ga-admin-status" [class.connected]="cfg.connected">
             @if (cfg.connected) {
-              <span>✅ Conectado{{ cfg.connectedEmail ? ' como ' + cfg.connectedEmail : '' }}</span>
+              <span class="deal-meta-with-icon">
+                <svg lucideCircleCheck [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                Conectado{{ cfg.connectedEmail ? ' como ' + cfg.connectedEmail : '' }}
+              </span>
               <button type="button" class="btn-ghost small" (click)="disconnectGoogleAnalytics()">Desconectar</button>
             } @else {
-              <span>⚠️ Sin conexión OAuth — autoriza tu cuenta de Google para leer estadísticas.</span>
+              <span class="deal-meta-with-icon">
+                <svg lucideTriangleAlert [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                Sin conexión OAuth — autoriza tu cuenta de Google para leer estadísticas.
+              </span>
             }
           </div>
 
@@ -207,7 +245,10 @@
 
     @if (tab() === 'users') {
       <div class="dash-card">
-        <h2 class="card-title">Gestión de usuarios</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideUsers [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Gestión de usuarios
+        </h2>
         <p class="card-desc">Modifica datos y contraseñas de gestores y concesionarias.</p>
         <div class="filter-tabs">
           <button [class.active]="userFilter() === 'all'" (click)="userFilter.set('all'); loadUsers()">Todos</button>
@@ -221,14 +262,27 @@
             }
             @for (u of managedUsers(); track u.id) {
               <button type="button" class="user-row" [class.selected]="selectedUser()?.id === u.id" (click)="selectUser(u)">
-                <strong>{{ u.name }}</strong>
-                <span class="user-meta">{{ u.role }} • {{ u.email }}</span>
+                <div class="user-row-avatar">{{ userInitials(u.name) }}</div>
+                <div class="user-row-body">
+                  <strong>{{ u.name }}</strong>
+                  <span class="user-meta">{{ u.email }}</span>
+                </div>
+                <span class="user-role-badge" [class.gestor]="u.role === 'gestor'" [class.concesionaria]="u.role === 'concesionaria'">
+                  {{ u.role === 'gestor' ? 'Gestor' : 'Concesionaria' }}
+                </span>
               </button>
             }
           </div>
           @if (selectedUser(); as u) {
             <div class="user-editor">
-              <h3>Editar: {{ u.name }}</h3>
+              <h3 class="card-title-with-icon">
+                @if (u.role === 'gestor') {
+                  <svg lucideUser [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                } @else {
+                  <svg lucideBuilding2 [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                }
+                Editar: {{ u.name }}
+              </h3>
               <div class="form-group"><label>Nombre</label><input [(ngModel)]="editName"></div>
               <div class="form-group"><label>Email</label><input [(ngModel)]="editEmail"></div>
               @if (u.role === 'gestor') {
@@ -247,9 +301,15 @@
               <hr class="divider">
               <h4>Auditoría de Actividad</h4>
               <p class="card-desc">Monitorea clientes, trámites y lee los mensajes de esta organización.</p>
-              <button type="button" class="btn-audit" (click)="auditUser(u)">
-                🔍 Auditar Organización
+              <button type="button" class="btn-audit btn-with-icon" (click)="auditUser(u)">
+                <svg lucideSearch [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                Auditar Organización
               </button>
+            </div>
+          } @else {
+            <div class="user-editor user-editor-placeholder">
+              <svg lucideUsers [size]="48" [strokeWidth]="1.5" aria-hidden="true"></svg>
+              <p>Selecciona un usuario de la lista para ver y editar sus datos.</p>
             </div>
           }
         </div>
@@ -272,7 +332,10 @@
 
     @if (tab() === 'stripe') {
       <div class="dash-card">
-        <h2 class="card-title">🤖 Configuración de Inteligencia Artificial (Global)</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Configuración de Inteligencia Artificial (Global)
+        </h2>
         <p class="card-desc">Esta API Key será utilizada por todos los gestores y concesionarias para el autocompletado y chatbots si no configuran una propia.</p>
         
         <div class="stripe-settings" style="display: flex; flex-direction: column; gap: 15px;">
@@ -301,13 +364,20 @@
           </button>
         </div>
         @if (aiMsg()) { <p class="success-msg banner-msg" style="margin-top: 16px;">{{ aiMsg() }}</p> }
-        <button class="btn-copy full" [disabled]="aiSaving()" style="margin-top: 20px;" (click)="saveAiConfig()">
-          {{ aiSaving() ? 'Guardando...' : '💾 GUARDAR API KEY DE IA' }}
+        <button class="btn-copy full btn-with-icon" [disabled]="aiSaving()" style="margin-top: 20px;" (click)="saveAiConfig()">
+          @if (aiSaving()) { Guardando... }
+          @else {
+            <svg lucideSave [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+            GUARDAR API KEY DE IA
+          }
         </button>
 
         <hr class="divider" style="margin: 28px 0;">
 
-        <h2 class="card-title">🤖 Asistente del Panel</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Asistente del Panel
+        </h2>
         <p class="card-desc">Personaliza el botón flotante de ayuda en tu panel de administración.</p>
         <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
           <input type="checkbox" [(ngModel)]="panelAssistantEnabled">
@@ -336,13 +406,20 @@
           (colorPicked)="savePanelAssistant()"
         ></app-panel-color-palette>
         @if (panelAssistantMsg()) { <p class="success-msg banner-msg" style="margin-bottom: 12px;">{{ panelAssistantMsg() }}</p> }
-        <button class="btn-copy full" [disabled]="panelAssistantSaving()" style="margin-bottom: 40px;" (click)="savePanelAssistant()">
-          {{ panelAssistantSaving() ? 'Guardando...' : '💾 GUARDAR ASISTENTE' }}
+        <button class="btn-copy full btn-with-icon" [disabled]="panelAssistantSaving()" style="margin-bottom: 40px;" (click)="savePanelAssistant()">
+          @if (panelAssistantSaving()) { Guardando... }
+          @else {
+            <svg lucideSave [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+            GUARDAR ASISTENTE
+          }
         </button>
 
         <hr class="divider">
 
-        <h2 class="card-title">💳 Configuración de Pagos y Suscripción</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideCreditCard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Configuración de Pagos y Suscripción
+        </h2>
         <p class="card-desc">Define las claves de Stripe y el precio de suscripción mensual. Al activar esto, los gestores y concesionarias deberán pagar antes de activar su cuenta.</p>
 
         <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 20px 0 14px;">Claves de API de Stripe</h4>
@@ -366,16 +443,21 @@
           </div>
         </div>
 
-        <div class="stripe-settings-note">
-          <strong>&#9889; Cómo funciona:</strong> Cuando guardas la configuración, al registrarse un nuevo gestor o concesionaria se les pedirá pagar la suscripción mediante Stripe Checkout. Su cuenta no se activará hasta que el pago sea confirmado por el webhook de Stripe.
+        <div class="stripe-settings-note deal-meta-with-icon">
+          <svg lucideZap [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+          <strong>Cómo funciona:</strong> Cuando guardas la configuración, al registrarse un nuevo gestor o concesionaria se les pedirá pagar la suscripción mediante Stripe Checkout. Su cuenta no se activará hasta que el pago sea confirmado por el webhook de Stripe.
         </div>
 
         @if (stripeMsg()) {
           <p class="success-msg banner-msg" style="margin-top: 16px;">{{ stripeMsg() }}</p>
         }
 
-        <button class="btn-copy full" [disabled]="stripeSaving()" style="margin-top: 20px;" (click)="saveStripeConfig()">
-          {{ stripeSaving() ? 'Guardando...' : '&#128190; GUARDAR CONFIGURACIÓN DE STRIPE' }}
+        <button class="btn-copy full btn-with-icon" [disabled]="stripeSaving()" style="margin-top: 20px;" (click)="saveStripeConfig()">
+          @if (stripeSaving()) { Guardando... }
+          @else {
+            <svg lucideSave [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+            GUARDAR CONFIGURACIÓN DE STRIPE
+          }
         </button>
       </div>
     }
@@ -383,9 +465,14 @@
     @if (auditingOrg(); as org) {
       <div class="modal-overlay" (click)="closeAudit()">
         <div class="modal-content large-modal" (click)="$event.stopPropagation()">
-          <button class="modal-close" (click)="closeAudit()">&#x2715;</button>
+          <button class="modal-close" (click)="closeAudit()" aria-label="Cerrar">
+            <svg lucideX [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+          </button>
 
-          <h2 class="card-title" style="padding-right: 44px; margin-bottom: 8px;">🔍 Auditoría: {{ org.name }}</h2>
+          <h2 class="card-title card-title-with-icon" style="padding-right: 44px; margin-bottom: 8px;">
+            <svg lucideSearch [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Auditoría: {{ org.name }}
+          </h2>
           <div class="audit-mode-badge">Modo Lectura Silenciosa Activo</div>
 
           @if (orgStats(); as st) {
@@ -429,25 +516,28 @@
                       <div class="audit-msg" [class.from-client]="msg.sender_role === 'cliente'" [class.from-gestor]="msg.sender_role !== 'cliente'">
                         {{ msg.message }}
                         @if (msg.file_url) {
-                          <div style="margin-top: 6px;"><a [href]="msg.file_url" target="_blank" style="color: var(--gold); font-size: 12px;">📎 Adjunto</a></div>
+                          <div style="margin-top: 6px;"><a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: var(--gold); font-size: 12px;">
+                            <svg lucidePaperclip [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+                            Adjunto
+                          </a></div>
                         }
                       </div>
                     </div>
                   }
                   @if (!chatMessages().length) {
                     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted);">
-                      <span style="font-size: 40px;">💬</span>
+                      <svg lucideMessageCircle [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg>
                       <p style="margin: 0; font-size: 13px;">No hay mensajes en este trámite.</p>
                     </div>
                   }
                 </div>
                 <div style="padding: 12px 20px; background: rgba(0,0,0,0.3); display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                  <span style="font-size: 16px;">🔒</span>
+                  <svg lucideLock [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
                   <span style="font-size: 12px; color: var(--muted); font-family: var(--f-ui);">Solo lectura &mdash; las partes no saben que estás aquí</span>
                 </div>
               } @else {
                 <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 12px; color: var(--muted);">
-                  <span style="font-size: 48px; opacity: 0.3;">👁</span>
+                  <svg lucideEye [size]="48" [strokeWidth]="1.5" style="opacity:0.3" aria-hidden="true"></svg>
                   <p style="margin: 0; font-size: 13px;">Selecciona un trámite para leer sus mensajes</p>
                 </div>
               }

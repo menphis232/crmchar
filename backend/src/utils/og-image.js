@@ -8,6 +8,39 @@ const OG_HEIGHT = 630;
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 const ogCacheDir = path.join(uploadDir, 'og');
+const brandAssetsDir = path.join(__dirname, '..', '..', 'assets');
+
+async function composeOgImage(logoBuffer, outPath) {
+  const { width = 0, height = 0 } = await sharp(logoBuffer).metadata();
+  const left = Math.max(0, Math.round((OG_WIDTH - width) / 2));
+  const top = Math.max(0, Math.round((OG_HEIGHT - height) / 2));
+
+  await sharp({
+    create: {
+      width: OG_WIDTH,
+      height: OG_HEIGHT,
+      channels: 3,
+      background: { r: 0, g: 0, b: 0 },
+    },
+  })
+    .composite([{ input: logoBuffer, left, top }])
+    .jpeg({ quality: 90 })
+    .toFile(outPath);
+
+  return outPath;
+}
+
+async function logoBufferFromPath(logoPath, maxScale = 0.7) {
+  return sharp(logoPath)
+    .resize({
+      width: Math.round(OG_WIDTH * maxScale),
+      height: Math.round(OG_HEIGHT * maxScale),
+      fit: 'inside',
+      withoutEnlargement: false,
+    })
+    .png()
+    .toBuffer();
+}
 
 function resolveLogoPath(logoUrl) {
   if (!logoUrl) return null;
@@ -47,31 +80,29 @@ export async function generateDealerOgImage(logoUrl, slug) {
     }
   }
 
-  const logoBuffer = await sharp(logoPath)
-    .resize({
-      width: Math.round(OG_WIDTH * 0.7),
-      height: Math.round(OG_HEIGHT * 0.7),
-      fit: 'inside',
-      withoutEnlargement: false,
-    })
-    .png()
-    .toBuffer();
+  const logoBuffer = await logoBufferFromPath(logoPath);
 
-  const { width = 0, height = 0 } = await sharp(logoBuffer).metadata();
-  const left = Math.max(0, Math.round((OG_WIDTH - width) / 2));
-  const top = Math.max(0, Math.round((OG_HEIGHT - height) / 2));
+  return composeOgImage(logoBuffer, outPath);
+}
 
-  await sharp({
-    create: {
-      width: OG_WIDTH,
-      height: OG_HEIGHT,
-      channels: 3,
-      background: { r: 0, g: 0, b: 0 },
-    },
-  })
-    .composite([{ input: logoBuffer, left, top }])
-    .jpeg({ quality: 90 })
-    .toFile(outPath);
+export async function generateAutosOgImage() {
+  const logoPath = path.join(brandAssetsDir, 'tvm-logo.png');
+  if (!fs.existsSync(logoPath)) return null;
 
-  return outPath;
+  if (!fs.existsSync(ogCacheDir)) {
+    fs.mkdirSync(ogCacheDir, { recursive: true });
+  }
+
+  const outPath = path.join(ogCacheDir, 'autos.jpg');
+  const logoStat = fs.statSync(logoPath);
+
+  if (fs.existsSync(outPath)) {
+    const outStat = fs.statSync(outPath);
+    if (outStat.mtimeMs >= logoStat.mtimeMs) {
+      return outPath;
+    }
+  }
+
+  const logoBuffer = await logoBufferFromPath(logoPath, 0.65);
+  return composeOgImage(logoBuffer, outPath);
 }

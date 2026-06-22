@@ -1,3 +1,4 @@
+import { LucideX } from '@lucide/angular';
 import { Component, Input, Output, EventEmitter, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -11,7 +12,7 @@ import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 @Component({
   selector: 'app-page-builder',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, PanelColorPaletteComponent],
+  imports: [CommonModule, FormsModule, DragDropModule, PanelColorPaletteComponent, LucideX],
   templateUrl: './page-builder.component.html',
   styleUrl: './page-builder.component.css'
 })

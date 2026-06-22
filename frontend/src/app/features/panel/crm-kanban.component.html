@@ -1,14 +1,19 @@
-<div class="kanban-hint" [class.kanban-hint-touch]="isTouchDevice()">
+<div class="kanban-hint kanban-hint-with-icon" [class.kanban-hint-touch]="isTouchDevice()">
+  <svg lucideLightbulb [size]="14" aria-hidden="true"></svg>
   @if (isTouchDevice()) {
-    💡 Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.
+    <span>Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.</span>
   } @else if (editable()) {
-    💡 Arrastra la cabecera para reordenar columnas · Doble clic en el nombre para editarlo · Arrastra tarjetas entre columnas.
+    <span>Arrastra la cabecera para reordenar columnas · Doble clic en el nombre para editarlo · Arrastra tarjetas entre columnas.</span>
   } @else {
-    💡 Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.
+    <span>Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.</span>
   }
 </div>
 
-<p class="kanban-scroll-hint">← Desliza para ver más etapas →</p>
+<p class="kanban-scroll-hint kanban-scroll-hint-with-icon">
+  <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg>
+  Desliza para ver más etapas
+  <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+</p>
 
 <div class="kanban-board">
   @for (stage of localStages(); track stage.id; let idx = $index) {
@@ -84,11 +89,17 @@
             }
 
             @if (showValue() && deal.estimatedValue) {
-              <span class="kanban-value">💰 {{ deal.estimatedValue | number:'1.0-0' }} MXN</span>
+              <span class="kanban-value kanban-meta-with-icon">
+                <svg lucideBanknote [size]="12" aria-hidden="true"></svg>
+                {{ deal.estimatedValue | number:'1.0-0' }} MXN
+              </span>
             }
 
             @if (deal.daysInStage && deal.daysInStage > 0) {
-              <span class="kanban-days">🕐 {{ deal.daysInStage }}d en etapa</span>
+              <span class="kanban-days kanban-meta-with-icon">
+                <svg lucideClock [size]="12" aria-hidden="true"></svg>
+                {{ deal.daysInStage }}d en etapa
+              </span>
             }
 
             <label class="kanban-select-label">Mover a etapa</label>
@@ -124,7 +135,9 @@
   <!-- ── Add column button (editable mode only) ── -->
   @if (editable()) {
     <div class="kanban-add-col">
-      <button type="button" class="btn-add-col" title="Agregar etapa" (click)="addColumn()">+</button>
+      <button type="button" class="btn-add-col" title="Agregar etapa" (click)="addColumn()">
+        <svg lucidePlus [size]="18" aria-hidden="true"></svg>
+      </button>
     </div>
   }
 </div>

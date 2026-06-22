@@ -12,17 +12,47 @@
   <div class="dash-container panel-preview-body">
     <aside class="dash-sidebar">
       @if (isConcesionaria) {
-        <button class="dash-link active">📊 Panel</button>
-        <button class="dash-link">🚗 Inventario</button>
-        <button class="dash-link">👤 Perfil</button>
-        <a class="dash-link">🌐 Página pública</a>
+        <button class="dash-link dash-link-with-icon active">
+          <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Panel
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Inventario
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Perfil
+        </button>
+        <a class="dash-link dash-link-with-icon">
+          <svg lucideGlobe [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Página pública
+        </a>
       } @else {
-        <button class="dash-link active">📊 Dashboard</button>
-        <button class="dash-link">📋 Embudo de Ventas</button>
-        <button class="dash-link">🛠 Servicios</button>
-        <button class="dash-link">💰 Finanzas</button>
-        <button class="dash-link">👤 Mi perfil</button>
-        <a class="dash-link">🌐 Directorio público</a>
+        <button class="dash-link dash-link-with-icon active">
+          <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Dashboard
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideFunnel [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Embudo de Ventas
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Servicios
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideLandmark [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Finanzas
+        </button>
+        <button class="dash-link dash-link-with-icon">
+          <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Mi perfil
+        </button>
+        <a class="dash-link dash-link-with-icon">
+          <svg lucideGlobe [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+          Directorio público
+        </a>
       }
     </aside>
 

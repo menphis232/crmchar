@@ -169,7 +169,12 @@
       }
 
       <div class="dash-card ai-insights-card">
-        <h2 class="card-title ai-insights-title">🤖 Análisis IA Comercial</h2>
+        <h2 class="card-title ai-insights-title">
+          <span class="dash-link-with-icon ai-insights-title-row">
+            <svg lucideSparkles [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+            <span>Análisis IA Comercial</span>
+          </span>
+        </h2>
         @if (isAiLoading()) {
           <p class="card-desc">Generando recomendaciones prácticas para tu concesionaria...</p>
         } @else if (aiInsights().length === 0) {
@@ -178,7 +183,10 @@
           <p class="card-desc">Tips para mejorar tus ventas y la atención a tus clientes:</p>
           <ul class="ai-insights-list">
             @for (insight of aiInsights(); track $index) {
-              <li>{{ insight }}</li>
+              <li class="ai-insight-row">
+                <svg lucideLightbulb [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                <span>{{ stripEmojis(insight) }}</span>
+              </li>
             }
           </ul>
         }
@@ -187,7 +195,10 @@
       @if (todayInbox(); as inbox) {
         <div class="dash-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
           <p class="card-desc" style="margin:0;">Registra clientes que llegaron por teléfono, showroom o referidos.</p>
-          <button type="button" class="btn-nuevo-lead" (click)="openManualLeadForm()">＋ Nuevo lead</button>
+          <button type="button" class="btn-nuevo-lead btn-with-icon" (click)="openManualLeadForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Nuevo lead
+          </button>
         </div>
         <app-crm-today-inbox
           [inbox]="inbox"
@@ -199,7 +210,10 @@
 
       @if (publicSlug) {
         <div class="dash-card">
-          <h2 class="card-title">🔗 Compartir mi página</h2>
+          <h2 class="card-title card-title-with-icon">
+            <svg lucideLink [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Compartir mi página
+          </h2>
           <p class="card-desc">Comparte este enlace para que los clientes vean tu inventario con imagen y título en WhatsApp y redes.</p>
           <div class="link-box">
             <input class="link-input" [value]="publicShareUrl" readonly>
@@ -213,7 +227,10 @@
     <!-- ── PIPELINE ── -->
     @if (tab() === 'pipeline' && hasPerm('pipeline') && crmDashboard(); as crm) {
       <div class="dash-card kanban-wrap">
-        <h2 class="card-title">🎯 Embudo de ventas</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideFunnel [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Embudo de ventas
+        </h2>
         <p class="card-desc">Sigue cada lead desde la primera pregunta hasta la venta.</p>
         <div class="pipeline-filters">
           <div class="pipeline-filter-field pipeline-filter-search">
@@ -230,7 +247,10 @@
             </select>
           </div>
           <button type="button" class="btn-copy pipeline-filter-btn" (click)="loadDeals()">Buscar</button>
-          <button type="button" class="btn-nuevo-lead" (click)="openManualLeadForm()">＋ Nuevo lead</button>
+          <button type="button" class="btn-nuevo-lead btn-with-icon" (click)="openManualLeadForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Nuevo lead
+          </button>
         </div>
         <app-crm-kanban
           [stages]="crm.stages"
@@ -271,7 +291,10 @@
     @if (tab() === 'inventory' && hasPerm('inventory')) {
       <div class="dash-card">
         <h2 class="card-title">
-          🚗 Mi Inventario
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Mi Inventario
+        </h2>
           <button class="btn-copy small" (click)="startNew()">+ Nuevo</button>
         </h2>
         <div class="filter-tabs">
@@ -303,17 +326,28 @@
                   }
                 </div>
                 <div class="action-row">
-                  <button class="btn-ghost small" (click)="startEdit(car)">✏️ Editar</button>
+                  <button class="btn-ghost small btn-with-icon" (click)="startEdit(car)">
+                    <svg lucideSquarePen [size]="14" aria-hidden="true"></svg>
+                    Editar
+                  </button>
                   @if (car.status !== 'published') {
-                    <button class="btn-ghost small" (click)="changeStatus(car, 'published')">🌐 Publicar</button>
+                    <button class="btn-ghost small btn-with-icon" (click)="changeStatus(car, 'published')">
+                      <svg lucideGlobe [size]="14" aria-hidden="true"></svg>
+                      Publicar
+                    </button>
                   }
                   @if (car.status !== 'draft') {
-                    <button class="btn-ghost small" (click)="changeStatus(car, 'draft')">📄 Borrador</button>
+                    <button class="btn-ghost small btn-with-icon" (click)="changeStatus(car, 'draft')">
+                      <svg lucideFileText [size]="14" aria-hidden="true"></svg>
+                      Borrador
+                    </button>
                   }
                   @if (car.status !== 'baja') {
                     <button class="btn-ghost small warn" (click)="changeStatus(car, 'baja')">Dar de baja</button>
                   }
-                  <button class="btn-delete" (click)="deleteCar(car.id)">🗑</button>
+                  <button class="btn-delete" (click)="deleteCar(car.id)" title="Eliminar">
+                    <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
+                  </button>
                 </div>
               </div>
             </div>
@@ -327,7 +361,15 @@
     <!-- ── EDITAR / NUEVO ── -->
     @if (tab() === 'edit' && hasPerm('edit')) {
       <div class="dash-card">
-        <h2 class="card-title">{{ editing() ? '✏️ Editar vehículo' : '🚗 Nuevo vehículo' }}</h2>
+        <h2 class="card-title card-title-with-icon">
+          @if (editing()) {
+            <svg lucideSquarePen [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Editar vehículo
+          } @else {
+            <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Nuevo vehículo
+          }
+        </h2>
         <div class="form-row">
           <div class="form-group"><label>Marca</label><input [(ngModel)]="form.make" placeholder="Ej: Toyota"></div>
           <div class="form-group"><label>Modelo</label><input [(ngModel)]="form.model" placeholder="Ej: Corolla"></div>
@@ -355,39 +397,10 @@
           <div class="form-group">
             <label>Ubicación (Estado)</label>
             <select [(ngModel)]="form.location" name="location">
-              <option value="">-- Seleccionar estado --</option>
-              <option>Aguascalientes</option>
-              <option>Baja California</option>
-              <option>Baja California Sur</option>
-              <option>Campeche</option>
-              <option>Chiapas</option>
-              <option>Chihuahua</option>
-              <option>Ciudad de México</option>
-              <option>Coahuila</option>
-              <option>Colima</option>
-              <option>Durango</option>
-              <option>Estado de México</option>
-              <option>Guanajuato</option>
-              <option>Guerrero</option>
-              <option>Hidalgo</option>
-              <option>Jalisco</option>
-              <option>Michoacán</option>
-              <option>Morelos</option>
-              <option>Nayarit</option>
-              <option>Nuevo León</option>
-              <option>Oaxaca</option>
-              <option>Puebla</option>
-              <option>Querétaro</option>
-              <option>Quintana Roo</option>
-              <option>San Luis Potosí</option>
-              <option>Sinaloa</option>
-              <option>Sonora</option>
-              <option>Tabasco</option>
-              <option>Tamaulipas</option>
-              <option>Tlaxcala</option>
-              <option>Veracruz</option>
-              <option>Yucatán</option>
-              <option>Zacatecas</option>
+              <option value="">— Seleccionar estado —</option>
+              @for (st of mexicoStates; track st) {
+                <option [value]="st">{{ st }}</option>
+              }
             </select>
           </div>
           <div class="form-group form-group-check">
@@ -426,12 +439,19 @@
                      (drop)="onImageDropItem($event, $index)">
                   <img [src]="img" class="img-sort-thumb" [alt]="'Foto ' + ($index + 1)">
                   @if ($index === 0) {
-                    <span class="img-sort-cover-badge">★ Portada</span>
+                    <span class="img-sort-cover-badge">
+                      <svg lucideStar [size]="12" aria-hidden="true"></svg>
+                      Portada
+                    </span>
                   }
                   <button class="img-sort-del" type="button"
                           (click)="removeCarImage($index)"
-                          aria-label="Eliminar foto">✕</button>
-                  <span class="img-sort-handle" title="Arrastra para mover">⠿</span>
+                          aria-label="Eliminar foto">
+                    <svg lucideX [size]="14" aria-hidden="true"></svg>
+                  </button>
+                  <span class="img-sort-handle" title="Arrastra para mover">
+                    <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
+                  </span>
                 </div>
               }
             </div>
@@ -455,8 +475,9 @@
           <input [(ngModel)]="form.videoUrl" placeholder="https://www.youtube.com/watch?v=... o https://vimeo.com/...">
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px;">
             <input type="file" accept="video/mp4,video/webm,video/quicktime" (change)="onVideoSelected($event)" #carVideoInput style="display:none">
-            <button type="button" class="btn-ghost small" (click)="carVideoInput.click()" [disabled]="isUploadingVideo">
-              {{ isUploadingVideo ? 'Subiendo video...' : '📹 Subir video' }}
+            <button type="button" class="btn-ghost small btn-with-icon" (click)="carVideoInput.click()" [disabled]="isUploadingVideo">
+              <svg lucideVideo [size]="14" aria-hidden="true"></svg>
+              {{ isUploadingVideo ? 'Subiendo video...' : 'Subir video' }}
             </button>
             @if (form.videoUrl) {
               <button type="button" class="btn-delete small" (click)="removeVideo()">Quitar video</button>
@@ -470,7 +491,10 @@
 
         <div class="auto-private-docs">
           <div class="auto-private-docs-header">
-            <h4 class="section-sub">📁 Documentación del vehículo (uso interno)</h4>
+            <h4 class="section-sub card-title-with-icon">
+              <svg lucideFolderOpen [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+              Documentación del vehículo (uso interno)
+            </h4>
             <span class="auto-private-docs-badge">No visible en la ficha pública</span>
           </div>
           <p class="card-desc">Sube facturas, refacturas, baja de placas, contrato de compra-venta u otros archivos. Solo tú y tu equipo los ven en el panel.</p>
@@ -502,14 +526,29 @@
               <ul class="auto-private-docs-list">
                 @for (doc of privateDocuments(); track doc.id) {
                   <li class="auto-private-doc-item">
-                    <span class="auto-private-doc-icon">{{ privateDocIcon(doc.fileName) }}</span>
+                    <span class="auto-private-doc-icon">
+                      @switch (privateDocKind(doc.fileName)) {
+                        @case ('pdf') {
+                          <svg lucideFileText [size]="18" aria-hidden="true"></svg>
+                        }
+                        @case ('image') {
+                          <svg lucideImage [size]="18" aria-hidden="true"></svg>
+                        }
+                        @default {
+                          <svg lucidePaperclip [size]="18" aria-hidden="true"></svg>
+                        }
+                      }
+                    </span>
                     <div class="auto-private-doc-meta">
                       <strong>{{ doc.label }}</strong>
                       <span>{{ doc.fileName || 'Archivo' }}</span>
                       @if (doc.notes) { <em>{{ doc.notes }}</em> }
                     </div>
                     <div class="auto-private-doc-actions">
-                      <button type="button" class="doc-btn doc-btn-download" (click)="downloadPrivateDocument(doc)">⬇ Descargar</button>
+                      <button type="button" class="doc-btn doc-btn-download btn-with-icon" (click)="downloadPrivateDocument(doc)">
+                        <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                        Descargar
+                      </button>
                       <button type="button" class="doc-btn doc-btn-delete" (click)="deletePrivateDocument(doc)">Eliminar</button>
                     </div>
                   </li>
@@ -524,8 +563,14 @@
         </div>
 
         <div class="action-row">
-          <button class="btn-copy" (click)="saveCar(false)">🌐 Publicar</button>
-          <button class="btn-ghost" (click)="saveCar(true)">💾 Guardar borrador</button>
+          <button class="btn-copy btn-with-icon" (click)="saveCar(false)">
+            <svg lucideGlobe [size]="16" aria-hidden="true"></svg>
+            Publicar
+          </button>
+          <button class="btn-ghost btn-with-icon" (click)="saveCar(true)">
+            <svg lucideSave [size]="16" aria-hidden="true"></svg>
+            Guardar borrador
+          </button>
           @if (editing()) {
             <button class="btn-ghost warn" (click)="changeStatus(editing()!, 'baja')">Dar de baja</button>
           }
@@ -536,10 +581,17 @@
     <!-- ── REPUTACIÓN ── -->
     @if (tab() === 'reputation' && hasPerm('reputation')) {
       <div class="dash-card">
-        <h2 class="card-title">⭐ Reputación — {{ reputation().rating }}/5 ({{ reputation().reviewCount }} reseñas)</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideStar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Reputación — {{ reputation().rating }}/5 ({{ reputation().reviewCount }} reseñas)
+        </h2>
         @for (r of reviews(); track r.id) {
           <div class="review-card">
-            <div class="review-stars">{{ '⭐'.repeat(r.rating) }}</div>
+            <div class="review-stars">
+              @for (s of reviewStarSlots; track s) {
+                <svg lucideStar [size]="14" [class.star-filled]="s <= r.rating" aria-hidden="true"></svg>
+              }
+            </div>
             <p style="color:var(--text);font-size:14px;line-height:1.5;margin:8px 0;">"{{ r.comment }}"</p>
             <span class="review-author">— {{ r.author }}</span>
           </div>
@@ -552,7 +604,10 @@
     <!-- ── PLANTILLAS ── -->
     @if (tab() === 'plantillas' && hasPerm('plantillas')) {
       <div class="dash-card">
-        <h2 class="card-title">📝 Plantillas de respuesta</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideFileText [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Plantillas de respuesta
+        </h2>
         <p class="card-desc">Respuestas rápidas para tus leads.</p>
         @for (t of templates(); track t.id) {
           <div class="block-editor">
@@ -620,8 +675,14 @@
               </div>
             }
             <input type="file" accept="image/*" (change)="onLogoSelected($event)" #logoInput style="display:none">
-            <button class="btn-ghost small" (click)="logoInput.click()">
-              {{ profileLogoUrl ? '✏️ Cambiar logo' : '📷 Subir logo' }}
+            <button class="btn-ghost small btn-with-icon" (click)="logoInput.click()">
+              @if (profileLogoUrl) {
+                <svg lucideSquarePen [size]="14" aria-hidden="true"></svg>
+                Cambiar logo
+              } @else {
+                <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                Subir logo
+              }
             </button>
             @if (isUploadingLogo) { <span class="card-desc">Subiendo...</span> }
             @if (profileLogoUrl && !isUploadingLogo) {
@@ -658,18 +719,22 @@
                    (keydown.enter)="searchAddress()"
                    placeholder="Ej: Av. Chapultepec 123, Guadalajara, Jalisco"
                    style="flex:1;">
-            <button type="button" class="btn-copy"
+            <button type="button" class="btn-copy btn-with-icon"
                     style="white-space:nowrap; padding:8px 14px; font-size:13px;"
                     (click)="searchAddress()"
                     [disabled]="mapSearching">
-              {{ mapSearching ? 'Buscando…' : '🔍 Buscar' }}
+              <svg lucideSearch [size]="14" aria-hidden="true"></svg>
+              {{ mapSearching ? 'Buscando…' : 'Buscar' }}
             </button>
           </div>
           @if (mapSearchError) {
             <p style="color:#f87171; font-size:12px; margin-top:6px;">{{ mapSearchError }}</p>
           }
           @if (mapFoundLabel()) {
-            <p style="color:#4ade80; font-size:12px; margin-top:6px;">📍 {{ mapFoundLabel() }}</p>
+            <p class="map-found-label">
+              <svg lucideMapPin [size]="14" aria-hidden="true"></svg>
+              {{ mapFoundLabel() }}
+            </p>
           }
           @if (mapPreviewUrl()) {
             <div style="margin-top:10px; border-radius:10px; overflow:hidden; height:200px;">
@@ -683,7 +748,10 @@
             </p>
           } @else if (profileMapEmbedUrl) {
             <div style="margin-top:10px; padding:14px; border-radius:10px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); text-align:center;">
-              <p style="color:#fbbf24; font-size:13px; margin:0 0 8px;">⚠️ El mapa guardado usa un formato antiguo que no se puede previsualizar.</p>
+              <p class="map-warning-label">
+                <svg lucideTriangleAlert [size]="14" aria-hidden="true"></svg>
+                El mapa guardado usa un formato antiguo que no se puede previsualizar.
+              </p>
               <p style="color:rgba(255,255,255,0.5); font-size:12px; margin:0;">Escribe tu dirección arriba y presiona <strong>Buscar</strong> para actualizarlo.</p>
             </div>
           }
@@ -706,7 +774,10 @@
     <!-- ── ASISTENTE IA ── -->
     @if (tab() === 'asistente' && hasPerm('asistente')) {
       <div class="dash-card">
-        <h2 class="card-title">Asistente IA</h2>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Asistente IA
+        </h2>
         <p class="card-desc">Configura el bot flotante de ayuda: colores, nombre, fuente e instrucciones personalizadas.</p>
 
         <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
@@ -789,7 +860,9 @@
 @if (showManualLeadForm()) {
   <div class="modal-overlay" (click)="closeManualLeadForm()">
     <div class="modal-content" (click)="$event.stopPropagation()">
-      <button type="button" class="modal-close" (click)="closeManualLeadForm()" aria-label="Cerrar">✕</button>
+      <button type="button" class="modal-close" (click)="closeManualLeadForm()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
       <h2 class="card-title" style="margin-bottom:8px;">+ Nuevo lead manual</h2>
       <p class="card-desc" style="margin-bottom:20px;">Registra un cliente que llegó por teléfono, showroom o referido.</p>
 

@@ -1,12 +1,13 @@
 import { Component, input, output, signal, effect } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { LucideCircle, LucideCircleCheck, LucideMail, LucidePhone, LucideX } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { CrmContact360 } from '../../models';
 
 @Component({
   selector: 'app-crm-contact-panel',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle],
   templateUrl: './crm-contact-panel.component.html',
   styleUrl: './panel-dashboard.css',
 })

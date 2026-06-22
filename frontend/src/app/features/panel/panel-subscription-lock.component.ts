@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { LucideBan, LucideCreditCard } from '@lucide/angular';
 import { AuthService } from '../../core/auth.service';
 import { SubscriptionBillingComponent } from './subscription-billing.component';
 import { environment } from '../../../environments/environment';
@@ -8,17 +9,21 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-panel-subscription-lock',
   standalone: true,
-  imports: [CommonModule, SubscriptionBillingComponent],
+  imports: [CommonModule, SubscriptionBillingComponent, LucideBan, LucideCreditCard],
   template: `
     @if (locked()) {
       <div class="sub-lock-overlay">
         <div class="sub-lock-card">
           @if (status() === 'deactivated') {
-            <div class="sub-lock-icon">🚫</div>
+            <div class="sub-lock-icon">
+              <svg lucideBan [size]="40" aria-hidden="true"></svg>
+            </div>
             <h2>Cuenta desactivada</h2>
             <p>Tu suscripción fue suspendida tras 3 intentos de pago fallidos. Actualiza tu método de pago para reactivar el panel.</p>
           } @else {
-            <div class="sub-lock-icon">💳</div>
+            <div class="sub-lock-icon">
+              <svg lucideCreditCard [size]="40" aria-hidden="true"></svg>
+            </div>
             <h2>Activa tu suscripción</h2>
             <p>Tu cuenta está registrada pero el pago aún no se ha completado. Activa tu plan para usar todos los módulos del panel.</p>
             @if (paymentFailedCount() > 0) {
@@ -65,7 +70,13 @@ import { environment } from '../../../environments/environment';
       width: 100%;
       text-align: center;
     }
-    .sub-lock-icon { font-size: 42px; margin-bottom: 16px; }
+    .sub-lock-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      color: rgba(255,255,255,0.85);
+    }
     .sub-lock-card h2 {
       color: #fff;
       font-size: 18px;

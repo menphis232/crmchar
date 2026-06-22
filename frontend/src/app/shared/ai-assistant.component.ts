@@ -4,6 +4,7 @@ import {
 import { isPlatformBrowser, DatePipe, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { LucideBot, LucideMap, LucideMessageCircle, LucideSend, LucideX } from '@lucide/angular';
 import { AuthService } from '../core/auth.service';
 import { environment } from '../../environments/environment';
 
@@ -77,7 +78,7 @@ const QUICK_QUESTIONS: Record<string, string[]> = {
 @Component({
   selector: 'app-ai-assistant',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, LucideBot, LucideMap, LucideX, LucideSend, LucideMessageCircle],
   templateUrl: './ai-assistant.component.html',
   styleUrl: './ai-assistant.component.css',
 })
@@ -171,7 +172,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   }
 
   private welcomeMessage() {
-    return `¡Hola! 👋 Soy ${this.assistantName()}. Pregúntame lo que quieras sobre el panel.`;
+    return `¡Hola! Soy ${this.assistantName()}. Pregúntame lo que quieras sobre el panel.`;
   }
 
   ngOnInit() {
