@@ -747,12 +747,17 @@ export class PanelConcesionariaComponent implements OnInit {
     return this.publicSlug ? `${window.location.origin}/concesionarias/${this.publicSlug}` : '';
   }
 
+  /** URL corta con Open Graph para WhatsApp/redes (igual que en la página pública) */
+  get publicShareUrl(): string {
+    return this.publicSlug ? `${window.location.origin}/sc/${this.publicSlug}` : '';
+  }
+
   copyPublicPageLink() {
     if (!this.publicSlug) {
       this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');
       return;
     }
-    navigator.clipboard.writeText(this.publicPageUrl).then(
+    navigator.clipboard.writeText(this.publicShareUrl).then(
       () => this.toast.success('Enlace copiado al portapapeles'),
       () => this.toast.error('No se pudo copiar el enlace'),
     );
