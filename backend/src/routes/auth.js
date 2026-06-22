@@ -17,6 +17,7 @@ import {
   STRIPE_TRIAL_DAYS,
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
+import { slugify, uniqueUserSlug, uniqueGestorSlug } from '../utils/slug.js';
 
 function getRegisterOrigin() {
   return getFrontendBase();
@@ -103,19 +104,19 @@ router.post('/register', async (req, res) => {
       [userId, email.toLowerCase(), hash, role, String(name).trim(), initialStatus]);
 
     if (role === 'concesionaria') {
-      // Generate unique slug from name
-      const baseSlug = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'concesionaria';
-      const slug = `${baseSlug}-${userId.slice(0, 6)}`;
+      const baseSlug = slugify(name) || 'concesionaria';
+      const slug = await uniqueUserSlug(get, baseSlug);
       await run('UPDATE users SET slug = ? WHERE id = ?', [slug, userId]);
     }
 
     if (role === 'gestor') {
-      const slugBase = String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'gestor';
+      const slugBase = slugify(name) || 'gestor';
+      const slug = await uniqueGestorSlug(get, slugBase);
       await run(`
         INSERT INTO gestores (id, user_id, slug, name, location, state, banner_url, photo_url, bio, whatsapp, schedule)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        uuid(), userId, `${slugBase}-${userId.slice(0, 6)}`, String(name).trim(),
+        uuid(), userId, slug, String(name).trim(),
         'Ciudad de México', 'CDMX',
         'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600',
         'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200',

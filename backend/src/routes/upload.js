@@ -31,12 +31,25 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 12 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Solo se permiten imágenes'));
   }
 });
+
+function handleUpload(req, res, next) {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'La imagen es muy pesada (máx. 12 MB). Intenta recortarla de nuevo.' });
+      }
+      return res.status(400).json({ error: err.message });
+    }
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}
 
 const docStorage = multer.diskStorage({
   destination: uploadDir,
@@ -79,22 +92,29 @@ function buildPublicUploadUrl(_req, filename) {
   return `/uploads/${filename}`;
 }
 
-router.post('/', authRequired, upload.single('file'), async (req, res) => {
+router.post('/', authRequired, handleUpload, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No se envió ningún archivo' });
     }
-    
-    // Convert to png with sharp and save to disk
-    const filename = `${uuid()}.png`;
+
+    const isPng = req.file.mimetype === 'image/png';
+    const ext = isPng ? 'png' : 'jpg';
+    const filename = `${uuid()}.${ext}`;
     const outputPath = path.join(uploadDir, filename);
-    
-    await sharp(req.file.buffer)
-      .png()
-      .toFile(outputPath);
+
+    let pipeline = sharp(req.file.buffer)
+      .rotate()
+      .resize({ width: 1920, height: 1920, fit: 'inside', withoutEnlargement: true });
+
+    if (isPng) {
+      await pipeline.png({ compressionLevel: 9, quality: 90 }).toFile(outputPath);
+    } else {
+      await pipeline.jpeg({ quality: 85, mozjpeg: true }).toFile(outputPath);
+    }
 
     const url = buildPublicUploadUrl(req, filename);
-    
+
     res.json({ url });
   } catch (err) {
     console.error(err);

@@ -473,7 +473,9 @@ export class PanelConcesionariaComponent implements OnInit {
       },
       error: (err: any) => {
         this.isUploadingCarImages = false;
-        const msg = err?.error?.error || err?.statusText || 'Error desconocido';
+        const msg = err?.status === 413
+          ? 'La imagen es muy pesada. Aleja un poco con el zoom e intenta de nuevo.'
+          : (err?.error?.error || err?.statusText || 'Error desconocido');
         this.toast.error(`No se pudo subir la foto: ${msg}`, 'Error');
         const remaining = queue.slice(1);
         this.cropQueue.set(remaining);
