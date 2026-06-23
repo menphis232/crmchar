@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -11,6 +11,8 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DomSanitizer } from '@angular/platform-browser';
 import { GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
+import { MetaTagsService } from '../../shared/meta-tags.service';
+import { getGestorShareUrl } from '../../shared/gestor-share.util';
 import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
@@ -25,9 +27,10 @@ import { toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
   templateUrl: './gestor-detail.component.html',
   styleUrl: './gestor-detail.component.css',
 })
-export class GestorDetailComponent implements OnInit {
+export class GestorDetailComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
+  private metaTags = inject(MetaTagsService);
 
   readonly mexicoStates = MEXICO_STATES;
 
@@ -64,10 +67,15 @@ export class GestorDetailComponent implements OnInit {
     this.gestoresService.getBySlug(slug).subscribe({
       next: data => {
         this.gestor.set(data);
+        this.metaTags.setGestorShareTags(data);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  ngOnDestroy() {
+    this.metaTags.reset();
   }
 
   whatsappLink(g: Gestor) {
@@ -114,9 +122,7 @@ export class GestorDetailComponent implements OnInit {
 
   shareGestor() {
     const g = this.gestor();
-    const shareUrl = g
-      ? `${window.location.origin}/sg/${g.slug}`
-      : window.location.href;
+    const shareUrl = g ? getGestorShareUrl(g) : window.location.href;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (isMobile && navigator.share) {
       navigator.share({

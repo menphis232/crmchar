@@ -749,6 +749,48 @@ select option { background: #111111; color: #ffffff; }
   color: #ffffff !important;
   border-color: rgba(255,255,255,0.6) !important;
 }
+
+.share-og-preview {
+  margin: 0 0 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  max-width: 520px;
+}
+.share-og-preview img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 630;
+  object-fit: cover;
+  image-rendering: auto;
+}
+.share-og-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.share-og-caption strong {
+  font-family: var(--f-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ffffff;
+  line-height: 1.35;
+}
+.share-og-caption span {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+}
+.share-og-preview--perfil {
+  margin-top: 4px;
+  margin-bottom: 0;
+}
+
 :host ::ng-deep .btn-copy {
   background: #ffffff !important;
   color: #000000 !important;

@@ -60,7 +60,7 @@ function resolveLogoPath(logoUrl) {
   return null;
 }
 
-export async function generateDealerOgImage(logoUrl, slug) {
+async function generateLogoOgImage(logoUrl, slug, prefix) {
   if (!logoUrl || !slug) return null;
 
   const logoPath = resolveLogoPath(logoUrl);
@@ -70,7 +70,7 @@ export async function generateDealerOgImage(logoUrl, slug) {
     fs.mkdirSync(ogCacheDir, { recursive: true });
   }
 
-  const outPath = path.join(ogCacheDir, `dealer-${slug}.jpg`);
+  const outPath = path.join(ogCacheDir, `${prefix}-${slug}.jpg`);
   const logoStat = fs.statSync(logoPath);
 
   if (fs.existsSync(outPath)) {
@@ -81,8 +81,15 @@ export async function generateDealerOgImage(logoUrl, slug) {
   }
 
   const logoBuffer = await logoBufferFromPath(logoPath);
-
   return composeOgImage(logoBuffer, outPath);
+}
+
+export async function generateDealerOgImage(logoUrl, slug) {
+  return generateLogoOgImage(logoUrl, slug, 'dealer');
+}
+
+export async function generateGestorOgImage(logoUrl, slug) {
+  return generateLogoOgImage(logoUrl, slug, 'gestor');
 }
 
 export async function generateAutosOgImage() {

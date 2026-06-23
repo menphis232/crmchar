@@ -11,6 +11,10 @@ import { engomadoLabel } from '../../shared/engomado-colors';
   imports: [FormsModule, LucideSearch, LucideUser, LucideCar],
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
+    .dash-card {
+      padding: 24px 28px;
+      box-sizing: border-box;
+    }
     .clients-toolbar {
       display: flex;
       gap: 10px;

@@ -120,12 +120,17 @@ router.get('/:id', async (req, res) => {
 
 async function buildGestorHtml(slug) {
   const row = await get(
-    "SELECT id, slug, name, location, photo_url, banner_url FROM users WHERE slug = ? AND role = 'gestor'",
+    `SELECT g.slug, g.name, g.location, g.photo_url, g.banner_url, u.logo_url
+     FROM gestores g
+     JOIN users u ON g.user_id = u.id
+     WHERE g.slug = ?`,
     [slug],
   );
   if (!row) return null;
 
-  const imageUrl = absoluteUrl(row.photo_url || row.banner_url || null);
+  const imageUrl = row.logo_url
+    ? `${SITE_BASE}/og/gestor/${row.slug}.jpg`
+    : absoluteUrl(row.photo_url || row.banner_url || null);
   const pageUrl  = `${SITE_BASE}/gestores/${row.slug}`;
   const shareUrl = `${SITE_BASE}/sg/${row.slug}`;
   const subtitle = `${row.name} — ${row.location || 'México'}`;

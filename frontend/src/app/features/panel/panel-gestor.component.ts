@@ -56,7 +56,8 @@ import {
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
-import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
+import { getGestorOgImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import {
   GESTOR_BANNER_ASPECT,
@@ -120,6 +121,7 @@ export class PanelGestorComponent implements OnInit {
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  readonly gestorShareTagline = GESTOR_SHARE_TAGLINE;
   readonly mexicoStates = MEXICO_STATES;
 
   tab = signal<GestorTab>('dashboard');
@@ -363,6 +365,22 @@ export class PanelGestorComponent implements OnInit {
     return this.publicSlug ? `${window.location.origin}/sg/${this.publicSlug}` : '';
   }
 
+  get publicShareOgImageUrl(): string | null {
+    const p = this.profile();
+    if (!p?.slug) return null;
+    return getGestorOgImageUrl({
+      slug: p.slug,
+      logoUrl: this.profileLogoUrl || p.logoUrl,
+      photoUrl: p.photoUrl,
+      bannerUrl: p.bannerUrl,
+    });
+  }
+
+  get gestorShareSubtitle(): string {
+    const p = this.profile();
+    return p ? getGestorShareSubtitle(p) : '';
+  }
+
   copyPublicPageLink() {
     if (!this.publicSlug) {
       this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');
@@ -550,10 +568,14 @@ export class PanelGestorComponent implements OnInit {
   }
 
   copyLink() {
-    const url = `${window.location.origin}/gestores/${this.profile()?.slug}`;
-    navigator.clipboard.writeText(url);
-    this.message.set('¡Enlace copiado!');
-    setTimeout(() => this.message.set(''), 2000);
+    if (!this.publicShareUrl) {
+      this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');
+      return;
+    }
+    navigator.clipboard.writeText(this.publicShareUrl).then(
+      () => this.toast.success('Enlace copiado al portapapeles'),
+      () => this.toast.error('No se pudo copiar el enlace'),
+    );
   }
 
   // Profile logo & banner
