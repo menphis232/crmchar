@@ -16,6 +16,7 @@ import { getGestorShareUrl } from '../../shared/gestor-share.util';
 import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
+import { GestorReviewsSectionComponent } from '../../shared/gestor-reviews-section.component';
 import { PageBlock, PageBuilderConfig } from '../../models';
 import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
 import { toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
@@ -23,7 +24,7 @@ import { toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
 @Component({
   selector: 'app-gestor-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappIconComponent, GestorShowcaseGalleryComponent, ...GESTOR_LUCIDE_ICONS],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappIconComponent, GestorShowcaseGalleryComponent, GestorReviewsSectionComponent, ...GESTOR_LUCIDE_ICONS],
   templateUrl: './gestor-detail.component.html',
   styleUrl: './gestor-detail.component.css',
 })
@@ -82,12 +83,6 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     const text = encodeURIComponent('Hola, vengo del Directorio y necesito ayuda con un trámite.');
     return `https://wa.me/${g.whatsapp}?text=${text}`;
   }
-
-  stars(rating: number) {
-    return Math.max(0, Math.min(5, Math.round(rating)));
-  }
-
-  starIndexes = [1, 2, 3, 4, 5];
 
   /** Logo del panel (users.logo_url) tiene prioridad sobre la foto legacy del gestor. */
   profileImage(g: Gestor): string {

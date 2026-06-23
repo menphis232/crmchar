@@ -10,6 +10,23 @@ import { callAIProvider } from '../utils/ai_helper.js';
 import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
 
+const GESTOR_SERVICES_SELECT = `
+  SELECT id, name, time_estimate as timeEstimate, price, required_documents
+  FROM gestor_services WHERE gestor_id = ?
+  ORDER BY sort_order ASC, name ASC
+`;
+
+function parseGestorServices(rows) {
+  return rows.map(s => {
+    try {
+      s.required_documents = typeof s.required_documents === 'string'
+        ? JSON.parse(s.required_documents)
+        : s.required_documents;
+    } catch (e) { /* keep raw */ }
+    return s;
+  });
+}
+
 function parseGalleryImages(raw) {
   if (!raw) return [];
   try {
@@ -62,6 +79,17 @@ function syncPageBuilderBio(config, bio) {
   blocks = moveTextBeforeServices(blocks);
 
   return { ...parsed, blocks };
+}
+
+async function recalcGestorReviewStats(gestorId) {
+  const stats = await get(
+    'SELECT AVG(rating) as avgRating, COUNT(*) as cnt FROM gestor_reviews WHERE gestor_id = ?',
+    [gestorId],
+  );
+  const avg = stats?.avgRating ? Number(Number(stats.avgRating).toFixed(1)) : 0;
+  const cnt = stats?.cnt || 0;
+  await run('UPDATE gestores SET rating = ?, review_count = ? WHERE id = ?', [avg, cnt, gestorId]);
+  return { rating: avg, reviewCount: cnt };
 }
 
 function gestorRow(row) {
@@ -123,11 +151,7 @@ router.get('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
       WHERE g.user_id = ?`, [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
 
-    const services = await query(
-      'SELECT id, name, time_estimate as timeEstimate, price, required_documents FROM gestor_services WHERE gestor_id = ?', [row.id]);
-    services.forEach(s => {
-      try { s.required_documents = typeof s.required_documents === 'string' ? JSON.parse(s.required_documents) : s.required_documents; } catch(e) {}
-    });
+    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
     const solicitudes = await query(`
       SELECT id, client_name as clientName, service_name as serviceName, location, status, created_at as createdAt
       FROM solicitudes WHERE gestor_id = ? ORDER BY created_at DESC`, [row.id]);
@@ -225,11 +249,143 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     }
     if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
-    await run('INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs)]);
+    const maxOrder = await get(
+      'SELECT COALESCE(MAX(sort_order), -1) as maxOrder FROM gestor_services WHERE gestor_id = ?',
+      [row.id],
+    );
+    const sortOrder = (maxOrder?.maxOrder ?? -1) + 1;
+
+    await run(
+      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), sortOrder],
+    );
     res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
+  }
+});
+
+router.put('/me/services/order', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const { order } = req.body;
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ error: 'Orden de servicios inválido.' });
+    }
+
+    const existing = await query('SELECT id FROM gestor_services WHERE gestor_id = ?', [row.id]);
+    const existingIds = new Set(existing.map(s => s.id));
+    const uniqueOrder = [...new Set(order.map(id => String(id)))];
+    if (uniqueOrder.length !== existing.length || uniqueOrder.some(id => !existingIds.has(id))) {
+      return res.status(400).json({ error: 'La lista de servicios no coincide con tu catálogo.' });
+    }
+
+    for (let i = 0; i < uniqueOrder.length; i++) {
+      await run('UPDATE gestor_services SET sort_order = ? WHERE id = ? AND gestor_id = ?', [i, uniqueOrder[i], row.id]);
+    }
+
+    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
+    res.json({ ok: true, services });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al reordenar servicios' });
+  }
+});
+
+router.get('/me/reviews', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const reviews = await query(
+      'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC',
+      [row.id],
+    );
+    const stats = await recalcGestorReviewStats(row.id);
+    res.json({ reviews, ...stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar reseñas' });
+  }
+});
+
+router.post('/me/reviews', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const { author, rating, comment } = req.body;
+    const authorName = String(author || '').trim();
+    const reviewText = String(comment || '').trim();
+    const stars = Number(rating);
+
+    if (!authorName || !reviewText || !Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return res.status(400).json({ error: 'Autor, calificación (1-5) y comentario son requeridos.' });
+    }
+
+    const id = uuid();
+    await run(
+      'INSERT INTO gestor_reviews (id, gestor_id, author, rating, comment) VALUES (?, ?, ?, ?, ?)',
+      [id, row.id, authorName, stars, reviewText],
+    );
+    const stats = await recalcGestorReviewStats(row.id);
+    res.status(201).json({
+      review: { id, author: authorName, rating: stars, comment: reviewText },
+      ...stats,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al crear reseña' });
+  }
+});
+
+router.put('/me/reviews/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const existing = await get('SELECT id FROM gestor_reviews WHERE id = ? AND gestor_id = ?', [req.params.id, row.id]);
+    if (!existing) return res.status(404).json({ error: 'Reseña no encontrada' });
+
+    const { author, rating, comment } = req.body;
+    const authorName = String(author || '').trim();
+    const reviewText = String(comment || '').trim();
+    const stars = Number(rating);
+
+    if (!authorName || !reviewText || !Number.isInteger(stars) || stars < 1 || stars > 5) {
+      return res.status(400).json({ error: 'Autor, calificación (1-5) y comentario son requeridos.' });
+    }
+
+    await run(
+      'UPDATE gestor_reviews SET author = ?, rating = ?, comment = ? WHERE id = ? AND gestor_id = ?',
+      [authorName, stars, reviewText, req.params.id, row.id],
+    );
+    const stats = await recalcGestorReviewStats(row.id);
+    res.json({
+      review: { id: req.params.id, author: authorName, rating: stars, comment: reviewText },
+      ...stats,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar reseña' });
+  }
+});
+
+router.delete('/me/reviews/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const result = await run('DELETE FROM gestor_reviews WHERE id = ? AND gestor_id = ?', [req.params.id, row.id]);
+    if (!result.affectedRows) return res.status(404).json({ error: 'Reseña no encontrada' });
+
+    const stats = await recalcGestorReviewStats(row.id);
+    res.json({ ok: true, ...stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar reseña' });
   }
 });
 
@@ -270,13 +426,9 @@ router.get('/:slugOrId', async (req, res) => {
       WHERE g.slug = ? OR g.id = ?`, [slugOrId, slugOrId]);
     if (!row) return res.status(404).json({ error: 'Gestor no encontrado' });
 
-    const services = await query(
-      'SELECT id, name, time_estimate as timeEstimate, price, required_documents FROM gestor_services WHERE gestor_id = ?', [row.id]);
-    services.forEach(s => {
-      try { s.required_documents = typeof s.required_documents === 'string' ? JSON.parse(s.required_documents) : s.required_documents; } catch(e) {}
-    });
+    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
     const reviews = await query(
-      'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC LIMIT 10',
+      'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC LIMIT 20',
       [row.id]);
 
     let pageBuilderConfig = row.page_builder_config;
@@ -498,9 +650,7 @@ router.post('/review/:dealId', async (req, res) => {
       [id, deal.gestor_id, deal.id, authorName, rating, comment]
     );
 
-    // Actualizar rating y review_count del gestor
-    const stats = await get('SELECT AVG(rating) as avgRating, COUNT(*) as cnt FROM gestor_reviews WHERE gestor_id = ?', [deal.gestor_id]);
-    await run('UPDATE gestores SET rating = ?, review_count = ? WHERE id = ?', [stats.avgRating || 0, stats.cnt || 0, deal.gestor_id]);
+    await recalcGestorReviewStats(deal.gestor_id);
 
     res.status(201).json({ success: true });
   } catch (err) {
@@ -529,7 +679,10 @@ router.post('/:slugOrId/chat', async (req, res) => {
       return res.status(400).json({ error: 'El administrador debe configurar el asistente IA.' });
     }
 
-    const services = await query('SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?)', [gestor.user_id]);
+    const services = await query(
+      'SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?) ORDER BY sort_order ASC, name ASC',
+      [gestor.user_id],
+    );
     let servicesText = services.map(s => {
       const priceLabel = s.price != null && Number(s.price) > 0 ? `$${s.price} MXN` : 'Precio por definir';
       return `- ${s.name}: ${priceLabel}, demora aprox ${s.time_estimate}`;

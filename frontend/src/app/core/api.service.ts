@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmContactVehicle, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
+  CrmContact, CrmContact360, CrmContactVehicle, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -25,7 +25,22 @@ export class GestoresService {
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
   addService(data: { name: string; timeEstimate: string; price: number; required_documents?: string[] }) { return this.http.post(`${this.base}/me/services`, data); }
+  reorderServices(order: string[]) {
+    return this.http.put<{ ok: boolean; services: import('../models').GestorService[] }>(`${this.base}/me/services/order`, { order });
+  }
   deleteService(id: string) { return this.http.delete(`${this.base}/me/services/${id}`); }
+  getMyReviews() {
+    return this.http.get<{ reviews: GestorReview[]; rating: number; reviewCount: number }>(`${this.base}/me/reviews`);
+  }
+  createReview(data: { author: string; rating: number; comment: string }) {
+    return this.http.post<{ review: GestorReview; rating: number; reviewCount: number }>(`${this.base}/me/reviews`, data);
+  }
+  updateReview(id: string, data: { author: string; rating: number; comment: string }) {
+    return this.http.put<{ review: GestorReview; rating: number; reviewCount: number }>(`${this.base}/me/reviews/${id}`, data);
+  }
+  deleteReview(id: string) {
+    return this.http.delete<{ ok: boolean; rating: number; reviewCount: number }>(`${this.base}/me/reviews/${id}`);
+  }
   updateSolicitud(id: string, status: string) { return this.http.patch(`${this.base}/me/solicitudes/${id}`, { status }); }
   createSolicitud(gestorId: string, data: { clientName: string; serviceName: string; location?: string; clientEmail?: string; clientPhone?: string; customData?: any; }) {
     return this.http.post(`${this.base}/${gestorId}/solicitudes`, data);

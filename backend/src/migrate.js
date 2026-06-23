@@ -852,6 +852,35 @@ async function migrate() {
       await conn39.end();
       console.log('Migración v39 (contact vehicles) aplicada.');
     }
+
+    const v40Path = path.join(__dirname, '..', 'sql', 'migration-v40-gestor-service-sort.sql');
+    if (fs.existsSync(v40Path)) {
+      const v40 = fs.readFileSync(v40Path, 'utf8');
+      const conn40 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn40.query('USE tramites_vehiculares');
+      for (const stmt of v40.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn40.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      const [gestorRows] = await conn40.query('SELECT DISTINCT gestor_id FROM gestor_services');
+      for (const row of gestorRows) {
+        const [services] = await conn40.query(
+          'SELECT id FROM gestor_services WHERE gestor_id = ? ORDER BY name',
+          [row.gestor_id],
+        );
+        for (let i = 0; i < services.length; i++) {
+          await conn40.query('UPDATE gestor_services SET sort_order = ? WHERE id = ?', [i, services[i].id]);
+        }
+      }
+      await conn40.end();
+      console.log('Migración v40 (gestor service sort) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

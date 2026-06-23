@@ -82,26 +82,13 @@
                     </div>
                   }
 
-                  @if (b.type === 'reviews' && g.reviews?.length) {
-                    <h3 class="section-title reviews-title">{{ b.data.title }}</h3>
-                    <div class="reviews-list">
-                      @for (r of g.reviews; track r.id) {
-                        <article class="review-item">
-                          <div class="review-header">
-                            <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">
-                              @for (i of starIndexes; track i) {
-                                <svg lucideStar [size]="14" class="review-star" [class.review-star-filled]="i <= stars(r.rating)" aria-hidden="true"></svg>
-                              }
-                            </span>
-                            <span class="review-author">{{ r.author }}</span>
-                          </div>
-                          <p class="review-text">{{ r.comment }}</p>
-                          @if (r.createdAt) {
-                            <time class="review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
-                          }
-                        </article>
-                      }
-                    </div>
+                  @if (b.type === 'reviews' && (g.reviews?.length || g.reviewCount)) {
+                    <app-gestor-reviews-section
+                      [title]="b.data.title || 'Reseñas de clientes'"
+                      [rating]="g.rating"
+                      [reviewCount]="g.reviewCount"
+                      [reviews]="g.reviews || []"
+                    />
                   }
 
                   @if (b.type === 'gallery' && b.data.images?.length) {
@@ -257,26 +244,13 @@
             }
           </div>
 
-          @if (g.reviews?.length) {
-            <h3 class="section-title reviews-title">Reseñas Destacadas</h3>
-            <div class="reviews-list">
-              @for (r of g.reviews; track r.id) {
-                <article class="review-item">
-                  <div class="review-header">
-                    <span class="review-stars" [attr.aria-label]="r.rating + ' de 5'">
-                      @for (i of starIndexes; track i) {
-                        <svg lucideStar [size]="14" class="review-star" [class.review-star-filled]="i <= stars(r.rating)" aria-hidden="true"></svg>
-                      }
-                    </span>
-                    <span class="review-author">{{ r.author }}</span>
-                  </div>
-                  <p class="review-text">{{ r.comment }}</p>
-                  @if (r.createdAt) {
-                    <time class="review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
-                  }
-                </article>
-              }
-            </div>
+          @if (g.reviews?.length || g.reviewCount) {
+            <app-gestor-reviews-section
+              title="Reseñas de clientes"
+              [rating]="g.rating"
+              [reviewCount]="g.reviewCount"
+              [reviews]="g.reviews || []"
+            />
           }
         </div>
 

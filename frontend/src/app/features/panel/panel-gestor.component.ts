@@ -7,7 +7,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
+import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -218,6 +218,7 @@ export class PanelGestorComponent implements OnInit {
       this.panelTheme.set(t);
     });
     this.loadProfile();
+    this.loadGestorReviews();
     this.loadCrmSummary();
     this.loadVerificationAlerts();
     this.scheduleAiInsights();
@@ -300,6 +301,78 @@ export class PanelGestorComponent implements OnInit {
     if (!this.templates().length) {
       this.crmService.getTemplates().subscribe(t => this.templates.set(t));
     }
+  }
+
+  loadGestorReviews() {
+    this.gestoresService.getMyReviews().subscribe({
+      next: (data) => {
+        this.gestorReviews.set(data.reviews);
+        this.gestorReviewsRating.set(data.rating);
+        this.gestorReviewsCount.set(data.reviewCount);
+        const profile = this.profile();
+        if (profile) {
+          this.profile.set({ ...profile, rating: data.rating, reviewCount: data.reviewCount, reviews: data.reviews });
+        }
+      },
+      error: () => {
+        this.gestorReviews.set([]);
+        this.gestorReviewsRating.set(0);
+        this.gestorReviewsCount.set(0);
+      },
+    });
+  }
+
+  resetGestorReviewForm() {
+    this.editingReviewId = null;
+    this.gestorReviewForm = { author: '', rating: 5, comment: '' };
+  }
+
+  editGestorReview(review: GestorReview) {
+    this.editingReviewId = review.id;
+    this.gestorReviewForm = {
+      author: review.author,
+      rating: review.rating,
+      comment: review.comment,
+    };
+  }
+
+  saveGestorReview() {
+    const { author, rating, comment } = this.gestorReviewForm;
+    if (!author.trim() || !comment.trim()) {
+      this.toast.error('Completa autor y comentario.');
+      return;
+    }
+
+    const payload = { author: author.trim(), rating: Number(rating), comment: comment.trim() };
+    const editing = this.editingReviewId;
+    const req = editing
+      ? this.gestoresService.updateReview(editing, payload)
+      : this.gestoresService.createReview(payload);
+
+    req.subscribe({
+      next: (res) => {
+        this.gestorReviewsRating.set(res.rating);
+        this.gestorReviewsCount.set(res.reviewCount);
+        this.loadGestorReviews();
+        this.resetGestorReviewForm();
+        this.toast.success(editing ? 'Reseña actualizada.' : 'Reseña publicada en tu ficha.');
+      },
+      error: (err) => this.toast.error(err.error?.error || 'No se pudo guardar la reseña.'),
+    });
+  }
+
+  deleteGestorReview(id: string) {
+    if (!confirm('¿Eliminar esta reseña de tu ficha pública?')) return;
+    this.gestoresService.deleteReview(id).subscribe({
+      next: (res) => {
+        this.gestorReviewsRating.set(res.rating);
+        this.gestorReviewsCount.set(res.reviewCount);
+        this.loadGestorReviews();
+        if (this.editingReviewId === id) this.resetGestorReviewForm();
+        this.toast.success('Reseña eliminada.');
+      },
+      error: (err) => this.toast.error(err.error?.error || 'No se pudo eliminar.'),
+    });
   }
 
   loadProfile() {
@@ -603,11 +676,20 @@ export class PanelGestorComponent implements OnInit {
   isUploadingBanner = false;
   bannerCropFile = signal<File | null>(null);
   gestorGalleryImages: string[] = [];
+  gestorReviews = signal<GestorReview[]>([]);
+  gestorReviewsRating = signal(0);
+  gestorReviewsCount = signal(0);
+  gestorReviewForm = { author: '', rating: 5, comment: '' };
+  editingReviewId: string | null = null;
+  reviewStarSlots = [1, 2, 3, 4, 5];
   isUploadingGallery = false;
   galleryCropQueue = signal<File[]>([]);
   galleryCropCurrentFile = signal<File | null>(null);
   galleryDragIdx = -1;
   galleryDragOverIdx = -1;
+  serviceDragIdx = -1;
+  serviceDragOverIdx = -1;
+  private serviceOrderSaving = false;
 
   onLogoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -1022,6 +1104,70 @@ export class PanelGestorComponent implements OnInit {
         this.newService = { name: '', timeEstimate: '', price: null, requiredDocumentsStr: '' };
         this.loadProfile();
         this.message.set('Servicio agregado');
+      },
+    });
+  }
+
+  onServiceDragStart(event: DragEvent, idx: number) {
+    this.serviceDragIdx = idx;
+    event.dataTransfer?.setData('text/plain', String(idx));
+    event.dataTransfer!.effectAllowed = 'move';
+  }
+
+  onServiceDragEnter(event: DragEvent, idx: number) {
+    event.preventDefault();
+    this.serviceDragOverIdx = idx;
+  }
+
+  onServiceDragLeave() {
+    this.serviceDragOverIdx = -1;
+  }
+
+  onServiceDrop(event: DragEvent) {
+    event.preventDefault();
+    this.resetServiceDragState();
+  }
+
+  onServiceDropItem(event: DragEvent, toIdx: number) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (this.serviceDragIdx < 0 || this.serviceDragIdx === toIdx) {
+      this.resetServiceDragState();
+      return;
+    }
+    this.moveServiceInList(this.serviceDragIdx, toIdx);
+    this.resetServiceDragState();
+  }
+
+  private resetServiceDragState() {
+    this.serviceDragIdx = -1;
+    this.serviceDragOverIdx = -1;
+  }
+
+  private moveServiceInList(fromIdx: number, toIdx: number) {
+    const profile = this.profile();
+    if (!profile?.services?.length) return;
+    const services = [...profile.services];
+    const [moved] = services.splice(fromIdx, 1);
+    services.splice(toIdx, 0, moved);
+    this.profile.set({ ...profile, services });
+    this.persistServiceOrder(services);
+  }
+
+  private persistServiceOrder(services: { id: string }[]) {
+    if (this.serviceOrderSaving) return;
+    this.serviceOrderSaving = true;
+    const order = services.map(s => s.id);
+    this.gestoresService.reorderServices(order).subscribe({
+      next: (res) => {
+        const profile = this.profile();
+        if (profile) this.profile.set({ ...profile, services: res.services });
+        this.serviceOrderSaving = false;
+      },
+      error: (err) => {
+        this.serviceOrderSaving = false;
+        this.toast.error(err.error?.error || 'No se pudo guardar el orden.');
+        this.loadProfile();
       },
     });
   }

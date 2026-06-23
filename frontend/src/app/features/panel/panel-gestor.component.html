@@ -326,10 +326,28 @@
           <svg lucideWrench [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Catálogo de servicios
         </h2>
-        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional.</p>
-        @for (s of p.services; track s.id) {
-          <div class="inbox-item service-catalog-item">
-            <div class="inbox-info">
+        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional. Arrastra para definir el orden en tu página pública.</p>
+        @if (p.services?.length) {
+          <p class="card-desc" style="font-size:11px; margin-bottom:10px;">
+            Arrastra los servicios para cambiar el orden · Se guarda automáticamente
+          </p>
+        }
+        <div class="service-sort-list"
+             (dragover)="$event.preventDefault()"
+             (drop)="onServiceDrop($event)">
+          @for (s of p.services; track s.id) {
+            <div class="inbox-item service-catalog-item service-sort-item"
+                 [class.service-sort-item--dragging]="serviceDragIdx === $index"
+                 [class.service-sort-item--over]="serviceDragOverIdx === $index"
+                 draggable="true"
+                 (dragstart)="onServiceDragStart($event, $index)"
+                 (dragenter)="onServiceDragEnter($event, $index)"
+                 (dragleave)="onServiceDragLeave()"
+                 (drop)="onServiceDropItem($event, $index)">
+              <span class="service-sort-handle" title="Arrastra para mover">
+                <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
+              </span>
+              <div class="inbox-info">
               <h4>{{ s.name }}</h4>
               <p class="deal-meta-with-icon">
                 <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
@@ -350,9 +368,11 @@
                 </ul>
               </details>
             </div>
-            <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
-          </div>
-        } @empty {
+              <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
+            </div>
+          }
+        </div>
+        @if (!p.services?.length) {
           <p class="empty">Aún no tienes servicios. Agrega el primero abajo.</p>
         }
         <hr class="divider">
@@ -602,6 +622,64 @@
           } @else {
             <p class="card-desc" style="font-size:12px;">Sin fotos — la sección de galería no aparecerá en tu ficha pública.</p>
           }
+        </div>
+
+        <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">
+          <h3 class="section-sub card-title-with-icon">
+            <svg lucideStar [size]="16" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Reseñas de clientes
+          </h3>
+          <p class="card-desc" style="margin-bottom:16px; font-size:12px;">
+            Crea reseñas que aparecerán en tu ficha pública con el mismo diseño que las concesionarias.
+            Promedio actual: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
+          </p>
+
+          @for (r of gestorReviews(); track r.id) {
+            <div class="review-card">
+              <div class="review-stars">
+                @for (s of reviewStarSlots; track s) {
+                  <svg lucideStar [size]="14" [class.star-filled]="s <= r.rating" aria-hidden="true"></svg>
+                }
+              </div>
+              <p style="color:var(--text);font-size:14px;line-height:1.5;margin:8px 0;">"{{ r.comment }}"</p>
+              <span class="review-author">— {{ r.author }}</span>
+              <div style="display:flex; gap:8px; margin-top:10px;">
+                <button type="button" class="btn-ghost small" (click)="editGestorReview(r)">Editar</button>
+                <button type="button" class="btn-ghost small warn" (click)="deleteGestorReview(r.id)">Eliminar</button>
+              </div>
+            </div>
+          } @empty {
+            <p class="card-desc" style="margin-bottom:16px;">Aún no tienes reseñas en tu ficha pública.</p>
+          }
+
+          <hr class="divider" style="margin:20px 0;">
+          <h4 class="section-sub">{{ editingReviewId ? 'Editar reseña' : 'Nueva reseña' }}</h4>
+          <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-group">
+              <label>Nombre del cliente</label>
+              <input [(ngModel)]="gestorReviewForm.author" placeholder="Ej: María González">
+            </div>
+            <div class="form-group">
+              <label>Calificación</label>
+              <select [(ngModel)]="gestorReviewForm.rating">
+                @for (s of reviewStarSlots; track s) {
+                  <option [ngValue]="s">{{ s }} estrella{{ s > 1 ? 's' : '' }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label>Comentario</label>
+            <textarea [(ngModel)]="gestorReviewForm.comment" rows="3" placeholder="Escribe la reseña del cliente..."></textarea>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button type="button" class="btn-copy" (click)="saveGestorReview()">
+              {{ editingReviewId ? 'Guardar cambios' : 'Publicar reseña' }}
+            </button>
+            @if (editingReviewId) {
+              <button type="button" class="btn-ghost" (click)="resetGestorReviewForm()">Cancelar</button>
+            }
+          </div>
         </div>
 
         <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--border);">

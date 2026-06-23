@@ -1,0 +1,32 @@
+<section class="dp-reviews">
+  <h2 class="dp-reviews-title">{{ title }}</h2>
+
+  @if ((reviewCount ?? 0) > 0) {
+    <div class="dp-reviews-summary-block">
+      <div class="dp-reviews-score">{{ rating | number:'1.1-1' }}</div>
+      <div class="dp-reviews-summary-meta">
+        <div class="dp-reviews-stars-lg" [attr.aria-label]="rating + ' de 5'">{{ stars(rating) }}</div>
+        <p class="dp-reviews-summary">{{ reviewCount ?? 0 }} reseñas globales</p>
+      </div>
+    </div>
+  }
+
+  @if (reviews.length) {
+    <ul class="dp-reviews-list">
+      @for (r of reviews; track r.id) {
+        <li class="dp-review-item">
+          <div class="dp-review-header">
+            <span class="dp-review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
+            <span class="dp-review-author">{{ r.author }}</span>
+          </div>
+          <p class="dp-review-text">{{ r.comment }}</p>
+          @if (r.createdAt) {
+            <time class="dp-review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
+          }
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="dp-reviews-empty">Aún no hay reseñas.</p>
+  }
+</section>
