@@ -71,6 +71,23 @@ function formatMoney(value) {
   return `$${Number(value || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
 }
 
+const PDF_LOGO_BOX_PT = 48;
+
+/** Escala el logo con recorte tipo object-fit: cover dentro de un cuadrado fijo. */
+function drawPdfLogoCover(doc, logoBuffer, x, y, boxSize = PDF_LOGO_BOX_PT) {
+  const img = doc.openImage(logoBuffer);
+  const scale = Math.max(boxSize / img.width, boxSize / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  const ox = x + (boxSize - w) / 2;
+  const oy = y + (boxSize - h) / 2;
+  doc.save();
+  doc.rect(x, y, boxSize, boxSize).clip();
+  doc.image(logoBuffer, ox, oy, { width: w, height: h });
+  doc.restore();
+  return boxSize;
+}
+
 /**
  * Generates a PDF Quote and pipes it to the provided writable stream (e.g., HTTP Response).
  * @param {Object} deal - Deal data (includes contact and auto details if available)
@@ -102,10 +119,11 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
   const blocks = {
     header: async () => {
       let logoLoaded = false;
+      const headerStartY = doc.y;
       try {
         const logoBuffer = await resolvePdfLogoBuffer(concesionaria);
         if (logoBuffer) {
-          doc.image(logoBuffer, 50, doc.y, { height: 40 });
+          drawPdfLogoCover(doc, logoBuffer, 50, headerStartY);
           logoLoaded = true;
         }
       } catch (err) {
@@ -116,14 +134,14 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
         doc
           .fillColor(GREEN)
           .fontSize(24)
-          .text('TRÁMITES', 50, doc.y, { continued: true })
+          .text('TRÁMITES', 50, headerStartY, { continued: true })
           .fillColor(GOLD)
           .text('VEHICULARES', { continued: true })
           .fillColor(GREEN)
           .text('.mx');
       }
 
-      doc.y = Math.max(doc.y, doc.y + (logoLoaded ? 40 : 10)) + 10;
+      doc.y = logoLoaded ? headerStartY + PDF_LOGO_BOX_PT + 10 : doc.y + 10;
 
       doc
         .fillColor(GRAY)

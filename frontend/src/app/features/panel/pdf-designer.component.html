@@ -26,7 +26,9 @@
           Opcional. Si no subes uno aquí, se usará el logo de tu perfil; si tampoco tienes, el de Trámites Vehiculares de México.
         </p>
         <div class="pdf-logo-preview-box">
-          <img [src]="previewLogoUrl()" alt="Vista previa del logo PDF" class="pdf-logo-preview-img">
+          <div class="pdf-logo-frame">
+            <img [src]="previewLogoUrl()" alt="Vista previa del logo PDF" class="pdf-logo-cover-img">
+          </div>
         </div>
         <p class="pdf-logo-source">
           @if (previewLogoSource() === 'pdf') {
@@ -76,7 +78,9 @@
         
         @if (block.id === 'header') {
           <div class="preview-block block-header">
-            <img [src]="previewLogoUrl()" alt="Logo" class="preview-logo-img">
+            <div class="pdf-logo-frame pdf-logo-frame--header">
+              <img [src]="previewLogoUrl()" alt="Logo" class="pdf-logo-cover-img">
+            </div>
             <div class="mock-contact">
               {{ auth.user()?.name || (isGestor() ? 'Gestoría Autorizada' : 'Concesionaria Autorizada') }}<br>{{ auth.user()?.email || 'contacto@tramitesvehiculares.mx' }}
             </div>

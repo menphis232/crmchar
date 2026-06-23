@@ -219,13 +219,26 @@
   margin-bottom: 20px;
 }
 
-.preview-logo-img {
-  max-height: 48px;
-  max-width: 220px;
-  object-fit: contain;
-  object-position: left center;
-  display: block;
+.pdf-logo-frame {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  flex-shrink: 0;
+}
+
+.pdf-logo-frame--header {
   margin-bottom: 10px;
+}
+
+.pdf-logo-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .pdf-logo-hint {
@@ -241,15 +254,9 @@
   padding: 16px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-height: 72px;
   margin-bottom: 8px;
-}
-
-.pdf-logo-preview-img {
-  max-height: 56px;
-  max-width: 100%;
-  object-fit: contain;
 }
 
 .pdf-logo-source {
