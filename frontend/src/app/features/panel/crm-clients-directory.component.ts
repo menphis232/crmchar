@@ -20,7 +20,59 @@ import { engomadoLabel } from '../../shared/engomado-colors';
       align-items: flex-end;
     }
     .clients-search { flex: 1; min-width: 220px; }
-    .clients-search input { width: 100%; box-sizing: border-box; }
+    .clients-search label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .clients-search .deal-meta-with-icon {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #111111;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+    .clients-search .deal-meta-with-icon svg { color: rgba(255,255,255,0.45); flex-shrink: 0; }
+    .clients-search input {
+      width: 100%;
+      box-sizing: border-box;
+      background: transparent !important;
+      border: none !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      padding: 10px 0;
+      outline: none;
+    }
+    .clients-search input::placeholder { color: rgba(255,255,255,0.28); }
+    .deal-outline-btn.clients-action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      min-height: 44px;
+      background: #111111 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border: 1px solid rgba(255,255,255,0.35) !important;
+      border-radius: 8px !important;
+      font-family: var(--f-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .deal-outline-btn.clients-action-btn:hover {
+      background: rgba(255,255,255,0.08) !important;
+      border-color: rgba(255,255,255,0.6) !important;
+      color: #ffffff !important;
+    }
     .clients-table { display: flex; flex-direction: column; gap: 8px; }
     .client-row {
       display: grid;

@@ -297,42 +297,10 @@
           (stagesChange)="onStagesChange($event)"
         />
       </div>
-
-      @if (selectedDealId()) {
-        <app-crm-deal-panel
-          [dealId]="selectedDealId()"
-          [stages]="crm.stages"
-          [stageLabels]="crm.stageLabels"
-          [templates]="templates()"
-          [whatsappNumber]="profile()?.whatsapp || ''"
-          (closed)="selectedDealId.set(null)"
-          (updated)="onDealUpdated()"
-          (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
-          (updated)="loadVerificationAlerts()"
-        />
-      }
-      @if (!selectedDealId() && selectedContactId()) {
-        <app-crm-contact-panel
-          [contactId]="selectedContactId()"
-          [stageLabels]="crm.stageLabels"
-          (closed)="selectedContactId.set(null)"
-          (openDeal)="openDeal($event)"
-          (updated)="loadVerificationAlerts()"
-        />
-      }
     }
 
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
       <app-crm-clients-directory (openContact)="openClientContact($event)" />
-      @if (selectedContactId()) {
-        <app-crm-contact-panel
-          [contactId]="selectedContactId()"
-          [stageLabels]="crmDashboard()?.stageLabels || {}"
-          (closed)="selectedContactId.set(null)"
-          (openDeal)="openDeal($event); setTab('pipeline')"
-          (updated)="loadVerificationAlerts()"
-        />
-      }
     }
 
     <!-- ── SERVICIOS ── -->
@@ -881,6 +849,28 @@
       </div>
     }
   </main>
+
+  @if (selectedDealId(); as dealId) {
+    <app-crm-deal-panel
+      [dealId]="dealId"
+      [stages]="crmDashboard()?.stages ?? []"
+      [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+      [templates]="templates()"
+      [whatsappNumber]="profile()?.whatsapp || ''"
+      (closed)="selectedDealId.set(null)"
+      (updated)="onDealUpdated(); loadVerificationAlerts()"
+      (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+    />
+  }
+  @if (!selectedDealId() && selectedContactId(); as contactId) {
+    <app-crm-contact-panel
+      [contactId]="contactId"
+      [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+      (closed)="selectedContactId.set(null)"
+      (openDeal)="openDeal($event); setTab('pipeline')"
+      (updated)="loadVerificationAlerts()"
+    />
+  }
 </div>
 
 @if (showManualLeadForm()) {

@@ -13,7 +13,7 @@ import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
   standalone: true,
   imports: [FormsModule, DatePipe, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2],
   templateUrl: './crm-contact-panel.component.html',
-  styleUrl: './panel-dashboard.css',
+  styleUrls: ['./panel-dashboard.css', './crm-side-panel.theme.css'],
   styles: [`
     .contact-form-grid {
       display: grid;
@@ -37,11 +37,11 @@ import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
       box-sizing: border-box;
     }
     .vehicle-card {
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 12px;
       padding: 12px;
       margin-bottom: 10px;
-      background: rgba(255,255,255,0.03);
+      background: #141414;
     }
     .vehicle-card-top {
       display: flex;

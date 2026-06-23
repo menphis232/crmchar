@@ -1,0 +1,216 @@
+/* Tema oscuro compartido — paneles laterales CRM (embudo + clientes) */
+:host {
+  --brand-black:  #ffffff;
+  --brand-white:  #0a0a0a;
+  --surface:      #141414;
+  --muted:        rgba(255,255,255,0.45);
+  --mx-white:     #ffffff;
+  --gold:         rgba(200,169,74,0.9);
+}
+
+.deal-panel-overlay {
+  background: rgba(0,0,0,0.75) !important;
+  backdrop-filter: blur(6px);
+  z-index: 500;
+}
+
+.deal-panel {
+  background: #000 !important;
+  border-left: 1px solid rgba(255,255,255,0.10) !important;
+  color: #ffffff !important;
+  scrollbar-color: rgba(255,255,255,0.12) transparent;
+  font-family: var(--f-display) !important;
+}
+.deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }
+.deal-panel-body { background: #000 !important; }
+.deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
+
+.deal-panel-header {
+  background: #111 !important;
+  border-bottom: 1px solid rgba(255,255,255,0.09) !important;
+}
+.deal-panel-eyebrow {
+  color: rgba(255,255,255,0.35) !important;
+  font-size: 9px !important;
+  letter-spacing: 0.20em !important;
+  font-family: var(--f-display) !important;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+.deal-panel-header h3 {
+  color: #ffffff !important;
+  font-family: var(--f-display) !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+}
+.deal-panel-close {
+  background: transparent !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.50) !important;
+  border-radius: 8px !important;
+}
+.deal-panel-close:hover {
+  background: rgba(230,61,47,0.15) !important;
+  border-color: #e63d2f !important;
+  color: #e63d2f !important;
+}
+
+.deal-section h4 {
+  color: rgba(255,255,255,0.40) !important;
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.22em !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+}
+
+.deal-panel select,
+.deal-section select {
+  color-scheme: dark !important;
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  color: rgba(255,255,255,0.80) !important;
+  -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  padding: 8px 10px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  font-family: var(--f-display) !important;
+}
+.deal-panel select option,
+.deal-section select option {
+  background: #1a1a1a !important;
+  color: #ffffff !important;
+}
+
+.deal-panel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+.deal-section input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
+.deal-panel textarea,
+.deal-section textarea {
+  background: #161616 !important;
+  border: 1px solid rgba(255,255,255,0.13) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+  border-radius: 8px !important;
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+  color-scheme: dark !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+.deal-panel input::placeholder,
+.deal-panel textarea::placeholder,
+.deal-section input::placeholder,
+.deal-section textarea::placeholder {
+  color: rgba(255,255,255,0.25) !important;
+  opacity: 1;
+}
+
+.card-desc {
+  color: rgba(255,255,255,0.45) !important;
+  font-family: var(--f-display) !important;
+  font-size: 13px !important;
+}
+
+.deal-outline-btn,
+label.deal-outline-btn,
+button.deal-outline-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 9px 16px !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  border-radius: 999px !important;
+  font-family: var(--f-display) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+}
+.deal-outline-btn:hover {
+  background: rgba(255,255,255,0.10) !important;
+  border-color: rgba(255,255,255,0.60) !important;
+}
+
+.inbox-row {
+  background: #111 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font: inherit;
+}
+.inbox-row:hover {
+  border-color: rgba(255,255,255,0.25) !important;
+  background: #161616 !important;
+}
+
+.status-badge {
+  background: rgba(255,255,255,0.08) !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+  color: rgba(255,255,255,0.75) !important;
+  font-size: 10px !important;
+  padding: 4px 10px !important;
+  border-radius: 999px !important;
+  white-space: nowrap;
+}
+
+.activity-item {
+  background: #111 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-left: 3px solid rgba(255,255,255,0.20) !important;
+  border-radius: 10px !important;
+  margin-bottom: 8px !important;
+  padding: 10px 14px !important;
+}
+.activity-item p { color: rgba(255,255,255,0.70) !important; font-size: 13px !important; }
+.activity-type {
+  color: rgba(255,255,255,0.40) !important;
+  font-size: 10px !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+}
+.review-author { color: rgba(255,255,255,0.35) !important; font-size: 11px !important; }
+
+.task-row-icon { color: rgba(255,255,255,0.75) !important; }
+.task-row-icon.done { opacity: 0.45; }
+
+.btn-ghost {
+  color: rgba(255,255,255,0.65) !important;
+  border: 1px solid rgba(255,255,255,0.20) !important;
+  background: transparent !important;
+  border-radius: 8px !important;
+}
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #fff !important;
+}
+
+label:not(.deal-outline-btn) {
+  color: rgba(255,255,255,0.40) !important;
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.12em !important;
+}
+
+h5 {
+  color: rgba(255,255,255,0.45) !important;
+  font-family: var(--f-display) !important;
+  font-size: 11px !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
