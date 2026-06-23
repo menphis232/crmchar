@@ -830,6 +830,11 @@ router.get('/contacts', async (req, res) => {
       WHERE ${whereSql}
     `, params);
 
+    const total = Number(countRow?.total || 0);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const safeLimit = Number(limit);
+    const safeOffset = Number(offset);
+
     const rows = await query(`
       SELECT c.*,
         COUNT(DISTINCT d.id) as dealCount,
@@ -843,8 +848,8 @@ router.get('/contacts', async (req, res) => {
       WHERE ${whereSql}
       GROUP BY c.id
       ORDER BY c.updated_at DESC
-      LIMIT ? OFFSET ?
-    `, [uid, ...params, limit, offset]);
+      LIMIT ${safeLimit} OFFSET ${safeOffset}
+    `, [uid, ...params]);
 
     const tramiteOptions = await query(`
       SELECT DISTINCT title
@@ -852,9 +857,6 @@ router.get('/contacts', async (req, res) => {
       WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != ''
       ORDER BY title ASC
     `, [uid]);
-
-    const total = Number(countRow?.total || 0);
-    const totalPages = Math.max(1, Math.ceil(total / limit));
 
     res.json({
       contacts: rows.map((r) => ({
