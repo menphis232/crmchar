@@ -7,7 +7,7 @@ import { requireActiveSubscription } from '../middleware/subscription.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
-  createManualVentaDeal, createManualTramiteDeal,
+  createManualVentaDeal, createManualTramiteDeal, findOrCreateContact,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -792,6 +792,52 @@ router.get('/contacts', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar contactos' });
+  }
+});
+
+router.post('/contacts', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { name, email, phone, whatsapp, notes, residenceState } = req.body;
+
+    if (!name?.trim()) {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
+
+    const contact = await findOrCreateContact(uid, {
+      name: name.trim(),
+      email: email?.trim() || null,
+      phone: phone?.trim() || null,
+      whatsapp: whatsapp?.trim() || phone?.trim() || null,
+      source: 'manual',
+    });
+
+    await run(`
+      UPDATE contacts SET
+        name = ?,
+        email = COALESCE(?, email),
+        phone = COALESCE(?, phone),
+        whatsapp = COALESCE(?, whatsapp),
+        notes = COALESCE(?, notes),
+        residence_state = COALESCE(?, residence_state),
+        updated_at = NOW()
+      WHERE id = ? AND user_id = ?
+    `, [
+      name.trim(),
+      email?.trim()?.toLowerCase() || null,
+      phone?.trim() || null,
+      whatsapp?.trim() || phone?.trim() || null,
+      notes?.trim() || null,
+      residenceState?.trim() || null,
+      contact.id,
+      uid,
+    ]);
+
+    const row = await get('SELECT * FROM contacts WHERE id = ?', [contact.id]);
+    res.status(201).json(contactRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al crear contacto' });
   }
 });
 

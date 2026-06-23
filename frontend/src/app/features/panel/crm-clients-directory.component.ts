@@ -1,14 +1,16 @@
-import { Component, input, output, signal, OnInit, computed } from '@angular/core';
+import { Component, output, signal, OnInit, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideCar, LucideSearch, LucideUser } from '@lucide/angular';
+import { LucideCar, LucidePlus, LucideSearch, LucideUser } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
+import { ToastService } from '../../core/toast.service';
 import { CrmContact } from '../../models';
 import { engomadoLabel } from '../../shared/engomado-colors';
+import { MEXICO_STATES } from '../../shared/mexico-states';
 
 @Component({
   selector: 'app-crm-clients-directory',
   standalone: true,
-  imports: [FormsModule, LucideSearch, LucideUser, LucideCar],
+  imports: [FormsModule, LucideSearch, LucideUser, LucideCar, LucidePlus],
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
     .dash-card {
@@ -79,6 +81,7 @@ import { engomadoLabel } from '../../shared/engomado-colors';
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
       padding: 10px 20px;
       min-height: 44px;
       background: #111111 !important;
@@ -94,10 +97,86 @@ import { engomadoLabel } from '../../shared/engomado-colors';
       cursor: pointer;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
-    .deal-outline-btn.clients-action-btn:hover {
+    .deal-outline-btn.clients-action-btn:hover:not(:disabled) {
       background: rgba(255,255,255,0.08) !important;
       border-color: rgba(255,255,255,0.6) !important;
       color: #ffffff !important;
+    }
+    .deal-outline-btn.clients-action-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .deal-outline-btn.clients-action-btn--primary {
+      background: #ffffff !important;
+      color: #000000 !important;
+      -webkit-text-fill-color: #000000 !important;
+      border-color: #ffffff !important;
+    }
+    .deal-outline-btn.clients-action-btn--primary:hover:not(:disabled) {
+      background: rgba(255,255,255,0.9) !important;
+      color: #000000 !important;
+    }
+    .client-add-form {
+      margin-bottom: 20px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .client-add-title {
+      margin: 0 0 4px;
+      font-family: var(--f-display);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .client-add-desc {
+      margin: 0 0 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
+    .client-add-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .client-add-grid .full { grid-column: 1 / -1; }
+    @media (max-width: 700px) {
+      .client-add-grid { grid-template-columns: 1fr; }
+      .client-add-grid .full { grid-column: auto; }
+    }
+    .client-add-field label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .client-add-field input,
+    .client-add-field select,
+    .client-add-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #000 !important;
+      border: 1px solid rgba(255,255,255,0.22) !important;
+      border-radius: 8px;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      padding: 10px 12px;
+      font-family: var(--f-display);
+      font-size: 14px;
+      outline: none;
+    }
+    .client-add-field textarea { resize: vertical; min-height: 64px; }
+    .client-add-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      justify-content: flex-end;
     }
     .clients-table { display: flex; flex-direction: column; gap: 8px; }
     .client-row {
@@ -141,12 +220,25 @@ import { engomadoLabel } from '../../shared/engomado-colors';
   `],
 })
 export class CrmClientsDirectoryComponent implements OnInit {
+  private toast = inject(ToastService);
+
   openContact = output<string>();
 
   clients = signal<CrmContact[]>([]);
   search = signal('');
   isLoading = signal(true);
+  showAddForm = signal(false);
+  isSaving = signal(false);
   readonly engomadoLabel = engomadoLabel;
+  readonly mexicoStates = MEXICO_STATES;
+
+  newClient = {
+    name: '',
+    email: '',
+    phone: '',
+    residenceState: '',
+    notes: '',
+  };
 
   filtered = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -176,5 +268,55 @@ export class CrmClientsDirectoryComponent implements OnInit {
       },
       error: () => this.isLoading.set(false),
     });
+  }
+
+  openAddForm() {
+    this.resetNewClient();
+    this.showAddForm.set(true);
+  }
+
+  cancelAddForm() {
+    this.showAddForm.set(false);
+    this.resetNewClient();
+  }
+
+  saveClient() {
+    const name = this.newClient.name.trim();
+    if (!name) {
+      this.toast.warning('El nombre del cliente es obligatorio');
+      return;
+    }
+
+    this.isSaving.set(true);
+    this.crmService.createContact({
+      name,
+      email: this.newClient.email.trim() || undefined,
+      phone: this.newClient.phone.trim() || undefined,
+      residenceState: this.newClient.residenceState.trim() || undefined,
+      notes: this.newClient.notes.trim() || undefined,
+    }).subscribe({
+      next: (contact) => {
+        this.isSaving.set(false);
+        this.showAddForm.set(false);
+        this.resetNewClient();
+        this.load();
+        this.toast.success('Cliente agregado al directorio');
+        this.openContact.emit(contact.id);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.toast.error(err?.error?.error || 'No se pudo guardar el cliente');
+      },
+    });
+  }
+
+  private resetNewClient() {
+    this.newClient = {
+      name: '',
+      email: '',
+      phone: '',
+      residenceState: '',
+      notes: '',
+    };
   }
 }
