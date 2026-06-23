@@ -91,14 +91,10 @@
                     />
                   }
 
-                  @if (b.type === 'gallery' && b.data.images?.length) {
-                    <app-gestor-showcase-gallery [images]="b.data.images" title="Galería fotos" />
+                  @if (b.type === 'gallery' && galleryImagesForBlock(b, g).length) {
+                    <app-gestor-showcase-gallery [images]="galleryImagesForBlock(b, g)" title="Galería fotos" />
                   }
                 </div>
-            }
-
-            @if (g.galleryImages?.length) {
-              <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
             }
           </div>
 
@@ -209,12 +205,12 @@
 
       <div class="profile-content">
         <div class="main-column">
-          @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
-          }
-
           @if (g.bio?.trim()) {
             <p class="bio">{{ g.bio }}</p>
+          }
+
+          @if (g.galleryImages?.length) {
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
           }
 
           <h3 class="section-title">Servicios y Tarifas</h3>

@@ -100,26 +100,45 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
 
-  /** Descripción y galería siempre antes de servicios en la ficha pública. */
+  /** Orden fijo en ficha pública: stats → descripción → galería → servicios → reseñas. */
   orderedMainBlocks(config: PageBuilderConfig, g: Gestor): PageBlock[] {
     const blocks = (config.blocks ?? []).filter(b => b.region !== 'sidebar' && b.type !== 'hero');
-    const beforeTypes = new Set(['stats', 'text', 'gallery']);
-    const before = blocks.filter(b => beforeTypes.has(b.type));
-    const after = blocks.filter(b => !beforeTypes.has(b.type));
+    const pick = (type: PageBlock['type']) => blocks.filter(b => b.type === type);
 
-    if (g.bio?.trim() && !before.some(b => b.type === 'text')) {
-      const stats = before.filter(b => b.type === 'stats');
-      const gallery = before.filter(b => b.type === 'gallery');
-      const bioBlock: PageBlock = {
+    let textBlocks = pick('text');
+    let galleryBlocks = pick('gallery');
+
+    if (g.bio?.trim() && !textBlocks.length) {
+      textBlocks = [{
         id: '__profile-bio__',
         type: 'text',
         region: 'main',
         data: { content: g.bio.trim() },
-      };
-      return [...stats, bioBlock, ...gallery, ...after];
+      }];
     }
 
-    return [...before, ...after];
+    if (g.galleryImages?.length && !galleryBlocks.length) {
+      galleryBlocks = [{
+        id: '__profile-gallery__',
+        type: 'gallery',
+        region: 'main',
+        data: { images: g.galleryImages },
+      }];
+    }
+
+    return [
+      ...pick('stats'),
+      ...textBlocks,
+      ...galleryBlocks,
+      ...pick('services'),
+      ...pick('reviews'),
+    ];
+  }
+
+  galleryImagesForBlock(block: PageBlock, g: Gestor): string[] {
+    const fromBlock = block.data?.images;
+    if (Array.isArray(fromBlock) && fromBlock.length) return fromBlock.filter(Boolean);
+    return g.galleryImages ?? [];
   }
 
   readonly hasServicePrice = hasServicePrice;
