@@ -350,7 +350,7 @@
     @if (tab() === 'perfil' && hasPerm('perfil') && profile(); as p) {
       <div class="dash-card">
         <h2 class="card-title">Mi Perfil Público</h2>
-        <p class="card-desc">Personaliza la información que los clientes verán en tu ficha pública y en tus cotizaciones PDF. El tema visual de tu página se configura en <strong>Constructor Web</strong>.</p>
+        <p class="card-desc">Personaliza la información que los clientes verán en tu ficha pública y en tus cotizaciones PDF. El <strong>logo</strong> se configura aquí abajo. La <strong>imagen de fondo del banner</strong> se cambia en <strong>Constructor Web</strong> → bloque <strong>Banner</strong> → <em>Fondo del Hero</em>.</p>
 
         @if (publicSlug) {
           <div class="link-box" style="margin-bottom: 20px;">
@@ -362,7 +362,7 @@
 
         <div class="form-group" style="margin-bottom:20px;">
           <label>Logo de la Empresa</label>
-          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se mostrará en el header del panel, tu página pública y cotizaciones PDF. Se recortará en círculo 1:1.</p>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se muestra en el círculo de tu página pública, el header del panel y cotizaciones PDF. Se recortará en círculo 1:1.</p>
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
             @if (profileLogoUrl) {
               <div class="dash-logo-frame" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.28);flex-shrink:0;">

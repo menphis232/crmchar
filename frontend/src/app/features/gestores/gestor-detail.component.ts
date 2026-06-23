@@ -74,6 +74,15 @@ export class GestorDetailComponent implements OnInit {
 
   starIndexes = [1, 2, 3, 4, 5];
 
+  /** Logo del panel (users.logo_url) tiene prioridad sobre la foto legacy del gestor. */
+  profileImage(g: Gestor): string {
+    return g.logoUrl || g.photoUrl || '';
+  }
+
+  isLogoImage(g: Gestor): boolean {
+    return !!g.logoUrl;
+  }
+
   sendSolicitud() {
     const g = this.gestor();
     if (!g || !this.solicitudForm.clientName || !this.solicitudForm.serviceName) return;

@@ -321,7 +321,8 @@
           <label>Subtítulo</label>
           <textarea [(ngModel)]="b.data.subtitle" (change)="emitChange()"></textarea>
 
-          <label>Fondo del Hero</label>
+          <label>Fondo del banner (imagen de portada)</label>
+          <p class="sidebar-hint" style="margin-top:-6px;margin-bottom:10px;">No es el logo. El logo se sube en Panel → Perfil.</p>
           <div class="upload-row">
             <label class="upload-btn" [class.disabled]="isUploading()">
               {{ isUploading() ? 'Subiendo...' : '+ Subir imagen' }}

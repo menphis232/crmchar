@@ -19,6 +19,7 @@ function gestorRow(row) {
     state: row.state,
     bannerUrl: row.banner_url,
     photoUrl: row.photo_url,
+    logoUrl: row.logo_url || null,
     rating: Number(row.rating),
     reviewCount: row.review_count,
     tramitesCount: row.tramites_count,
@@ -35,7 +36,7 @@ function gestorRow(row) {
 router.get('/', async (req, res) => {
   try {
     const { state, minRating } = req.query;
-    let sql = 'SELECT * FROM gestores WHERE 1=1';
+    let sql = `SELECT g.*, u.logo_url FROM gestores g JOIN users u ON g.user_id = u.id WHERE 1=1`;
     const params = [];
     if (state) { sql += ' AND state = ?'; params.push(state); }
     if (minRating) { sql += ' AND rating >= ?'; params.push(Number(minRating)); }
@@ -59,7 +60,11 @@ router.get('/filters/states', async (_req, res) => {
 
 router.get('/me/profile', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
-    const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
+    const row = await get(`
+      SELECT g.*, u.logo_url
+      FROM gestores g
+      JOIN users u ON g.user_id = u.id
+      WHERE g.user_id = ?`, [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
 
     const services = await query(
@@ -163,7 +168,7 @@ router.get('/:slugOrId', async (req, res) => {
   try {
     const { slugOrId } = req.params;
     const row = await get(`
-      SELECT g.*, u.google_analytics_id, u.page_builder_config, u.chatbot_bg_color, u.chatbot_btn_color, u.chatbot_text_color
+      SELECT g.*, u.google_analytics_id, u.page_builder_config, u.chatbot_bg_color, u.chatbot_btn_color, u.chatbot_text_color, u.logo_url
       FROM gestores g 
       JOIN users u ON g.user_id = u.id 
       WHERE g.slug = ? OR g.id = ?`, [slugOrId, slugOrId]);

@@ -216,6 +216,7 @@ export interface Gestor {
   state: string;
   bannerUrl?: string;
   photoUrl?: string;
+  logoUrl?: string;
   rating: number;
   reviewCount?: number;
   tramitesCount: number;

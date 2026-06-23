@@ -112,7 +112,7 @@
                 <div class="card-banner-overlay"></div>
               </div>
               <div class="card-body">
-                <img [src]="g.photoUrl || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop'" class="agent-img" [alt]="g.name">
+                <img [src]="g.logoUrl || g.photoUrl || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop'" class="agent-img" [alt]="g.name">
                 <h3 class="agent-name">{{ g.name }}</h3>
                 <div class="agent-location">{{ g.location }}</div>
                 <div class="agent-stats">

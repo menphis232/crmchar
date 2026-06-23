@@ -541,11 +541,13 @@ export class PanelGestorComponent implements OnInit {
   saveProfile() {
     this.gestoresService.updateProfile({
       bio: this.bio,
+      name: this.profileName || undefined,
       location: this.gestorState || undefined,
       state: this.gestorState || undefined,
       phone: this.gestorPhone || undefined,
       address: this.gestorAddress || undefined,
       mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
+      photoUrl: this.profileLogoUrl || undefined,
     }).subscribe({
       next: p => {
         this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });

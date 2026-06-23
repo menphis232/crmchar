@@ -72,6 +72,12 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   flex-shrink: 0;
 }
+
+.profile-img-logo {
+  object-fit: contain;
+  background: #fff;
+  padding: 12px;
+}
 .profile-name {
   font-family: var(--f-display);
   font-size: clamp(28px, 5vw, 44px);
