@@ -1,9 +1,20 @@
-import { Component, input, signal, HostListener } from '@angular/core';
+import {
+  Component,
+  input,
+  signal,
+  HostListener,
+  ViewEncapsulation,
+  ElementRef,
+  inject,
+  afterNextRender,
+  DestroyRef,
+} from '@angular/core';
 import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
 
 @Component({
   selector: 'app-gestor-showcase-gallery',
   standalone: true,
+  encapsulation: ViewEncapsulation.None,
   template: `
     @if (images().length) {
       <section class="gg" [attr.aria-label]="title() || 'Galería'">
@@ -20,49 +31,42 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
               (click)="open(i)"
               [attr.aria-label]="'Ampliar foto ' + (i + 1)">
               <img [src]="img" alt="" loading="lazy" draggable="false" />
-              <span class="gg-cell-overlay" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
-                  <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
-                </svg>
-              </span>
             </button>
           }
         </div>
       </section>
 
       @if (lightboxIdx() !== null) {
-        <div class="gg-lightbox" (click)="close()" role="dialog" aria-modal="true" aria-label="Vista ampliada">
-          <button type="button" class="gg-lb-close-fab" (click)="close($event)" aria-label="Cerrar foto">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-            <span>Cerrar</span>
-          </button>
+        <div #lightboxRoot class="gg-lightbox" (click)="close()" role="dialog" aria-modal="true" aria-label="Vista ampliada">
+          <div class="gg-lb-panel" (click)="$event.stopPropagation()">
+            <button type="button" class="gg-lb-close" (click)="close($event)" aria-label="Cerrar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
 
-          <div class="gg-lb-toolbar" (click)="$event.stopPropagation()">
-            <span class="gg-lb-title">{{ title() }}</span>
-            <span class="gg-lb-count">{{ lightboxIdx()! + 1 }} / {{ images().length }}</span>
-          </div>
-          <div class="gg-lb-body" (click)="$event.stopPropagation()">
-            @if (images().length > 1) {
-              <button type="button" class="gg-lb-nav gg-lb-prev" (click)="prev($event)" aria-label="Anterior">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-              </button>
-            }
-            <img [src]="images()[lightboxIdx()!]" class="gg-lb-img" alt="" />
-            @if (images().length > 1) {
-              <button type="button" class="gg-lb-nav gg-lb-next" (click)="next($event)" aria-label="Siguiente">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-            }
+            <div class="gg-lb-frame">
+              @if (images().length > 1) {
+                <button type="button" class="gg-lb-nav gg-lb-prev" (click)="prev($event)" aria-label="Foto anterior">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+              }
+              <img [src]="images()[lightboxIdx()!]" class="gg-lb-img" alt="" />
+              @if (images().length > 1) {
+                <button type="button" class="gg-lb-nav gg-lb-next" (click)="next($event)" aria-label="Foto siguiente">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+              }
+            </div>
+
+            <p class="gg-lb-caption">{{ lightboxIdx()! + 1 }} de {{ images().length }}</p>
           </div>
         </div>
       }
     }
   `,
   styles: [`
-    :host { display: block; width: 100%; }
+    .gg { display: block; width: 100%; }
 
     .gg-head {
       display: flex;
@@ -98,7 +102,6 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
     }
 
     .gg-cell {
-      position: relative;
       aspect-ratio: 1 / 1;
       padding: 0;
       border: 1px solid rgba(255, 255, 255, 0.12);
@@ -118,160 +121,178 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
       display: block;
       user-select: none;
     }
 
-    .gg-cell-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.35);
-      color: #fff;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .gg-cell-overlay svg { width: 22px; height: 22px; }
-    .gg-cell:hover .gg-cell-overlay { opacity: 1; }
-
+    /* ── Lightbox (portal a body) ── */
     .gg-lightbox {
       position: fixed;
       inset: 0;
-      z-index: 50000;
-      background: rgba(0, 0, 0, 0.96);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .gg-lb-close-fab {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 50001;
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      min-width: 56px;
-      min-height: 56px;
-      padding: 10px 14px;
-      border: 2px solid rgba(255, 255, 255, 0.35);
-      border-radius: 12px;
-      background: rgba(0, 0, 0, 0.75);
-      color: #fff;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-      transition: background 0.2s, border-color 0.2s, transform 0.15s;
-    }
-
-    .gg-lb-close-fab svg { width: 22px; height: 22px; flex-shrink: 0; }
-    .gg-lb-close-fab span {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      line-height: 1;
-    }
-
-    .gg-lb-close-fab:hover {
-      background: rgba(220, 38, 38, 0.85);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: scale(1.03);
-    }
-
-    .gg-lb-toolbar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 18px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      flex-shrink: 0;
-    }
-
-    .gg-lb-title {
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.7);
-      flex: 1;
-    }
-
-    .gg-lb-count { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
-
-    .gg-lb-body {
-      flex: 1;
+      z-index: 200000;
+      background: rgba(0, 0, 0, 0.92);
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 24px 16px;
+      box-sizing: border-box;
+      animation: gg-fade-in 0.2s ease;
+    }
+
+    @keyframes gg-fade-in {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .gg-lb-panel {
       position: relative;
-      padding: 16px 56px;
-      min-height: 0;
+      width: min(92vw, 720px);
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* Círculo blanco con X — siempre visible */
+    .gg-lb-close {
+      position: absolute;
+      top: -18px;
+      right: -18px;
+      z-index: 5;
+      width: 52px;
+      height: 52px;
+      border: none;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #111111;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
+      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+
+    .gg-lb-close svg { width: 22px; height: 22px; }
+
+    .gg-lb-close:hover {
+      transform: scale(1.08);
+      background: #f3f4f6;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.65);
+    }
+
+    .gg-lb-close:active { transform: scale(0.96); }
+
+    .gg-lb-frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #0a0a0a;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
     }
 
     .gg-lb-img {
-      max-width: min(1080px, 100%);
-      max-height: 100%;
-      aspect-ratio: 1 / 1;
+      width: 100%;
+      height: 100%;
       object-fit: contain;
-      border-radius: 4px;
+      object-position: center;
+      display: block;
       user-select: none;
+      background: #000;
     }
 
     .gg-lb-nav {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 48px;
-      height: 48px;
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 2;
+      width: 44px;
+      height: 44px;
+      border: none;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.06);
-      color: #fff;
+      background: rgba(255, 255, 255, 0.92);
+      color: #111;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s, background 0.15s;
     }
 
-    .gg-lb-nav:hover { background: rgba(255, 255, 255, 0.12); }
+    .gg-lb-nav:hover { transform: translateY(-50%) scale(1.06); background: #fff; }
     .gg-lb-nav svg { width: 20px; height: 20px; }
     .gg-lb-prev { left: 12px; }
     .gg-lb-next { right: 12px; }
 
-    @media (max-width: 768px) {
-      .gg-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-      .gg-cell-overlay { opacity: 1; }
-      .gg-lb-body { padding: 12px 44px; padding-top: 72px; }
-      .gg-lb-nav { width: 40px; height: 40px; }
-      .gg-lb-close-fab { top: 12px; right: 12px; min-width: 52px; min-height: 52px; }
+    .gg-lb-caption {
+      margin: 14px 0 0;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: rgba(255, 255, 255, 0.55);
+      text-transform: uppercase;
     }
 
-    @media (max-width: 420px) {
-      .gg-grid { grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) {
+      .gg-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .gg-lightbox { padding: 16px 12px; }
+      .gg-lb-panel { width: min(96vw, 520px); }
+      .gg-lb-close {
+        top: -14px;
+        right: -8px;
+        width: 48px;
+        height: 48px;
+      }
+      .gg-lb-nav { width: 38px; height: 38px; }
+      .gg-lb-prev { left: 8px; }
+      .gg-lb-next { right: 8px; }
     }
   `],
 })
 export class GestorShowcaseGalleryComponent {
+  private host = inject(ElementRef<HTMLElement>);
+  private destroyRef = inject(DestroyRef);
+
   images = input.required<string[]>();
   title = input('Galería fotos');
 
   lightboxIdx = signal<number | null>(null);
+  private lightboxEl: HTMLElement | null = null;
+
+  constructor() {
+    afterNextRender(() => this.syncLightboxPortal());
+    this.destroyRef.onDestroy(() => {
+      document.body.style.overflow = '';
+      this.lightboxEl?.remove();
+      this.lightboxEl = null;
+    });
+  }
+
+  private syncLightboxPortal() {
+    const root = this.host.nativeElement.querySelector('.gg-lightbox') as HTMLElement | null;
+    if (this.lightboxIdx() !== null && root) {
+      if (root.parentElement !== document.body) {
+        document.body.appendChild(root);
+      }
+      this.lightboxEl = root;
+    }
+  }
 
   open(i: number) {
     this.lightboxIdx.set(i);
     document.body.style.overflow = 'hidden';
+    queueMicrotask(() => this.syncLightboxPortal());
   }
 
   close(e?: Event) {
     e?.stopPropagation();
     this.lightboxIdx.set(null);
     document.body.style.overflow = '';
+    this.lightboxEl = null;
   }
 
   prev(e: Event) {
