@@ -73,7 +73,7 @@ function formatMoney(value) {
 
 const PDF_LOGO_BOX_PT = 48;
 
-/** Escala el logo con recorte tipo object-fit: cover dentro de un cuadrado fijo. */
+/** Escala el logo con recorte circular tipo object-fit: cover (como la vista previa). */
 function drawPdfLogoCover(doc, logoBuffer, x, y, boxSize = PDF_LOGO_BOX_PT) {
   const img = doc.openImage(logoBuffer);
   const scale = Math.max(boxSize / img.width, boxSize / img.height);
@@ -81,8 +81,9 @@ function drawPdfLogoCover(doc, logoBuffer, x, y, boxSize = PDF_LOGO_BOX_PT) {
   const h = img.height * scale;
   const ox = x + (boxSize - w) / 2;
   const oy = y + (boxSize - h) / 2;
+  const radius = boxSize / 2;
   doc.save();
-  doc.rect(x, y, boxSize, boxSize).clip();
+  doc.circle(x + radius, y + radius, radius).clip();
   doc.image(logoBuffer, ox, oy, { width: w, height: h });
   doc.restore();
   return boxSize;
