@@ -78,7 +78,7 @@
           <div class="preview-block block-header">
             <img [src]="previewLogoUrl()" alt="Logo" class="preview-logo-img">
             <div class="mock-contact">
-              {{ auth.user()?.name || 'Concesionaria Autorizada' }}<br>{{ auth.user()?.email || 'contacto@tramitesvehiculares.mx' }}
+              {{ auth.user()?.name || (isGestor() ? 'Gestoría Autorizada' : 'Concesionaria Autorizada') }}<br>{{ auth.user()?.email || 'contacto@tramitesvehiculares.mx' }}
             </div>
           </div>
         }
@@ -102,7 +102,7 @@
           </div>
         }
 
-        @if (block.id === 'auto') {
+        @if (block.id === 'auto' && !isGestor()) {
           <div class="preview-block block-auto">
             <h4 [style.color]="primaryColor()">VEHÍCULO COTIZADO</h4>
             <div class="mock-hr" [style.background-color]="primaryColor()"></div>
@@ -110,24 +110,47 @@
           </div>
         }
 
+        @if (block.id === 'tramite' && isGestor()) {
+          <div class="preview-block block-tramite">
+            <h4 [style.color]="primaryColor()">TRÁMITE</h4>
+            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+            <div class="mock-text"><strong>Cambio de propietario — Jalisco</strong></div>
+          </div>
+        }
+
         @if (block.id === 'financial') {
           <div class="preview-block block-financial">
-            <h4 [style.color]="primaryColor()">DESGLOSE FINANCIERO</h4>
-            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
-            <div class="mock-row"><span>Precio del Vehículo:</span> <span>$350,000.00 MXN</span></div>
-            <div class="mock-row"><span>Enganche:</span> <span>-$100,000.00 MXN</span></div>
-            <hr class="mock-divider">
-            <div class="mock-row total-row"><strong>Monto a Financiar:</strong> <strong>$250,000.00 MXN</strong></div>
-            <div class="mock-plazo" style="color: #006847">Plazo Estimado: 48 meses</div>
+            @if (isGestor()) {
+              <h4 [style.color]="primaryColor()">HONORARIOS</h4>
+              <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+              <div class="mock-row"><span>Honorarios del trámite:</span> <span>$4,500.00 MXN</span></div>
+              <hr class="mock-divider">
+              <div class="mock-row total-row"><strong>Total:</strong> <strong>$4,500.00 MXN</strong></div>
+            } @else {
+              <h4 [style.color]="primaryColor()">DESGLOSE FINANCIERO</h4>
+              <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+              <div class="mock-row"><span>Precio del Vehículo:</span> <span>$350,000.00 MXN</span></div>
+              <div class="mock-row"><span>Enganche:</span> <span>-$100,000.00 MXN</span></div>
+              <hr class="mock-divider">
+              <div class="mock-row total-row"><strong>Monto a Financiar:</strong> <strong>$250,000.00 MXN</strong></div>
+              <div class="mock-plazo" style="color: #006847">Plazo Estimado: 48 meses</div>
+            }
           </div>
         }
 
         @if (block.id === 'items') {
           <div class="preview-block block-items">
-            <h4 [style.color]="primaryColor()">EXTRAS / ACCESORIOS</h4>
-            <div class="mock-hr" [style.background-color]="primaryColor()"></div>
-            <div class="mock-row"><span>Seguro de Vida (Financiado)</span> <span>$15,000.00 MXN</span></div>
-            <div class="mock-row"><span>Garantía Extendida</span> <span>$8,000.00 MXN</span></div>
+            @if (isGestor()) {
+              <h4 [style.color]="primaryColor()">CONCEPTOS / SERVICIOS</h4>
+              <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+              <div class="mock-row"><span>Gestión de placas</span> <span>$800.00 MXN</span></div>
+              <div class="mock-row"><span>Verificación vehicular</span> <span>$650.00 MXN</span></div>
+            } @else {
+              <h4 [style.color]="primaryColor()">EXTRAS / ACCESORIOS</h4>
+              <div class="mock-hr" [style.background-color]="primaryColor()"></div>
+              <div class="mock-row"><span>Seguro de Vida (Financiado)</span> <span>$15,000.00 MXN</span></div>
+              <div class="mock-row"><span>Garantía Extendida</span> <span>$8,000.00 MXN</span></div>
+            }
           </div>
         }
 

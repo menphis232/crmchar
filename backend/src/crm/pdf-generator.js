@@ -42,14 +42,45 @@ async function resolvePdfLogoBuffer(concesionaria) {
   return null;
 }
 
+const CONCESIONARIA_DEFAULT_LAYOUT = ['header', 'title', 'client', 'auto', 'financial', 'items', 'footer'];
+const GESTOR_DEFAULT_LAYOUT = ['header', 'title', 'client', 'tramite', 'financial', 'items', 'footer'];
+
+const CONCESIONARIA_DEFAULT_FOOTER =
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
+
+const GESTOR_DEFAULT_FOOTER =
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los honorarios pueden variar según requisitos adicionales del trámite.';
+
+function isGestorRole(role) {
+  return role === 'gestor';
+}
+
+function normalizePdfLayout(layout, role) {
+  const isGestor = isGestorRole(role);
+  const allowed = new Set(isGestor ? GESTOR_DEFAULT_LAYOUT : CONCESIONARIA_DEFAULT_LAYOUT);
+  const defaultLayout = isGestor ? GESTOR_DEFAULT_LAYOUT : CONCESIONARIA_DEFAULT_LAYOUT;
+  const source = Array.isArray(layout) && layout.length > 0 ? layout : defaultLayout;
+  const filtered = source.filter(id => allowed.has(id) && !(isGestor && id === 'auto'));
+  for (const id of defaultLayout) {
+    if (!filtered.includes(id)) filtered.push(id);
+  }
+  return filtered;
+}
+
+function formatMoney(value) {
+  return `$${Number(value || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`;
+}
+
 /**
  * Generates a PDF Quote and pipes it to the provided writable stream (e.g., HTTP Response).
  * @param {Object} deal - Deal data (includes contact and auto details if available)
  * @param {Object} quote - Quote data (id, total, items, valid_until, etc)
- * @param {Object} concesionaria - User details of the concesionaria (including pdf_settings)
+ * @param {Object} orgUser - User details of the org (including pdf_settings, role)
  * @param {WritableStream} res - Express response stream
  */
-export async function generateQuotePdf(deal, quote, concesionaria, res) {
+export async function generateQuotePdf(deal, quote, orgUser, res) {
+  const concesionaria = orgUser;
+  const isGestor = isGestorRole(orgUser?.role);
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
 
   // Pipe its output to the response
@@ -57,8 +88,7 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
 
   // Settings parsing
   const settings = concesionaria?.pdf_settings || {};
-  const defaultLayout = ['header', 'title', 'client', 'auto', 'financial', 'items', 'footer'];
-  const layout = Array.isArray(settings.layout) && settings.layout.length > 0 ? settings.layout : defaultLayout;
+  const layout = normalizePdfLayout(settings.layout, orgUser?.role);
 
   // Colors
   const GOLD = settings.primaryColor || '#c8a94a';
@@ -66,7 +96,7 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
   const BLACK = '#111111';
   const GRAY = '#555555';
 
-  const footerText = settings.footerText || 'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
+  const footerText = settings.footerText || (isGestor ? GESTOR_DEFAULT_FOOTER : CONCESIONARIA_DEFAULT_FOOTER);
 
   // Block definitions
   const blocks = {
@@ -98,7 +128,7 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
       doc
         .fillColor(GRAY)
         .fontSize(10)
-        .text(concesionaria?.name || 'Concesionaria Autorizada', 50, doc.y)
+        .text(concesionaria?.name || (isGestor ? 'Gestoría Autorizada' : 'Concesionaria Autorizada'), 50, doc.y)
         .text(concesionaria?.email || 'contacto@tramitesvehiculares.mx');
       
       doc.moveDown(2);
@@ -135,6 +165,8 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
     },
 
     auto: async () => {
+      if (isGestor) return;
+
       doc.fillColor(GOLD).fontSize(12).text('VEHÍCULO COTIZADO');
       doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
       doc.moveDown(1.5);
@@ -143,8 +175,19 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
       doc.moveDown(1);
     },
 
+    tramite: async () => {
+      if (!isGestor) return;
+
+      doc.fillColor(GOLD).fontSize(12).text('TRÁMITE');
+      doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
+      doc.moveDown(1.5);
+
+      doc.fillColor(BLACK).fontSize(11).text(deal.title || 'Trámite vehicular', { bold: true });
+      doc.moveDown(1);
+    },
+
     financial: async () => {
-      doc.fillColor(GOLD).fontSize(12).text('DESGLOSE FINANCIERO');
+      doc.fillColor(GOLD).fontSize(12).text(isGestor ? 'HONORARIOS' : 'DESGLOSE FINANCIERO');
       doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
       doc.moveDown(1.5);
 
@@ -152,9 +195,20 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
         doc.fillColor(isTotal ? BLACK : GRAY)
            .fontSize(isTotal ? 12 : 10)
            .text(label, 50, doc.y, { continued: false });
-        doc.text(`$${Number(value).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`, 350, doc.y - (isTotal ? 14 : 12), { width: 150, align: 'right' });
+        doc.text(formatMoney(value), 350, doc.y - (isTotal ? 14 : 12), { width: 150, align: 'right' });
         doc.moveDown(0.5);
       };
+
+      if (isGestor) {
+        const honorarios = Number(quote?.total || deal.estimated_value || 0);
+        drawRow('Honorarios del trámite:', honorarios);
+        doc.moveDown(0.5);
+        doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GRAY).lineWidth(0.5).stroke();
+        doc.moveDown(1);
+        drawRow('Total:', honorarios, true);
+        doc.moveDown(2);
+        return;
+      }
 
       drawRow('Precio del Vehículo:', deal.estimated_value);
       
@@ -186,13 +240,13 @@ export async function generateQuotePdf(deal, quote, concesionaria, res) {
       try { items = typeof quote.items === 'string' ? JSON.parse(quote.items) : quote.items; } catch(e){}
       
       if (items && items.length > 0) {
-        doc.fillColor(GOLD).fontSize(12).text('EXTRAS / ACCESORIOS', 50, doc.y);
+        doc.fillColor(GOLD).fontSize(12).text(isGestor ? 'CONCEPTOS / SERVICIOS' : 'EXTRAS / ACCESORIOS', 50, doc.y);
         doc.rect(50, doc.y + 5, 500, 1).fill(GOLD);
         doc.moveDown(1.5);
         
         for (let item of items) {
           doc.fillColor(GRAY).fontSize(10).text(item.description, 50, doc.y, { continued: false });
-          doc.text(`$${Number(item.price).toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN`, 350, doc.y - 12, { width: 150, align: 'right' });
+          doc.text(formatMoney(item.price), 350, doc.y - 12, { width: 150, align: 'right' });
           doc.moveDown(0.5);
         }
         doc.moveDown(2);

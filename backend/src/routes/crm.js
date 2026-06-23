@@ -982,7 +982,7 @@ router.get('/quotes/:id/pdf', async (req, res) => {
       WHERE d.id = ?
     `, [quote.deal_id]);
 
-    const user = await get('SELECT name, email, logo_url, pdf_settings FROM users WHERE id = ?', [uid]);
+    const user = await get('SELECT name, email, logo_url, pdf_settings, role FROM users WHERE id = ?', [uid]);
     
     // Parse pdf_settings if exists
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {

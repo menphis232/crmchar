@@ -12,15 +12,49 @@ export interface PdfBlockDef {
   name: string;
 }
 
-const DEFAULT_BLOCKS: PdfBlockDef[] = [
+const CONCESIONARIA_BLOCKS: PdfBlockDef[] = [
   { id: 'header', name: 'Encabezado y Logo' },
   { id: 'title', name: 'Título de la Cotización' },
   { id: 'client', name: 'Datos del Cliente' },
-  { id: 'auto', name: 'Vehículo / Trámite' },
-  { id: 'financial', name: 'Desglose Financiero' },
+  { id: 'auto', name: 'Vehículo cotizado' },
+  { id: 'financial', name: 'Desglose financiero' },
   { id: 'items', name: 'Extras / Accesorios' },
-  { id: 'footer', name: 'Pie de Página' }
+  { id: 'footer', name: 'Pie de Página' },
 ];
+
+const GESTOR_BLOCKS: PdfBlockDef[] = [
+  { id: 'header', name: 'Encabezado y Logo' },
+  { id: 'title', name: 'Título de la Cotización' },
+  { id: 'client', name: 'Datos del Cliente' },
+  { id: 'tramite', name: 'Trámite' },
+  { id: 'financial', name: 'Honorarios' },
+  { id: 'items', name: 'Conceptos / Servicios' },
+  { id: 'footer', name: 'Pie de Página' },
+];
+
+const CONCESIONARIA_DEFAULT_FOOTER =
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
+
+const GESTOR_DEFAULT_FOOTER =
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los honorarios pueden variar según requisitos adicionales del trámite.';
+
+function blocksForRole(role?: string): PdfBlockDef[] {
+  return role === 'gestor' ? [...GESTOR_BLOCKS] : [...CONCESIONARIA_BLOCKS];
+}
+
+function defaultFooterForRole(role?: string): string {
+  return role === 'gestor' ? GESTOR_DEFAULT_FOOTER : CONCESIONARIA_DEFAULT_FOOTER;
+}
+
+function normalizeLayout(layout: string[], role?: string): string[] {
+  const catalog = blocksForRole(role);
+  const allowed = new Set(catalog.map(b => b.id));
+  const filtered = layout.filter(id => allowed.has(id) && !(role === 'gestor' && id === 'auto'));
+  for (const block of catalog) {
+    if (!filtered.includes(block.id)) filtered.push(block.id);
+  }
+  return filtered;
+}
 
 @Component({
   selector: 'app-pdf-designer',
@@ -35,9 +69,11 @@ export class PdfDesignerComponent implements OnInit {
 
   readonly tvmLogoUrl = TVM_LOGO_URL;
 
-  blocks = signal<PdfBlockDef[]>([...DEFAULT_BLOCKS]);
+  isGestor = computed(() => this.auth.user()?.role === 'gestor');
+
+  blocks = signal<PdfBlockDef[]>([...CONCESIONARIA_BLOCKS]);
   primaryColor = signal('#c8a94a');
-  footerText = signal('Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.');
+  footerText = signal(CONCESIONARIA_DEFAULT_FOOTER);
   pdfLogoUrl = signal<string | null>(null);
   isSaving = signal(false);
   isUploadingLogo = signal(false);
@@ -62,32 +98,31 @@ export class PdfDesignerComponent implements OnInit {
   loadSettings() {
     const user = this.auth.user();
     if (!user) return;
-    
+
+    const catalog = blocksForRole(user.role);
+    this.blocks.set([...catalog]);
+
     if (user.pdf_settings) {
       if (user.pdf_settings.primaryColor) {
         this.primaryColor.set(user.pdf_settings.primaryColor);
       }
       if (user.pdf_settings.footerText) {
         this.footerText.set(user.pdf_settings.footerText);
+      } else {
+        this.footerText.set(defaultFooterForRole(user.role));
       }
       if (user.pdf_settings.logoUrl) {
         this.pdfLogoUrl.set(user.pdf_settings.logoUrl);
       }
       if (user.pdf_settings.layout && Array.isArray(user.pdf_settings.layout)) {
-        // Reorder DEFAULT_BLOCKS based on layout array
-        const ordered = [];
-        for (const id of user.pdf_settings.layout) {
-          const block = DEFAULT_BLOCKS.find(b => b.id === id);
-          if (block) ordered.push(block);
-        }
-        // Add any missing blocks that might be new
-        for (const block of DEFAULT_BLOCKS) {
-          if (!ordered.find(b => b.id === block.id)) {
-            ordered.push(block);
-          }
-        }
+        const layoutIds = normalizeLayout(user.pdf_settings.layout, user.role);
+        const ordered = layoutIds
+          .map(id => catalog.find(b => b.id === id))
+          .filter((block): block is PdfBlockDef => !!block);
         this.blocks.set(ordered);
       }
+    } else {
+      this.footerText.set(defaultFooterForRole(user.role));
     }
   }
 
@@ -129,7 +164,8 @@ export class PdfDesignerComponent implements OnInit {
 
   save() {
     this.isSaving.set(true);
-    const layout = this.blocks().map(b => b.id);
+    const role = this.auth.user()?.role;
+    const layout = normalizeLayout(this.blocks().map(b => b.id), role);
 
     this.auth.updateMe({
       pdf_settings: {
