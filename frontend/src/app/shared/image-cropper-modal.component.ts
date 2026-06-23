@@ -114,6 +114,8 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges, OnD
 
   imageFile = input<File | null>(null);
   aspect    = input<number>(16 / 9);
+  /** Lado máximo en px del archivo exportado (p. ej. 1080 para galería cuadrada). */
+  outputMax = input<number>(1600);
   /** circle = recorte circular (PNG). rect = marco rectangular fijo (JPEG). */
   mode      = input<'circle' | 'rect'>('circle');
   cropped   = output<CropResult>();
@@ -322,7 +324,7 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges, OnD
     const srcY = (this.cropY - this.imgY) * scaleToImg;
     const srcW = this.cropW * scaleToImg;
     const srcH = this.cropH * scaleToImg;
-    const MAX_OUT = 1600;
+    const MAX_OUT = this.outputMax();
     const ratio = Math.min(1, MAX_OUT / srcW);
     const outW = Math.round(srcW * ratio);
     const outH = Math.round(srcH * ratio);

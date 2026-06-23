@@ -6,7 +6,9 @@ export const GESTOR_LOGO_SIZE_LABEL = '512×512 px';
 export const GESTOR_BANNER_ASPECT = 3 / 1;
 export const GESTOR_BANNER_SIZE_LABEL = '1200×400 px';
 
-/** Fotos de galería pública (proporción distinta a autos 3:2). */
-export const GESTOR_GALLERY_ASPECT = 4 / 3;
-export const GESTOR_GALLERY_SIZE_LABEL = '800×600 px';
-export const GESTOR_GALLERY_MAX = 12;
+/** Fotos de galería pública: cuadradas 1080×1080, grid 3×3 (máx. 9). */
+export const GESTOR_GALLERY_ASPECT = 1;
+export const GESTOR_GALLERY_SIZE_LABEL = '1080×1080 px';
+export const GESTOR_GALLERY_MAX = 9;
+export const GESTOR_GALLERY_COLUMNS = 3;
+export const GESTOR_GALLERY_OUTPUT = 1080;

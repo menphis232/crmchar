@@ -480,9 +480,9 @@
         </div>
 
         <div class="form-group" style="margin-bottom:16px;">
-          <label>Galería pública</label>
+          <label>Galería fotos</label>
           <p class="card-desc" style="font-size:11px; margin:0 0 10px;">
-            Tamaño fijo {{ gestorGallerySizeLabel }} · Máximo {{ gestorGalleryMax }} fotos.
+            Cuadradas {{ gestorGallerySizeLabel }} · Máximo {{ gestorGalleryMax }} fotos en filas de 3.
             Se muestra en tu página pública solo si subes imágenes.
           </p>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
@@ -585,6 +585,7 @@
       <app-image-cropper-modal
         [imageFile]="galleryCropCurrentFile()!"
         [aspect]="gestorGalleryAspect"
+        [outputMax]="gestorGalleryOutput"
         mode="rect"
         (cropped)="onGalleryCropConfirmed($event)"
         (cancelled)="onGalleryCropCancelled()"

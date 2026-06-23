@@ -59,6 +59,7 @@ import {
   GESTOR_BANNER_SIZE_LABEL,
   GESTOR_GALLERY_ASPECT,
   GESTOR_GALLERY_MAX,
+  GESTOR_GALLERY_OUTPUT,
   GESTOR_GALLERY_SIZE_LABEL,
   GESTOR_LOGO_ASPECT,
   GESTOR_LOGO_SIZE_LABEL,
@@ -110,6 +111,7 @@ export class PanelGestorComponent implements OnInit {
   readonly gestorGalleryAspect = GESTOR_GALLERY_ASPECT;
   readonly gestorGallerySizeLabel = GESTOR_GALLERY_SIZE_LABEL;
   readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
+  readonly gestorGalleryOutput = GESTOR_GALLERY_OUTPUT;
   private sanitizer = inject(DomSanitizer);
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -285,7 +287,7 @@ export class PanelGestorComponent implements OnInit {
       this.gestorAddress = p.address || '';
       this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
       this.mapSearchQuery = p.address || '';
-      this.gestorGalleryImages = [...(p.galleryImages || [])];
+      this.gestorGalleryImages = [...(p.galleryImages || [])].slice(0, this.gestorGalleryMax);
       this.profileBannerUrl = p.bannerUrl || '';
       const embed = this.toOsmEmbedUrl(this.gestorMapEmbedUrl);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
@@ -617,7 +619,7 @@ export class PanelGestorComponent implements OnInit {
       mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
       photoUrl: this.profileLogoUrl || undefined,
       bannerUrl: this.profileBannerUrl || undefined,
-      galleryImages: this.gestorGalleryImages,
+      galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
     }).subscribe({
       next: p => {
         this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });

@@ -117,7 +117,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     `, params);
 
     if (galleryImages !== undefined) {
-      const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean) : [];
+      const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean).slice(0, 9) : [];
       await run('UPDATE gestores SET gallery_images = ? WHERE user_id = ?', [JSON.stringify(imgs), req.user.id]);
     }
 

@@ -90,14 +90,14 @@
                   }
 
                   @if (b.type === 'gallery' && b.data.images?.length) {
-                    <app-gestor-showcase-gallery [images]="b.data.images" title="Galería" />
+                    <app-gestor-showcase-gallery [images]="b.data.images" title="Galería fotos" />
                   }
                 </div>
               }
             }
 
             @if (g.galleryImages?.length) {
-              <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería" />
+              <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
             }
           </div>
 
@@ -210,7 +210,7 @@
       <div class="profile-content">
         <div class="main-column">
           @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería" />
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
           }
 
           <h3 class="section-title">Servicios y Tarifas</h3>
