@@ -385,8 +385,8 @@ export class PanelGestorComponent implements OnInit {
   onSharePreviewImageError(event: Event) {
     const img = event.target as HTMLImageElement;
     const og = this.publicShareOgImageUrl;
-    if (!og || img.dataset.fallback === '1') return;
-    img.dataset.fallback = '1';
+    if (!og || img.dataset['fallback'] === '1') return;
+    img.dataset['fallback'] = '1';
     img.src = `${og}?t=${Date.now()}`;
   }
 
