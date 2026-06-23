@@ -85,7 +85,7 @@
           <svg lucideLayoutDashboard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           ¡Hola, {{ auth.user()?.name }}!
         </h2>
-        <p class="card-desc">Aquí está el resumen de tus trámites vehiculares. Usa LEGALIA (botón abajo a la derecha) para consultar leyes de tránsito.</p>
+        <p class="card-desc">Aquí está el resumen de tus trámites vehiculares. Usa el Asistente Virtual (botón abajo a la derecha) para consultar leyes de tránsito.</p>
 
         <div class="stats-grid">
           <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
@@ -563,7 +563,7 @@
         <div class="client-docs">
           <div class="client-docs-intro">
             <h3>Documentos requeridos</h3>
-            <p>Sube fotos o PDF de los archivos que te solicitó tu gestoría para avanzar con el trámite.</p>
+            <p>Sube un archivo nuevo o elige uno que ya tengas en tu billetera.</p>
           </div>
           <div class="client-docs-list">
             @for (doc of selectedDeal().required_documents; track doc) {
@@ -579,16 +579,41 @@
                     <span class="client-badge badge-new">Pendiente</span>
                   }
                 </div>
-                <div>
+                <div class="client-doc-actions">
                   @if (!getDocStatus(doc)) {
+                    @if (hasWalletOptions()) {
+                      <button type="button" class="btn-ghost small"
+                              [class.active]="walletPickerFor() === doc"
+                              [disabled]="uploadingDocType() === doc"
+                              (click)="toggleWalletPicker(doc)">
+                        {{ walletPickerFor() === doc ? 'Cancelar' : 'De mi billetera' }}
+                      </button>
+                    }
                     <label class="btn-copy small" [class.loading]="uploadingDocType() === doc">
                       <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*,.pdf,application/pdf">
-                      {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir archivo' }}
+                      {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir nuevo' }}
                     </label>
                   } @else {
                     <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-ghost small">Ver archivo</a>
                   }
                 </div>
+                @if (!getDocStatus(doc) && walletPickerFor() === doc && hasWalletOptions()) {
+                  <div class="client-wallet-picker">
+                    <p class="client-wallet-picker-hint">Selecciona un documento de tu billetera:</p>
+                    @for (w of walletDocsForType(doc); track w.id) {
+                      <button type="button" class="client-wallet-picker-item"
+                              [class.suggested]="isWalletDocSuggested(doc, w)"
+                              [disabled]="uploadingDocType() === doc"
+                              (click)="useWalletDoc(doc, w)">
+                        <strong>{{ w.label }}</strong>
+                        <span>{{ w.category }}</span>
+                        @if (isWalletDocSuggested(doc, w)) {
+                          <span class="client-badge badge-ai">Sugerido</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
               </div>
             }
           </div>

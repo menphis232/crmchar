@@ -57,7 +57,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2,
-    LucideFolderOpen, LucideBot,
+    LucideFolderOpen,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -105,6 +105,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   invoicesLoading = signal(false);
   downloadingInvoiceId = signal<string | null>(null);
   uploadingDocType = signal<string | null>(null);
+  walletPickerFor = signal<string | null>(null);
 
   walletDocs = signal<any[]>([]);
   walletLoading = signal(false);
@@ -341,6 +342,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
       next: docs => this.documents.set(docs),
     });
+    if (!this.walletDocs().length) {
+      this.loadWallet();
+    }
     if (deal.payment_status === 'paid' && !deal.invoice_id) {
       this.http.get<any>(`${environment.apiUrl}/client/deals/${deal.id}/invoice`).subscribe({
         next: inv => this.dealInvoice.set(inv),
@@ -449,23 +453,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
     upload$.subscribe({
       next: res => {
-        const dealId = this.selectedDeal()?.id;
-        if (!dealId) return;
-        this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/documents`, {
-          documentType: docType,
-          fileUrl: res.url,
-        }).subscribe({
-          next: newDoc => {
-            this.documents.update(docs => [newDoc, ...docs]);
-            this.uploadingDocType.set(null);
-            input.value = '';
-          },
-          error: () => {
-            this.uploadingDocType.set(null);
-            this.toast.error('No se pudo registrar el documento.', 'Error');
-            input.value = '';
-          },
-        });
+        this.registerDealDocument(docType, res.url, () => { input.value = ''; });
       },
       error: (e) => {
         this.uploadingDocType.set(null);
@@ -477,6 +465,79 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   getDocStatus(docType: string) {
     return this.documents().find(d => d.document_type === docType);
+  }
+
+  hasWalletOptions(): boolean {
+    return this.walletDocs().length > 0;
+  }
+
+  walletDocsForType(docType: string) {
+    const all = this.walletDocs();
+    const matched = all.filter(w => this.walletMatchesRequiredDoc(docType, w));
+    const rest = all.filter(w => !matched.some(m => m.id === w.id));
+    return [...matched, ...rest];
+  }
+
+  isWalletDocSuggested(docType: string, walletDoc: any): boolean {
+    return this.walletMatchesRequiredDoc(docType, walletDoc);
+  }
+
+  toggleWalletPicker(docType: string) {
+    this.walletPickerFor.update(current => (current === docType ? null : docType));
+  }
+
+  useWalletDoc(docType: string, walletDoc: any) {
+    this.registerDealDocument(docType, walletDoc.file_url);
+  }
+
+  private registerDealDocument(docType: string, fileUrl: string, onDone?: () => void) {
+    const dealId = this.selectedDeal()?.id;
+    if (!dealId) return;
+    this.uploadingDocType.set(docType);
+    this.http.post<any>(`${environment.apiUrl}/client/deals/${dealId}/documents`, {
+      documentType: docType,
+      fileUrl,
+    }).subscribe({
+      next: newDoc => {
+        this.documents.update(docs => [newDoc, ...docs.filter(d => d.document_type !== docType)]);
+        this.uploadingDocType.set(null);
+        this.walletPickerFor.set(null);
+        this.toast.success('Documento vinculado al trámite.', 'Listo');
+        onDone?.();
+      },
+      error: () => {
+        this.uploadingDocType.set(null);
+        this.toast.error('No se pudo registrar el documento.', 'Error');
+      },
+    });
+  }
+
+  private walletMatchesRequiredDoc(docType: string, walletDoc: any): boolean {
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const dt = norm(docType);
+    const blob = norm(`${walletDoc.label || ''} ${walletDoc.category || ''}`);
+
+    if (blob.includes(dt) || dt.includes(norm(walletDoc.label || ''))) return true;
+
+    const rules: [string[], string[]][] = [
+      [['ine', 'identificacion', 'credencial', 'ife'], ['ine', 'identificacion', 'identific']],
+      [['circulacion', 'tarjeta de circulacion'], ['circulacion', 'tarjeta']],
+      [['factura', 'comprobante'], ['factura', 'comprobante']],
+      [['licencia', 'conducir'], ['licencia', 'conducir']],
+      [['seguro', 'poliza'], ['seguro', 'poliza']],
+      [['domicilio'], ['domicilio']],
+      [['curp'], ['curp', 'identificacion']],
+      [['rfc'], ['rfc', 'fiscal']],
+    ];
+
+    for (const [docKeys, walletKeys] of rules) {
+      if (docKeys.some(k => dt.includes(k)) && walletKeys.some(k => blob.includes(k))) {
+        return true;
+      }
+    }
+
+    const words = dt.split(/\W+/).filter(w => w.length > 3);
+    return words.some(w => blob.includes(w));
   }
 
   pipelineStages(deal: any): { id: string; label: string }[] {

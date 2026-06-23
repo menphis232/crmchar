@@ -765,10 +765,8 @@
 
 .client-doc-row {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
   padding: 14px 16px;
   background: #0f0f0f;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -785,6 +783,72 @@
 .client-doc-info strong {
   font-size: 14px;
   color: #fff;
+}
+
+.client-doc-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.client-doc-actions .btn-ghost.active {
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.client-wallet-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.client-wallet-picker-hint {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.client-wallet-picker-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.client-wallet-picker-item:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.client-wallet-picker-item.suggested {
+  border-color: rgba(120, 180, 255, 0.35);
+}
+
+.client-wallet-picker-item strong {
+  font-size: 14px;
+}
+
+.client-wallet-picker-item span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.client-wallet-picker-item:disabled {
+  opacity: 0.6;
+  cursor: wait;
 }
 
 .client-settings-hint {

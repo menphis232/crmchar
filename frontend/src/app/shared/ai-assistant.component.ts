@@ -54,7 +54,7 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
     { emoji: '🎉', title: '¡Listo!', speech: 'Tienes el control total. ¡Aquí estoy si necesitas ayuda!', selector: '', mood: 'happy', gesture: 'bounce' },
   ],
   cliente: [
-    { emoji: '⚖️', title: 'Asistente Legal', speech: 'Soy LEGALIA, tu asistente en leyes de tránsito de México. Pregúntame sobre trámites, documentos o regulaciones de cualquier estado.', selector: '', mood: 'wave', gesture: 'bounce' },
+    { emoji: '⚖️', title: 'Asistente Virtual', speech: 'Soy tu Asistente Virtual especializado en leyes de tránsito de México. Pregúntame sobre trámites, documentos o regulaciones de cualquier estado.', selector: '', mood: 'wave', gesture: 'bounce' },
     { emoji: '📋', title: 'Mis Trámites', speech: 'Aquí ves tus trámites activos y puedes chatear con tu gestoría.', selector: '', mood: 'happy', gesture: 'point' },
     { emoji: '📁', title: 'Billetera', speech: 'Guarda tus documentos personales para tenerlos listos cuando los necesites.', selector: '', mood: 'excited', gesture: 'bounce' },
     { emoji: '📜', title: 'Historial', speech: 'Consulta todos tus trámites cerrados con buscador y paginación.', selector: '', mood: 'happy', gesture: 'wiggle' },
@@ -144,8 +144,8 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   assistantName = computed(() => {
     const custom = this.auth.user()?.panel_assistant_name?.trim();
-    if (custom) return custom;
-    return this.panelRole === 'cliente' ? 'LEGALIA' : 'VEGA';
+    if (custom && custom !== 'VEGA' && custom !== 'LEGALIA') return custom;
+    return 'Asistente Virtual';
   });
   bgColor = computed(() => this.auth.user()?.panel_assistant_bg_color || '#0f172a');
   btnColor = computed(() => this.auth.user()?.panel_assistant_btn_color || '#4F46E5');

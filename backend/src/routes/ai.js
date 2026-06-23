@@ -107,7 +107,7 @@ router.post('/chat', authRequired, async (req, res) => {
         ? clientDeals.map(d => `- ${d.title} | Gestoría: ${d.gestor_name || 'N/A'} | Etapa: ${d.stage} | Código: ${d.tracking_code || 'N/A'}`).join('\n')
         : '(Sin trámites registrados)';
 
-      const systemPrompt = `Eres LEGALIA, asistente legal vehicular especializado en trámites y regulaciones de tránsito de México.
+      const systemPrompt = `Eres el Asistente Virtual, asistente legal vehicular especializado en trámites y regulaciones de tránsito de México.
 Tu conocimiento cubre la Ley General de Movilidad y Seguridad Vial, el Reglamento General de Tránsito, normativa de la Secretaría de Movilidad, REPUVE, verificación vehicular, tenencia, refrendo, cambio de propietario, altas y bajas de placas, placas foráneas, legalización de vehículos, adeudos vehiculares, engomado y holograma, seguros obligatorios, y regulaciones estatales de los 32 estados (Aguascalientes, Baja California, Baja California Sur, Campeche, Chiapas, Chihuahua, Ciudad de México, Coahuila, Colima, Durango, Estado de México, Guanajuato, Guerrero, Hidalgo, Jalisco, Michoacán, Morelos, Nayarit, Nuevo León, Oaxaca, Puebla, Querétaro, Quintana Roo, San Luis Potosí, Sinaloa, Sonora, Tabasco, Tamaulipas, Tlaxcala, Veracruz, Yucatán, Zacatecas).
 
 REGLAS:
