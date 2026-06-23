@@ -727,6 +727,17 @@ select option { background: #111111; color: #ffffff; }
   background: rgba(255,255,255,0.10) !important;
 }
 :host ::ng-deep .divider { border-color: rgba(255,255,255,0.07) !important; }
+:host ::ng-deep app-crm-clients-directory .clients-search-field,
+:host ::ng-deep app-crm-clients-directory .clients-search-field input,
+:host ::ng-deep app-crm-clients-directory #clients-search-input {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  caret-color: #ffffff !important;
+}
+:host ::ng-deep app-crm-clients-directory .clients-search-field {
+  border: 1px solid rgba(255,255,255,0.22) !important;
+}
 :host ::ng-deep app-crm-clients-directory .btn-copy {
   background: #111111 !important;
   color: #ffffff !important;

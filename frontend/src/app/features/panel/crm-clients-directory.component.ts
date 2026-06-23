@@ -10,7 +10,6 @@ import { engomadoLabel } from '../../shared/engomado-colors';
   standalone: true,
   imports: [FormsModule, LucideSearch, LucideUser, LucideCar],
   templateUrl: './crm-clients-directory.component.html',
-  styleUrl: './panel-dashboard.css',
   styles: [`
     .clients-toolbar {
       display: flex;
@@ -28,27 +27,50 @@ import { engomadoLabel } from '../../shared/engomado-colors';
       text-transform: uppercase;
       color: rgba(255,255,255,0.45);
     }
-    .clients-search .deal-meta-with-icon {
+    .clients-search .clients-search-field {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #111111;
-      border: 1px solid rgba(255,255,255,0.14);
+      background: #000000 !important;
+      border: 1px solid rgba(255,255,255,0.22) !important;
       border-radius: 8px;
       padding: 0 12px;
+      min-height: 44px;
+      box-sizing: border-box;
     }
-    .clients-search .deal-meta-with-icon svg { color: rgba(255,255,255,0.45); flex-shrink: 0; }
-    .clients-search input {
+    .clients-search .clients-search-field svg {
+      color: rgba(255,255,255,0.45);
+      flex-shrink: 0;
+    }
+    .clients-search .clients-search-field input,
+    .clients-search input#clients-search-input {
+      flex: 1;
+      min-width: 0;
       width: 100%;
       box-sizing: border-box;
-      background: transparent !important;
+      background: #000000 !important;
+      background-color: #000000 !important;
       border: none !important;
       color: #ffffff !important;
       -webkit-text-fill-color: #ffffff !important;
+      caret-color: #ffffff !important;
       padding: 10px 0;
       outline: none;
+      font-family: var(--f-display);
+      font-size: 14px;
+      color-scheme: dark;
     }
-    .clients-search input::placeholder { color: rgba(255,255,255,0.28); }
+    .clients-search .clients-search-field input::placeholder,
+    .clients-search input#clients-search-input::placeholder {
+      color: rgba(255,255,255,0.35) !important;
+      opacity: 1;
+    }
+    .clients-search .clients-search-field input:-webkit-autofill,
+    .clients-search input#clients-search-input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 1000px #000000 inset !important;
+      -webkit-text-fill-color: #ffffff !important;
+      caret-color: #ffffff !important;
+    }
     .deal-outline-btn.clients-action-btn {
       display: inline-flex;
       align-items: center;

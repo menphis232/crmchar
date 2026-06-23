@@ -7,9 +7,9 @@
   <div class="clients-toolbar">
     <div class="clients-search">
       <label for="clients-search-input">Buscar</label>
-      <div class="deal-meta-with-icon">
+      <div class="clients-search-field">
         <svg lucideSearch [size]="14" aria-hidden="true"></svg>
-        <input id="clients-search-input" type="text" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nombre, teléfono, placa, estado...">
+        <input id="clients-search-input" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nombre, teléfono, placa, estado...">
       </div>
     </div>
     <button type="button" class="deal-outline-btn clients-action-btn" (click)="load()">Actualizar</button>
