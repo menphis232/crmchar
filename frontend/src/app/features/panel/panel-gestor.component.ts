@@ -138,6 +138,8 @@ export class PanelGestorComponent implements OnInit {
   bio = '';
   profileName = '';
   gestorState = '';
+  gestorExperienceYears: number | '' = '';
+  gestorTramitesCount: number | '' = '';
   publicSlug = '';
   googleAnalyticsId = '';
   stripePublicKey = '';
@@ -306,6 +308,8 @@ export class PanelGestorComponent implements OnInit {
       this.bio = p.bio || '';
       this.profileName = p.name || '';
       this.gestorState = p.state || p.location || '';
+      this.gestorExperienceYears = p.experienceYears ?? '';
+      this.gestorTramitesCount = p.tramitesCount ?? '';
       this.publicSlug = p.slug || '';
       this.gestorPhone = p.phone || '';
       this.gestorAddress = p.address || '';
@@ -666,6 +670,13 @@ export class PanelGestorComponent implements OnInit {
     this.saveProfile();
   }
 
+  private toOptionalCount(value: number | ''): number | undefined {
+    if (value === '') return undefined;
+    const n = Number(value);
+    if (Number.isNaN(n) || n < 0) return undefined;
+    return Math.floor(n);
+  }
+
   saveProfile() {
     const name = this.profileName.trim();
     const location = this.gestorState.trim();
@@ -676,6 +687,8 @@ export class PanelGestorComponent implements OnInit {
       name: name || undefined,
       location: location || undefined,
       state: location || undefined,
+      experienceYears: this.toOptionalCount(this.gestorExperienceYears),
+      tramitesCount: this.toOptionalCount(this.gestorTramitesCount),
       phone: this.gestorPhone || undefined,
       address: this.gestorAddress || undefined,
       mapEmbedUrl: toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress) || undefined,

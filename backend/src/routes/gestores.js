@@ -131,7 +131,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl, galleryImages } = req.body;
+    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages } = req.body;
 
     let slugUpdate = null;
     if (name !== undefined && name !== null) {
@@ -144,7 +144,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     }
     
     const params = [
-      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl
+      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl
     ].map(v => v === undefined ? null : v);
     params.push(req.user.id);
 
@@ -154,6 +154,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
         banner_url = COALESCE(?, banner_url), photo_url = COALESCE(?, photo_url),
         bio = COALESCE(?, bio), whatsapp = COALESCE(?, whatsapp),
         schedule = COALESCE(?, schedule), experience_years = COALESCE(?, experience_years),
+        tramites_count = COALESCE(?, tramites_count),
         phone = COALESCE(?, phone), address = COALESCE(?, address), map_embed_url = COALESCE(?, map_embed_url)`;
 
     if (slugUpdate) {
