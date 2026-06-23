@@ -823,7 +823,8 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
   private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
-  private onDealPaymentPaid = (data: { dealId?: string; paymentStatus?: string; stage?: string }) => {
+  private onDealPaymentPaid = (payload: unknown) => {
+    const data = payload as { dealId?: string; paymentStatus?: string; stage?: string };
     this.zone.run(() => {
       if (data.dealId !== this.dealId()) return;
       this.toast.success('El pago fue acreditado correctamente.', '¡Pagado!');
