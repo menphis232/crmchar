@@ -50,6 +50,13 @@
         <span class="kanban-count">{{ activeDeals() }}</span>
       }
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="activeTab.set('facturas'); closeDeal(); isMobileMenuOpen.set(false)">
+      <svg lucideReceipt [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Facturas
+      @if (allInvoices().length > 0) {
+        <span class="kanban-count">{{ allInvoices().length }}</span>
+      }
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="activeTab.set('ajustes'); isMobileMenuOpen.set(false)">
       <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Ajustes
@@ -101,7 +108,12 @@
               <button type="button" class="client-deal-card" (click)="openDeal(deal)">
                 <div class="client-deal-top">
                   <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
-                  <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                  <div class="client-deal-badges">
+                    @if (isPaid(deal)) {
+                      <span class="client-badge badge-paid">Pagado</span>
+                    }
+                    <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                  </div>
                 </div>
                 <strong class="client-deal-title">{{ deal.title }}</strong>
                 <p class="client-deal-meta">
@@ -145,7 +157,12 @@
                 <button type="button" class="client-deal-card" (click)="openDeal(deal)">
                   <div class="client-deal-top">
                     <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
-                    <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                    <div class="client-deal-badges">
+                      @if (isPaid(deal)) {
+                        <span class="client-badge badge-paid">Pagado</span>
+                      }
+                      <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                    </div>
                   </div>
                   <strong class="client-deal-title">{{ deal.title }}</strong>
                   <p class="client-deal-meta">
@@ -217,9 +234,44 @@
                 <svg lucideFileText [size]="14" aria-hidden="true"></svg>
                 Documentos
               </button>
+              @if (isPaid(selectedDeal()) || dealInvoice()) {
+                <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'factura'" (click)="dealTab.set('factura')">
+                  <svg lucideReceipt [size]="14" aria-hidden="true"></svg>
+                  Factura
+                </button>
+              }
             </div>
 
-            @if (dealTab() === 'chat') {
+            @if (dealTab() === 'factura') {
+              <div class="client-invoice">
+                @if (dealInvoice()) {
+                  <div class="client-invoice-card">
+                    <div class="client-invoice-icon"><svg lucideReceipt [size]="32" aria-hidden="true"></svg></div>
+                    <div class="client-invoice-info">
+                      <strong>{{ dealInvoice().invoice_number }}</strong>
+                      <p>{{ selectedDeal().title }}</p>
+                      <span class="client-invoice-meta">
+                        {{ dealInvoice().created_at | date:'dd MMM yyyy' }} ·
+                        {{ dealInvoice().amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                      </span>
+                    </div>
+                    <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === dealInvoice().id"
+                            (click)="downloadInvoice(dealInvoice().id, dealInvoice().invoice_number)">
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      {{ downloadingInvoiceId() === dealInvoice().id ? 'Descargando...' : 'Descargar PDF' }}
+                    </button>
+                  </div>
+                } @else if (isPaid(selectedDeal())) {
+                  <div class="client-empty">
+                    <p>Tu pago fue registrado. La factura estará disponible en breve.</p>
+                  </div>
+                } @else {
+                  <div class="client-empty">
+                    <p>Cuando completes el pago de este trámite, tu comprobante aparecerá aquí.</p>
+                  </div>
+                }
+              </div>
+            } @else if (dealTab() === 'chat') {
               <div class="client-chat">
                 <div class="client-chat-toolbar">
                   <div>
@@ -312,6 +364,46 @@
           </div>
         </div>
       }
+    }
+
+    @if (activeTab() === 'facturas') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideReceipt [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Mis Facturas
+        </h2>
+        <p class="card-desc">Comprobantes de pago de tus trámites vehiculares.</p>
+
+        @if (invoicesLoading()) {
+          <div class="client-empty">Cargando facturas...</div>
+        } @else if (allInvoices().length === 0) {
+          <div class="client-empty">
+            <div class="client-empty-icon"><svg lucideReceipt [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
+            <strong>No tienes facturas aún</strong>
+            <p>Cuando pagues un trámite, tu comprobante aparecerá aquí y te llegará por correo.</p>
+          </div>
+        } @else {
+          <div class="client-invoices-list">
+            @for (inv of allInvoices(); track inv.id) {
+              <div class="client-invoice-row">
+                <div class="client-invoice-row-main">
+                  <strong>{{ inv.invoice_number }}</strong>
+                  <span>{{ inv.deal_title }}</span>
+                  <span class="client-invoice-meta">{{ inv.gestor_name }} · {{ inv.created_at | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div class="client-invoice-row-side">
+                  <span class="client-deal-price">{{ inv.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+                  <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === inv.id"
+                          (click)="downloadInvoice(inv.id, inv.invoice_number)">
+                    <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                    Descargar
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     }
 
     @if (activeTab() === 'ajustes') {

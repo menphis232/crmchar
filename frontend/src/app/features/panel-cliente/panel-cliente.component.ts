@@ -23,6 +23,8 @@ import {
   LucidePaperclip,
   LucideSettings,
   LucideUser,
+  LucideReceipt,
+  LucideDownload,
 } from '@lucide/angular';
 
 @Component({
@@ -33,7 +35,7 @@ import {
     PanelUserMenuComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideSettings, LucideCar, LucideInbox,
     LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle, LucideFileText,
-    LucidePaperclip, LucideKeyRound, LucideUser,
+    LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -48,13 +50,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   toast = inject(ToastService);
   zone = inject(NgZone);
 
-  activeTab = signal<'dashboard' | 'tramites' | 'ajustes'>('dashboard');
+  activeTab = signal<'dashboard' | 'tramites' | 'facturas' | 'ajustes'>('dashboard');
   isMobileMenuOpen = signal(false);
-  dealTab = signal<'chat' | 'docs'>('chat');
+  dealTab = signal<'chat' | 'docs' | 'factura'>('chat');
   deals = signal<any[]>([]);
   selectedDeal = signal<any>(null);
   loading = signal(true);
   documents = signal<any[]>([]);
+  dealInvoice = signal<any>(null);
+  allInvoices = signal<any[]>([]);
+  invoicesLoading = signal(false);
+  downloadingInvoiceId = signal<string | null>(null);
   uploadingDocType = signal<string | null>(null);
 
   messages = signal<any[]>([]);
@@ -76,6 +82,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     document.documentElement.style.setProperty('--panel-bg', '#000000');
     document.body.style.backgroundColor = '#000000';
     this.loadDeals();
+    this.loadInvoices();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
     const user = this.auth.user();
@@ -113,6 +120,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (this.socket) this.socket.disconnect();
   }
 
+  loadInvoices() {
+    this.invoicesLoading.set(true);
+    this.http.get<any[]>(`${environment.apiUrl}/client/invoices`).subscribe({
+      next: res => {
+        this.allInvoices.set(res);
+        this.invoicesLoading.set(false);
+      },
+      error: () => this.invoicesLoading.set(false),
+    });
+  }
+
   loadDeals() {
     this.loading.set(true);
     this.http.get<any[]>(`${environment.apiUrl}/client/deals`).subscribe({
@@ -127,7 +145,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   openDeal(deal: any) {
     this.selectedDeal.set(deal);
     this.activeTab.set('tramites');
-    this.dealTab.set('chat');
+    this.dealTab.set(deal.payment_status === 'paid' && deal.invoice_id ? 'factura' : 'chat');
+    this.dealInvoice.set(deal.invoice_id ? {
+      id: deal.invoice_id,
+      invoice_number: deal.invoice_number,
+      amount: deal.invoice_amount,
+      pdf_url: deal.invoice_pdf_url,
+      created_at: deal.invoice_date,
+    } : null);
     this.chatLoading.set(true);
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/messages`).subscribe({
       next: res => {
@@ -141,6 +166,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
       next: docs => this.documents.set(docs),
     });
+    if (deal.payment_status === 'paid' && !deal.invoice_id) {
+      this.http.get<any>(`${environment.apiUrl}/client/deals/${deal.id}/invoice`).subscribe({
+        next: inv => this.dealInvoice.set(inv),
+        error: () => this.dealInvoice.set(null),
+      });
+    }
   }
 
   closeDeal() {
@@ -149,6 +180,32 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.selectedDeal.set(null);
     this.messages.set([]);
     this.documents.set([]);
+    this.dealInvoice.set(null);
+  }
+
+  downloadInvoice(invoiceId: string, invoiceNumber?: string) {
+    this.downloadingInvoiceId.set(invoiceId);
+    this.http.get(`${environment.apiUrl}/client/invoices/${invoiceId}/download`, {
+      responseType: 'blob',
+    }).subscribe({
+      next: blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${invoiceNumber || 'factura'}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloadingInvoiceId.set(null);
+      },
+      error: () => {
+        this.downloadingInvoiceId.set(null);
+        this.toast.error('No se pudo descargar la factura.', 'Error');
+      },
+    });
+  }
+
+  isPaid(deal: any): boolean {
+    return deal?.payment_status === 'paid';
   }
 
   sendMessage() {

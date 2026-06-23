@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import Stripe from 'stripe';
 import { get, run } from '../db.js';
-import { v4 as uuid } from 'uuid';
 import {
   getPlatformStripeAdmin,
   activateUserSubscription,
   isSubscriptionSessionComplete,
 } from '../utils/subscription-lifecycle.js';
+import { finalizeDealPayment } from '../services/deal-payment.js';
 
 const router = Router();
 
@@ -35,16 +35,17 @@ router.post('/confirm', async (req, res) => {
     const session = await stripe.checkout.sessions.retrieve(session_id);
 
     if (session.payment_status === 'paid') {
-      // 4. Mark deal as paid and moved to completado
-      await run("UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?", [deal_id]);
-
-      // 5. Add income to fin_transactions
-      const amountPaid = session.amount_total / 100; // Convert from cents
-      await run(`
-        INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, date, category)
-        VALUES (?, ?, ?, 'income', ?, ?, NOW(), 'Venta/Trámite Pagado')
-      `, [uuid(), deal.user_id, deal_id, amountPaid, `Stripe (Ref: ${session_id.slice(-8)}) - ${deal.title || 'Trámite'}`]);
-
+      const amountPaid = session.amount_total / 100;
+      try {
+        await finalizeDealPayment(deal_id, {
+          amount: amountPaid,
+          mpOrderId: session_id,
+          paymentMethod: 'stripe',
+        });
+      } catch (finalizeErr) {
+        console.error('Stripe finalizeDealPayment error:', finalizeErr);
+        await run("UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?", [deal_id]);
+      }
       return res.json({ success: true });
     } else {
       return res.status(400).json({ error: 'El pago no ha sido completado en Stripe' });

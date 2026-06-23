@@ -8,21 +8,34 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 const router = Router();
 
 import { pipelineStagesForUser } from '../crm/stages.js';
+
+async function clientOwnsDeal(email, dealId) {
+  const row = await get(
+    `SELECT d.id FROM crm_deals d
+     JOIN contacts c ON c.id = d.contact_id
+     WHERE d.id = ? AND c.email = ?`,
+    [dealId, email],
+  );
+  return !!row;
+}
 
 // Get all deals for the client
 router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
   try {
     const deals = await query(`
       SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, g.name as gestor_name, d.deal_type, d.tracking_code,
-             gs.required_documents, u.role as owner_role, u.crm_stages
+             d.payment_status, gs.required_documents, u.role as owner_role, u.crm_stages,
+             di.id as invoice_id, di.invoice_number, di.pdf_url as invoice_pdf_url, di.amount as invoice_amount, di.created_at as invoice_date
       FROM crm_deals d
       LEFT JOIN gestores g ON g.user_id = d.user_id
       LEFT JOIN gestor_services gs ON gs.gestor_id = g.id AND gs.name = d.title
       JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN users u ON u.id = d.user_id
+      LEFT JOIN deal_invoices di ON di.deal_id = d.id
       WHERE c.email = ?
       ORDER BY d.created_at DESC
     `, [req.user.email]);
@@ -99,6 +112,72 @@ router.post('/deals/:id/messages', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al enviar mensaje' });
+  }
+});
+
+// List all invoices for the client
+router.get('/invoices', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const invoices = await query(`
+      SELECT i.id, i.invoice_number, i.amount, i.pdf_url, i.payment_method, i.created_at,
+             d.id as deal_id, d.title as deal_title, g.name as gestor_name
+      FROM deal_invoices i
+      JOIN crm_deals d ON d.id = i.deal_id
+      JOIN contacts c ON c.id = d.contact_id
+      LEFT JOIN gestores g ON g.user_id = d.user_id
+      WHERE i.contact_email = ?
+      ORDER BY i.created_at DESC
+    `, [req.user.email]);
+    res.json(invoices);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener facturas' });
+  }
+});
+
+// Download invoice PDF (authenticated)
+router.get('/invoices/:id/download', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const invoice = await get(
+      `SELECT i.*, d.title as deal_title
+       FROM deal_invoices i
+       JOIN crm_deals d ON d.id = i.deal_id
+       WHERE i.id = ? AND i.contact_email = ?`,
+      [req.params.id, req.user.email],
+    );
+    if (!invoice) return res.status(404).json({ error: 'Factura no encontrada' });
+
+    const filename = path.basename(invoice.pdf_url);
+    const filePath = path.join(uploadDir, 'invoices', filename);
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'Archivo PDF no encontrado' });
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoice_number}.pdf"`);
+    fs.createReadStream(filePath).pipe(res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al descargar factura' });
+  }
+});
+
+// Invoice for a specific deal
+router.get('/deals/:id/invoice', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Trámite no encontrado' });
+    }
+    const invoice = await get(
+      `SELECT id, invoice_number, amount, pdf_url, payment_method, created_at
+       FROM deal_invoices WHERE deal_id = ?`,
+      [req.params.id],
+    );
+    if (!invoice) return res.status(404).json({ error: 'Sin factura' });
+    res.json(invoice);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener factura' });
   }
 });
 

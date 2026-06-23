@@ -901,6 +901,25 @@ async function migrate() {
       console.log('Migración v41 (MercadoPago) aplicada.');
     }
 
+    const v42Path = path.join(__dirname, '..', 'sql', 'migration-v42-deal-invoices.sql');
+    if (fs.existsSync(v42Path)) {
+      const v42 = fs.readFileSync(v42Path, 'utf8');
+      const conn42 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn42.query('USE tramites_vehiculares');
+      for (const stmt of v42.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn42.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn42.end();
+      console.log('Migración v42 (deal invoices) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

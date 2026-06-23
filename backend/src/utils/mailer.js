@@ -212,7 +212,7 @@ export async function createTransporter() {
   });
 }
 
-export async function sendEmail(to, subject, text, html, userId = null) {
+export async function sendEmail(to, subject, text, html, userId = null, extraAttachments = []) {
   try {
     const branding = await resolveEmailBranding(userId);
 
@@ -229,7 +229,7 @@ export async function sendEmail(to, subject, text, html, userId = null) {
       subject,
       text,
       html: finalHtml,
-      attachments: branding.logoAttachments,
+      attachments: [...branding.logoAttachments, ...extraAttachments],
     });
 
     console.log('Message sent: %s', info.messageId);

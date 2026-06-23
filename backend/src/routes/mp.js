@@ -4,6 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { get, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { orgId } from '../utils/org-access.js';
+import { finalizeDealPayment, isOrderPaid } from '../services/deal-payment.js';
 
 const router = express.Router();
 
@@ -73,26 +74,30 @@ function extractMpError(err) {
   return [...new Set(parts.filter(Boolean))].join('. ') || 'Error al procesar el pago';
 }
 
-function handleOrderResponse(orderResult, row, res, mpErr) {
+async function handleOrderResponse(orderResult, row, res, mpErr) {
   const status = orderResult?.status;
   const orderId = orderResult?.id;
   const statusDetail = orderResult?.status_detail;
   const payment = orderResult?.transactions?.payments?.[0];
   const paymentDetail = payment?.status_detail;
 
-  if (status === 'processed' || status === 'approved' || statusDetail === 'accredited' || paymentDetail === 'accredited') {
-    return run(
-      `UPDATE crm_deals
-       SET mp_order_id = ?, mp_payment_token = NULL, payment_status = 'paid', stage = 'completado'
-       WHERE id = ?`,
-      [orderId || null, row.id],
-    ).then(() => res.json({ success: true, status, orderId }));
+  if (isOrderPaid(orderResult)) {
+    try {
+      await finalizeDealPayment(row.id, {
+        amount: row.estimated_value,
+        mpOrderId: orderId || null,
+        paymentMethod: 'mercadopago',
+      });
+    } catch (finalizeErr) {
+      console.error('finalizeDealPayment error:', finalizeErr);
+    }
+    return res.json({ success: true, status, orderId });
   }
 
   if (status === 'requires_action') {
     const actionUrl = payment?.payment_method?.transaction_security?.url;
-    return run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id])
-      .then(() => res.json({ success: false, status, requiresAction: true, actionUrl }));
+    await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
+    return res.json({ success: false, status, requiresAction: true, actionUrl });
   }
 
   const msg = translateMpCode(paymentDetail)
@@ -268,10 +273,16 @@ router.post('/process-payment/:token', async (req, res) => {
 
     try {
       const orderResult = await orderApi.create({ body, requestOptions });
+      if (orderResult?.id) {
+        await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderResult.id, row.id]);
+      }
       return handleOrderResponse(orderResult, row, res);
     } catch (mpErr) {
       console.error('MP process-payment error:', JSON.stringify(mpErr, null, 2));
       if (mpErr?.data) {
+        if (mpErr.data?.id) {
+          await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [mpErr.data.id, row.id]);
+        }
         return handleOrderResponse(mpErr.data, row, res, mpErr);
       }
       return res.status(500).json({ error: extractMpError(mpErr) });
@@ -287,14 +298,29 @@ router.post('/process-payment/:token', async (req, res) => {
 router.post('/webhook', async (req, res) => {
   try {
     const { type, data } = req.body || {};
-    if (type === 'order' && data?.id) {
-      // Find the deal by mp_order_id
-      const deal = await get('SELECT id FROM crm_deals WHERE mp_order_id = ?', [data.id]);
+    const orderId = data?.id;
+    if (type === 'order' && orderId) {
+      const deal = await get(
+        'SELECT id, estimated_value, user_id FROM crm_deals WHERE mp_order_id = ?',
+        [orderId],
+      );
       if (deal) {
-        await run(
-          "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado' WHERE id = ?",
-          [deal.id],
-        );
+        const owner = await get('SELECT mp_access_token FROM users WHERE id = ?', [deal.user_id]);
+        if (owner?.mp_access_token) {
+          try {
+            const orderApi = new Order(getMpClient(owner.mp_access_token));
+            const orderResult = await orderApi.get({ id: orderId });
+            if (isOrderPaid(orderResult)) {
+              await finalizeDealPayment(deal.id, {
+                amount: deal.estimated_value,
+                mpOrderId: orderId,
+                paymentMethod: 'mercadopago',
+              });
+            }
+          } catch (fetchErr) {
+            console.error('MP webhook order fetch:', fetchErr);
+          }
+        }
       }
     }
     res.sendStatus(200);
