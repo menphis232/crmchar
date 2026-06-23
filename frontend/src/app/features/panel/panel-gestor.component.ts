@@ -1,5 +1,5 @@
 import { Component, OnInit, signal, effect, inject } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -101,7 +101,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   selector: 'app-panel-gestor',
   standalone: true,
   imports: [
-    RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
+    RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
     LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap,
   ],
@@ -220,6 +220,7 @@ export class PanelGestorComponent implements OnInit {
     });
     this.loadProfile();
     this.loadGestorReviews();
+    this.gestorReviewForm.reviewDate = this.todayInputDate();
     this.loadCrmSummary();
     this.loadVerificationAlerts();
     this.scheduleAiInsights();
@@ -325,7 +326,21 @@ export class PanelGestorComponent implements OnInit {
 
   resetGestorReviewForm() {
     this.editingReviewId = null;
-    this.gestorReviewForm = { author: '', rating: 5, comment: '' };
+    this.gestorReviewForm = { author: '', rating: 5, comment: '', reviewDate: this.todayInputDate() };
+  }
+
+  private todayInputDate(): string {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
+  private reviewDateInput(createdAt?: string): string {
+    if (!createdAt) return this.todayInputDate();
+    const d = new Date(createdAt);
+    if (Number.isNaN(d.getTime())) return this.todayInputDate();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   }
 
   editGestorReview(review: GestorReview) {
@@ -334,17 +349,27 @@ export class PanelGestorComponent implements OnInit {
       author: review.author,
       rating: review.rating,
       comment: review.comment,
+      reviewDate: this.reviewDateInput(review.createdAt),
     };
   }
 
   saveGestorReview() {
-    const { author, rating, comment } = this.gestorReviewForm;
+    const { author, rating, comment, reviewDate } = this.gestorReviewForm;
     if (!author.trim() || !comment.trim()) {
       this.toast.error('Completa autor y comentario.');
       return;
     }
+    if (!reviewDate) {
+      this.toast.error('Selecciona la fecha de la reseña.');
+      return;
+    }
 
-    const payload = { author: author.trim(), rating: Number(rating), comment: comment.trim() };
+    const payload = {
+      author: author.trim(),
+      rating: Number(rating),
+      comment: comment.trim(),
+      reviewDate,
+    };
     const editing = this.editingReviewId;
     const req = editing
       ? this.gestoresService.updateReview(editing, payload)
@@ -680,7 +705,7 @@ export class PanelGestorComponent implements OnInit {
   gestorReviews = signal<GestorReview[]>([]);
   gestorReviewsRating = signal(0);
   gestorReviewsCount = signal(0);
-  gestorReviewForm = { author: '', rating: 5, comment: '' };
+  gestorReviewForm = { author: '', rating: 5, comment: '', reviewDate: '' };
   editingReviewId: string | null = null;
   reviewStarSlots = [1, 2, 3, 4, 5];
   isUploadingGallery = false;

@@ -27,6 +27,24 @@ function parseGestorServices(rows) {
   });
 }
 
+function parseReviewDate(value) {
+  if (value === undefined || value === null || value === '') return new Date();
+  const raw = String(value).trim();
+  const match = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), 12, 0, 0);
+    if (!Number.isNaN(date.getTime())) return date;
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed;
+}
+
+function toMysqlDatetime(date) {
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 function parseGalleryImages(raw) {
   if (!raw) return [];
   try {
@@ -316,23 +334,28 @@ router.post('/me/reviews', authRequired, requireRole('gestor'), requireActiveSub
     const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { author, rating, comment } = req.body;
+    const { author, rating, comment, reviewDate, createdAt } = req.body;
     const authorName = String(author || '').trim();
     const reviewText = String(comment || '').trim();
     const stars = Number(rating);
+    const reviewCreatedAt = parseReviewDate(reviewDate ?? createdAt);
 
     if (!authorName || !reviewText || !Number.isInteger(stars) || stars < 1 || stars > 5) {
       return res.status(400).json({ error: 'Autor, calificación (1-5) y comentario son requeridos.' });
     }
+    if (!reviewCreatedAt) {
+      return res.status(400).json({ error: 'Fecha de reseña inválida.' });
+    }
 
     const id = uuid();
+    const createdAtSql = toMysqlDatetime(reviewCreatedAt);
     await run(
-      'INSERT INTO gestor_reviews (id, gestor_id, author, rating, comment) VALUES (?, ?, ?, ?, ?)',
-      [id, row.id, authorName, stars, reviewText],
+      'INSERT INTO gestor_reviews (id, gestor_id, author, rating, comment, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, row.id, authorName, stars, reviewText, createdAtSql],
     );
     const stats = await recalcGestorReviewStats(row.id);
     res.status(201).json({
-      review: { id, author: authorName, rating: stars, comment: reviewText },
+      review: { id, author: authorName, rating: stars, comment: reviewText, createdAt: createdAtSql },
       ...stats,
     });
   } catch (err) {
@@ -349,22 +372,27 @@ router.put('/me/reviews/:id', authRequired, requireRole('gestor'), requireActive
     const existing = await get('SELECT id FROM gestor_reviews WHERE id = ? AND gestor_id = ?', [req.params.id, row.id]);
     if (!existing) return res.status(404).json({ error: 'Reseña no encontrada' });
 
-    const { author, rating, comment } = req.body;
+    const { author, rating, comment, reviewDate, createdAt } = req.body;
     const authorName = String(author || '').trim();
     const reviewText = String(comment || '').trim();
     const stars = Number(rating);
+    const reviewCreatedAt = parseReviewDate(reviewDate ?? createdAt);
 
     if (!authorName || !reviewText || !Number.isInteger(stars) || stars < 1 || stars > 5) {
       return res.status(400).json({ error: 'Autor, calificación (1-5) y comentario son requeridos.' });
     }
+    if (!reviewCreatedAt) {
+      return res.status(400).json({ error: 'Fecha de reseña inválida.' });
+    }
 
+    const createdAtSql = toMysqlDatetime(reviewCreatedAt);
     await run(
-      'UPDATE gestor_reviews SET author = ?, rating = ?, comment = ? WHERE id = ? AND gestor_id = ?',
-      [authorName, stars, reviewText, req.params.id, row.id],
+      'UPDATE gestor_reviews SET author = ?, rating = ?, comment = ?, created_at = ? WHERE id = ? AND gestor_id = ?',
+      [authorName, stars, reviewText, createdAtSql, req.params.id, row.id],
     );
     const stats = await recalcGestorReviewStats(row.id);
     res.json({
-      review: { id: req.params.id, author: authorName, rating: stars, comment: reviewText },
+      review: { id: req.params.id, author: authorName, rating: stars, comment: reviewText, createdAt: createdAtSql },
       ...stats,
     });
   } catch (err) {

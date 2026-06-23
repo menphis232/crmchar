@@ -32,10 +32,10 @@ export class GestoresService {
   getMyReviews() {
     return this.http.get<{ reviews: GestorReview[]; rating: number; reviewCount: number }>(`${this.base}/me/reviews`);
   }
-  createReview(data: { author: string; rating: number; comment: string }) {
+  createReview(data: { author: string; rating: number; comment: string; reviewDate?: string }) {
     return this.http.post<{ review: GestorReview; rating: number; reviewCount: number }>(`${this.base}/me/reviews`, data);
   }
-  updateReview(id: string, data: { author: string; rating: number; comment: string }) {
+  updateReview(id: string, data: { author: string; rating: number; comment: string; reviewDate?: string }) {
     return this.http.put<{ review: GestorReview; rating: number; reviewCount: number }>(`${this.base}/me/reviews/${id}`, data);
   }
   deleteReview(id: string) {
