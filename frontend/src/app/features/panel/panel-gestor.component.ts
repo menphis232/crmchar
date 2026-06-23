@@ -58,7 +58,7 @@ import {
   LucideX,
 } from '@lucide/angular';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
 /** Constructor Web oculto hasta v2 */
 const SHOW_PAGE_BUILDER = false;
