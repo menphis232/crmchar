@@ -114,10 +114,12 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges, OnD
 
   imageFile = input<File | null>(null);
   aspect    = input<number>(16 / 9);
+  /** circle = recorte circular (PNG). rect = marco rectangular fijo (JPEG). */
+  mode      = input<'circle' | 'rect'>('circle');
   cropped   = output<CropResult>();
   cancelled = output<void>();
 
-  isCircle = computed(() => Math.abs(this.aspect() - 1) < 0.01);
+  isCircle = computed(() => this.mode() === 'circle');
 
   ratioLabel = computed(() => {
     const a = this.aspect();

@@ -27,6 +27,12 @@ import { PanelSubscriptionLockComponent } from './panel-subscription-lock.compon
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import {
+  GESTOR_BANNER_ASPECT,
+  GESTOR_BANNER_SIZE_LABEL,
+  GESTOR_LOGO_ASPECT,
+  GESTOR_LOGO_SIZE_LABEL,
+} from '../../shared/gestor-media.constants';
+import {
   LucideBot,
   LucideCamera,
   LucideClock,
@@ -52,7 +58,10 @@ import {
   LucideX,
 } from '@lucide/angular';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'automatizaciones';
+
+/** Constructor Web oculto hasta v2 */
+const SHOW_PAGE_BUILDER = false;
 
 const DEFAULT_AI_TIPS = [
   'Configura mensajes de bienvenida en WhatsApp con saludo, lista de requisitos y tiempo estimado; el primer contacto marca la confianza del cliente.',
@@ -87,6 +96,11 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
 })
 export class PanelGestorComponent implements OnInit {
+  readonly showPageBuilder = SHOW_PAGE_BUILDER;
+  readonly gestorLogoAspect = GESTOR_LOGO_ASPECT;
+  readonly gestorLogoSizeLabel = GESTOR_LOGO_SIZE_LABEL;
+  readonly gestorBannerAspect = GESTOR_BANNER_ASPECT;
+  readonly gestorBannerSizeLabel = GESTOR_BANNER_SIZE_LABEL;
   private sanitizer = inject(DomSanitizer);
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -261,6 +275,7 @@ export class PanelGestorComponent implements OnInit {
       this.gestorPhone = p.phone || '';
       this.gestorAddress = p.address || '';
       this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
+      this.profileBannerUrl = p.bannerUrl || '';
       const embed = this.toOsmEmbedUrl(this.gestorMapEmbedUrl);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
@@ -506,9 +521,12 @@ export class PanelGestorComponent implements OnInit {
     setTimeout(() => this.message.set(''), 2000);
   }
 
-  // Phase 3.1 Profile Logo
+  // Profile logo & banner
   profileLogoUrl = '';
+  profileBannerUrl = '';
   isUploadingLogo = false;
+  isUploadingBanner = false;
+  bannerCropFile = signal<File | null>(null);
 
   onLogoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -538,6 +556,39 @@ export class PanelGestorComponent implements OnInit {
     this.logoCropFile.set(null);
   }
 
+  onBannerSelected(event: Event) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.bannerCropFile.set(file);
+    (event.target as HTMLInputElement).value = '';
+  }
+
+  onBannerCropConfirmed(result: { blob: Blob; previewUrl: string }) {
+    const file = new File([result.blob], 'banner.jpg', { type: 'image/jpeg' });
+    this.isUploadingBanner = true;
+    this.bannerCropFile.set(null);
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res: { url: string }) => {
+        this.profileBannerUrl = res.url;
+        this.isUploadingBanner = false;
+        this.saveProfile();
+      },
+      error: () => {
+        this.isUploadingBanner = false;
+        this.message.set('Error al subir el banner');
+      },
+    });
+  }
+
+  onBannerCropCancelled() {
+    this.bannerCropFile.set(null);
+  }
+
+  clearBanner() {
+    this.profileBannerUrl = '';
+    this.saveProfile();
+  }
+
   saveProfile() {
     this.gestoresService.updateProfile({
       bio: this.bio,
@@ -548,6 +599,7 @@ export class PanelGestorComponent implements OnInit {
       address: this.gestorAddress || undefined,
       mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
       photoUrl: this.profileLogoUrl || undefined,
+      bannerUrl: this.profileBannerUrl || undefined,
     }).subscribe({
       next: p => {
         this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });

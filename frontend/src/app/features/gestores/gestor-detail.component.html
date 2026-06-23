@@ -14,12 +14,11 @@
             <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
               @if (b.type === 'hero') {
                 <header class="profile-header" 
-                        [style.background-image]="b.data.bgUrl ? 'url(' + b.data.bgUrl + ')' : 'none'" 
-                        [style.background-color]="b.data.bgUrl ? 'transparent' : 'var(--p-theme)'"
-                        [style.background-size]="b.data.bgSize || 'cover'"
-                        [style.background-repeat]="b.data.bgRepeat ? 'repeat' : 'no-repeat'">
+                        [style.background-image]="g.bannerUrl ? 'url(' + g.bannerUrl + ')' : 'none'" 
+                        [style.background-color]="g.bannerUrl ? 'transparent' : 'var(--p-theme)'"
+                        style="background-size: cover; background-position: center; background-repeat: no-repeat;">
                   <div class="profile-info">
-                    <img [src]="profileImage(g)" class="profile-img" [class.profile-img-logo]="isLogoImage(g)" [alt]="g.name">
+                    <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
                     <h1 class="profile-name">{{ b.data.title }}</h1>
                     <div class="profile-hero-actions">
                       <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ b.data.subtitle }}</div>
@@ -176,7 +175,7 @@
       <header class="profile-header">
         <img [src]="g.bannerUrl" class="profile-banner" alt="Banner">
         <div class="profile-info">
-          <img [src]="profileImage(g)" class="profile-img" [class.profile-img-logo]="isLogoImage(g)" [alt]="g.name">
+          <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
           <h1 class="profile-name">{{ g.name }}</h1>
           <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location }}</div>
 

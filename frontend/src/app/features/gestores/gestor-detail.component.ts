@@ -79,10 +79,6 @@ export class GestorDetailComponent implements OnInit {
     return g.logoUrl || g.photoUrl || '';
   }
 
-  isLogoImage(g: Gestor): boolean {
-    return !!g.logoUrl;
-  }
-
   sendSolicitud() {
     const g = this.gestor();
     if (!g || !this.solicitudForm.clientName || !this.solicitudForm.serviceName) return;

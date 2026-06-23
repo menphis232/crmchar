@@ -108,7 +108,7 @@
         PDF Cotización
       </button>
     }
-    @if (hasPerm('perfil')) {
+    @if (showPageBuilder && hasPerm('perfil')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'page_builder'" (click)="setTab('page_builder'); isMobileMenuOpen.set(false)">
         <svg lucidePalette [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
         Constructor Web
@@ -350,7 +350,7 @@
     @if (tab() === 'perfil' && hasPerm('perfil') && profile(); as p) {
       <div class="dash-card">
         <h2 class="card-title">Mi Perfil Público</h2>
-        <p class="card-desc">Personaliza la información que los clientes verán en tu ficha pública y en tus cotizaciones PDF. El <strong>logo</strong> se configura aquí abajo. La <strong>imagen de fondo del banner</strong> se cambia en <strong>Constructor Web</strong> → bloque <strong>Banner</strong> → <em>Fondo del Hero</em>.</p>
+        <p class="card-desc">Personaliza la información que los clientes verán en tu ficha pública y en tus cotizaciones PDF.</p>
 
         @if (publicSlug) {
           <div class="link-box" style="margin-bottom: 20px;">
@@ -361,8 +361,27 @@
         }
 
         <div class="form-group" style="margin-bottom:20px;">
+          <label>Imagen de portada (banner)</label>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Proporción fija {{ gestorBannerSizeLabel }}. Arrastra y acerca la imagen como en la galería de autos.</p>
+          @if (profileBannerUrl) {
+            <img [src]="profileBannerUrl" alt="Banner actual" class="gestor-banner-preview">
+          }
+          <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:10px;">
+            <input type="file" accept="image/*" (change)="onBannerSelected($event)" #bannerInput style="display:none">
+            <button type="button" class="btn-ghost small btn-with-icon" (click)="bannerInput.click()">
+              <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+              {{ profileBannerUrl ? 'Cambiar banner' : 'Subir banner' }}
+            </button>
+            @if (isUploadingBanner) { <span class="card-desc">Subiendo...</span> }
+            @if (profileBannerUrl && !isUploadingBanner) {
+              <button type="button" class="btn-delete small" (click)="clearBanner()">Quitar</button>
+            }
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
           <label>Logo de la Empresa</label>
-          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Se muestra en el círculo de tu página pública, el header del panel y cotizaciones PDF. Se recortará en círculo 1:1.</p>
+          <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Cuadrado {{ gestorLogoSizeLabel }}. Se muestra en círculo en tu página pública, panel y PDF.</p>
           <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
             @if (profileLogoUrl) {
               <div class="dash-logo-frame" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,0.28);flex-shrink:0;">
@@ -489,9 +508,20 @@
     @if (logoCropFile()) {
       <app-image-cropper-modal
         [imageFile]="logoCropFile()!"
-        [aspect]="1"
+        [aspect]="gestorLogoAspect"
+        mode="rect"
         (cropped)="onLogoCropConfirmed($event)"
         (cancelled)="onLogoCropCancelled()"
+      />
+    }
+
+    @if (bannerCropFile()) {
+      <app-image-cropper-modal
+        [imageFile]="bannerCropFile()!"
+        [aspect]="gestorBannerAspect"
+        mode="rect"
+        (cropped)="onBannerCropConfirmed($event)"
+        (cancelled)="onBannerCropCancelled()"
       />
     }
 
@@ -619,7 +649,7 @@
     }
 
     <!-- ── PAGE BUILDER ── -->
-    @if (tab() === 'page_builder') {
+    @if (showPageBuilder && tab() === 'page_builder') {
       <app-page-builder 
         [config]="auth.user()?.page_builder_config || null"
         [profile]="profile()"
