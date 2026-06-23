@@ -21,17 +21,7 @@ import { ToastService } from '../../core/toast.service';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
-import { ImageCropperModalComponent } from '../../shared/image-cropper-modal.component';
-import { PanelUserMenuComponent } from './panel-user-menu.component';
-import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
-import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
-import { MEXICO_STATES } from '../../shared/mexico-states';
-import {
-  GESTOR_BANNER_ASPECT,
-  GESTOR_BANNER_SIZE_LABEL,
-  GESTOR_LOGO_ASPECT,
-  GESTOR_LOGO_SIZE_LABEL,
-} from '../../shared/gestor-media.constants';
+import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
 import {
   LucideBot,
   LucideCamera,
@@ -56,7 +46,23 @@ import {
   LucideUsers,
   LucideWrench,
   LucideX,
+  LucideGripVertical,
+  LucideImage,
+  LucideStar,
 } from '@lucide/angular';
+import { PanelUserMenuComponent } from './panel-user-menu.component';
+import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { MEXICO_STATES } from '../../shared/mexico-states';
+import {
+  GESTOR_BANNER_ASPECT,
+  GESTOR_BANNER_SIZE_LABEL,
+  GESTOR_GALLERY_ASPECT,
+  GESTOR_GALLERY_MAX,
+  GESTOR_GALLERY_SIZE_LABEL,
+  GESTOR_LOGO_ASPECT,
+  GESTOR_LOGO_SIZE_LABEL,
+} from '../../shared/gestor-media.constants';
 
 type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
@@ -90,7 +96,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
@@ -101,6 +107,9 @@ export class PanelGestorComponent implements OnInit {
   readonly gestorLogoSizeLabel = GESTOR_LOGO_SIZE_LABEL;
   readonly gestorBannerAspect = GESTOR_BANNER_ASPECT;
   readonly gestorBannerSizeLabel = GESTOR_BANNER_SIZE_LABEL;
+  readonly gestorGalleryAspect = GESTOR_GALLERY_ASPECT;
+  readonly gestorGallerySizeLabel = GESTOR_GALLERY_SIZE_LABEL;
+  readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
   private sanitizer = inject(DomSanitizer);
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
@@ -275,6 +284,8 @@ export class PanelGestorComponent implements OnInit {
       this.gestorPhone = p.phone || '';
       this.gestorAddress = p.address || '';
       this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
+      this.mapSearchQuery = p.address || '';
+      this.gestorGalleryImages = [...(p.galleryImages || [])];
       this.profileBannerUrl = p.bannerUrl || '';
       const embed = this.toOsmEmbedUrl(this.gestorMapEmbedUrl);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
@@ -527,6 +538,12 @@ export class PanelGestorComponent implements OnInit {
   isUploadingLogo = false;
   isUploadingBanner = false;
   bannerCropFile = signal<File | null>(null);
+  gestorGalleryImages: string[] = [];
+  isUploadingGallery = false;
+  galleryCropQueue = signal<File[]>([]);
+  galleryCropCurrentFile = signal<File | null>(null);
+  galleryDragIdx = -1;
+  galleryDragOverIdx = -1;
 
   onLogoSelected(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
@@ -600,6 +617,7 @@ export class PanelGestorComponent implements OnInit {
       mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
       photoUrl: this.profileLogoUrl || undefined,
       bannerUrl: this.profileBannerUrl || undefined,
+      galleryImages: this.gestorGalleryImages,
     }).subscribe({
       next: p => {
         this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });
@@ -727,15 +745,125 @@ export class PanelGestorComponent implements OnInit {
           this.gestorMapEmbedUrl = osmUrl;
           this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
           this.mapFoundLabel.set(r.display_name);
+          if (!this.gestorAddress) {
+            this.gestorAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
+          }
         } else {
-          this.mapSearchError = 'No se encontró la dirección. Intenta con calle, colonia y ciudad.';
+          this.applyGoogleMapsEmbed(q);
         }
       },
       error: () => {
         this.mapSearching = false;
-        this.mapSearchError = 'Error al buscar la dirección. Intenta de nuevo.';
+        this.applyGoogleMapsEmbed(q);
       },
     });
+  }
+
+  private applyGoogleMapsEmbed(address: string) {
+    const googleUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed&hl=es`;
+    this.gestorMapEmbedUrl = googleUrl;
+    this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(googleUrl));
+    this.mapFoundLabel.set(address);
+    if (!this.gestorAddress) {
+      this.gestorAddress = address;
+    }
+  }
+
+  onGalleryImagesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []) as File[];
+    input.value = '';
+    if (!files.length) return;
+    const room = this.gestorGalleryMax - this.gestorGalleryImages.length;
+    if (room <= 0) {
+      this.toast.warning(`Máximo ${this.gestorGalleryMax} imágenes en la galería.`);
+      return;
+    }
+    const batch = files.slice(0, room);
+    if (batch.length < files.length) {
+      this.toast.warning(`Solo se procesarán ${batch.length} foto(s); límite ${this.gestorGalleryMax}.`);
+    }
+    this.galleryCropQueue.set(batch);
+    this.galleryCropCurrentFile.set(batch[0]);
+  }
+
+  onGalleryCropConfirmed(result: CropResult) {
+    const queue = this.galleryCropQueue();
+    const originalName = queue[0]?.name ?? 'gallery.jpg';
+    this.galleryCropCurrentFile.set(null);
+    const file = new File([result.blob], originalName, { type: 'image/jpeg' });
+    this.isUploadingGallery = true;
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res: { url: string }) => {
+        this.gestorGalleryImages = [...this.gestorGalleryImages, res.url];
+        this.isUploadingGallery = false;
+        const remaining = queue.slice(1);
+        this.galleryCropQueue.set(remaining);
+        if (remaining.length > 0) {
+          this.galleryCropCurrentFile.set(remaining[0]);
+        } else {
+          this.toast.success('Imágenes listas. Recuerda guardar tu perfil.', 'Galería');
+        }
+      },
+      error: () => {
+        this.isUploadingGallery = false;
+        this.toast.error('No se pudo subir la imagen');
+        const remaining = queue.slice(1);
+        this.galleryCropQueue.set(remaining);
+        if (remaining.length > 0) this.galleryCropCurrentFile.set(remaining[0]);
+      },
+    });
+  }
+
+  onGalleryCropCancelled() {
+    const queue = this.galleryCropQueue();
+    const remaining = queue.slice(1);
+    this.galleryCropCurrentFile.set(null);
+    this.galleryCropQueue.set(remaining);
+    if (remaining.length > 0) this.galleryCropCurrentFile.set(remaining[0]);
+  }
+
+  removeGalleryImage(index: number) {
+    this.gestorGalleryImages = this.gestorGalleryImages.filter((_, i) => i !== index);
+  }
+
+  onGalleryDragStart(e: DragEvent, idx: number) {
+    this.galleryDragIdx = idx;
+    e.dataTransfer!.effectAllowed = 'move';
+    e.dataTransfer!.setData('text/plain', String(idx));
+  }
+
+  onGalleryDragEnter(e: DragEvent, idx: number) {
+    e.preventDefault();
+    this.galleryDragOverIdx = idx;
+  }
+
+  onGalleryDragLeave() {
+    this.galleryDragOverIdx = -1;
+  }
+
+  onGalleryDropItem(e: DragEvent, toIdx: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.moveGalleryImage(this.galleryDragIdx, toIdx);
+    this.galleryDragIdx = -1;
+    this.galleryDragOverIdx = -1;
+  }
+
+  onGalleryDrop(e: DragEvent) {
+    e.preventDefault();
+    if (this.galleryDragIdx >= 0) {
+      this.galleryDragIdx = -1;
+      this.galleryDragOverIdx = -1;
+    }
+  }
+
+  private moveGalleryImage(from: number, to: number) {
+    if (from === to || from < 0 || to < 0) return;
+    const imgs = [...this.gestorGalleryImages];
+    const [item] = imgs.splice(from, 1);
+    imgs.splice(to, 0, item);
+    this.gestorGalleryImages = imgs;
   }
 
   savePageBuilderConfig(config: unknown) {

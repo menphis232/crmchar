@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -9,20 +9,22 @@ import { ToastService } from '../../core/toast.service';
 import { Gestor } from '../../models';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
-import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
 import { MEXICO_STATES } from '../../shared/mexico-states';
+import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
 
 @Component({
   selector: 'app-gestor-detail',
   standalone: true,
-  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappIconComponent, ...GESTOR_LUCIDE_ICONS],
+  imports: [NavComponent, RouterLink, DecimalPipe, DatePipe, FormsModule, WhatsappIconComponent, GestorShowcaseGalleryComponent, ...GESTOR_LUCIDE_ICONS],
   templateUrl: './gestor-detail.component.html',
   styleUrl: './gestor-detail.component.css',
 })
 export class GestorDetailComponent implements OnInit {
   private toast = inject(ToastService);
+  private sanitizer = inject(DomSanitizer);
 
   readonly mexicoStates = MEXICO_STATES;
 
@@ -44,24 +46,51 @@ export class GestorDetailComponent implements OnInit {
   isChatLoading = false;
   leadCreated = false;
 
-  constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient, private sanitizer: DomSanitizer) {}
+  constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient) {}
+
+  safeMapUrl = computed(() => {
+    const raw = this.gestor()?.mapEmbedUrl;
+    if (!raw) return null;
+    const url = this.toEmbedUrl(raw);
+    return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
+  });
 
   ngOnInit() {
     const slug = this.route.snapshot.paramMap.get('slug')!;
     this.gestoresService.getBySlug(slug).subscribe({
-      next: data => { 
-        this.gestor.set(data); 
+      next: data => {
+        this.gestor.set(data);
         this.loading.set(false);
-        // Compute safe map URL after data loads
-        if (data.mapEmbedUrl) {
-          this.safeMapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(data.mapEmbedUrl);
-        }
       },
       error: () => this.loading.set(false),
     });
   }
 
-  safeMapUrl: SafeResourceUrl | null = null;
+  private toEmbedUrl(url: string): string | null {
+    const s = url.trim();
+    if (!s) return null;
+    if (s.includes('openstreetmap.org/export/embed')) return s;
+    if (s.includes('output=embed')) return s;
+    if (s.includes('maps/embed')) return s;
+    if (s.includes('google.com/maps') || s.includes('goo.gl/maps') || s.includes('maps.google')) {
+      const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+      if (coordMatch) {
+        const [, lat, lng] = coordMatch;
+        return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+      }
+      const placeMatch = s.match(/\/place\/([^/@?&]+)/);
+      if (placeMatch) {
+        const q = encodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
+        return `https://maps.google.com/maps?q=${q}&output=embed`;
+      }
+      const qMatch = s.match(/[?&]q=([^&]+)/);
+      if (qMatch) {
+        return `https://maps.google.com/maps?q=${qMatch[1]}&output=embed`;
+      }
+    }
+    if (s.startsWith('https://')) return s;
+    return null;
+  }
 
   whatsappLink(g: Gestor) {
     const text = encodeURIComponent('Hola, vengo del Directorio y necesito ayuda con un trámite.');

@@ -227,6 +227,7 @@ export interface Gestor {
   phone?: string;
   address?: string;
   mapEmbedUrl?: string;
+  galleryImages?: string[];
   google_analytics_id?: string;
   page_builder_config?: PageBuilderConfig;
   chatbot_bg_color?: string;

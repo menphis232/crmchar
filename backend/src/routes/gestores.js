@@ -9,6 +9,16 @@ import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 const router = Router();
 
+function parseGalleryImages(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
 function gestorRow(row) {
   if (!row) return null;
   return {
@@ -30,6 +40,7 @@ function gestorRow(row) {
     phone: row.phone || null,
     address: row.address || null,
     mapEmbedUrl: row.map_embed_url || null,
+    galleryImages: parseGalleryImages(row.gallery_images),
   };
 }
 
@@ -88,7 +99,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl } = req.body;
+    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl, galleryImages } = req.body;
     
     const params = [
       name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl
@@ -104,6 +115,11 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
         phone = COALESCE(?, phone), address = COALESCE(?, address), map_embed_url = COALESCE(?, map_embed_url)
       WHERE user_id = ?
     `, params);
+
+    if (galleryImages !== undefined) {
+      const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean) : [];
+      await run('UPDATE gestores SET gallery_images = ? WHERE user_id = ?', [JSON.stringify(imgs), req.user.id]);
+    }
 
     const updated = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     res.json(gestorRow(updated));

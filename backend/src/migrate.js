@@ -795,6 +795,25 @@ async function migrate() {
       await conn36.end();
       console.log('Migración v36 (crm doc notes) aplicada.');
     }
+
+    const v37Path = path.join(__dirname, '..', 'sql', 'migration-v37-gestor-gallery.sql');
+    if (fs.existsSync(v37Path)) {
+      const v37 = fs.readFileSync(v37Path, 'utf8');
+      const conn37 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn37.query('USE tramites_vehiculares');
+      for (const stmt of v37.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn37.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn37.end();
+      console.log('Migración v37 (gestor gallery) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

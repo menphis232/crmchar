@@ -160,6 +160,10 @@
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
 }
+app-gestor-showcase-gallery {
+  display: block;
+  margin: 28px 0 36px;
+}
 .section-title {
   font-family: var(--f-display);
   font-size: 20px;
@@ -499,6 +503,12 @@ aside {
   gap: 6px;
 }
 .gestor-map-title-icon { flex-shrink: 0; opacity: 0.75; }
+.gestor-map-address {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 10px;
+  line-height: 1.45;
+}
 .gestor-map-wrap {
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.18);
