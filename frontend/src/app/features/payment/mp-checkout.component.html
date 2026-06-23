@@ -61,7 +61,7 @@
     }
 
     <!-- Card form -->
-    @if (!success() && !requiresAction()) {
+    @if (formReady() && !success() && !requiresAction()) {
       <form id="mp-card-form" class="mp-form" [class.hidden]="loading()">
         <progress class="mp-progress-bar" value="0" max="100" style="display:none"></progress>
 

@@ -73,7 +73,8 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
       return;
     }
     this.scriptEl = document.createElement('script');
-    this.scriptEl.src = 'https://sdk.mercadopago.com/v2/mercadopago.js';
+    this.scriptEl.src = 'https://sdk.mercadopago.com/js/v2';
+    this.scriptEl.async = true;
     this.scriptEl.onload = () => this.initMp();
     this.scriptEl.onerror = () => {
       this.error.set('No se pudo cargar el SDK de MercadoPago.');
