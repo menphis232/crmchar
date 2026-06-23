@@ -4,7 +4,6 @@ import { v4 as uuid } from 'uuid';
 import { get, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { orgId } from '../utils/org-access.js';
-import { orgId } from '../utils/org-access.js';
 
 const router = express.Router();
 
