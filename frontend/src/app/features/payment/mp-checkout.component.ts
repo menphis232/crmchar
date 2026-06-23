@@ -9,6 +9,7 @@ import { MpService } from '../../core/api.service';
   standalone: true,
   imports: [RouterModule, DecimalPipe],
   templateUrl: './mp-checkout.component.html',
+  styleUrl: './mp-checkout.component.css',
 })
 export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   token = '';
@@ -25,12 +26,10 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   description = '';
   gestorName = '';
 
-  /** El formulario debe existir en el DOM antes de inicializar cardForm. */
-  showForm = signal(false);
-  formReady = signal(false);
+  showBrick = signal(false);
+  brickReady = signal(false);
 
-  private mp: any = null;
-  private cardForm: any = null;
+  private brickController: { unmount?: () => void } | null = null;
   private sdkReady = false;
   private paymentInfoReady = false;
   private viewReady = false;
@@ -47,7 +46,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     void loadMercadoPago()
-      .then(() => { this.sdkReady = true; })
+      .then(() => { this.sdkReady = true; this.tryInitBrick(); })
       .catch(() => {
         this.error.set('No se pudo cargar el SDK de MercadoPago.');
         this.loading.set(false);
@@ -60,8 +59,8 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
         this.description = info.description;
         this.gestorName = info.gestorName;
         this.paymentInfoReady = true;
-        this.showForm.set(true);
-        this.tryInitCardForm();
+        this.showBrick.set(true);
+        this.tryInitBrick();
       },
       error: (err) => {
         this.error.set(err.error?.error || 'No se pudo cargar la información de pago.');
@@ -72,25 +71,25 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngAfterViewInit() {
     this.viewReady = true;
-    this.tryInitCardForm();
+    this.tryInitBrick();
   }
 
   ngOnDestroy() {
-    this.cardForm = null;
-    this.mp = null;
+    this.brickController?.unmount?.();
+    this.brickController = null;
   }
 
-  private tryInitCardForm() {
+  private tryInitBrick() {
     if (this.initStarted || !this.sdkReady || !this.paymentInfoReady || !this.viewReady) return;
-    if (!document.getElementById('mp-card-form')) {
-      setTimeout(() => this.tryInitCardForm(), 50);
+    if (!document.getElementById('cardPaymentBrick_container')) {
+      setTimeout(() => this.tryInitBrick(), 50);
       return;
     }
     this.initStarted = true;
-    this.initMp();
+    void this.initBrick();
   }
 
-  private initMp() {
+  private async initBrick() {
     try {
       const MercadoPago = (window as any).MercadoPago;
       if (!MercadoPago) {
@@ -99,73 +98,101 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      this.mp = new MercadoPago(this.publicKey, { locale: 'es-MX' });
-      this.cardForm = this.mp.cardForm({
-        amount: String(this.amount),
-        iframe: true,
-        form: {
-          id: 'mp-card-form',
-          cardNumber: { id: 'mp-card-number', placeholder: 'Número de tarjeta' },
-          expirationDate: { id: 'mp-expiration-date', placeholder: 'MM/AA' },
-          securityCode: { id: 'mp-security-code', placeholder: 'CVV' },
-          cardholderName: { id: 'mp-cardholder-name', placeholder: 'Nombre en la tarjeta' },
-          issuer: { id: 'mp-issuer', placeholder: 'Banco emisor' },
-          installments: { id: 'mp-installments', placeholder: 'Cuotas' },
-          identificationType: { id: 'mp-identification-type', placeholder: 'Tipo de documento' },
-          identificationNumber: { id: 'mp-identification-number', placeholder: 'Número de documento' },
-          cardholderEmail: { id: 'mp-cardholder-email', placeholder: 'Email' },
+      const mp = new MercadoPago(this.publicKey, { locale: 'es-MX' });
+      const bricksBuilder = mp.bricks();
+
+      this.brickController = await bricksBuilder.create('cardPayment', 'cardPaymentBrick_container', {
+        initialization: {
+          amount: this.amount,
+        },
+        customization: {
+          visual: {
+            style: {
+              theme: 'bootstrap',
+              customVariables: {
+                baseColor: '#009ee3',
+                baseColorFirstVariant: '#007eb5',
+                baseColorSecondVariant: '#005f87',
+                errorColor: '#e53935',
+                successColor: '#00a650',
+                outlinePrimaryColor: '#009ee3',
+                outlineSecondaryColor: '#e0e0e0',
+                buttonTextColor: '#ffffff',
+                formBackgroundColor: '#ffffff',
+                inputBackgroundColor: '#f7f9fc',
+                borderRadius: '10px',
+                fontSizeExtraSmall: '12px',
+                fontSizeSmall: '14px',
+                fontSizeMedium: '16px',
+                fontSizeLarge: '18px',
+                inputVerticalPadding: '12px',
+                inputHorizontalPadding: '14px',
+              },
+            },
+            texts: {
+              formTitle: 'Datos de la tarjeta',
+              formSubmit: `Pagar $${this.amount.toFixed(2)} MXN`,
+            },
+          },
+          paymentMethods: {
+            minInstallments: 1,
+            maxInstallments: 12,
+          },
         },
         callbacks: {
-          onFormMounted: (mountError: any) => {
-            if (mountError) {
-              console.error('MP cardForm mount error:', mountError);
-              const detail = mountError?.message || mountError?.[0]?.message;
-              this.error.set(detail || 'Error al inicializar el formulario de pago.');
-              this.loading.set(false);
-              return;
-            }
-            this.formReady.set(true);
+          onReady: () => {
+            this.brickReady.set(true);
             this.loading.set(false);
           },
-          onSubmit: (event: Event) => {
-            event.preventDefault();
-            const data = this.cardForm.getCardFormData();
+          onError: (brickError: any) => {
+            console.error('MP brick error:', brickError);
+            const msg = brickError?.message || 'Error en el formulario de pago.';
+            this.error.set(msg);
+            this.loading.set(false);
+          },
+          onSubmit: (cardFormData: any) => {
             this.processing.set(true);
             this.error.set('');
 
-            this.mpService.processPayment(this.token, {
-              cardToken: data.token,
-              payerEmail: data.cardholderEmail,
-              installments: Number(data.installments) || 1,
-              identificationType: data.identificationType,
-              identificationNumber: data.identificationNumber,
-            }).subscribe({
-              next: (res) => {
-                this.processing.set(false);
-                if (res.success || res.status === 'processed' || res.status === 'approved') {
-                  this.success.set(true);
-                } else if (res.requiresAction && res.actionUrl) {
-                  this.requiresAction.set(true);
-                  this.actionUrl.set(res.actionUrl);
-                } else {
-                  this.error.set(res.message || 'Pago no aprobado. Intenta con otra tarjeta.');
-                }
-              },
-              error: (err) => {
-                this.processing.set(false);
-                this.error.set(err.error?.error || 'Error al procesar el pago.');
-              },
+            return new Promise<void>((resolve, reject) => {
+              this.mpService.processPayment(this.token, {
+                cardToken: cardFormData.token,
+                paymentMethodId: cardFormData.payment_method_id,
+                payerEmail: cardFormData.payer?.email,
+                installments: Number(cardFormData.installments) || 1,
+                identificationType: cardFormData.payer?.identification?.type,
+                identificationNumber: cardFormData.payer?.identification?.number,
+              }).subscribe({
+                next: (res) => {
+                  this.processing.set(false);
+                  if (res.success || res.status === 'processed' || res.status === 'approved') {
+                    this.success.set(true);
+                    resolve();
+                    return;
+                  }
+                  if (res.requiresAction && res.actionUrl) {
+                    this.requiresAction.set(true);
+                    this.actionUrl.set(res.actionUrl);
+                    resolve();
+                    return;
+                  }
+                  const msg = res.message || 'Pago no aprobado. Intenta con otra tarjeta.';
+                  this.error.set(msg);
+                  reject(new Error(msg));
+                },
+                error: (err) => {
+                  this.processing.set(false);
+                  const msg = err.error?.error || 'Error al procesar el pago.';
+                  this.error.set(msg);
+                  reject(new Error(msg));
+                },
+              });
             });
-          },
-          onFetching: () => {
-            const progressBar = document.querySelector('.mp-progress-bar') as HTMLProgressElement | null;
-            progressBar?.removeAttribute('value');
-            return () => progressBar?.setAttribute('value', '0');
           },
         },
       });
     } catch (e: any) {
-      console.error('MP init error:', e);
+      console.error('MP brick init error:', e);
       this.error.set('Error al inicializar MercadoPago: ' + (e?.message || ''));
       this.loading.set(false);
     }

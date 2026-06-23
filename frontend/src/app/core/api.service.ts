@@ -503,6 +503,7 @@ export class MpService {
 
   processPayment(token: string, body: {
     cardToken: string;
+    paymentMethodId: string;
     payerEmail: string;
     installments?: number;
     identificationType?: string;

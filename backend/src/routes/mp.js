@@ -13,6 +13,23 @@ function getMpClient(accessToken) {
   return new MercadoPagoConfig({ accessToken, options: { timeout: 10000 } });
 }
 
+function extractMpError(err) {
+  const parts = [];
+  const causes = err?.cause;
+  if (Array.isArray(causes)) {
+    for (const c of causes) {
+      if (c?.description) parts.push(c.description);
+      else if (c?.message) parts.push(c.message);
+      else if (c?.code) parts.push(c.code);
+    }
+  }
+  if (err?.message && !parts.length) parts.push(err.message);
+  if (err?.status === 402 || err?.statusCode === 402) {
+    parts.unshift('El pago fue rechazado. Verifica los datos de la tarjeta.');
+  }
+  return parts.join('. ') || 'Error al procesar el pago';
+}
+
 // ─── Generate payment link for a deal ────────────────────────────────────────
 // POST /api/mp/generate-link/:dealId  (authenticated)
 router.post('/generate-link/:dealId', authRequired, async (req, res) => {
@@ -92,10 +109,20 @@ router.get('/payment-info/:token', async (req, res) => {
 // POST /api/mp/process-payment/:token
 router.post('/process-payment/:token', async (req, res) => {
   try {
-    const { cardToken, payerEmail, installments, identificationType, identificationNumber } = req.body;
+    const {
+      cardToken,
+      paymentMethodId,
+      payerEmail,
+      installments,
+      identificationType,
+      identificationNumber,
+    } = req.body;
 
     if (!cardToken || !payerEmail) {
       return res.status(400).json({ error: 'Faltan datos del pago (token de tarjeta o email)' });
+    }
+    if (!paymentMethodId) {
+      return res.status(400).json({ error: 'No se recibió el tipo de tarjeta. Intenta de nuevo.' });
     }
 
     const row = await get(
@@ -119,53 +146,60 @@ router.post('/process-payment/:token', async (req, res) => {
     const orderApi = new Order(mpClient);
 
     const totalAmount = Number(row.estimated_value).toFixed(2);
+    const title = (row.title || 'Trámite Vehicular').slice(0, 150);
 
     const body = {
       type: 'online',
       processing_mode: 'automatic',
+      capture_mode: 'automatic',
       total_amount: totalAmount,
-      external_reference: `deal_${row.id}`,
-      description: row.title || 'Trámite Vehicular',
+      external_reference: `deal_${row.id}`.slice(0, 150),
+      description: title,
       payer: {
         email: payerEmail,
+        entity_type: 'individual',
         ...(identificationType && identificationNumber
-          ? { identification: { type: identificationType, number: identificationNumber } }
+          ? { identification: { type: identificationType, number: String(identificationNumber) } }
           : {}),
       },
+      items: [
+        {
+          title,
+          unit_price: totalAmount,
+          quantity: 1,
+          description: title,
+        },
+      ],
       transactions: {
         payments: [
           {
             amount: totalAmount,
             payment_method: {
-              id: 'master', // will be overridden by the card token
+              id: paymentMethodId,
               type: 'credit_card',
               token: cardToken,
               installments: Number(installments) || 1,
-              statement_descriptor: 'Tramites Vehiculares',
+              statement_descriptor: 'TRAMITESVEH',
             },
           },
         ],
       },
     };
 
-    const requestOptions = { idempotencyKey: `deal_${row.id}_${req.params.token}` };
+    const requestOptions = { idempotencyKey: uuid() };
 
     const orderResult = await orderApi.create({ body, requestOptions });
 
     const status = orderResult?.status;
     const orderId = orderResult?.id;
+    const statusDetail = orderResult?.status_detail;
 
-    // Store the order ID on the deal
-    await run(
-      'UPDATE crm_deals SET mp_order_id = ?, mp_payment_token = NULL WHERE id = ?',
-      [orderId || null, row.id],
-    );
-
-    if (status === 'processed' || status === 'approved') {
-      // Mark the deal as paid
+    if (status === 'processed' || status === 'approved' || statusDetail === 'accredited') {
       await run(
-        "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado' WHERE id = ?",
-        [row.id],
+        `UPDATE crm_deals
+         SET mp_order_id = ?, mp_payment_token = NULL, payment_status = 'paid', stage = 'completado'
+         WHERE id = ?`,
+        [orderId || null, row.id],
       );
       return res.json({ success: true, status, orderId });
     }
@@ -173,14 +207,20 @@ router.post('/process-payment/:token', async (req, res) => {
     if (status === 'requires_action') {
       const txn = orderResult?.transactions?.payments?.[0];
       const actionUrl = txn?.payment_method?.transaction_security?.url;
+      await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
       return res.json({ success: false, status, requiresAction: true, actionUrl });
     }
 
-    res.json({ success: false, status, orderId, message: 'Pago no aprobado. Intenta con otra tarjeta.' });
+    const txnError = orderResult?.transactions?.payments?.[0]?.status_detail;
+    res.json({
+      success: false,
+      status,
+      orderId,
+      message: txnError || statusDetail || 'Pago no aprobado. Intenta con otra tarjeta.',
+    });
   } catch (err) {
     console.error('MP process-payment error:', err);
-    const mpError = err?.cause?.[0]?.description || err?.message || 'Error al procesar el pago';
-    res.status(500).json({ error: mpError });
+    res.status(500).json({ error: extractMpError(err) });
   }
 });
 
