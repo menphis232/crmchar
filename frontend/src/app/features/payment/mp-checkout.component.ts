@@ -1,18 +1,16 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { loadMercadoPago } from '@mercadopago/sdk-js';
 import { MpService } from '../../core/api.service';
-
-declare const MercadoPago: any;
 
 @Component({
   selector: 'app-mp-checkout',
   standalone: true,
-  imports: [RouterModule, FormsModule, DecimalPipe],
+  imports: [RouterModule, DecimalPipe],
   templateUrl: './mp-checkout.component.html',
 })
-export class MpCheckoutComponent implements OnInit, OnDestroy {
+export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   token = '';
 
   loading = signal(true);
@@ -27,15 +25,16 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
   description = '';
   gestorName = '';
 
-  payerEmail = '';
-  identificationType = 'RFC';
-  identificationNumber = '';
-  installments = 1;
-
+  /** El formulario debe existir en el DOM antes de inicializar cardForm. */
+  showForm = signal(false);
   formReady = signal(false);
+
   private mp: any = null;
   private cardForm: any = null;
-  private scriptEl: HTMLScriptElement | null = null;
+  private sdkReady = false;
+  private paymentInfoReady = false;
+  private viewReady = false;
+  private initStarted = false;
 
   constructor(private route: ActivatedRoute, private mpService: MpService) {}
 
@@ -46,13 +45,23 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
       this.loading.set(false);
       return;
     }
+
+    void loadMercadoPago()
+      .then(() => { this.sdkReady = true; })
+      .catch(() => {
+        this.error.set('No se pudo cargar el SDK de MercadoPago.');
+        this.loading.set(false);
+      });
+
     this.mpService.getPaymentInfo(this.token).subscribe({
       next: (info) => {
         this.publicKey = info.publicKey;
         this.amount = info.amount;
         this.description = info.description;
         this.gestorName = info.gestorName;
-        this.loadMpScript();
+        this.paymentInfoReady = true;
+        this.showForm.set(true);
+        this.tryInitCardForm();
       },
       error: (err) => {
         this.error.set(err.error?.error || 'No se pudo cargar la información de pago.');
@@ -61,30 +70,35 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {
-    if (this.scriptEl) {
-      document.head.removeChild(this.scriptEl);
-    }
+  ngAfterViewInit() {
+    this.viewReady = true;
+    this.tryInitCardForm();
   }
 
-  private loadMpScript() {
-    if (typeof MercadoPago !== 'undefined') {
-      this.initMp();
+  ngOnDestroy() {
+    this.cardForm = null;
+    this.mp = null;
+  }
+
+  private tryInitCardForm() {
+    if (this.initStarted || !this.sdkReady || !this.paymentInfoReady || !this.viewReady) return;
+    if (!document.getElementById('mp-card-form')) {
+      setTimeout(() => this.tryInitCardForm(), 50);
       return;
     }
-    this.scriptEl = document.createElement('script');
-    this.scriptEl.src = 'https://sdk.mercadopago.com/js/v2';
-    this.scriptEl.async = true;
-    this.scriptEl.onload = () => this.initMp();
-    this.scriptEl.onerror = () => {
-      this.error.set('No se pudo cargar el SDK de MercadoPago.');
-      this.loading.set(false);
-    };
-    document.head.appendChild(this.scriptEl);
+    this.initStarted = true;
+    this.initMp();
   }
 
   private initMp() {
     try {
+      const MercadoPago = (window as any).MercadoPago;
+      if (!MercadoPago) {
+        this.error.set('SDK de MercadoPago no disponible.');
+        this.loading.set(false);
+        return;
+      }
+
       this.mp = new MercadoPago(this.publicKey, { locale: 'es-MX' });
       this.cardForm = this.mp.cardForm({
         amount: String(this.amount),
@@ -102,36 +116,29 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
           cardholderEmail: { id: 'mp-cardholder-email', placeholder: 'Email' },
         },
         callbacks: {
-          onFormMounted: (error: any) => {
-            if (error) {
-              this.error.set('Error al inicializar el formulario de pago.');
+          onFormMounted: (mountError: any) => {
+            if (mountError) {
+              console.error('MP cardForm mount error:', mountError);
+              const detail = mountError?.message || mountError?.[0]?.message;
+              this.error.set(detail || 'Error al inicializar el formulario de pago.');
               this.loading.set(false);
               return;
             }
             this.formReady.set(true);
             this.loading.set(false);
           },
-          onSubmit: (event: any) => {
+          onSubmit: (event: Event) => {
             event.preventDefault();
-            const {
-              paymentMethodId,
-              issuerId,
-              cardholderEmail: email,
-              token: cardToken,
-              installments,
-              identificationNumber,
-              identificationType,
-            } = this.cardForm.getCardFormData();
-
+            const data = this.cardForm.getCardFormData();
             this.processing.set(true);
             this.error.set('');
 
             this.mpService.processPayment(this.token, {
-              cardToken,
-              payerEmail: email,
-              installments: Number(installments) || 1,
-              identificationType,
-              identificationNumber,
+              cardToken: data.token,
+              payerEmail: data.cardholderEmail,
+              installments: Number(data.installments) || 1,
+              identificationType: data.identificationType,
+              identificationNumber: data.identificationNumber,
             }).subscribe({
               next: (res) => {
                 this.processing.set(false);
@@ -150,16 +157,15 @@ export class MpCheckoutComponent implements OnInit, OnDestroy {
               },
             });
           },
-          onFetching: (resource: any) => {
-            const progressBar = document.querySelector('.mp-progress-bar');
+          onFetching: () => {
+            const progressBar = document.querySelector('.mp-progress-bar') as HTMLProgressElement | null;
             progressBar?.removeAttribute('value');
-            return () => {
-              progressBar?.setAttribute('value', '0');
-            };
+            return () => progressBar?.setAttribute('value', '0');
           },
         },
       });
     } catch (e: any) {
+      console.error('MP init error:', e);
       this.error.set('Error al inicializar MercadoPago: ' + (e?.message || ''));
       this.loading.set(false);
     }

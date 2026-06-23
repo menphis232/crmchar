@@ -1,6 +1,5 @@
 <div class="mp-page">
   <div class="mp-card">
-    <!-- Header -->
     <div class="mp-header">
       <div class="mp-logo">
         <img src="https://http2.mlstatic.com/storage/logos-api-admin/0d8f4010-6e6b-11ec-bcc8-d9f3028bc512-xl@2x.png"
@@ -11,7 +10,6 @@
       }
     </div>
 
-    <!-- Loading spinner -->
     @if (loading()) {
       <div class="mp-status">
         <div class="mp-spinner"></div>
@@ -19,7 +17,6 @@
       </div>
     }
 
-    <!-- Success -->
     @if (success()) {
       <div class="mp-status mp-success">
         <div class="mp-icon-circle success">✓</div>
@@ -29,7 +26,6 @@
       </div>
     }
 
-    <!-- 3DS / Requires action -->
     @if (requiresAction()) {
       <div class="mp-status">
         <div class="mp-icon-circle info">!</div>
@@ -39,7 +35,6 @@
       </div>
     }
 
-    <!-- Error (no form) -->
     @if (error() && !formReady() && !loading()) {
       <div class="mp-status mp-error-block">
         <div class="mp-icon-circle error">✕</div>
@@ -49,74 +44,73 @@
       </div>
     }
 
-    <!-- Payment details -->
-    @if (formReady() && !success() && !requiresAction()) {
-      <div class="mp-amount-row">
-        <span class="mp-amount-label">Total a pagar</span>
-        <span class="mp-amount-value">${{ amount | number:'1.2-2' }} MXN</span>
-      </div>
-      @if (description) {
-        <p class="mp-description">{{ description }}</p>
+    @if (showForm() && !success() && !requiresAction()) {
+      @if (formReady()) {
+        <div class="mp-amount-row">
+          <span class="mp-amount-label">Total a pagar</span>
+          <span class="mp-amount-value">${{ amount | number:'1.2-2' }} MXN</span>
+        </div>
+        @if (description) {
+          <p class="mp-description">{{ description }}</p>
+        }
       }
-    }
 
-    <!-- Card form -->
-    @if (formReady() && !success() && !requiresAction()) {
-      <form id="mp-card-form" class="mp-form" [class.hidden]="loading()">
+      <!-- El formulario debe estar en el DOM antes de que cardForm se monte -->
+      <form id="mp-card-form" class="mp-form" [class.mp-form-pending]="!formReady()">
         <progress class="mp-progress-bar" value="0" max="100" style="display:none"></progress>
 
         <div class="mp-field-group">
-          <label class="mp-label">Número de tarjeta</label>
+          <label class="mp-label" for="mp-card-number">Número de tarjeta</label>
           <div id="mp-card-number" class="mp-iframe-field"></div>
         </div>
 
         <div class="mp-row-2">
           <div class="mp-field-group">
-            <label class="mp-label">Vencimiento</label>
+            <label class="mp-label" for="mp-expiration-date">Vencimiento</label>
             <div id="mp-expiration-date" class="mp-iframe-field"></div>
           </div>
           <div class="mp-field-group">
-            <label class="mp-label">CVV</label>
+            <label class="mp-label" for="mp-security-code">CVV</label>
             <div id="mp-security-code" class="mp-iframe-field"></div>
           </div>
         </div>
 
         <div class="mp-field-group">
-          <label class="mp-label">Nombre en la tarjeta</label>
-          <div id="mp-cardholder-name" class="mp-iframe-field"></div>
+          <label class="mp-label" for="mp-cardholder-name">Nombre en la tarjeta</label>
+          <input type="text" id="mp-cardholder-name" class="mp-input" placeholder="Como aparece en la tarjeta">
         </div>
 
         <div class="mp-field-group">
-          <label class="mp-label">Email</label>
-          <div id="mp-cardholder-email" class="mp-iframe-field"></div>
+          <label class="mp-label" for="mp-cardholder-email">Email</label>
+          <input type="email" id="mp-cardholder-email" class="mp-input" placeholder="tu@email.com">
         </div>
 
         <div class="mp-row-2">
           <div class="mp-field-group">
-            <label class="mp-label">Tipo de identificación</label>
-            <div id="mp-identification-type" class="mp-iframe-field"></div>
+            <label class="mp-label" for="mp-identification-type">Tipo de identificación</label>
+            <select id="mp-identification-type" class="mp-input"></select>
           </div>
           <div class="mp-field-group">
-            <label class="mp-label">Número de identificación</label>
-            <div id="mp-identification-number" class="mp-iframe-field"></div>
+            <label class="mp-label" for="mp-identification-number">Número de identificación</label>
+            <input type="text" id="mp-identification-number" class="mp-input" placeholder="RFC o CURP">
           </div>
         </div>
 
         <div class="mp-field-group">
-          <label class="mp-label">Banco emisor</label>
-          <div id="mp-issuer" class="mp-iframe-field"></div>
+          <label class="mp-label" for="mp-issuer">Banco emisor</label>
+          <select id="mp-issuer" class="mp-input"></select>
         </div>
 
         <div class="mp-field-group">
-          <label class="mp-label">Cuotas</label>
-          <div id="mp-installments" class="mp-iframe-field"></div>
+          <label class="mp-label" for="mp-installments">Cuotas</label>
+          <select id="mp-installments" class="mp-input"></select>
         </div>
 
-        @if (error()) {
+        @if (error() && formReady()) {
           <p class="mp-error-msg">{{ error() }}</p>
         }
 
-        <button type="submit" class="mp-btn mp-submit-btn" [disabled]="processing()">
+        <button type="submit" class="mp-btn mp-submit-btn" [disabled]="processing() || !formReady()">
           @if (processing()) {
             <span class="mp-spinner small"></span>
             Procesando...
@@ -126,10 +120,6 @@
         </button>
 
         <p class="mp-secure-label">
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
           Pago seguro procesado por MercadoPago
         </p>
       </form>
@@ -164,11 +154,7 @@
   border-bottom: 1px solid #e8e8e8;
 }
 
-.mp-subtitle {
-  color: #666;
-  font-size: 14px;
-  margin: 8px 0 0;
-}
+.mp-subtitle { color: #666; font-size: 14px; margin: 8px 0 0; }
 
 .mp-amount-row {
   display: flex;
@@ -182,35 +168,30 @@
 
 .mp-amount-label { color: #555; font-size: 14px; }
 .mp-amount-value { font-size: 20px; font-weight: 700; color: #009ee3; }
-
-.mp-description {
-  color: #777;
-  font-size: 13px;
-  text-align: center;
-  margin-bottom: 20px;
-}
+.mp-description { color: #777; font-size: 13px; text-align: center; margin-bottom: 20px; }
 
 .mp-form { margin-top: 20px; }
-.mp-form.hidden { display: none; }
+.mp-form-pending { visibility: hidden; height: 0; overflow: hidden; margin: 0; }
 
 .mp-field-group { margin-bottom: 14px; }
 .mp-label { display: block; font-size: 12px; color: #555; font-weight: 600; margin-bottom: 6px; }
 
+.mp-input,
 .mp-iframe-field {
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px;
   min-height: 44px;
   background: #fafafa;
-  transition: border-color 0.2s;
+  font-size: 14px;
 }
-.mp-iframe-field:focus-within { border-color: #009ee3; }
 
-.mp-row-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+.mp-iframe-field { padding: 8px 12px; }
+.mp-input:focus { outline: none; border-color: #009ee3; }
+
+.mp-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .mp-btn {
   display: block;
@@ -226,76 +207,36 @@
   text-align: center;
   text-decoration: none;
   margin-top: 8px;
-  transition: background 0.2s;
 }
-.mp-btn:hover { background: #0080c0; }
 .mp-btn:disabled { background: #aad4ef; cursor: not-allowed; }
+.mp-submit-btn { margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-.mp-submit-btn {
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.mp-secure-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 11px;
-  color: #999;
-  margin-top: 12px;
-}
-
-.mp-status {
-  text-align: center;
-  padding: 24px 0;
-}
-
+.mp-secure-label { text-align: center; font-size: 11px; color: #999; margin-top: 12px; }
+.mp-status { text-align: center; padding: 24px 0; }
 .mp-status h2 { font-size: 18px; margin: 12px 0 8px; color: #333; }
 .mp-status p { color: #666; font-size: 14px; margin-bottom: 16px; }
 
 .mp-icon-circle {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  font-weight: 700;
-  margin-bottom: 8px;
+  width: 56px; height: 56px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 24px; font-weight: 700; margin-bottom: 8px;
 }
 .mp-icon-circle.success { background: #e6f7ee; color: #00a550; }
-.mp-icon-circle.error   { background: #fff0f0; color: #e00; }
-.mp-icon-circle.info    { background: #e8f4fd; color: #009ee3; }
+.mp-icon-circle.error { background: #fff0f0; color: #e00; }
+.mp-icon-circle.info { background: #e8f4fd; color: #009ee3; }
 
 .mp-error-msg {
-  color: #c00;
-  font-size: 13px;
-  background: #fff0f0;
-  border-radius: 6px;
-  padding: 8px 12px;
-  margin: 8px 0;
+  color: #c00; font-size: 13px; background: #fff0f0;
+  border-radius: 6px; padding: 8px 12px; margin: 8px 0;
 }
 
 .mp-spinner {
-  width: 36px;
-  height: 36px;
-  border: 3px solid #e0e0e0;
-  border-top-color: #009ee3;
-  border-radius: 50%;
-  animation: mp-spin 0.7s linear infinite;
+  width: 36px; height: 36px;
+  border: 3px solid #e0e0e0; border-top-color: #009ee3;
+  border-radius: 50%; animation: mp-spin 0.7s linear infinite;
   margin: 0 auto 12px;
 }
-.mp-spinner.small {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-  margin: 0;
-}
+.mp-spinner.small { width: 16px; height: 16px; border-width: 2px; margin: 0; }
 
 @keyframes mp-spin { to { transform: rotate(360deg); } }
 
