@@ -668,25 +668,41 @@ export class PanelGestorComponent implements OnInit {
     bio: string,
   ): PageBuilderConfig | null | undefined {
     if (!config?.blocks?.length) return config;
-    return {
-      ...config,
-      blocks: config.blocks.map(block => {
-        if (block.type === 'hero') {
-          return {
-            ...block,
-            data: {
-              ...block.data,
-              title: name,
-              subtitle: location || block.data.subtitle,
-            },
-          };
-        }
-        if (block.type === 'text' && bio) {
-          return { ...block, data: { ...block.data, content: bio } };
-        }
-        return block;
-      }),
-    };
+
+    const trimmedBio = bio.trim();
+    let blocks = config.blocks.map(block => {
+      if (block.type === 'hero') {
+        return {
+          ...block,
+          data: {
+            ...block.data,
+            title: name,
+            subtitle: location || block.data.subtitle,
+          },
+        };
+      }
+      if (block.type === 'text' && trimmedBio) {
+        return { ...block, data: { ...block.data, content: trimmedBio } };
+      }
+      return block;
+    });
+
+    if (trimmedBio && !blocks.some(b => b.type === 'text')) {
+      const heroIdx = blocks.findIndex(b => b.type === 'hero');
+      const insertAt = heroIdx >= 0 ? heroIdx + 1 : 0;
+      blocks = [
+        ...blocks.slice(0, insertAt),
+        {
+          id: `block-bio-${Date.now()}`,
+          type: 'text',
+          region: 'main',
+          data: { content: trimmedBio },
+        },
+        ...blocks.slice(insertAt),
+      ];
+    }
+
+    return { ...config, blocks };
   }
 
   readonly assistantFontOptions = [

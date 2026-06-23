@@ -14,6 +14,7 @@ import { GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
+import { PageBlock, PageBuilderConfig } from '../../models';
 
 @Component({
   selector: 'app-gestor-detail',
@@ -106,6 +107,17 @@ export class GestorDetailComponent implements OnInit {
   /** Logo del panel (users.logo_url) tiene prioridad sobre la foto legacy del gestor. */
   profileImage(g: Gestor): string {
     return g.logoUrl || g.photoUrl || '';
+  }
+
+  /** La descripción del perfil (gestores.bio) tiene prioridad sobre el bloque del constructor web. */
+  publicBio(g: Gestor, block?: PageBlock): string {
+    const fromProfile = g.bio?.trim() || '';
+    const fromBlock = String(block?.data?.content ?? '').trim();
+    return fromProfile || fromBlock;
+  }
+
+  hasMainTextBlock(config: PageBuilderConfig): boolean {
+    return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
 
   sendSolicitud() {

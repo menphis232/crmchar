@@ -20,6 +20,37 @@ function parseGalleryImages(raw) {
   }
 }
 
+function syncPageBuilderBio(config, bio) {
+  const trimmed = String(bio ?? '').trim();
+  if (!trimmed) return null;
+
+  let parsed = config;
+  if (typeof parsed === 'string') {
+    try { parsed = JSON.parse(parsed); } catch { return null; }
+  }
+  if (!parsed?.blocks?.length) return null;
+
+  let blocks = [...parsed.blocks];
+  const hasText = blocks.some(b => b.type === 'text');
+
+  if (hasText) {
+    blocks = blocks.map(b =>
+      b.type === 'text' ? { ...b, data: { ...b.data, content: trimmed } } : b,
+    );
+  } else {
+    const heroIdx = blocks.findIndex(b => b.type === 'hero');
+    const insertAt = heroIdx >= 0 ? heroIdx + 1 : 0;
+    blocks.splice(insertAt, 0, {
+      id: `block-bio-${Date.now()}`,
+      type: 'text',
+      region: 'main',
+      data: { content: trimmed },
+    });
+  }
+
+  return { ...parsed, blocks };
+}
+
 function gestorRow(row) {
   if (!row) return null;
   return {
@@ -140,6 +171,14 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     if (galleryImages !== undefined) {
       const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean).slice(0, 9) : [];
       await run('UPDATE gestores SET gallery_images = ? WHERE user_id = ?', [JSON.stringify(imgs), req.user.id]);
+    }
+
+    if (bio !== undefined && bio !== null) {
+      const userRow = await get('SELECT page_builder_config FROM users WHERE id = ?', [req.user.id]);
+      const syncedBuilder = syncPageBuilderBio(userRow?.page_builder_config, bio);
+      if (syncedBuilder) {
+        await run('UPDATE users SET page_builder_config = ? WHERE id = ?', [JSON.stringify(syncedBuilder), req.user.id]);
+      }
     }
 
     const updated = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);

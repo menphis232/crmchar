@@ -47,7 +47,9 @@
                   }
 
                   @if (b.type === 'text') {
-                    <p class="bio" style="margin: 20px 0;">{{ b.data.content }}</p>
+                    @if (publicBio(g, b); as bioText) {
+                      <p class="bio" style="margin: 20px 0;">{{ bioText }}</p>
+                    }
                   }
 
                   @if (b.type === 'services') {
@@ -94,6 +96,10 @@
                   }
                 </div>
               }
+            }
+
+            @if (g.bio?.trim() && !hasMainTextBlock(config)) {
+              <p class="bio" style="margin: 20px 0;">{{ g.bio }}</p>
             }
 
             @if (g.galleryImages?.length) {
@@ -203,7 +209,9 @@
             <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div>
             <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div>
           </div>
-          <p class="bio">{{ g.bio }}</p>
+          @if (g.bio?.trim()) {
+            <p class="bio">{{ g.bio }}</p>
+          }
         </div>
       </header>
 
