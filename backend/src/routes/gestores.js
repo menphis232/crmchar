@@ -7,6 +7,7 @@ import { createDealFromSolicitud } from '../crm/helpers.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
+import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
 
 function parseGalleryImages(raw) {
@@ -100,21 +101,40 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
     const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl, galleryImages } = req.body;
+
+    let slugUpdate = null;
+    if (name !== undefined && name !== null) {
+      const trimmedName = String(name).trim();
+      if (trimmedName && trimmedName !== row.name) {
+        const baseSlug = slugify(trimmedName) || 'gestor';
+        slugUpdate = await uniqueGestorSlug(get, baseSlug, row.id);
+      }
+    }
     
     const params = [
       name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, phone, address, mapEmbedUrl
     ].map(v => v === undefined ? null : v);
     params.push(req.user.id);
 
-    await run(`
+    let updateSql = `
       UPDATE gestores SET
         name = COALESCE(?, name), location = COALESCE(?, location), state = COALESCE(?, state),
         banner_url = COALESCE(?, banner_url), photo_url = COALESCE(?, photo_url),
         bio = COALESCE(?, bio), whatsapp = COALESCE(?, whatsapp),
         schedule = COALESCE(?, schedule), experience_years = COALESCE(?, experience_years),
-        phone = COALESCE(?, phone), address = COALESCE(?, address), map_embed_url = COALESCE(?, map_embed_url)
-      WHERE user_id = ?
-    `, params);
+        phone = COALESCE(?, phone), address = COALESCE(?, address), map_embed_url = COALESCE(?, map_embed_url)`;
+
+    if (slugUpdate) {
+      updateSql += ', slug = ?';
+      params.splice(params.length - 1, 0, slugUpdate);
+    }
+
+    updateSql += ' WHERE user_id = ?';
+    await run(updateSql, params);
+
+    if (name !== undefined && name !== null && String(name).trim()) {
+      await run('UPDATE users SET name = ? WHERE id = ?', [String(name).trim(), req.user.id]);
+    }
 
     if (galleryImages !== undefined) {
       const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean).slice(0, 9) : [];

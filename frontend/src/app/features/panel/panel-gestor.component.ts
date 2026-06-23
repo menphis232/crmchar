@@ -7,7 +7,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { CrmDashboard, CrmDeal, CrmTodayInbox, Gestor, MessageTemplate, SiteSettings } from '../../models';
+import { CrmDashboard, CrmDeal, CrmTodayInbox, Gestor, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -609,11 +609,15 @@ export class PanelGestorComponent implements OnInit {
   }
 
   saveProfile() {
+    const name = this.profileName.trim();
+    const location = this.gestorState.trim();
+    const prevSlug = this.publicSlug;
+
     this.gestoresService.updateProfile({
       bio: this.bio,
-      name: this.profileName || undefined,
-      location: this.gestorState || undefined,
-      state: this.gestorState || undefined,
+      name: name || undefined,
+      location: location || undefined,
+      state: location || undefined,
       phone: this.gestorPhone || undefined,
       address: this.gestorAddress || undefined,
       mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
@@ -622,20 +626,67 @@ export class PanelGestorComponent implements OnInit {
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
     }).subscribe({
       next: p => {
-        this.profile.set({ ...this.profile()!, ...p, name: this.profileName || p.name });
-        this.auth.updateMe({
-          name: this.profileName || undefined,
-          logo_url: this.profileLogoUrl,
-          google_analytics_id: this.googleAnalyticsId,
-          stripe_secret_key: this.stripeSecretKey,
-          stripe_public_key: this.stripePublicKey,
-        }).subscribe({
-          next: () => this.toast.success('Tu información de perfil ha sido guardada.', 'Perfil actualizado'),
+        this.publicSlug = p.slug || this.publicSlug;
+        this.profile.set({ ...this.profile()!, ...p, name: name || p.name });
+        this.auth.getMe().subscribe({
+          next: (res) => {
+            const syncedBuilder = this.syncPageBuilderWithProfile(
+              res.user.page_builder_config,
+              name || p.name,
+              location || p.location || '',
+              this.bio,
+            );
+            this.auth.updateMe({
+              name: name || undefined,
+              logo_url: this.profileLogoUrl,
+              google_analytics_id: this.googleAnalyticsId,
+              stripe_secret_key: this.stripeSecretKey,
+              stripe_public_key: this.stripePublicKey,
+              ...(syncedBuilder ? { page_builder_config: syncedBuilder } : {}),
+            }).subscribe({
+              next: () => {
+                const slugChanged = !!p.slug && p.slug !== prevSlug;
+                const msg = slugChanged
+                  ? 'Perfil guardado. Tu nombre y enlace público se actualizaron.'
+                  : 'Tu información de perfil ha sido guardada.';
+                this.toast.success(msg, 'Perfil actualizado');
+              },
+              error: () => this.toast.error('No se pudo guardar el perfil'),
+            });
+          },
           error: () => this.toast.error('No se pudo guardar el perfil'),
         });
       },
       error: () => this.toast.error('No se pudo guardar el perfil'),
     });
+  }
+
+  private syncPageBuilderWithProfile(
+    config: PageBuilderConfig | null | undefined,
+    name: string,
+    location: string,
+    bio: string,
+  ): PageBuilderConfig | null | undefined {
+    if (!config?.blocks?.length) return config;
+    return {
+      ...config,
+      blocks: config.blocks.map(block => {
+        if (block.type === 'hero') {
+          return {
+            ...block,
+            data: {
+              ...block.data,
+              title: name,
+              subtitle: location || block.data.subtitle,
+            },
+          };
+        }
+        if (block.type === 'text' && bio) {
+          return { ...block, data: { ...block.data, content: bio } };
+        }
+        return block;
+      }),
+    };
   }
 
   readonly assistantFontOptions = [
