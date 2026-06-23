@@ -173,7 +173,7 @@ export class PanelGestorComponent implements OnInit {
 
   showManualLeadForm = signal(false);
   savingManualLead = signal(false);
-  manualLeadServices = signal<{ name: string; price: number }[]>([]);
+  manualLeadServices = signal<{ name: string; price: number | null }[]>([]);
   manualLead = {
     clientName: '',
     clientEmail: '',
