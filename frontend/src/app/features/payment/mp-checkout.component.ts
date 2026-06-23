@@ -182,7 +182,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
                 },
                 error: (err) => {
                   this.processing.set(false);
-                  const msg = err.error?.error || 'Error al procesar el pago.';
+                  const msg = err.error?.error || err.error?.message || 'Error al procesar el pago.';
                   this.error.set(msg);
                   reject(new Error(msg));
                 },
