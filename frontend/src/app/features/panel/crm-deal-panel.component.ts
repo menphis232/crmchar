@@ -553,6 +553,86 @@ import { ToastService } from '../../core/toast.service';
     .deal-doc-item { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
     .deal-doc-item-top { background: transparent !important; }
 
+    .quote-upload-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+
+    .quote-editor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 640px) {
+      .quote-editor-grid { grid-template-columns: 1fr; }
+    }
+    .quote-editor-grid .form-group { margin: 0; }
+    .quote-editor-grid label {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .quote-editor-grid input {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .quote-items-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 16px 0 10px;
+    }
+    .quote-items-header h5 {
+      margin: 0;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .quote-item-row {
+      display: grid;
+      grid-template-columns: 1fr 120px 36px;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    @media (max-width: 640px) {
+      .quote-item-row { grid-template-columns: 1fr; }
+    }
+    .quote-item-row input { width: 100%; box-sizing: border-box; }
+    .quote-item-remove {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: transparent;
+      color: rgba(255,255,255,0.6);
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .quote-item-remove:hover { border-color: rgba(255,100,100,0.5); color: #ff8a8a; }
+    .quote-total-row {
+      margin: 14px 0;
+      padding: 12px 14px;
+      border: 1px solid rgba(200,169,74,0.25);
+      border-radius: 10px;
+      background: rgba(200,169,74,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .quote-total-row strong { color: var(--gold); font-size: 15px; }
+    .quote-editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
     /* Upload area */
     .deal-upload-area { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
 
@@ -590,6 +670,19 @@ export class CrmDealPanelComponent implements OnDestroy {
   taskTitle = '';
   taskDue = '';
   lostReasons = LOST_REASONS;
+
+  quoteId: string | null = null;
+  quoteClientName = '';
+  quoteClientEmail = '';
+  quoteClientPhone = '';
+  quoteDealTitle = '';
+  quoteValidUntil = '';
+  quoteHonorarios = 0;
+  quoteItems: { id: string; description: string; price: number | null }[] = [];
+  isSavingQuote = signal(false);
+  isLoadingQuote = signal(false);
+  isDownloadingQuote = signal(false);
+  private quoteItemSeq = 0;
 
   isGeneratingPayment = signal(false);
   paymentLink = signal('');
@@ -649,6 +742,173 @@ export class CrmDealPanelComponent implements OnDestroy {
 
       this.loadDocuments(id);
       this.loadMessages(id);
+      if (!this.isConcesionaria()) {
+        this.loadQuote(id);
+      }
+    });
+  }
+
+  private defaultValidUntil(): string {
+    const d = new Date(Date.now() + 15 * 86400000);
+    return d.toISOString().slice(0, 10);
+  }
+
+  private toDateInput(value?: string | null): string {
+    if (!value) return this.defaultValidUntil();
+    return value.slice(0, 10);
+  }
+
+  private toValidUntilDatetime(dateStr: string): string {
+    const base = dateStr || this.defaultValidUntil();
+    return `${base} 23:59:59`;
+  }
+
+  private nextQuoteItemId(): string {
+    this.quoteItemSeq += 1;
+    return `qi-${this.quoteItemSeq}`;
+  }
+
+  loadQuote(dealId: string) {
+    this.isLoadingQuote.set(true);
+    this.crmService.getQuotes(dealId).subscribe({
+      next: (quotes) => {
+        const d = this.deal();
+        if (!d) return;
+        if (quotes.length > 0) {
+          const q = quotes[0];
+          this.quoteId = q.id;
+          this.quoteValidUntil = this.toDateInput(q.valid_until);
+          this.quoteItems = (q.items || []).map((item: { description?: string; price?: number }, i: number) => ({
+            id: `qi-${i}`,
+            description: item.description || '',
+            price: item.price ?? null,
+          }));
+          this.quoteItemSeq = this.quoteItems.length;
+          if (this.quoteItems.length === 0) {
+            this.quoteHonorarios = Number(q.total) || d.estimatedValue || 0;
+          }
+        } else {
+          this.initQuoteFormFromDeal(d);
+        }
+        this.syncQuoteClientFromDeal(d);
+        this.isLoadingQuote.set(false);
+      },
+      error: () => {
+        const d = this.deal();
+        if (d) this.initQuoteFormFromDeal(d);
+        this.isLoadingQuote.set(false);
+      },
+    });
+  }
+
+  private syncQuoteClientFromDeal(d: CrmDeal) {
+    this.quoteClientName = d.contact?.name || '';
+    this.quoteClientEmail = d.contact?.email || '';
+    this.quoteClientPhone = d.contact?.phone || d.contact?.whatsapp || '';
+    this.quoteDealTitle = d.title || '';
+    this.quoteHonorarios = d.estimatedValue || 0;
+  }
+
+  private initQuoteFormFromDeal(d: CrmDeal) {
+    this.quoteId = null;
+    this.quoteValidUntil = this.defaultValidUntil();
+    this.quoteItems = [];
+    this.quoteItemSeq = 0;
+    this.syncQuoteClientFromDeal(d);
+  }
+
+  addQuoteItem() {
+    this.quoteItems = [
+      ...this.quoteItems,
+      { id: this.nextQuoteItemId(), description: '', price: null },
+    ];
+  }
+
+  removeQuoteItem(itemId: string) {
+    this.quoteItems = this.quoteItems.filter(i => i.id !== itemId);
+  }
+
+  quoteItemsTotal(): number {
+    return this.quoteItems.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+  }
+
+  quoteDisplayTotal(): number {
+    if (this.quoteItems.length > 0) {
+      return this.quoteItemsTotal();
+    }
+    return Number(this.quoteHonorarios) || 0;
+  }
+
+  private buildQuotePayload() {
+    const items = this.quoteItems
+      .filter(i => i.description.trim() || Number(i.price))
+      .map(i => ({
+        description: i.description.trim() || 'Concepto',
+        price: Number(i.price) || 0,
+      }));
+    const total = items.length > 0 ? this.quoteItemsTotal() : Number(this.quoteHonorarios) || 0;
+
+    return {
+      items,
+      total,
+      validUntil: this.toValidUntilDatetime(this.quoteValidUntil),
+      dealTitle: this.quoteDealTitle.trim() || undefined,
+      clientName: this.quoteClientName.trim() || undefined,
+      clientEmail: this.quoteClientEmail.trim() || undefined,
+      clientPhone: this.quoteClientPhone.trim() || undefined,
+      estimatedValue: total,
+    };
+  }
+
+  saveQuote() {
+    const d = this.deal();
+    if (!d) return;
+    this.isSavingQuote.set(true);
+    const payload = this.buildQuotePayload();
+
+    const onSuccess = (quoteId: string) => {
+      this.quoteId = quoteId;
+      this.isSavingQuote.set(false);
+      this.toast.success('Cotización guardada');
+      this.loadDeal(d.id);
+      this.updated.emit();
+    };
+
+    const onError = () => {
+      this.isSavingQuote.set(false);
+      this.toast.error('Error al guardar la cotización');
+    };
+
+    if (this.quoteId) {
+      this.crmService.updateQuote(this.quoteId, payload).subscribe({
+        next: () => onSuccess(this.quoteId!),
+        error: onError,
+      });
+    } else {
+      this.crmService.createQuote(d.id, payload).subscribe({
+        next: (res) => onSuccess(res.id),
+        error: onError,
+      });
+    }
+  }
+
+  downloadGeneratedQuotePdf() {
+    if (!this.quoteId) {
+      this.toast.error('Guarda la cotización antes de generar el PDF');
+      return;
+    }
+    this.isDownloadingQuote.set(true);
+    this.crmService.downloadQuotePdf(this.quoteId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank', 'noopener');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+        this.isDownloadingQuote.set(false);
+      },
+      error: () => {
+        this.isDownloadingQuote.set(false);
+        this.toast.error('Error al generar el PDF');
+      },
     });
   }
 

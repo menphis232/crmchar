@@ -108,6 +108,9 @@ export class CrmService {
   createQuote(dealId: string, data: any) {
     return this.http.post<{ id: string }>(`${this.base}/deals/${dealId}/quotes`, data);
   }
+  updateQuote(quoteId: string, data: any) {
+    return this.http.patch<any>(`${this.base}/quotes/${quoteId}`, data);
+  }
   downloadQuotePdf(quoteId: string) {
     return this.http.get(`${this.base}/quotes/${quoteId}/pdf`, { responseType: 'blob' });
   }

@@ -937,21 +937,81 @@ router.get('/deals/:id/quotes', async (req, res) => {
   }
 });
 
+async function syncQuoteDealAndContact(dealId, uid, body) {
+  const {
+    dealTitle,
+    estimatedValue,
+    downPayment,
+    tradeInValue,
+    termMonths,
+    clientName,
+    clientEmail,
+    clientPhone,
+  } = body;
+
+  const dealSets = ['updated_at = NOW()'];
+  const dealParams = [];
+  if (dealTitle !== undefined) { dealSets.push('title = ?'); dealParams.push(dealTitle); }
+  if (estimatedValue !== undefined) { dealSets.push('estimated_value = ?'); dealParams.push(estimatedValue); }
+  if (downPayment !== undefined) { dealSets.push('down_payment = ?'); dealParams.push(downPayment); }
+  if (tradeInValue !== undefined) { dealSets.push('trade_in_value = ?'); dealParams.push(tradeInValue); }
+  if (termMonths !== undefined) { dealSets.push('term_months = ?'); dealParams.push(termMonths); }
+  if (dealSets.length > 1) {
+    dealParams.push(dealId, uid);
+    await run(`UPDATE crm_deals SET ${dealSets.join(', ')} WHERE id = ? AND user_id = ?`, dealParams);
+  }
+
+  if (clientName !== undefined || clientEmail !== undefined || clientPhone !== undefined) {
+    const deal = await get('SELECT contact_id FROM crm_deals WHERE id = ? AND user_id = ?', [dealId, uid]);
+    if (deal?.contact_id) {
+      await run(`
+        UPDATE contacts SET
+          name = COALESCE(?, name),
+          email = COALESCE(?, email),
+          phone = COALESCE(?, phone),
+          updated_at = NOW()
+        WHERE id = ? AND user_id = ?
+      `, [
+        clientName ?? null,
+        clientEmail !== undefined ? String(clientEmail).toLowerCase() : null,
+        clientPhone ?? null,
+        deal.contact_id,
+        uid,
+      ]);
+    }
+  }
+}
+
 router.post('/deals/:id/quotes', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { items, total, validUntil, downPayment, tradeInValue, termMonths } = req.body;
+    const {
+      items,
+      total,
+      validUntil,
+      downPayment,
+      tradeInValue,
+      termMonths,
+      dealTitle,
+      estimatedValue,
+      clientName,
+      clientEmail,
+      clientPhone,
+    } = req.body;
     
     const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
-    const dealSets = ['updated_at = NOW()'];
-    const dealParams = [];
-    if (downPayment !== undefined) { dealSets.push('down_payment = ?'); dealParams.push(downPayment); }
-    if (tradeInValue !== undefined) { dealSets.push('trade_in_value = ?'); dealParams.push(tradeInValue); }
-    if (termMonths !== undefined) { dealSets.push('term_months = ?'); dealParams.push(termMonths); }
-    dealParams.push(req.params.id);
-    await run(`UPDATE crm_deals SET ${dealSets.join(', ')} WHERE id = ?`, dealParams);
+    await syncQuoteDealAndContact(req.params.id, uid, {
+      dealTitle,
+      estimatedValue,
+      downPayment,
+      tradeInValue,
+      termMonths,
+      clientName,
+      clientEmail,
+      clientPhone,
+    });
 
     const quoteId = uuid();
     const vUntil = validUntil || new Date(Date.now() + 15 * 86400000).toISOString().slice(0,19).replace('T', ' ');
@@ -965,6 +1025,65 @@ router.post('/deals/:id/quotes', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear cotización' });
+  }
+});
+
+router.patch('/quotes/:id', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const quote = await get('SELECT * FROM crm_quotes WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+    const {
+      items,
+      total,
+      validUntil,
+      downPayment,
+      tradeInValue,
+      termMonths,
+      dealTitle,
+      estimatedValue,
+      clientName,
+      clientEmail,
+      clientPhone,
+    } = req.body;
+
+    await syncQuoteDealAndContact(quote.deal_id, uid, {
+      dealTitle,
+      estimatedValue,
+      downPayment,
+      tradeInValue,
+      termMonths,
+      clientName,
+      clientEmail,
+      clientPhone,
+    });
+
+    const sets = ['updated_at = NOW()'];
+    const params = [];
+    if (items !== undefined) {
+      sets.push('items = ?');
+      params.push(JSON.stringify(items));
+    }
+    if (total !== undefined) {
+      sets.push('total = ?');
+      params.push(total);
+    }
+    if (validUntil !== undefined) {
+      sets.push('valid_until = ?');
+      params.push(validUntil);
+    }
+    params.push(req.params.id, uid);
+    await run(`UPDATE crm_quotes SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`, params);
+
+    const updated = await get('SELECT * FROM crm_quotes WHERE id = ?', [req.params.id]);
+    res.json({
+      ...updated,
+      items: typeof updated.items === 'string' ? JSON.parse(updated.items) : (updated.items || []),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar cotización' });
   }
 });
 

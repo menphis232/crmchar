@@ -208,7 +208,86 @@
           }
         </div>
 
-        <!-- PDF COTIZACIÓN (subir manual) -->
+        <!-- COTIZACIÓN EDITABLE (solo gestores) -->
+        @if (!isConcesionaria()) {
+          <div class="deal-section deal-quote-editor">
+            <h4>Cotización</h4>
+            <p class="card-desc">Edita los datos del cliente, el trámite y los conceptos. Guarda para actualizar y genera el PDF con tu plantilla.</p>
+
+            @if (isLoadingQuote()) {
+              <p class="card-desc">Cargando cotización...</p>
+            } @else {
+              <div class="quote-editor-grid">
+                <div class="form-group">
+                  <label>Cliente</label>
+                  <input type="text" [(ngModel)]="quoteClientName" placeholder="Nombre del cliente">
+                </div>
+                <div class="form-group">
+                  <label>Teléfono</label>
+                  <input type="text" [(ngModel)]="quoteClientPhone" placeholder="Teléfono">
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" [(ngModel)]="quoteClientEmail" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                  <label>Válida hasta</label>
+                  <input type="date" [(ngModel)]="quoteValidUntil">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                  <label>Trámite</label>
+                  <input type="text" [(ngModel)]="quoteDealTitle" placeholder="Tipo de trámite">
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 12px;">
+                <label>Honorarios del trámite (MXN)</label>
+                <input type="number" [(ngModel)]="quoteHonorarios" min="0" step="1" [disabled]="quoteItems.length > 0">
+                @if (quoteItems.length > 0) {
+                  <p class="card-desc" style="margin-top:6px;">Con conceptos en la lista, el total se calcula de los conceptos.</p>
+                }
+              </div>
+
+              <div class="quote-items-header">
+                <h5>Conceptos / servicios</h5>
+                <button type="button" class="deal-outline-btn btn-with-icon" (click)="addQuoteItem()">
+                  <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                  Agregar concepto
+                </button>
+              </div>
+
+              @if (quoteItems.length === 0) {
+                <p class="card-desc">Sin conceptos adicionales. Usa «Agregar concepto» para desglosar la cotización.</p>
+              } @else {
+                @for (item of quoteItems; track item.id) {
+                  <div class="quote-item-row">
+                    <input type="text" [(ngModel)]="item.description" placeholder="Descripción del concepto">
+                    <input type="number" [(ngModel)]="item.price" min="0" step="1" placeholder="Precio">
+                    <button type="button" class="quote-item-remove" title="Quitar concepto" (click)="removeQuoteItem(item.id)">
+                      <svg lucideX [size]="14" aria-hidden="true"></svg>
+                    </button>
+                  </div>
+                }
+              }
+
+              <div class="quote-total-row">
+                <span>Total cotización</span>
+                <strong>${{ quoteDisplayTotal() | number:'1.0-0' }} MXN</strong>
+              </div>
+
+              <div class="quote-editor-actions">
+                <button type="button" class="deal-outline-btn" (click)="saveQuote()" [disabled]="isSavingQuote()">
+                  {{ isSavingQuote() ? 'Guardando...' : 'Guardar cotización' }}
+                </button>
+                <button type="button" class="deal-outline-btn" (click)="downloadGeneratedQuotePdf()" [disabled]="!quoteId || isDownloadingQuote()">
+                  {{ isDownloadingQuote() ? 'Generando PDF...' : 'Ver / Descargar PDF' }}
+                </button>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- PDF COTIZACIÓN (subir manual — concesionaria) -->
         @if (d.dealType === 'venta_auto') {
           <div class="deal-section deal-quote-upload">
             <h4>Cotización PDF</h4>

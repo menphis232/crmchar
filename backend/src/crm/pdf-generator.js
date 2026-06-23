@@ -218,7 +218,14 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
       };
 
       if (isGestor) {
-        const honorarios = Number(quote?.total || deal.estimated_value || 0);
+        let items = [];
+        try { items = typeof quote?.items === 'string' ? JSON.parse(quote.items) : (quote?.items || []); } catch (e) {}
+        const itemsTotal = Array.isArray(items)
+          ? items.reduce((sum, item) => sum + Number(item?.price || 0), 0)
+          : 0;
+        const honorarios = itemsTotal > 0
+          ? itemsTotal
+          : Number(quote?.total || deal.estimated_value || 0);
         drawRow('Honorarios del trámite:', honorarios);
         doc.moveDown(0.5);
         doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GRAY).lineWidth(0.5).stroke();
