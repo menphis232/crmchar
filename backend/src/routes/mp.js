@@ -3,6 +3,8 @@ import { MercadoPagoConfig, Order } from 'mercadopago';
 import { v4 as uuid } from 'uuid';
 import { get, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
+import { orgId } from '../utils/org-access.js';
+import { orgId } from '../utils/org-access.js';
 
 const router = express.Router();
 
@@ -19,10 +21,11 @@ router.post('/generate-link/:dealId', authRequired, async (req, res) => {
     const dealId = req.params.dealId;
     if (!dealId) return res.status(400).json({ error: 'dealId inválido' });
 
+    const uid = orgId(req);
     const deal = await get(
       `SELECT d.id, d.title, d.estimated_value, d.user_id, d.stage
        FROM crm_deals d WHERE d.id = ? AND d.user_id = ?`,
-      [dealId, req.orgId],
+      [dealId, uid],
     );
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     if (!deal.estimated_value || deal.estimated_value <= 0) {
@@ -31,7 +34,7 @@ router.post('/generate-link/:dealId', authRequired, async (req, res) => {
 
     const owner = await get(
       'SELECT mp_access_token, mp_public_key FROM users WHERE id = ?',
-      [req.orgId],
+      [uid],
     );
     if (!owner?.mp_access_token) {
       return res.status(400).json({
