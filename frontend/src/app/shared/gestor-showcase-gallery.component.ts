@@ -33,12 +33,16 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
 
       @if (lightboxIdx() !== null) {
         <div class="gg-lightbox" (click)="close()" role="dialog" aria-modal="true" aria-label="Vista ampliada">
-          <div class="gg-lb-toolbar">
+          <button type="button" class="gg-lb-close-fab" (click)="close($event)" aria-label="Cerrar foto">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+            <span>Cerrar</span>
+          </button>
+
+          <div class="gg-lb-toolbar" (click)="$event.stopPropagation()">
             <span class="gg-lb-title">{{ title() }}</span>
             <span class="gg-lb-count">{{ lightboxIdx()! + 1 }} / {{ images().length }}</span>
-            <button type="button" class="gg-lb-close" (click)="close($event)" aria-label="Cerrar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
           </div>
           <div class="gg-lb-body" (click)="$event.stopPropagation()">
             @if (images().length > 1) {
@@ -137,10 +141,47 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
     .gg-lightbox {
       position: fixed;
       inset: 0;
-      z-index: 10000;
+      z-index: 50000;
       background: rgba(0, 0, 0, 0.96);
       display: flex;
       flex-direction: column;
+    }
+
+    .gg-lb-close-fab {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 50001;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 56px;
+      min-height: 56px;
+      padding: 10px 14px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+
+    .gg-lb-close-fab svg { width: 22px; height: 22px; flex-shrink: 0; }
+    .gg-lb-close-fab span {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    .gg-lb-close-fab:hover {
+      background: rgba(220, 38, 38, 0.85);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: scale(1.03);
     }
 
     .gg-lb-toolbar {
@@ -162,22 +203,6 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
     }
 
     .gg-lb-count { font-size: 12px; color: rgba(255, 255, 255, 0.45); }
-
-    .gg-lb-close {
-      width: 36px;
-      height: 36px;
-      border: none;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.08);
-      color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .gg-lb-close svg { width: 18px; height: 18px; }
-    .gg-lb-close:hover { background: rgba(255, 255, 255, 0.14); }
 
     .gg-lb-body {
       flex: 1;
@@ -222,8 +247,9 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
     @media (max-width: 768px) {
       .gg-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       .gg-cell-overlay { opacity: 1; }
-      .gg-lb-body { padding: 12px 44px; }
+      .gg-lb-body { padding: 12px 44px; padding-top: 72px; }
       .gg-lb-nav { width: 40px; height: 40px; }
+      .gg-lb-close-fab { top: 12px; right: 12px; min-width: 52px; min-height: 52px; }
     }
 
     @media (max-width: 420px) {
