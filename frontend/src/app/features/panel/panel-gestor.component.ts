@@ -7,11 +7,12 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { CrmDashboard, CrmDeal, CrmTodayInbox, Gestor, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
+import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
 import { CrmContactPanelComponent } from './crm-contact-panel.component';
+import { CrmClientsDirectoryComponent } from './crm-clients-directory.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { CrmTeamComponent } from './crm-team.component';
@@ -51,6 +52,7 @@ import {
   LucideGripVertical,
   LucideImage,
   LucideStar,
+  LucideCar,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -67,7 +69,7 @@ import {
   GESTOR_LOGO_SIZE_LABEL,
 } from '../../shared/gestor-media.constants';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
 /** Constructor Web oculto hasta v2 */
 const SHOW_PAGE_BUILDER = false;
@@ -98,8 +100,8 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar,
+    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
@@ -161,6 +163,7 @@ export class PanelGestorComponent implements OnInit {
   mapPreviewUrl = signal<SafeResourceUrl | null>(null);
   logoCropFile = signal<File | null>(null);
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
+  verificationAlerts = signal<CrmVerificationAlert[]>([]);
   isAiLoading = signal(false);
   message = signal('');
   newService = { name: '', timeEstimate: '', price: null as number | null, requiredDocumentsStr: '' };
@@ -212,6 +215,7 @@ export class PanelGestorComponent implements OnInit {
     });
     this.loadProfile();
     this.loadCrmSummary();
+    this.loadVerificationAlerts();
     this.scheduleAiInsights();
 
     this.route.queryParams.subscribe(params => {
@@ -242,8 +246,12 @@ export class PanelGestorComponent implements OnInit {
 
   setTab(t: GestorTab) {
     this.tab.set(t);
-    if (t === 'dashboard') this.loadCrmSummary();
+    if (t === 'dashboard') {
+      this.loadCrmSummary();
+      this.loadVerificationAlerts();
+    }
     if (t === 'pipeline') this.loadCrm();
+    if (t === 'clientes') this.loadVerificationAlerts();
     if (t === 'plantillas') this.loadTemplates();
     if (t === 'automatizaciones') {
       this.syncCrmStagesFromDashboard();
@@ -259,6 +267,18 @@ export class PanelGestorComponent implements OnInit {
       }
     });
     this.crmService.getToday().subscribe(t => this.todayInbox.set(t));
+  }
+
+  loadVerificationAlerts() {
+    this.crmService.getVerificationAlerts().subscribe({
+      next: (alerts) => this.verificationAlerts.set(alerts),
+      error: () => this.verificationAlerts.set([]),
+    });
+  }
+
+  openClientContact(contactId: string) {
+    this.selectedDealId.set(null);
+    this.selectedContactId.set(contactId);
   }
 
   private scheduleAiInsights() {

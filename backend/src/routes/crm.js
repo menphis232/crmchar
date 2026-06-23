@@ -14,6 +14,7 @@ import {
   stagesForRole, stageLabelsForUser,
 } from '../crm/stages.js';
 import { generateQuotePdf } from '../crm/pdf-generator.js';
+import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -755,11 +756,17 @@ router.get('/contacts/:id', async (req, res) => {
       ORDER BY t.completed ASC, t.due_at ASC
     `, [req.params.id, uid]);
 
+    const vehicles = await query(
+      'SELECT * FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY created_at ASC',
+      [req.params.id, uid],
+    );
+
     res.json({
       contact: contactRow(contact),
       deals: deals.map(dealRow),
       activities,
       tasks: tasks.map(taskRow),
+      vehicles: vehicles.map(vehicleRowWithVerification),
     });
   } catch (err) {
     console.error(err);
@@ -770,35 +777,149 @@ router.get('/contacts/:id', async (req, res) => {
 router.get('/contacts', async (req, res) => {
   try {
     const rows = await query(`
-      SELECT c.*, COUNT(d.id) as dealCount
+      SELECT c.*,
+        COUNT(DISTINCT d.id) as dealCount,
+        COUNT(DISTINCT cv.id) as vehicleCount,
+        GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates
       FROM contacts c
       LEFT JOIN crm_deals d ON d.contact_id = c.id
+      LEFT JOIN contact_vehicles cv ON cv.contact_id = c.id
       WHERE c.user_id = ?
       GROUP BY c.id
       ORDER BY c.updated_at DESC
     `, [req.orgId]);
-    res.json(rows.map(r => ({ ...contactRow(r), dealCount: r.dealCount })));
+    res.json(rows.map(r => ({ ...contactRow(r), dealCount: Number(r.dealCount || 0) })));
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Error al cargar contactos' });
   }
 });
 
+router.get('/verification-alerts', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const rows = await query(`
+      SELECT cv.*, c.name as contact_name, c.phone as contact_phone, c.email as contact_email
+      FROM contact_vehicles cv
+      JOIN contacts c ON c.id = cv.contact_id
+      WHERE cv.user_id = ?
+      ORDER BY cv.plate ASC
+    `, [uid]);
+
+    const alerts = rows
+      .map(row => {
+        const vehicle = vehicleRowWithVerification(row);
+        return {
+          ...vehicle,
+          contactName: row.contact_name,
+          contactPhone: row.contact_phone,
+          contactEmail: row.contact_email,
+        };
+      })
+      .filter(v => ['due', 'soon', 'overdue'].includes(v.verificationStatus));
+
+    res.json(alerts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar alertas de verificación' });
+  }
+});
+
+router.get('/engomado-colors', (_req, res) => {
+  res.json(ENGOMADO_COLORS);
+});
+
 router.patch('/contacts/:id', async (req, res) => {
   try {
-    const { name, email, phone, whatsapp, notes } = req.body;
+    const { name, email, phone, whatsapp, notes, residenceState } = req.body;
     const result = await run(`
       UPDATE contacts SET
         name = COALESCE(?, name), email = COALESCE(?, email),
         phone = COALESCE(?, phone), whatsapp = COALESCE(?, whatsapp),
-        notes = COALESCE(?, notes), updated_at = NOW()
+        notes = COALESCE(?, notes),
+        residence_state = COALESCE(?, residence_state),
+        updated_at = NOW()
       WHERE id = ? AND user_id = ?
-    `, [name, email?.toLowerCase(), phone, whatsapp, notes, req.params.id, req.orgId]);
+    `, [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState, req.params.id, req.orgId]);
 
     if (!result.affectedRows) return res.status(404).json({ error: 'Contacto no encontrado' });
     const row = await get('SELECT * FROM contacts WHERE id = ?', [req.params.id]);
     res.json(contactRow(row));
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar contacto' });
+  }
+});
+
+router.post('/contacts/:id/vehicles', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { plate, state, engomadoColor, vehicleNotes } = req.body;
+    if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
+
+    const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+
+    const id = uuid();
+    await run(`
+      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, state, engomado_color, vehicle_notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `, [
+      id, req.params.id, uid,
+      String(plate).trim().toUpperCase(),
+      state || null,
+      engomadoColor || null,
+      vehicleNotes || null,
+    ]);
+
+    const row = await get('SELECT * FROM contact_vehicles WHERE id = ?', [id]);
+    res.status(201).json(vehicleRowWithVerification(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al agregar vehículo' });
+  }
+});
+
+router.patch('/contact-vehicles/:id', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { plate, state, engomadoColor, vehicleNotes } = req.body;
+    const result = await run(`
+      UPDATE contact_vehicles SET
+        plate = COALESCE(?, plate),
+        state = COALESCE(?, state),
+        engomado_color = COALESCE(?, engomado_color),
+        vehicle_notes = COALESCE(?, vehicle_notes),
+        updated_at = NOW()
+      WHERE id = ? AND user_id = ?
+    `, [
+      plate ? String(plate).trim().toUpperCase() : null,
+      state ?? null,
+      engomadoColor ?? null,
+      vehicleNotes ?? null,
+      req.params.id,
+      uid,
+    ]);
+
+    if (!result.affectedRows) return res.status(404).json({ error: 'Vehículo no encontrado' });
+    const row = await get('SELECT * FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    res.json(vehicleRowWithVerification(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar vehículo' });
+  }
+});
+
+router.delete('/contact-vehicles/:id', async (req, res) => {
+  try {
+    const result = await run(
+      'DELETE FROM contact_vehicles WHERE id = ? AND user_id = ?',
+      [req.params.id, req.orgId],
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: 'Vehículo no encontrado' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar vehículo' });
   }
 });
 

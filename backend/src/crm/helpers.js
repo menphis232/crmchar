@@ -327,6 +327,9 @@ export function contactRow(row) {
     whatsapp: row.whatsapp,
     source: row.source,
     notes: row.notes,
+    residenceState: row.residence_state,
+    vehicleCount: row.vehicleCount != null ? Number(row.vehicleCount) : undefined,
+    plates: row.plates || undefined,
     createdAt: row.created_at,
   };
 }

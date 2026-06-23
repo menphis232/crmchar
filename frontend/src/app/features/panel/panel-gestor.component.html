@@ -72,6 +72,12 @@
         }
       </button>
     }
+    @if (hasPerm('pipeline')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'clientes'" (click)="setTab('clientes'); isMobileMenuOpen.set(false)">
+        <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Clientes
+      </button>
+    }
     @if (hasPerm('servicios')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'servicios'" (click)="setTab('servicios'); isMobileMenuOpen.set(false)">
         <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
@@ -195,6 +201,27 @@
         }
       </div>
 
+      @if (verificationAlerts().length > 0) {
+        <div class="dash-card">
+          <h2 class="card-title card-title-with-icon">
+            <svg lucideTriangleAlert [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Alertas de verificación vehicular
+          </h2>
+          <p class="card-desc">Vehículos con verificación este mes, el próximo o recién vencida (según último dígito de placa).</p>
+          @for (a of verificationAlerts(); track a.id) {
+            <button type="button" class="inbox-row" (click)="openClientContact(a.contactId)">
+              <div>
+                <strong>{{ a.contactName }}</strong>
+                <p class="card-desc" style="margin:4px 0 0;">
+                  Placa {{ a.plate }}@if (a.engomadoColor) { · Engomado {{ a.engomadoColor }} }
+                </p>
+              </div>
+              <span class="status-badge">{{ a.verificationLabel }}</span>
+            </button>
+          }
+        </div>
+      }
+
       @if (crmDashboard(); as crm) {
       @if (todayInbox(); as inbox) {
         <div class="dash-card" style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
@@ -281,6 +308,7 @@
           (closed)="selectedDealId.set(null)"
           (updated)="onDealUpdated()"
           (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+          (updated)="loadVerificationAlerts()"
         />
       }
       @if (!selectedDealId() && selectedContactId()) {
@@ -289,6 +317,20 @@
           [stageLabels]="crm.stageLabels"
           (closed)="selectedContactId.set(null)"
           (openDeal)="openDeal($event)"
+          (updated)="loadVerificationAlerts()"
+        />
+      }
+    }
+
+    @if (tab() === 'clientes' && hasPerm('pipeline')) {
+      <app-crm-clients-directory (openContact)="openClientContact($event)" />
+      @if (selectedContactId()) {
+        <app-crm-contact-panel
+          [contactId]="selectedContactId()"
+          [stageLabels]="crmDashboard()?.stageLabels || {}"
+          (closed)="selectedContactId.set(null)"
+          (openDeal)="openDeal($event); setTab('pipeline')"
+          (updated)="loadVerificationAlerts()"
         />
       }
     }

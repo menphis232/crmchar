@@ -18,7 +18,7 @@ import {
   LucideX,
 } from '@lucide/angular';
 import { CrmService, UploadService } from '../../core/api.service';
-import { CrmDeal, LOST_REASONS, MessageTemplate } from '../../models';
+import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -679,6 +679,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   quoteValidUntil = '';
   quoteHonorarios = 0;
   quoteItems: { id: string; description: string; price: number | null }[] = [];
+  contactVehicles: CrmContactVehicle[] = [];
   isSavingQuote = signal(false);
   isLoadingQuote = signal(false);
   isDownloadingQuote = signal(false);
@@ -744,7 +745,23 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.loadMessages(id);
       if (!this.isConcesionaria()) {
         this.loadQuote(id);
+        if (d.contact?.id) this.loadContactProfile(d.contact.id);
+      } else {
+        this.contactVehicles = [];
       }
+    });
+  }
+
+  private loadContactProfile(contactId: string) {
+    this.crmService.getContact(contactId).subscribe({
+      next: (c360) => {
+        const c = c360.contact;
+        this.quoteClientName = c.name || '';
+        this.quoteClientEmail = c.email || '';
+        this.quoteClientPhone = c.phone || c.whatsapp || '';
+        this.contactVehicles = c360.vehicles || [];
+      },
+      error: () => { this.contactVehicles = []; },
     });
   }
 

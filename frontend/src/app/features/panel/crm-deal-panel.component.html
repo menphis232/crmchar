@@ -212,7 +212,25 @@
         @if (!isConcesionaria()) {
           <div class="deal-section deal-quote-editor">
             <h4>Cotización</h4>
-            <p class="card-desc">Edita los datos del cliente, el trámite y los conceptos. Guarda para actualizar y genera el PDF con tu plantilla.</p>
+            <p class="card-desc">Los datos del cliente se cargan de su solicitud. Edita el trámite y los conceptos, guarda y genera el PDF.</p>
+            @if (d.contact?.id) {
+              <button type="button" class="btn-ghost small" style="margin-bottom:10px;" (click)="openContact.emit(d.contact!.id!)">
+                Ver / editar ficha del cliente
+              </button>
+            }
+            @if (contactVehicles.length > 0) {
+              <div class="deal-contact-card" style="margin-bottom:12px;">
+                <p class="card-desc" style="margin:0 0 8px;">Vehículos en su directorio ({{ contactVehicles.length }}):</p>
+                @for (v of contactVehicles; track v.id) {
+                  <p class="card-desc" style="margin:4px 0;">
+                    <strong style="color:var(--gold);">{{ v.plate }}</strong>
+                    @if (v.state) { · {{ v.state }} }
+                    @if (v.engomadoColor) { · Engomado {{ v.engomadoColor }} }
+                    @if (v.verificationLabel) { · {{ v.verificationLabel }} }
+                  </p>
+                }
+              </div>
+            }
 
             @if (isLoadingQuote()) {
               <p class="card-desc">Cargando cotización...</p>

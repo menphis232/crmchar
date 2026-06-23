@@ -1,0 +1,58 @@
+<div class="dash-card">
+  <h2 class="card-title">Directorio de clientes</h2>
+  <p class="card-desc">
+    Base de datos de quienes han solicitado trámites. Registra placas, estado y engomado para alertas de verificación.
+  </p>
+
+  <div class="clients-toolbar">
+    <div class="clients-search">
+      <label for="clients-search-input">Buscar</label>
+      <div class="deal-meta-with-icon">
+        <svg lucideSearch [size]="14" aria-hidden="true"></svg>
+        <input id="clients-search-input" type="text" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nombre, teléfono, placa, estado...">
+      </div>
+    </div>
+    <button type="button" class="btn-copy" (click)="load()">Actualizar</button>
+  </div>
+
+  @if (isLoading()) {
+    <p class="card-desc">Cargando clientes...</p>
+  } @else if (filtered().length === 0) {
+    <p class="card-desc">No hay clientes registrados todavía. Se agregan automáticamente cuando alguien solicita un trámite.</p>
+  } @else {
+    <div class="client-row-head">
+      <span>Cliente</span>
+      <span>Contacto</span>
+      <span>Estado</span>
+      <span>Autos</span>
+      <span>Placas</span>
+    </div>
+    <div class="clients-table">
+      @for (c of filtered(); track c.id) {
+        <button type="button" class="client-row" (click)="openContact.emit(c.id)">
+          <div>
+            <div class="client-name deal-meta-with-icon">
+              <svg lucideUser [size]="14" aria-hidden="true"></svg>
+              {{ c.name }}
+            </div>
+            @if (c.source) {
+              <div class="client-meta">Origen: {{ c.source }}</div>
+            }
+          </div>
+          <div class="client-meta">
+            @if (c.phone) { <div>{{ c.phone }}</div> }
+            @if (c.email) { <div>{{ c.email }}</div> }
+          </div>
+          <div class="client-meta">{{ c.residenceState || '—' }}</div>
+          <div>
+            <span class="client-count">
+              <svg lucideCar [size]="14" aria-hidden="true"></svg>
+              {{ c.vehicleCount || 0 }}
+            </span>
+          </div>
+          <div class="client-meta">{{ c.plates || '—' }}</div>
+        </button>
+      }
+    </div>
+  }
+</div>

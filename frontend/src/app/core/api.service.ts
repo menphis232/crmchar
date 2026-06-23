@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
+  CrmContact, CrmContact360, CrmContactVehicle, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -85,8 +85,20 @@ export class CrmService {
   }
   getContacts() { return this.http.get<CrmContact[]>(`${this.base}/contacts`); }
   getContact(id: string) { return this.http.get<CrmContact360>(`${this.base}/contacts/${id}`); }
-  updateContact(id: string, data: Partial<CrmContact>) {
+  updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string }) {
     return this.http.patch<CrmContact>(`${this.base}/contacts/${id}`, data);
+  }
+  addContactVehicle(contactId: string, data: { plate: string; state?: string; engomadoColor?: string; vehicleNotes?: string }) {
+    return this.http.post<CrmContactVehicle>(`${this.base}/contacts/${contactId}/vehicles`, data);
+  }
+  updateContactVehicle(vehicleId: string, data: Partial<{ plate: string; state: string; engomadoColor: string; vehicleNotes: string }>) {
+    return this.http.patch<CrmContactVehicle>(`${this.base}/contact-vehicles/${vehicleId}`, data);
+  }
+  deleteContactVehicle(vehicleId: string) {
+    return this.http.delete(`${this.base}/contact-vehicles/${vehicleId}`);
+  }
+  getVerificationAlerts() {
+    return this.http.get<CrmVerificationAlert[]>(`${this.base}/verification-alerts`);
   }
   createTask(dealId: string, title: string, dueAt: string) {
     return this.http.post(`${this.base}/deals/${dealId}/tasks`, { title, dueAt });

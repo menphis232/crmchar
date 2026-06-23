@@ -2,39 +2,154 @@
   <div class="deal-panel-overlay" (click)="onOverlayClick($event)">
     <div class="deal-panel contact-360" (click)="$event.stopPropagation()">
 
-      <!-- HEADER -->
       <div class="deal-panel-header">
         <div style="flex:1;min-width:0;">
-          <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Contacto 360°</p>
+          <p style="font-size:11px;color:var(--muted);margin:0 0 4px;text-transform:uppercase;letter-spacing:.1em;">Ficha de cliente</p>
           <h3>{{ c360.contact.name }}</h3>
+          <p class="card-desc" style="margin:6px 0 0;">
+            {{ vehicleCount() }} auto{{ vehicleCount() === 1 ? '' : 's' }} registrado{{ vehicleCount() === 1 ? '' : 's' }}
+          </p>
         </div>
         <button type="button" class="deal-panel-close" (click)="closed.emit()" aria-label="Cerrar">
           <svg lucideX [size]="18" aria-hidden="true"></svg>
         </button>
       </div>
 
-      <!-- BODY -->
       <div class="deal-panel-body">
 
-        <!-- INFO CONTACTO -->
         <div class="deal-section">
-          <h4>Información</h4>
-          <div class="deal-contact-card">
-            @if (c360.contact.email) {
-              <p class="deal-meta-with-icon"><svg lucideMail [size]="14" aria-hidden="true"></svg> {{ c360.contact.email }}</p>
-            }
-            @if (c360.contact.phone) {
-              <p class="deal-meta-with-icon"><svg lucidePhone [size]="14" aria-hidden="true"></svg> {{ c360.contact.phone }}</p>
-            }
-            @if (c360.contact.notes) {
-              <p class="inquiry-msg">{{ c360.contact.notes }}</p>
-            }
+          <h4>Datos del cliente</h4>
+          <p class="card-desc">Se llenan automáticamente cuando el cliente solicita un trámite. Puedes editarlos aquí.</p>
+          <div class="contact-form-grid">
+            <div>
+              <label>Nombre</label>
+              <input type="text" [(ngModel)]="editName">
+            </div>
+            <div>
+              <label>Teléfono</label>
+              <input type="text" [(ngModel)]="editPhone">
+            </div>
+            <div>
+              <label>Correo</label>
+              <input type="email" [(ngModel)]="editEmail">
+            </div>
+            <div>
+              <label>WhatsApp</label>
+              <input type="text" [(ngModel)]="editWhatsapp">
+            </div>
+            <div>
+              <label>Estado de residencia</label>
+              <select [(ngModel)]="editResidenceState">
+                <option value="">— Selecciona —</option>
+                @for (st of mexicoStates; track st) {
+                  <option [value]="st">{{ st }}</option>
+                }
+              </select>
+            </div>
+            <div class="full">
+              <label>Notas</label>
+              <textarea [(ngModel)]="editNotes" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="contact-actions">
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="saveContact()" [disabled]="isSaving()">
+              <svg lucideSave [size]="14" aria-hidden="true"></svg>
+              {{ isSaving() ? 'Guardando...' : 'Guardar cliente' }}
+            </button>
           </div>
         </div>
 
-        <!-- TRATOS -->
         <div class="deal-section">
-          <h4>Tratos ({{ c360.deals.length }})</h4>
+          <h4>Vehículos ({{ vehicleCount() }})</h4>
+          <p class="card-desc">Placas, estado y color de engomado para saber cuándo les toca verificar.</p>
+
+          @for (v of c360.vehicles; track v.id) {
+            <div class="vehicle-card">
+              <div class="vehicle-card-top">
+                <span class="vehicle-plate">{{ v.plate }}</span>
+                @if (v.verificationStatus && v.verificationStatus !== 'ok' && v.verificationStatus !== 'unknown') {
+                  <span class="verification-badge" [class]="v.verificationStatus">{{ v.verificationLabel }}</span>
+                } @else if (v.verificationLabel) {
+                  <span class="card-desc">{{ v.verificationLabel }}</span>
+                }
+              </div>
+              <div class="vehicle-form-grid">
+                <div>
+                  <label>Estado (placas)</label>
+                  <select [ngModel]="v.state || ''" (ngModelChange)="updateVehicle(v, 'state', $event)">
+                    <option value="">—</option>
+                    @for (st of mexicoStates; track st) {
+                      <option [value]="st">{{ st }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Engomado</label>
+                  <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateVehicle(v, 'engomadoColor', $event)">
+                    <option value="">—</option>
+                    @for (c of engomadoColors; track c.id) {
+                      <option [value]="c.id">
+                        {{ c.label }}
+                      </option>
+                    }
+                  </select>
+                  @if (v.engomadoColor) {
+                    <p class="card-desc" style="margin-top:4px;">
+                      <span class="engomado-dot" [class]="v.engomadoColor"></span>{{ engomadoLabel(v.engomadoColor) }}
+                    </p>
+                  }
+                </div>
+                <div class="full">
+                  <label>Notas del auto</label>
+                  <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Marca, modelo, año...">
+                </div>
+              </div>
+              <button type="button" class="btn-ghost small" style="margin-top:8px;color:#ff9b9b;" (click)="removeVehicle(v.id)">
+                <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                Quitar vehículo
+              </button>
+            </div>
+          }
+
+          <div class="vehicle-card" style="border-style:dashed;">
+            <h5 style="margin:0 0 10px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Agregar vehículo</h5>
+            <div class="vehicle-form-grid">
+              <div>
+                <label>Placa</label>
+                <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
+              </div>
+              <div>
+                <label>Estado</label>
+                <select [(ngModel)]="newVehicleState">
+                  <option value="">—</option>
+                  @for (st of mexicoStates; track st) {
+                    <option [value]="st">{{ st }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Engomado</label>
+                <select [(ngModel)]="newEngomado">
+                  <option value="">—</option>
+                  @for (c of engomadoColors; track c.id) {
+                    <option [value]="c.id">{{ c.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Notas</label>
+                <input type="text" [(ngModel)]="newVehicleNotes" placeholder="Marca, modelo...">
+              </div>
+            </div>
+            <button type="button" class="deal-outline-btn btn-with-icon" style="margin-top:10px;" (click)="addVehicle()" [disabled]="isAddingVehicle()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              {{ isAddingVehicle() ? 'Agregando...' : 'Agregar vehículo' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="deal-section">
+          <h4>Trámites ({{ c360.deals.length }})</h4>
           @for (d of c360.deals; track d.id) {
             <button type="button" class="inbox-row" (click)="openDeal.emit(d.id)">
               <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
@@ -42,11 +157,10 @@
             </button>
           }
           @if (!c360.deals.length) {
-            <p class="card-desc">Sin tratos registrados.</p>
+            <p class="card-desc">Sin trámites registrados.</p>
           }
         </div>
 
-        <!-- TAREAS -->
         @if (c360.tasks.length) {
           <div class="deal-section">
             <h4>Tareas</h4>
@@ -64,10 +178,9 @@
           </div>
         }
 
-        <!-- HISTORIAL -->
         @if (c360.activities.length) {
           <div class="deal-section">
-            <h4>Historial de actividad</h4>
+            <h4>Historial</h4>
             @for (a of c360.activities; track a.id) {
               <div class="activity-item">
                 <span class="activity-type">{{ a.dealTitle }}</span>

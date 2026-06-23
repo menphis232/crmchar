@@ -282,8 +282,30 @@ export interface CrmContact {
   whatsapp?: string;
   source?: string;
   notes?: string;
+  residenceState?: string;
+  vehicleCount?: number;
+  plates?: string;
   dealCount?: number;
   createdAt?: string;
+}
+
+export interface CrmContactVehicle {
+  id: string;
+  contactId: string;
+  plate: string;
+  state?: string;
+  engomadoColor?: string;
+  vehicleNotes?: string;
+  verificationMonth?: number | null;
+  verificationStatus?: 'due' | 'soon' | 'overdue' | 'ok' | 'unknown';
+  verificationLabel?: string;
+  createdAt?: string;
+}
+
+export interface CrmVerificationAlert extends CrmContactVehicle {
+  contactName: string;
+  contactPhone?: string;
+  contactEmail?: string;
 }
 
 export interface CrmDeal {
@@ -369,6 +391,7 @@ export interface CrmContact360 {
   deals: CrmDeal[];
   activities: (CrmActivity & { dealTitle?: string; dealId?: string })[];
   tasks: CrmTask[];
+  vehicles: CrmContactVehicle[];
 }
 
 export const LOST_REASONS = [

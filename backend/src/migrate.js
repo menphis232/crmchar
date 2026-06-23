@@ -833,6 +833,25 @@ async function migrate() {
       await conn38.end();
       console.log('Migración v38 (gestor service price nullable) aplicada.');
     }
+
+    const v39Path = path.join(__dirname, '..', 'sql', 'migration-v39-contact-vehicles.sql');
+    if (fs.existsSync(v39Path)) {
+      const v39 = fs.readFileSync(v39Path, 'utf8');
+      const conn39 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn39.query('USE tramites_vehiculares');
+      for (const stmt of v39.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn39.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn39.end();
+      console.log('Migración v39 (contact vehicles) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);
