@@ -144,14 +144,31 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
   readonly hasServicePrice = hasServicePrice;
   readonly serviceRequirements = serviceRequirements;
 
+  hasSidebarFormBlock(config: PageBuilderConfig): boolean {
+    return !!config.blocks?.some(b => b.region === 'sidebar' && b.type === 'form');
+  }
+
   sendSolicitud() {
     const g = this.gestor();
-    if (!g || !this.solicitudForm.clientName || !this.solicitudForm.serviceName) return;
+    if (!g || !this.solicitudForm.clientName?.trim() || !this.solicitudForm.serviceName) {
+      this.toast.warning('Completa tu nombre y el trámite que necesitas.', 'Datos incompletos');
+      return;
+    }
     this.gestoresService.createSolicitud(g.id, { ...this.solicitudForm, customData: this.customData }).subscribe({
       next: () => {
+        const hadEmail = !!this.solicitudForm.clientEmail?.trim();
         this.solicitudSent.set(true);
         this.solicitudForm = { clientName: '', clientEmail: '', clientPhone: '', serviceName: '', location: '' };
         this.customData = {};
+        this.toast.success(
+          hadEmail
+            ? 'Revisa el embudo Trámites en tu panel de gestor.'
+            : 'Solicitud registrada. Revisa el embudo Trámites en tu panel.',
+          '¡Solicitud enviada!',
+        );
+      },
+      error: (err) => {
+        this.toast.error(err.error?.error || 'No se pudo registrar la solicitud.', 'Error');
       },
     });
   }

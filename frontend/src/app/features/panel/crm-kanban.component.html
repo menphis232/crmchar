@@ -54,7 +54,7 @@
           >{{ stage.label }}</span>
         }
 
-        <span class="kanban-count">{{ dealsInStage(stage.id).length }}</span>
+        <span class="kanban-count">{{ dealsInStage(stage.id, idx).length }}</span>
       </div>
 
       <!-- ── Cards ── -->
@@ -63,7 +63,7 @@
         (dragover)="onDragOver($event, stage.id)"
         (drop)="onDrop($event, stage.id)"
       >
-        @for (deal of dealsInStage(stage.id); track deal.id) {
+        @for (deal of dealsInStage(stage.id, idx); track deal.id) {
           <div
             class="kanban-card"
             [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage.id !== 'completado' && stage.id !== 'vendido' && stage.id !== 'perdido'"

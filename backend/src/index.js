@@ -97,10 +97,11 @@ const isProd = process.env.NODE_ENV === 'production';
 io.on('connection', (socket) => {
   if (!isProd) console.log('Socket connected:', socket.id);
   
-  socket.on('identify', (userId) => {
-    if (userId) {
-      socket.join('user_' + userId);
-    }
+  socket.on('identify', (payload) => {
+    const userId = typeof payload === 'object' && payload !== null ? payload.userId : payload;
+    const orgId = typeof payload === 'object' && payload !== null ? payload.orgId : null;
+    if (userId) socket.join('user_' + userId);
+    if (orgId && orgId !== userId) socket.join('user_' + orgId);
   });
 
   socket.on('join_deal', (dealId) => {

@@ -98,3 +98,9 @@ export const LOST_REASONS = [
 export function initialStageForRole(role) {
   return role === 'gestor' ? 'nuevo' : 'lead_nuevo';
 }
+
+/** Primera etapa del pipeline del gestor (respeta crm_stages personalizados). */
+export function firstStageForGestor(userStagesJson = null) {
+  const stages = stagesForRole('gestor', userStagesJson);
+  return stages[0] || 'nuevo';
+}

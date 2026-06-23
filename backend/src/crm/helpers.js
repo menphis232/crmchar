@@ -5,6 +5,7 @@ import { get, query, run } from '../db.js';
 import { sendEmail } from '../utils/mailer.js';
 import {
   dealTypeForRole, mapDealStageToSolicitudStatus, mapInquiryStatus, mapSolicitudStatus, templateCategoryForRole,
+  stagesForRole,
 } from './stages.js';
 
 const DEFAULT_TEMPLATES = {
@@ -70,7 +71,10 @@ export async function createDealFromSolicitud(solicitud, gestorUserId, extra = {
   });
 
   const dealId = uuid();
-  const stage = mapSolicitudStatus(solicitud.status);
+  const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [gestorUserId]);
+  const defaultStage = mapSolicitudStatus(solicitud.status);
+  const pipelineStages = stagesForRole('gestor', userRow?.crm_stages);
+  const initialStage = pipelineStages.includes(defaultStage) ? defaultStage : (pipelineStages[0] || 'nuevo');
   const title = solicitud.service_name || solicitud.serviceName || 'Trámite vehicular';
   const estimatedValue = extra.estimatedValue || 0;
   
@@ -80,7 +84,7 @@ export async function createDealFromSolicitud(solicitud, gestorUserId, extra = {
   await run(
     `INSERT INTO crm_deals (id, user_id, contact_id, deal_type, title, stage, ref_type, ref_id, tracking_code, stage_changed_at, estimated_value, client_message)
      VALUES (?, ?, ?, 'tramite', ?, ?, 'solicitud', ?, ?, NOW(), ?, ?)`,
-    [dealId, gestorUserId, contact.id, title, stage, solicitud.id, trackingCode, estimatedValue, extra.clientMessage || null],
+    [dealId, gestorUserId, contact.id, title, initialStage, solicitud.id, trackingCode, estimatedValue, extra.clientMessage || null],
   );
 
   console.log(`[SIMULACIÓN CORREO] Enviando email a ${contact.email} con el código de seguimiento: ${trackingCode}`);

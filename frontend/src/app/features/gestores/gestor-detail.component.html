@@ -162,6 +162,37 @@
               }
             }
 
+            @if (!hasSidebarFormBlock(config)) {
+              <div class="inquiry-box" id="dynamic-form-section">
+                <h3>¿Necesitas ayuda?</h3>
+                <p>Cotiza tu trámite sin compromiso.</p>
+                @if (!solicitudSent()) {
+                  <div class="solicitud-form">
+                    <input [(ngModel)]="solicitudForm.clientName" placeholder="Tu nombre *" class="inq-input">
+                    <input [(ngModel)]="solicitudForm.clientEmail" placeholder="Email" type="email" class="inq-input">
+                    <input [(ngModel)]="solicitudForm.clientPhone" placeholder="Teléfono / WhatsApp" class="inq-input">
+                    <select [(ngModel)]="solicitudForm.serviceName" class="inq-input">
+                      <option value="">Trámite que necesitas *</option>
+                      @for (s of g.services; track s.id) {
+                        <option [value]="s.name">{{ s.name }}</option>
+                      }
+                    </select>
+                    <select [(ngModel)]="solicitudForm.location" class="inq-input">
+                      <option value="">Estado *</option>
+                      @for (st of mexicoStates; track st) {
+                        <option [value]="st">{{ st }}</option>
+                      }
+                    </select>
+                    <button type="button" class="btn-submit btn-inquiry" (click)="sendSolicitud()">ENVIAR SOLICITUD</button>
+                  </div>
+                } @else {
+                  <p class="success-text">¡Solicitud enviada! Te contactaremos pronto.</p>
+                }
+                <a [href]="whatsappLink(g)" target="_blank" class="btn-whatsapp"><app-whatsapp-icon [size]="18" /> WhatsApp directo</a>
+                <div class="schedule">Horario: {{ g.schedule }}</div>
+              </div>
+            }
+
             @if (safeMapUrl()) {
               <div class="gestor-map-card">
                 <div class="gestor-map-title"><svg lucideMapPin [size]="14" class="gestor-map-title-icon" aria-hidden="true"></svg> Ubicación</div>

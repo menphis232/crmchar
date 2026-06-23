@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, effect, inject } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -19,6 +19,7 @@ import { CrmTeamComponent } from './crm-team.component';
 import { FinancesComponent } from './finances.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
+import { SocketService } from '../../core/socket.service';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
@@ -109,7 +110,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
 })
-export class PanelGestorComponent implements OnInit {
+export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly showPageBuilder = SHOW_PAGE_BUILDER;
   readonly gestorLogoAspect = GESTOR_LOGO_ASPECT;
   readonly gestorLogoSizeLabel = GESTOR_LOGO_SIZE_LABEL;
@@ -120,6 +121,25 @@ export class PanelGestorComponent implements OnInit {
   readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
   readonly gestorGalleryOutput = GESTOR_GALLERY_OUTPUT;
   private sanitizer = inject(DomSanitizer);
+  private socketService = inject(SocketService);
+  private onCrmNotification = (payload: unknown) => {
+    const notif = payload as { type?: string; ref_id?: string };
+    if (notif.type === 'nuevo_lead') {
+      this.loadCrmSummary();
+      if (this.tab() !== 'pipeline') {
+        this.setTab('pipeline');
+      }
+      this.crmService.getDeals({
+        q: this.searchQuery || undefined,
+        stage: this.filterStage || undefined,
+      }).subscribe(d => {
+        this.deals.set(d);
+        if (notif.ref_id) {
+          this.openDeal(notif.ref_id);
+        }
+      });
+    }
+  };
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
@@ -245,6 +265,16 @@ export class PanelGestorComponent implements OnInit {
     if (user?.logo_url) {
       this.profileLogoUrl = user.logo_url;
     }
+
+    if (user) {
+      this.socketService.connect(user.id, user.parent_id || user.id);
+      this.socketService.off('notification', this.onCrmNotification);
+      this.socketService.on('notification', this.onCrmNotification);
+    }
+  }
+
+  ngOnDestroy() {
+    this.socketService.off('notification', this.onCrmNotification);
   }
 
   hasPerm(mod: string): boolean {
@@ -260,7 +290,10 @@ export class PanelGestorComponent implements OnInit {
       this.loadCrmSummary();
       this.loadVerificationAlerts();
     }
-    if (t === 'pipeline') this.loadCrm();
+    if (t === 'pipeline') {
+      this.loadCrm();
+      if (!this.deals().length) this.loadDeals();
+    }
     if (t === 'clientes') this.loadVerificationAlerts();
     if (t === 'plantillas') this.loadTemplates();
     if (t === 'automatizaciones') {

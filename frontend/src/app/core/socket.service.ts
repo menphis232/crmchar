@@ -6,13 +6,16 @@ import { environment } from '../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class SocketService implements OnDestroy {
   private socket: Socket | null = null;
-  private identifiedUserId: string | null = null;
+  private identifiedKey: string | null = null;
 
-  connect(userId: string): Socket {
+  connect(userId: string, orgId?: string): Socket {
+    const identifyKey = `${userId}:${orgId || userId}`;
+    const payload = { userId, orgId: orgId || userId };
+
     if (this.socket?.connected) {
-      if (this.identifiedUserId !== userId) {
-        this.socket.emit('identify', userId);
-        this.identifiedUserId = userId;
+      if (this.identifiedKey !== identifyKey) {
+        this.socket.emit('identify', payload);
+        this.identifiedKey = identifyKey;
       }
       return this.socket;
     }
@@ -27,12 +30,12 @@ export class SocketService implements OnDestroy {
     });
 
     this.socket.on('connect', () => {
-      if (userId) this.socket?.emit('identify', userId);
+      this.socket?.emit('identify', payload);
     });
 
-    this.identifiedUserId = userId;
+    this.identifiedKey = identifyKey;
     if (this.socket.connected) {
-      this.socket.emit('identify', userId);
+      this.socket.emit('identify', payload);
     }
 
     return this.socket;
@@ -43,7 +46,7 @@ export class SocketService implements OnDestroy {
   }
 
   on<T = unknown>(event: string, handler: (payload: T) => void): void {
-    this.socket?.on(event, handler);
+    this.socket?.on(event, handler as (...args: unknown[]) => void);
   }
 
   off(event: string, handler?: (...args: unknown[]) => void): void {
@@ -59,7 +62,7 @@ export class SocketService implements OnDestroy {
     this.socket?.disconnect();
     this.socket?.removeAllListeners();
     this.socket = null;
-    this.identifiedUserId = null;
+    this.identifiedKey = null;
   }
 
   ngOnDestroy(): void {

@@ -239,7 +239,15 @@ export class CrmKanbanComponent {
   }
 
   // ── helpers ──
-  dealsInStage(stage: string) { return this.deals().filter(d => d.stage === stage); }
+  dealsInStage(stage: string, stageIndex = 0) {
+    const stageIds = new Set(this.stages());
+    const inStage = this.deals().filter(d => d.stage === stage);
+    if (stageIndex === 0) {
+      const orphans = this.deals().filter(d => !stageIds.has(d.stage));
+      return [...orphans, ...inStage];
+    }
+    return inStage;
+  }
 
   private emitStagesChange() {
     this.stagesChange.emit([...this.localStages()]);

@@ -159,7 +159,7 @@ export class NotificationBellComponent implements OnInit {
     const user = this.auth.user();
     if (!user) return;
 
-    this.socketService.connect(user.id);
+    this.socketService.connect(user.id, user.parent_id || user.id);
     this.socketService.off('notification', this.onNotification);
     this.socketService.on('notification', this.onNotification);
   }
