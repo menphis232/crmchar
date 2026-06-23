@@ -193,6 +193,9 @@ export class CrmService {
   generatePaymentLink(dealId: string) {
     return this.http.post<{ url: string }>(`${this.base}/deals/${dealId}/checkout`, {});
   }
+  getPaymentProviders() {
+    return this.http.get<{ stripe: boolean; mercadopago: boolean }>(`${this.base}/payment-providers`);
+  }
 }
 
 @Injectable({ providedIn: 'root' })

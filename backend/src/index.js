@@ -27,6 +27,7 @@ import { fileURLToPath } from 'url';
 import { checkStalledDeals } from './crm/automations.js';
 import { startAutomationsCron } from './cron/automations.js';
 import { redirectToFrontend } from './utils/frontend-url.js';
+import { setSocketIo } from './utils/socket-events.js';
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ const io = new Server(server, {
   maxHttpBufferSize: 1e6,
 });
 app.set('io', io);
+setSocketIo(io);
 
 const isProd = process.env.NODE_ENV === 'production';
 

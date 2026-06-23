@@ -100,41 +100,15 @@
                 @if (d.paymentStatus !== 'paid') {
                   <button type="button" class="btn-ghost small btn-with-icon" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
                     <svg lucideCreditCard [size]="14" aria-hidden="true"></svg>
-                    {{ isGeneratingPayment() ? 'Generando...' : 'Cobrar en Línea' }}
+                    {{ isGeneratingPayment() ? 'Generando...' : 'Copiar link de cobro' }}
                   </button>
                 }
               </div>
-              
-              @if (paymentLink()) {
-                <div class="deal-payment-link-box">
-                  <p class="deal-payment-link-label">Link Stripe generado. Cópialo y envíalo al cliente:</p>
-                  <div class="deal-payment-link-row">
-                    <input type="text" readonly [value]="paymentLink()" #linkInput>
-                    <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
-                  </div>
-                </div>
-              }
-              @if (paymentError()) {
-                <p class="deal-payment-error">{{ paymentError() }}</p>
-              }
-
-              @if (d.paymentStatus !== 'paid') {
-                <button type="button" class="btn-ghost small btn-with-icon btn-mp" (click)="generateMpLink()" [disabled]="isGeneratingMpPayment()">
-                  <svg lucideWallet [size]="14" aria-hidden="true"></svg>
-                  {{ isGeneratingMpPayment() ? 'Generando...' : 'Cobrar con MercadoPago' }}
-                </button>
-              }
-              @if (mpPaymentLink()) {
-                <div class="deal-payment-link-box">
-                  <p class="deal-payment-link-label">Link MercadoPago generado. Cópialo y envíalo al cliente:</p>
-                  <div class="deal-payment-link-row">
-                    <input type="text" readonly [value]="mpPaymentLink()" #mpLinkInput>
-                    <button type="button" class="btn-copy small" (click)="copyToClipboard(mpLinkInput.value)">Copiar</button>
-                  </div>
-                </div>
-              }
-              @if (mpPaymentError()) {
-                <p class="deal-payment-error">{{ mpPaymentError() }}</p>
+              @if (isWatchingPayment() && d.paymentStatus !== 'paid') {
+                <p class="deal-payment-watching">
+                  <span class="deal-payment-watching-dot"></span>
+                  Esperando confirmación de pago…
+                </p>
               }
             </div>
           }
@@ -502,4 +476,36 @@
       </div><!-- /deal-panel-body -->
     </div><!-- /deal-panel -->
   </div><!-- /overlay -->
+}
+
+@if (paymentMethodModalOpen()) {
+  <div class="pay-method-overlay" (click)="cancelPaymentMethodModal()">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="cancelPaymentMethodModal()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Generar link de cobro</p>
+      <h3 class="pay-method-title">¿Con qué pasarela cobras?</h3>
+      <p class="pay-method-desc">Tienes Stripe y Mercado Pago configurados. Elige cuál usar para este trámite.</p>
+
+      <div class="pay-method-grid">
+        @if (paymentProviders()?.stripe) {
+          <button type="button" class="pay-method-card pay-method-card--stripe" (click)="selectPaymentMethod('stripe')">
+            <span class="pay-method-card-icon">⚡</span>
+            <strong>Stripe</strong>
+            <span>Tarjeta internacional · Checkout seguro</span>
+          </button>
+        }
+        @if (paymentProviders()?.mercadopago) {
+          <button type="button" class="pay-method-card pay-method-card--mp" (click)="selectPaymentMethod('mercadopago')">
+            <span class="pay-method-card-icon">💳</span>
+            <strong>Mercado Pago</strong>
+            <span>Tarjetas MX · Cuotas disponibles</span>
+          </button>
+        }
+      </div>
+
+      <button type="button" class="pay-method-cancel" (click)="cancelPaymentMethodModal()">Cancelar</button>
+    </div>
+  </div>
 }

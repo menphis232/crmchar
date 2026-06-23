@@ -2,6 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { get, run } from '../db.js';
 import { generateInvoicePdfFile } from '../crm/invoice-pdf.js';
 import { sendEmail } from '../utils/mailer.js';
+import { emitDealPaymentPaid } from '../utils/socket-events.js';
 async function nextInvoiceNumber(userId) {
   const year = new Date().getFullYear();
   const row = await get(
@@ -41,6 +42,12 @@ export async function finalizeDealPayment(dealId, {
         "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?",
         [dealId],
       );
+      emitDealPaymentPaid({
+        dealId,
+        userId: deal.user_id,
+        paymentStatus: 'paid',
+        stage: 'completado',
+      });
     }
     return existingInvoice;
   }
@@ -138,6 +145,13 @@ export async function finalizeDealPayment(dealId, {
       console.error('Invoice email error:', mailErr);
     }
   }
+
+  emitDealPaymentPaid({
+    dealId,
+    userId: deal.user_id,
+    paymentStatus: 'paid',
+    stage: 'completado',
+  });
 
   return get('SELECT * FROM deal_invoices WHERE id = ?', [invoiceId]);
 }

@@ -1546,6 +1546,22 @@ router.delete('/team/:id', async (req, res) => {
 // Stripe Payments Integration
 // ==========================================
 
+router.get('/payment-providers', async (req, res) => {
+  try {
+    const owner = await get(
+      'SELECT stripe_secret_key, mp_access_token, mp_public_key FROM users WHERE id = ?',
+      [req.orgId],
+    );
+    res.json({
+      stripe: !!(owner?.stripe_secret_key),
+      mercadopago: !!(owner?.mp_access_token && owner?.mp_public_key),
+    });
+  } catch (err) {
+    console.error('payment-providers error:', err);
+    res.status(500).json({ error: 'Error al consultar métodos de pago' });
+  }
+});
+
 router.post('/deals/:id/checkout', async (req, res) => {
   try {
     const dealId = req.params.id;

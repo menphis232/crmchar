@@ -16,7 +16,6 @@ import {
   LucideTimer,
   LucideUser,
   LucideX,
-  LucideWallet,
 } from '@lucide/angular';
 import { CrmService, MpService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
@@ -29,7 +28,7 @@ import { ToastService } from '../../core/toast.service';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideWallet],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
@@ -437,6 +436,137 @@ import { ToastService } from '../../core/toast.service';
       font-size: 12px !important;
       margin-top: 10px !important;
     }
+    .deal-payment-watching {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      font-family: var(--f-display);
+    }
+    .deal-payment-watching-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #c8a94a;
+      animation: payPulse 1.4s ease-in-out infinite;
+    }
+    @keyframes payPulse {
+      0%, 100% { opacity: 0.35; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Modal selector de pasarela */
+    .pay-method-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 12000;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .pay-method-modal {
+      position: relative;
+      width: min(440px, 100%);
+      background: #0a0a0a;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      padding: 28px 24px 22px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.65);
+      font-family: var(--f-display);
+    }
+    .pay-method-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.45);
+      cursor: pointer;
+      padding: 6px;
+    }
+    .pay-method-close:hover { color: #fff; }
+    .pay-method-eyebrow {
+      margin: 0 0 6px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.35);
+    }
+    .pay-method-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .pay-method-desc {
+      margin: 0 0 22px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(255,255,255,0.50);
+    }
+    .pay-method-grid {
+      display: grid;
+      gap: 12px;
+    }
+    .pay-method-card {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      text-align: left;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: #141414;
+      color: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.15s, background 0.2s;
+      font-family: var(--f-display);
+    }
+    .pay-method-card:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255,255,255,0.35);
+      background: #1a1a1a;
+    }
+    .pay-method-card strong {
+      font-size: 15px;
+      letter-spacing: 0.04em;
+    }
+    .pay-method-card span:last-child {
+      font-size: 12px;
+      color: rgba(255,255,255,0.45);
+    }
+    .pay-method-card-icon {
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+    .pay-method-card--stripe:hover { border-color: rgba(99,102,241,0.55); }
+    .pay-method-card--mp:hover { border-color: rgba(0,158,227,0.55); }
+    .pay-method-cancel {
+      width: 100%;
+      margin-top: 16px;
+      padding: 12px;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 999px;
+      color: rgba(255,255,255,0.55);
+      font-family: var(--f-display);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .pay-method-cancel:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.3);
+    }
     .deal-value-row { background: transparent !important; }
 
     /* Docs + file cards */
@@ -687,12 +817,20 @@ export class CrmDealPanelComponent implements OnDestroy {
   private quoteItemSeq = 0;
 
   isGeneratingPayment = signal(false);
-  paymentLink = signal('');
-  paymentError = signal('');
+  isWatchingPayment = signal(false);
+  paymentMethodModalOpen = signal(false);
+  paymentProviders = signal<{ stripe: boolean; mercadopago: boolean } | null>(null);
 
-  isGeneratingMpPayment = signal(false);
-  mpPaymentLink = signal('');
-  mpPaymentError = signal('');
+  private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
+  private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
+  private onDealPaymentPaid = (data: { dealId?: string; paymentStatus?: string; stage?: string }) => {
+    this.zone.run(() => {
+      if (data.dealId !== this.dealId()) return;
+      this.toast.success('El pago fue acreditado correctamente.', '¡Pagado!');
+      this.stopPaymentWatch();
+      this.refreshDealPaymentState(true);
+    });
+  };
 
   // Chat
   messages: any[] = [];
@@ -727,10 +865,14 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.socketService.connect(user.id);
     this.socketService.off('receive_message', this.onReceiveMessage);
     this.socketService.on('receive_message', this.onReceiveMessage);
+    this.socketService.off('deal_payment_paid', this.onDealPaymentPaid);
+    this.socketService.on('deal_payment_paid', this.onDealPaymentPaid);
   }
 
   ngOnDestroy() {
     this.socketService.off('receive_message', this.onReceiveMessage);
+    this.socketService.off('deal_payment_paid', this.onDealPaymentPaid);
+    this.stopPaymentWatch();
     if (this.joinedDealId) {
       this.socketService.emit('leave_deal', this.joinedDealId);
       this.joinedDealId = null;
@@ -743,16 +885,17 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.estimatedValue = d.estimatedValue || 0;
       this.internalNotes = d.internalNotes || '';
       this.lostReason = d.lostReason || '';
-      this.paymentLink.set('');
-      this.paymentError.set('');
-      this.mpPaymentLink.set('');
-      this.mpPaymentError.set('');
 
       this.loadDocuments(id);
       this.loadMessages(id);
       if (!this.isConcesionaria()) {
         this.loadQuote(id);
         if (d.contact?.id) this.loadContactProfile(d.contact.id);
+        if (d.paymentStatus !== 'paid') {
+          this.startPaymentWatch();
+        } else {
+          this.stopPaymentWatch();
+        }
       } else {
         this.contactVehicles = [];
       }
@@ -1110,62 +1253,138 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   generatePaymentLink() {
     if (!this.dealId()) return;
-    
-    // Auto-save if they typed a new value but forgot to click Save
+
     if (this.estimatedValue > 0 && this.deal()?.estimatedValue !== this.estimatedValue) {
       this.saveNotes();
-      // Wait for save to complete before generating link
-      setTimeout(() => this.executePaymentLinkGeneration(), 500);
+      setTimeout(() => this.startPaymentLinkFlow(), 500);
       return;
     }
-    
-    this.executePaymentLinkGeneration();
+
+    this.startPaymentLinkFlow();
   }
 
-  executePaymentLinkGeneration() {
+  private startPaymentLinkFlow() {
     if (!this.estimatedValue || this.estimatedValue <= 0) {
-      alert('Debes asignar un "Valor estimado" mayor a 0 y guardarlo antes de cobrar.');
+      this.toast.warning('Asigna un valor estimado mayor a 0 y guárdalo antes de cobrar.', 'Valor requerido');
       return;
     }
 
+    this.crmService.getPaymentProviders().subscribe({
+      next: async (providers) => {
+        this.paymentProviders.set(providers);
+        const available: ('stripe' | 'mercadopago')[] = [];
+        if (providers.stripe) available.push('stripe');
+        if (providers.mercadopago) available.push('mercadopago');
+
+        if (available.length === 0) {
+          this.toast.error('Configura Stripe o MercadoPago en la pestaña Perfil.', 'Sin método de pago');
+          return;
+        }
+
+        let method: 'stripe' | 'mercadopago';
+        if (available.length === 1) {
+          method = available[0];
+        } else {
+          const picked = await this.pickPaymentMethod();
+          if (!picked) return;
+          method = picked;
+        }
+
+        this.executePaymentLinkGeneration(method);
+      },
+      error: () => {
+        this.toast.error('No se pudieron consultar los métodos de pago.', 'Error');
+      },
+    });
+  }
+
+  private pickPaymentMethod(): Promise<'stripe' | 'mercadopago' | null> {
+    return new Promise((resolve) => {
+      this.paymentMethodResolver = resolve;
+      this.paymentMethodModalOpen.set(true);
+    });
+  }
+
+  selectPaymentMethod(method: 'stripe' | 'mercadopago') {
+    this.paymentMethodModalOpen.set(false);
+    this.paymentMethodResolver?.(method);
+    this.paymentMethodResolver = null;
+  }
+
+  cancelPaymentMethodModal() {
+    this.paymentMethodModalOpen.set(false);
+    this.paymentMethodResolver?.(null);
+    this.paymentMethodResolver = null;
+  }
+
+  private executePaymentLinkGeneration(method: 'stripe' | 'mercadopago') {
+    const dealId = this.dealId();
+    if (!dealId) return;
+
     this.isGeneratingPayment.set(true);
-    this.paymentError.set('');
-    this.crmService.generatePaymentLink(this.dealId()!).subscribe({
+    const request$ = method === 'stripe'
+      ? this.crmService.generatePaymentLink(dealId)
+      : this.mpService.generateLink(dealId);
+
+    request$.subscribe({
       next: (res) => {
-        this.paymentLink.set(res.url);
         this.isGeneratingPayment.set(false);
+        navigator.clipboard.writeText(res.url).then(() => {
+          const label = method === 'stripe' ? 'Stripe' : 'Mercado Pago';
+          this.toast.success(`Link de ${label} copiado al portapapeles`, '¡Listo!');
+        }).catch(() => {
+          this.toast.warning('Link generado. Cópialo manualmente si el portapapeles no respondió.', 'Link listo');
+        });
+        this.startPaymentWatch();
       },
       error: (err) => {
-        this.paymentError.set(err.error?.error || 'Error al generar link de pago');
         this.isGeneratingPayment.set(false);
+        this.toast.error(err.error?.error || 'Error al generar link de pago', 'Error');
+      },
+    });
+  }
+
+  private refreshDealPaymentState(notifyParent = false) {
+    const id = this.dealId();
+    if (!id) return;
+    this.crmService.getDeal(id).subscribe(d => {
+      this.deal.set(d);
+      if (d.paymentStatus === 'paid') {
+        this.stopPaymentWatch();
+        if (notifyParent) this.updated.emit();
       }
     });
   }
 
-  generateMpLink() {
-    if (!this.dealId()) return;
-    if (!this.estimatedValue || this.estimatedValue <= 0) {
-      this.mpPaymentError.set('Debes asignar un "Valor estimado" mayor a 0 antes de cobrar.');
-      return;
-    }
-    this.isGeneratingMpPayment.set(true);
-    this.mpPaymentError.set('');
-    this.mpPaymentLink.set('');
-    this.mpService.generateLink(this.dealId()!).subscribe({
-      next: (res) => {
-        this.mpPaymentLink.set(res.url);
-        this.isGeneratingMpPayment.set(false);
-      },
-      error: (err) => {
-        this.mpPaymentError.set(err.error?.error || 'Error al generar link de MercadoPago');
-        this.isGeneratingMpPayment.set(false);
-      },
-    });
+  private startPaymentWatch() {
+    if (this.deal()?.paymentStatus === 'paid') return;
+    this.isWatchingPayment.set(true);
+    this.stopPaymentWatch(false);
+    this.paymentWatchInterval = setInterval(() => {
+      const id = this.dealId();
+      if (!id || this.deal()?.paymentStatus === 'paid') {
+        this.stopPaymentWatch();
+        return;
+      }
+      this.crmService.getDeal(id).subscribe({
+        next: (d) => {
+          if (d.paymentStatus === 'paid' && this.deal()?.paymentStatus !== 'paid') {
+            this.deal.set(d);
+            this.toast.success('El pago fue acreditado correctamente.', '¡Pagado!');
+            this.stopPaymentWatch();
+            this.updated.emit();
+          }
+        },
+      });
+    }, 5000);
   }
 
-  copyToClipboard(val: string) {
-    navigator.clipboard.writeText(val);
-    alert('Link copiado al portapapeles');
+  private stopPaymentWatch(clearWatching = true) {
+    if (this.paymentWatchInterval) {
+      clearInterval(this.paymentWatchInterval);
+      this.paymentWatchInterval = null;
+    }
+    if (clearWatching) this.isWatchingPayment.set(false);
   }
 
   loadDocuments(dealId: string) {
