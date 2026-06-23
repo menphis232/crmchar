@@ -105,6 +105,28 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
 
+  /** Descripción y galería siempre antes de servicios en la ficha pública. */
+  orderedMainBlocks(config: PageBuilderConfig, g: Gestor): PageBlock[] {
+    const blocks = (config.blocks ?? []).filter(b => b.region !== 'sidebar' && b.type !== 'hero');
+    const beforeTypes = new Set(['stats', 'text', 'gallery']);
+    const before = blocks.filter(b => beforeTypes.has(b.type));
+    const after = blocks.filter(b => !beforeTypes.has(b.type));
+
+    if (g.bio?.trim() && !before.some(b => b.type === 'text')) {
+      const stats = before.filter(b => b.type === 'stats');
+      const gallery = before.filter(b => b.type === 'gallery');
+      const bioBlock: PageBlock = {
+        id: '__profile-bio__',
+        type: 'text',
+        region: 'main',
+        data: { content: g.bio.trim() },
+      };
+      return [...stats, bioBlock, ...gallery, ...after];
+    }
+
+    return [...before, ...after];
+  }
+
   readonly hasServicePrice = hasServicePrice;
   readonly serviceRequirements = serviceRequirements;
 

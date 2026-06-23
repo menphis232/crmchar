@@ -20,6 +20,16 @@ function parseGalleryImages(raw) {
   }
 }
 
+function moveTextBeforeServices(blocks) {
+  const textIdx = blocks.findIndex(b => b.type === 'text' && b.region !== 'sidebar');
+  const servicesIdx = blocks.findIndex(b => b.type === 'services' && b.region !== 'sidebar');
+  if (textIdx < 0 || servicesIdx < 0 || textIdx < servicesIdx) return blocks;
+  const next = [...blocks];
+  const [textBlock] = next.splice(textIdx, 1);
+  next.splice(servicesIdx, 0, textBlock);
+  return next;
+}
+
 function syncPageBuilderBio(config, bio) {
   const trimmed = String(bio ?? '').trim();
   if (!trimmed) return null;
@@ -39,7 +49,8 @@ function syncPageBuilderBio(config, bio) {
     );
   } else {
     const heroIdx = blocks.findIndex(b => b.type === 'hero');
-    const insertAt = heroIdx >= 0 ? heroIdx + 1 : 0;
+    const servicesIdx = blocks.findIndex(b => b.type === 'services' && b.region !== 'sidebar');
+    const insertAt = servicesIdx >= 0 ? servicesIdx : (heroIdx >= 0 ? heroIdx + 1 : 0);
     blocks.splice(insertAt, 0, {
       id: `block-bio-${Date.now()}`,
       type: 'text',
@@ -47,6 +58,8 @@ function syncPageBuilderBio(config, bio) {
       data: { content: trimmed },
     });
   }
+
+  blocks = moveTextBeforeServices(blocks);
 
   return { ...parsed, blocks };
 }

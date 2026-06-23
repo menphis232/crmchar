@@ -111,28 +111,28 @@ export class PageBuilderComponent implements OnInit {
         },
         ...(!isAuto ? [
           { id: `block-${Date.now()}-2`, type: 'stats' as const, region: 'main' as const, data: { showRating: true, showCount: true, showExperience: true } },
+          {
+            id: `block-${Date.now()}-3`,
+            type: 'text',
+            region: 'main',
+            data: { content: this.profile.bio || this.profile.description || 'Bienvenido...' },
+          },
           { id: `block-${Date.now()}-4`, type: 'services' as const, region: 'main' as const, data: { title: 'Servicios y Tarifas', showPrices: true } },
           { id: `block-${Date.now()}-5`, type: 'reviews' as const, region: 'main' as const, data: { title: 'Reseñas Destacadas' } }
         ] : [
           { id: `block-${Date.now()}-g`, type: 'gallery' as const, region: 'main' as const, data: { images: this.profile.images || [] } }
         ]),
-        { 
-          id: `block-${Date.now()}-3`, 
-          type: 'text',
-          region: 'main',
-          data: { content: this.profile.bio || this.profile.description || 'Bienvenido...' } 
-        },
-        { 
-          id: `block-${Date.now()}-6`, 
+        {
+          id: `block-${Date.now()}-6`,
           type: 'tracker',
           region: 'sidebar',
-          data: { title: 'Rastrea tu Trámite', subtitle: 'Ingresa tu código de seguimiento actual.' } 
+          data: { title: 'Rastrea tu Trámite', subtitle: 'Ingresa tu código de seguimiento actual.' }
         },
-        { 
-          id: `block-${Date.now()}-7`, 
+        {
+          id: `block-${Date.now()}-7`,
           type: 'form',
           region: 'sidebar',
-          data: { title: '¿Necesitas ayuda?', subtitle: 'Cotiza sin compromiso.' } 
+          data: { title: '¿Necesitas ayuda?', subtitle: 'Cotiza sin compromiso.' }
         }
       ];
       this.mainBlocks.set(defaultBlocks.filter(b => b.region !== 'sidebar'));

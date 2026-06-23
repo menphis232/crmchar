@@ -35,8 +35,7 @@
 
         <div class="profile-content">
           <div class="main-column">
-            @for (b of config.blocks; track b.id) {
-              @if (b.region !== 'sidebar' && b.type !== 'hero') {
+            @for (b of orderedMainBlocks(config, g); track b.id) {
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'stats') {
                     <div class="profile-stats">
@@ -109,11 +108,6 @@
                     <app-gestor-showcase-gallery [images]="b.data.images" title="Galería fotos" />
                   }
                 </div>
-              }
-            }
-
-            @if (g.bio?.trim() && !hasMainTextBlock(config)) {
-              <p class="bio" style="margin: 20px 0;">{{ g.bio }}</p>
             }
 
             @if (g.galleryImages?.length) {
@@ -223,9 +217,6 @@
             <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div>
             <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div>
           </div>
-          @if (g.bio?.trim()) {
-            <p class="bio">{{ g.bio }}</p>
-          }
         </div>
       </header>
 
@@ -233,6 +224,10 @@
         <div class="main-column">
           @if (g.galleryImages?.length) {
             <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
+          }
+
+          @if (g.bio?.trim()) {
+            <p class="bio">{{ g.bio }}</p>
           }
 
           <h3 class="section-title">Servicios y Tarifas</h3>
