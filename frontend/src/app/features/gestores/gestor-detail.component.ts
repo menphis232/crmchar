@@ -15,6 +15,7 @@ import { GESTOR_LUCIDE_ICONS } from '../../shared/gestor-lucide-icons';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
 import { PageBlock, PageBuilderConfig } from '../../models';
+import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
 
 @Component({
   selector: 'app-gestor-detail',
@@ -119,6 +120,9 @@ export class GestorDetailComponent implements OnInit {
   hasMainTextBlock(config: PageBuilderConfig): boolean {
     return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
+
+  readonly hasServicePrice = hasServicePrice;
+  readonly serviceRequirements = serviceRequirements;
 
   sendSolicitud() {
     const g = this.gestor();

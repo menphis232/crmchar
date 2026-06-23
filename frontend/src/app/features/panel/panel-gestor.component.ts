@@ -22,6 +22,7 @@ import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.com
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
+import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
 import {
   LucideBot,
   LucideCamera,
@@ -161,7 +162,7 @@ export class PanelGestorComponent implements OnInit {
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   isAiLoading = signal(false);
   message = signal('');
-  newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
+  newService = { name: '', timeEstimate: '', price: null as number | null, requiredDocumentsStr: '' };
   newTemplate = { name: '', content: '' };
   automations = signal<any[]>([]);
   newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
@@ -956,17 +957,24 @@ export class PanelGestorComponent implements OnInit {
   addService() {
     if (!this.newService.name || !this.newService.timeEstimate) return;
     const docs = this.newService.requiredDocumentsStr.split(',').map(s => s.trim()).filter(Boolean);
-    const payload: any = { name: this.newService.name, timeEstimate: this.newService.timeEstimate, price: this.newService.price };
+    const payload: any = {
+      name: this.newService.name,
+      timeEstimate: this.newService.timeEstimate,
+      price: this.newService.price,
+    };
     if (docs.length > 0) payload.required_documents = docs;
     
     this.gestoresService.addService(payload).subscribe({
       next: () => {
-        this.newService = { name: '', timeEstimate: '', price: 0, requiredDocumentsStr: '' };
+        this.newService = { name: '', timeEstimate: '', price: null, requiredDocumentsStr: '' };
         this.loadProfile();
         this.message.set('Servicio agregado');
       },
     });
   }
+
+  readonly hasServicePrice = hasServicePrice;
+  readonly serviceRequirements = serviceRequirements;
 
   deleteService(id: string) {
     if (!confirm('¿Eliminar este servicio?')) return;

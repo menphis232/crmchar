@@ -193,8 +193,14 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const { name, timeEstimate, price, required_documents } = req.body;
-    if (!name || !timeEstimate || price == null) {
+    if (!name || !timeEstimate) {
       return res.status(400).json({ error: 'Datos incompletos' });
+    }
+    const priceValue = (price === null || price === undefined || price === '')
+      ? null
+      : Number(price);
+    if (priceValue !== null && (Number.isNaN(priceValue) || priceValue < 0)) {
+      return res.status(400).json({ error: 'Precio inválido' });
     }
     const id = uuid();
     let docs = [];
@@ -206,8 +212,8 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
     await run('INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, price, JSON.stringify(docs)]);
-    res.status(201).json({ id, name, timeEstimate, price, required_documents: docs });
+      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs)]);
+    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
   }
@@ -510,7 +516,10 @@ router.post('/:slugOrId/chat', async (req, res) => {
     }
 
     const services = await query('SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?)', [gestor.user_id]);
-    let servicesText = services.map(s => `- ${s.name}: $${s.price} MXN, demora aprox ${s.time_estimate}`).join('\n');
+    let servicesText = services.map(s => {
+      const priceLabel = s.price != null && Number(s.price) > 0 ? `$${s.price} MXN` : 'Precio por definir';
+      return `- ${s.name}: ${priceLabel}, demora aprox ${s.time_estimate}`;
+    }).join('\n');
 
     let prompt = `Eres el asistente virtual público de un gestor vehicular llamado "${gestor.name}".
 Aquí está su biografía: "${gestor.bio || 'Gestor profesional.'}"

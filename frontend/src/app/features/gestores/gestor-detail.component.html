@@ -57,12 +57,26 @@
                     <div class="services-list" style="margin-bottom: 40px;">
                       @for (s of g.services; track s.id) {
                         <div class="service-item">
-                          <div>
+                          <div class="service-main">
                             <div class="service-name">{{ s.name }}</div>
                             <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
+                            <details class="service-requisitos">
+                              <summary>Ver requisitos</summary>
+                              <ul class="service-requisitos-list">
+                                @for (doc of serviceRequirements(s); track doc) {
+                                  <li>{{ doc }}</li>
+                                }
+                              </ul>
+                            </details>
                           </div>
                           @if (b.data.showPrices) {
-                            <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
+                            <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
+                              @if (hasServicePrice(s)) {
+                                ${{ s.price | number }} <span>MXN</span>
+                              } @else {
+                                Precio por definir
+                              }
+                            </div>
                           }
                         </div>
                       }
@@ -225,11 +239,25 @@
           <div class="services-list">
             @for (s of g.services; track s.id) {
               <div class="service-item">
-                <div>
+                <div class="service-main">
                   <div class="service-name">{{ s.name }}</div>
                   <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
+                  <details class="service-requisitos">
+                    <summary>Ver requisitos</summary>
+                    <ul class="service-requisitos-list">
+                      @for (doc of serviceRequirements(s); track doc) {
+                        <li>{{ doc }}</li>
+                      }
+                    </ul>
+                  </details>
                 </div>
-                <div class="service-price">${{ s.price | number }} <span>MXN</span></div>
+                <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
+                  @if (hasServicePrice(s)) {
+                    ${{ s.price | number }} <span>MXN</span>
+                  } @else {
+                    Precio por definir
+                  }
+                </div>
               </div>
             }
           </div>

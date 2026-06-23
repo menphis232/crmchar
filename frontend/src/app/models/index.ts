@@ -243,7 +243,7 @@ export interface GestorService {
   id: string;
   name: string;
   timeEstimate: string;
-  price: number;
+  price: number | null;
   required_documents?: string[];
 }
 

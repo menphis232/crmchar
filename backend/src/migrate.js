@@ -814,6 +814,25 @@ async function migrate() {
       await conn37.end();
       console.log('Migración v37 (gestor gallery) aplicada.');
     }
+
+    const v38Path = path.join(__dirname, '..', 'sql', 'migration-v38-gestor-service-price-null.sql');
+    if (fs.existsSync(v38Path)) {
+      const v38 = fs.readFileSync(v38Path, 'utf8');
+      const conn38 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn38.query('USE tramites_vehiculares');
+      for (const stmt of v38.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn38.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn38.end();
+      console.log('Migración v38 (gestor service price nullable) aplicada.');
+    }
     
     console.log('Todas las migraciones completadas.');
     process.exit(0);

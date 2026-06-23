@@ -300,18 +300,29 @@
           <svg lucideWrench [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Catálogo de servicios
         </h2>
-        <p class="card-desc">Define tus trámites con precio y tiempo estimado.</p>
+        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional.</p>
         @for (s of p.services; track s.id) {
-          <div class="inbox-item">
+          <div class="inbox-item service-catalog-item">
             <div class="inbox-info">
               <h4>{{ s.name }}</h4>
               <p class="deal-meta-with-icon">
                 <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
-                {{ s.timeEstimate }} — ${{ s.price | number }} MXN
+                {{ s.timeEstimate }}
+                —
+                @if (hasServicePrice(s)) {
+                  ${{ s.price | number }} MXN
+                } @else {
+                  Precio por definir
+                }
               </p>
-              @if (s.required_documents?.length) {
-                <p style="font-size:11px; color:var(--muted); margin-top:4px;">Requisitos: {{ s.required_documents?.join(', ') }}</p>
-              }
+              <details class="service-requisitos-panel">
+                <summary>Ver requisitos</summary>
+                <ul class="service-requisitos-list">
+                  @for (doc of serviceRequirements(s); track doc) {
+                    <li>{{ doc }}</li>
+                  }
+                </ul>
+              </details>
             </div>
             <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
           </div>
@@ -331,7 +342,8 @@
           </div>
           <div class="form-group">
             <label>Precio (MXN)</label>
-            <input type="number" [(ngModel)]="newService.price" placeholder="0">
+            <input type="number" [(ngModel)]="newService.price" placeholder="Opcional" min="0">
+            <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas vacío, en tu ficha pública se mostrará «Precio por definir».</p>
           </div>
         </div>
         <div class="form-group" style="margin-bottom: 15px;">

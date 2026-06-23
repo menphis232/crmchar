@@ -183,9 +183,13 @@ app-gestor-showcase-gallery {
   padding: 18px 20px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+}
+.service-main {
+  flex: 1;
+  min-width: 180px;
 }
 .service-name {
   font-weight: var(--display-weight);
@@ -204,6 +208,46 @@ app-gestor-showcase-gallery {
   letter-spacing: var(--display-letter-spacing);
 }
 .service-price span { font-size: 12px; color: rgba(255, 255, 255, 0.5); font-family: var(--f-ui); }
+.service-price-tbd {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.72);
+  font-family: var(--f-ui);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-align: right;
+  max-width: 140px;
+  line-height: 1.35;
+}
+.service-requisitos {
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.service-requisitos summary {
+  cursor: pointer;
+  font-family: var(--f-ui);
+  color: rgba(255, 255, 255, 0.82);
+  user-select: none;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.service-requisitos summary::-webkit-details-marker { display: none; }
+.service-requisitos summary::after {
+  content: '▾';
+  font-size: 11px;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+.service-requisitos[open] summary::after { transform: rotate(180deg); }
+.service-requisitos-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.6;
+}
+.service-requisitos-list li + li { margin-top: 4px; }
 
 .reviews-list {
   display: flex;

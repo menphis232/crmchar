@@ -1,0 +1,1 @@
+ALTER TABLE gestor_services MODIFY COLUMN price DECIMAL(12,2) NULL;

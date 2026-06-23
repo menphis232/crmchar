@@ -1133,3 +1133,93 @@ app-crm-team {
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
+
+.service-catalog-item {
+  align-items: flex-start;
+}
+
+.service-requisitos-panel {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.service-requisitos-panel summary {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.82);
+  user-select: none;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.service-requisitos-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.service-requisitos-panel summary::after {
+  content: '▾';
+  font-size: 11px;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.service-requisitos-panel[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.service-requisitos-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+
+.service-requisitos-list li + li {
+  margin-top: 4px;
+}
+
+.service-catalog-item {
+  align-items: flex-start;
+}
+
+.service-requisitos-panel {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.service-requisitos-panel summary {
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.82);
+  user-select: none;
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.service-requisitos-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.service-requisitos-panel summary::after {
+  content: '?';
+  font-size: 11px;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.service-requisitos-panel[open] summary::after {
+  transform: rotate(180deg);
+}
+
+.service-requisitos-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: rgba(255, 255, 255, 0.62);
+  line-height: 1.5;
+}
+
+.service-requisitos-list li + li {
+  margin-top: 4px;
+}
