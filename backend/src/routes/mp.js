@@ -13,21 +13,96 @@ function getMpClient(accessToken) {
   return new MercadoPagoConfig({ accessToken, options: { timeout: 10000 } });
 }
 
+function translateMpCode(code) {
+  const map = {
+    cc_rejected_bad_filled_security_code: 'CVV incorrecto.',
+    cc_rejected_bad_filled_date: 'Fecha de vencimiento incorrecta.',
+    cc_rejected_bad_filled_card_number: 'Número de tarjeta incorrecto.',
+    cc_rejected_bad_filled_other: 'Revisa los datos de la tarjeta.',
+    cc_rejected_insufficient_amount: 'Fondos insuficientes.',
+    cc_rejected_call_for_authorize: 'Debes autorizar el pago con tu banco.',
+    cc_rejected_high_risk: 'Pago rechazado por seguridad.',
+    cc_rejected_other_reason: 'Pago rechazado. Prueba con otra tarjeta.',
+    invalid_card_token: 'Token de tarjeta inválido o ya usado. Recarga la página e intenta de nuevo.',
+    invalid_users_email: 'En pruebas usa un email que termine en @testuser.com',
+    required_properties: 'Faltan datos obligatorios para el pago.',
+    failed: 'La transacción falló.',
+  };
+  return map[code] || code;
+}
+
 function extractMpError(err) {
   const parts = [];
+
+  if (Array.isArray(err?.errors)) {
+    for (const e of err.errors) {
+      if (e?.message && e.message !== 'The following transactions failed') {
+        parts.push(e.message);
+      }
+      if (Array.isArray(e?.details)) {
+        for (const d of e.details) {
+          if (d?.description) parts.push(d.description);
+          else if (d?.message) parts.push(d.message);
+          else if (d?.code) parts.push(translateMpCode(d.code));
+        }
+      }
+    }
+  }
+
+  const payment = err?.data?.transactions?.payments?.[0];
+  if (payment?.status_detail) {
+    parts.push(translateMpCode(payment.status_detail));
+  }
+
   const causes = err?.cause;
   if (Array.isArray(causes)) {
     for (const c of causes) {
       if (c?.description) parts.push(c.description);
       else if (c?.message) parts.push(c.message);
-      else if (c?.code) parts.push(c.code);
+      else if (c?.code) parts.push(translateMpCode(c.code));
     }
   }
-  if (err?.message && !parts.length) parts.push(err.message);
-  if (err?.status === 402 || err?.statusCode === 402) {
-    parts.unshift('El pago fue rechazado. Verifica los datos de la tarjeta.');
+
+  if (err?.message && !parts.length && err.message !== 'failed') {
+    parts.push(err.message);
   }
-  return parts.join('. ') || 'Error al procesar el pago';
+
+  return [...new Set(parts.filter(Boolean))].join('. ') || 'Error al procesar el pago';
+}
+
+function handleOrderResponse(orderResult, row, res, mpErr) {
+  const status = orderResult?.status;
+  const orderId = orderResult?.id;
+  const statusDetail = orderResult?.status_detail;
+  const payment = orderResult?.transactions?.payments?.[0];
+  const paymentDetail = payment?.status_detail;
+
+  if (status === 'processed' || status === 'approved' || statusDetail === 'accredited' || paymentDetail === 'accredited') {
+    return run(
+      `UPDATE crm_deals
+       SET mp_order_id = ?, mp_payment_token = NULL, payment_status = 'paid', stage = 'completado'
+       WHERE id = ?`,
+      [orderId || null, row.id],
+    ).then(() => res.json({ success: true, status, orderId }));
+  }
+
+  if (status === 'requires_action') {
+    const actionUrl = payment?.payment_method?.transaction_security?.url;
+    return run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id])
+      .then(() => res.json({ success: false, status, requiresAction: true, actionUrl }));
+  }
+
+  const msg = translateMpCode(paymentDetail)
+    || translateMpCode(statusDetail)
+    || extractMpError(mpErr || { data: orderResult });
+
+  return res.status(402).json({
+    success: false,
+    status,
+    orderId,
+    error: msg,
+    message: msg,
+  });
 }
 
 // ─── Generate payment link for a deal ────────────────────────────────────────
@@ -188,38 +263,18 @@ router.post('/process-payment/:token', async (req, res) => {
 
     const requestOptions = { idempotencyKey: uuid() };
 
-    const orderResult = await orderApi.create({ body, requestOptions });
-
-    const status = orderResult?.status;
-    const orderId = orderResult?.id;
-    const statusDetail = orderResult?.status_detail;
-
-    if (status === 'processed' || status === 'approved' || statusDetail === 'accredited') {
-      await run(
-        `UPDATE crm_deals
-         SET mp_order_id = ?, mp_payment_token = NULL, payment_status = 'paid', stage = 'completado'
-         WHERE id = ?`,
-        [orderId || null, row.id],
-      );
-      return res.json({ success: true, status, orderId });
+    try {
+      const orderResult = await orderApi.create({ body, requestOptions });
+      return handleOrderResponse(orderResult, row, res);
+    } catch (mpErr) {
+      console.error('MP process-payment error:', JSON.stringify(mpErr, null, 2));
+      if (mpErr?.data) {
+        return handleOrderResponse(mpErr.data, row, res, mpErr);
+      }
+      return res.status(500).json({ error: extractMpError(mpErr) });
     }
-
-    if (status === 'requires_action') {
-      const txn = orderResult?.transactions?.payments?.[0];
-      const actionUrl = txn?.payment_method?.transaction_security?.url;
-      await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
-      return res.json({ success: false, status, requiresAction: true, actionUrl });
-    }
-
-    const txnError = orderResult?.transactions?.payments?.[0]?.status_detail;
-    res.json({
-      success: false,
-      status,
-      orderId,
-      message: txnError || statusDetail || 'Pago no aprobado. Intenta con otra tarjeta.',
-    });
   } catch (err) {
-    console.error('MP process-payment error:', err);
+    console.error('MP process-payment fatal:', err);
     res.status(500).json({ error: extractMpError(err) });
   }
 });
