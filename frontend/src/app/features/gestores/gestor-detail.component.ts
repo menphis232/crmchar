@@ -16,6 +16,7 @@ import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
 import { PageBlock, PageBuilderConfig } from '../../models';
 import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
+import { toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
 
 @Component({
   selector: 'app-gestor-detail',
@@ -51,9 +52,10 @@ export class GestorDetailComponent implements OnInit {
   constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient) {}
 
   safeMapUrl = computed(() => {
-    const raw = this.gestor()?.mapEmbedUrl;
-    if (!raw) return null;
-    const url = this.toEmbedUrl(raw);
+    const g = this.gestor();
+    const raw = g?.mapEmbedUrl;
+    if (!raw && !g?.address) return null;
+    const url = toGoogleMapsEmbedUrl(raw || '', g?.address || undefined);
     return url ? this.sanitizer.bypassSecurityTrustResourceUrl(url) : null;
   });
 
@@ -66,32 +68,6 @@ export class GestorDetailComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
-  }
-
-  private toEmbedUrl(url: string): string | null {
-    const s = url.trim();
-    if (!s) return null;
-    if (s.includes('openstreetmap.org/export/embed')) return s;
-    if (s.includes('output=embed')) return s;
-    if (s.includes('maps/embed')) return s;
-    if (s.includes('google.com/maps') || s.includes('goo.gl/maps') || s.includes('maps.google')) {
-      const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
-      if (coordMatch) {
-        const [, lat, lng] = coordMatch;
-        return `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
-      }
-      const placeMatch = s.match(/\/place\/([^/@?&]+)/);
-      if (placeMatch) {
-        const q = encodeURIComponent(placeMatch[1].replace(/\+/g, ' '));
-        return `https://maps.google.com/maps?q=${q}&output=embed`;
-      }
-      const qMatch = s.match(/[?&]q=([^&]+)/);
-      if (qMatch) {
-        return `https://maps.google.com/maps?q=${qMatch[1]}&output=embed`;
-      }
-    }
-    if (s.startsWith('https://')) return s;
-    return null;
   }
 
   whatsappLink(g: Gestor) {

@@ -23,6 +23,7 @@ import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
 import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
+import { googleEmbedFromAddress, googleEmbedFromCoords, toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
 import {
   LucideBot,
   LucideCamera,
@@ -290,7 +291,7 @@ export class PanelGestorComponent implements OnInit {
       this.mapSearchQuery = p.address || '';
       this.gestorGalleryImages = [...(p.galleryImages || [])].slice(0, this.gestorGalleryMax);
       this.profileBannerUrl = p.bannerUrl || '';
-      const embed = this.toOsmEmbedUrl(this.gestorMapEmbedUrl);
+      const embed = toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
     this.auth.getMe().subscribe(res => {
@@ -621,7 +622,7 @@ export class PanelGestorComponent implements OnInit {
       state: location || undefined,
       phone: this.gestorPhone || undefined,
       address: this.gestorAddress || undefined,
-      mapEmbedUrl: this.gestorMapEmbedUrl || undefined,
+      mapEmbedUrl: toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress) || undefined,
       photoUrl: this.profileLogoUrl || undefined,
       bannerUrl: this.profileBannerUrl || undefined,
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
@@ -776,20 +777,14 @@ export class PanelGestorComponent implements OnInit {
     });
   }
 
-  private toOsmEmbedUrl(url: string): string | null {
-    const s = url.trim();
-    if (!s) return null;
-    if (s.includes('openstreetmap.org/export/embed')) return s;
-    if (s.includes('maps.google.com') && s.includes('output=embed')) return s;
-    if (s.includes('maps/embed')) return s;
-    const coordMatch = s.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || s.match(/[?&]q=(-?\d+\.\d+),(-?\d+\.\d+)/);
-    if (coordMatch) {
-      const lat = parseFloat(coordMatch[1]);
-      const lng = parseFloat(coordMatch[2]);
-      const delta = 0.008;
-      return `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
+  private applyGoogleMapsEmbed(address: string) {
+    const googleUrl = googleEmbedFromAddress(address);
+    this.gestorMapEmbedUrl = googleUrl;
+    this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(googleUrl));
+    this.mapFoundLabel.set(address);
+    if (!this.gestorAddress) {
+      this.gestorAddress = address;
     }
-    return null;
   }
 
   searchAddress() {
@@ -810,10 +805,9 @@ export class PanelGestorComponent implements OnInit {
           const r = results[0];
           const lat = parseFloat(r.lat);
           const lng = parseFloat(r.lon);
-          const delta = 0.008;
-          const osmUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - delta},${lat - delta},${lng + delta},${lat + delta}&layer=mapnik&marker=${lat},${lng}`;
-          this.gestorMapEmbedUrl = osmUrl;
-          this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(osmUrl));
+          const googleUrl = googleEmbedFromCoords(lat, lng);
+          this.gestorMapEmbedUrl = googleUrl;
+          this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(googleUrl));
           this.mapFoundLabel.set(r.display_name);
           if (!this.gestorAddress) {
             this.gestorAddress = r.display_name.split(',').slice(0, 3).join(',').trim();
@@ -827,16 +821,6 @@ export class PanelGestorComponent implements OnInit {
         this.applyGoogleMapsEmbed(q);
       },
     });
-  }
-
-  private applyGoogleMapsEmbed(address: string) {
-    const googleUrl = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed&hl=es`;
-    this.gestorMapEmbedUrl = googleUrl;
-    this.mapPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(googleUrl));
-    this.mapFoundLabel.set(address);
-    if (!this.gestorAddress) {
-      this.gestorAddress = address;
-    }
   }
 
   onGalleryImagesSelected(event: Event) {
