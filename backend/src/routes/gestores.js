@@ -105,9 +105,10 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     let slugUpdate = null;
     if (name !== undefined && name !== null) {
       const trimmedName = String(name).trim();
-      if (trimmedName && trimmedName !== row.name) {
+      if (trimmedName) {
         const baseSlug = slugify(trimmedName) || 'gestor';
-        slugUpdate = await uniqueGestorSlug(get, baseSlug, row.id);
+        const nextSlug = await uniqueGestorSlug(get, baseSlug, row.id);
+        if (nextSlug !== row.slug) slugUpdate = nextSlug;
       }
     }
     

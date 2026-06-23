@@ -626,8 +626,8 @@ export class PanelGestorComponent implements OnInit {
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
     }).subscribe({
       next: p => {
-        this.publicSlug = p.slug || this.publicSlug;
-        this.profile.set({ ...this.profile()!, ...p, name: name || p.name });
+        this.publicSlug = p.slug || '';
+        this.profile.set({ ...this.profile()!, ...p, slug: p.slug || '', name: name || p.name });
         this.auth.getMe().subscribe({
           next: (res) => {
             const syncedBuilder = this.syncPageBuilderWithProfile(
