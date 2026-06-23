@@ -113,8 +113,8 @@ export class PageBuilderComponent implements OnInit {
           { id: `block-${Date.now()}-2`, type: 'stats' as const, region: 'main' as const, data: { showRating: true, showCount: true, showExperience: true } },
           {
             id: `block-${Date.now()}-3`,
-            type: 'text',
-            region: 'main',
+            type: 'text' as const,
+            region: 'main' as const,
             data: { content: this.profile.bio || this.profile.description || 'Bienvenido...' },
           },
           { id: `block-${Date.now()}-4`, type: 'services' as const, region: 'main' as const, data: { title: 'Servicios y Tarifas', showPrices: true } },
@@ -124,14 +124,14 @@ export class PageBuilderComponent implements OnInit {
         ]),
         {
           id: `block-${Date.now()}-6`,
-          type: 'tracker',
-          region: 'sidebar',
+          type: 'tracker' as const,
+          region: 'sidebar' as const,
           data: { title: 'Rastrea tu Trámite', subtitle: 'Ingresa tu código de seguimiento actual.' }
         },
         {
           id: `block-${Date.now()}-7`,
-          type: 'form',
-          region: 'sidebar',
+          type: 'form' as const,
+          region: 'sidebar' as const,
           data: { title: '¿Necesitas ayuda?', subtitle: 'Cotiza sin compromiso.' }
         }
       ];
