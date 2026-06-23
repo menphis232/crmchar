@@ -209,10 +209,6 @@
             <p class="bio">{{ g.bio }}</p>
           }
 
-          @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
-          }
-
           <h3 class="section-title">Servicios y Tarifas</h3>
           <div class="services-list">
             @for (s of g.services; track s.id) {
@@ -239,6 +235,10 @@
               </div>
             }
           </div>
+
+          @if (g.galleryImages?.length) {
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
+          }
 
           @if (g.reviews?.length || g.reviewCount) {
             <app-gestor-reviews-section

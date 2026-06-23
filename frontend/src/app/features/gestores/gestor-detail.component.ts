@@ -100,7 +100,7 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
 
-  /** Orden fijo en ficha pública: stats → descripción → galería → servicios → reseñas. */
+  /** Orden fijo en ficha pública: stats → descripción → servicios → galería → reseñas. */
   orderedMainBlocks(config: PageBuilderConfig, g: Gestor): PageBlock[] {
     const blocks = (config.blocks ?? []).filter(b => b.region !== 'sidebar' && b.type !== 'hero');
     const pick = (type: PageBlock['type']) => blocks.filter(b => b.type === type);
@@ -129,8 +129,8 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     return [
       ...pick('stats'),
       ...textBlocks,
-      ...galleryBlocks,
       ...pick('services'),
+      ...galleryBlocks,
       ...pick('reviews'),
     ];
   }
