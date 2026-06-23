@@ -166,6 +166,10 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges, OnD
   private loadImage(file: File) {
     const url = URL.createObjectURL(file);
     this.img.onload = () => { URL.revokeObjectURL(url); this.setupCanvas(); };
+    this.img.onerror = () => {
+      URL.revokeObjectURL(url);
+      this.cancelled.emit();
+    };
     this.img.src = url;
   }
 

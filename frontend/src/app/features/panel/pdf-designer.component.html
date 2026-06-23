@@ -23,7 +23,7 @@
       <div class="form-group pdf-logo-group">
         <label>Logo para cotizaciones PDF</label>
         <p class="pdf-logo-hint">
-          Opcional. Si no subes uno aquí, se usará el logo de tu perfil; si tampoco tienes, el de Trámites Vehiculares de México.
+          Opcional. Si no subes uno aquí, se usará el logo de tu perfil; si tampoco tienes, el de Trámites Vehiculares de México. Puedes recortarlo y ajustar el zoom antes de guardarlo.
         </p>
         <div class="pdf-logo-preview-box">
           <div class="pdf-logo-frame">
@@ -40,10 +40,10 @@
           }
         </p>
         <div class="pdf-logo-actions">
-          <label class="btn btn-ghost small pdf-logo-upload-btn" [class.loading]="isUploadingLogo()">
-            <input type="file" accept="image/*" style="display:none" (change)="onPdfLogoSelected($event)">
+          <input type="file" accept="image/jpeg,image/png,image/webp" (change)="onPdfLogoSelected($event)" #pdfLogoInput style="display:none">
+          <button type="button" class="btn btn-ghost small" [disabled]="isUploadingLogo()" (click)="pdfLogoInput.click()">
             {{ isUploadingLogo() ? 'Subiendo...' : (pdfLogoUrl() ? 'Cambiar logo PDF' : 'Subir logo PDF') }}
-          </label>
+          </button>
           @if (pdfLogoUrl()) {
             <button type="button" class="btn btn-ghost small" (click)="clearPdfLogo()">Usar logo del perfil</button>
           }
@@ -168,3 +168,14 @@
     </div>
   </div>
 </div>
+
+@if (pdfLogoCropFile()) {
+  <app-image-cropper-modal
+    [imageFile]="pdfLogoCropFile()!"
+    [aspect]="pdfLogoAspect"
+    [outputMax]="pdfLogoOutputMax"
+    mode="rect"
+    (cropped)="onPdfLogoCropConfirmed($event)"
+    (cancelled)="onPdfLogoCropCancelled()"
+  />
+}

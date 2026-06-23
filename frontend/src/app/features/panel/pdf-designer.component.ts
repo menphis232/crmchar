@@ -6,6 +6,8 @@ import { AuthService } from '../../core/auth.service';
 import { UploadService } from '../../core/api.service';
 import { ColorPickerComponent } from '../../shared/color-picker.component';
 import { TVM_LOGO_URL } from '../../shared/brand.constants';
+import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
+import { GESTOR_LOGO_ASPECT } from '../../shared/gestor-media.constants';
 
 export interface PdfBlockDef {
   id: string;
@@ -59,7 +61,7 @@ function normalizeLayout(layout: string[], role?: string): string[] {
 @Component({
   selector: 'app-pdf-designer',
   standalone: true,
-  imports: [DragDropModule, FormsModule, CommonModule, ColorPickerComponent],
+  imports: [DragDropModule, FormsModule, CommonModule, ColorPickerComponent, ImageCropperModalComponent],
   templateUrl: './pdf-designer.component.html',
   styleUrl: './pdf-designer.component.css'
 })
@@ -75,6 +77,9 @@ export class PdfDesignerComponent implements OnInit {
   primaryColor = signal('#c8a94a');
   footerText = signal(CONCESIONARIA_DEFAULT_FOOTER);
   pdfLogoUrl = signal<string | null>(null);
+  pdfLogoCropFile = signal<File | null>(null);
+  readonly pdfLogoAspect = GESTOR_LOGO_ASPECT;
+  readonly pdfLogoOutputMax = 512;
   isSaving = signal(false);
   isUploadingLogo = signal(false);
   message = signal('');
@@ -135,31 +140,41 @@ export class PdfDesignerComponent implements OnInit {
   onPdfLogoSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file || !file.type.startsWith('image/')) {
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
       this.message.set('Selecciona una imagen (JPG, PNG o WebP).');
       setTimeout(() => this.message.set(''), 3000);
-      input.value = '';
       return;
     }
+    this.pdfLogoCropFile.set(file);
+  }
 
+  onPdfLogoCropConfirmed(result: CropResult) {
+    const file = new File([result.blob], 'pdf-logo.jpg', { type: 'image/jpeg' });
+    this.pdfLogoCropFile.set(null);
     this.isUploadingLogo.set(true);
     this.uploadService.uploadFile(file).subscribe({
       next: res => {
         this.pdfLogoUrl.set(res.url);
         this.isUploadingLogo.set(false);
-        input.value = '';
+        this.save();
       },
-      error: () => {
+      error: err => {
         this.isUploadingLogo.set(false);
-        this.message.set('Error al subir el logo.');
-        setTimeout(() => this.message.set(''), 3000);
-        input.value = '';
+        this.message.set(err?.error?.error || 'Error al subir el logo.');
+        setTimeout(() => this.message.set(''), 4000);
       },
     });
   }
 
+  onPdfLogoCropCancelled() {
+    this.pdfLogoCropFile.set(null);
+  }
+
   clearPdfLogo() {
     this.pdfLogoUrl.set(null);
+    this.save();
   }
 
   save() {
