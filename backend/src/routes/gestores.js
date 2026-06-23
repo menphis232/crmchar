@@ -4,6 +4,7 @@ import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
 import { createDealFromSolicitud } from '../crm/helpers.js';
+import { pipelineStagesForUser } from '../crm/stages.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { callAIProvider } from '../utils/ai_helper.js';
@@ -617,7 +618,7 @@ router.get('/:slugOrId/track/:code', async (req, res) => {
       title: deal.title,
       stage: deal.stage,
       updatedAt: deal.updated_at,
-      stages: user?.crm_stages ? JSON.parse(user.crm_stages) : null
+      stages: user?.crm_stages ? pipelineStagesForUser('gestor', user.crm_stages) : null,
     });
   } catch (err) {
     console.error(err);
