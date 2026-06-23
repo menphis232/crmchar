@@ -920,6 +920,25 @@ async function migrate() {
       console.log('Migración v42 (deal invoices) aplicada.');
     }
 
+    const v43Path = path.join(__dirname, '..', 'sql', 'migration-v43-client-wallet.sql');
+    if (fs.existsSync(v43Path)) {
+      const v43 = fs.readFileSync(v43Path, 'utf8');
+      const conn43 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn43.query('USE tramites_vehiculares');
+      for (const stmt of v43.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn43.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn43.end();
+      console.log('Migración v43 (client wallet) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

@@ -20,6 +20,10 @@ const router = Router();
  */
 router.get('/config', authRequired, async (req, res) => {
   try {
+    if (req.user.role === 'cliente') {
+      const admin = await get("SELECT ai_provider FROM users WHERE role = 'admin' LIMIT 1");
+      return res.json({ provider: admin?.ai_provider || null });
+    }
     const userRow = await get("SELECT ai_provider FROM users WHERE id = ?", [req.user.id]);
     if (userRow?.ai_provider) {
       return res.json({ provider: userRow.ai_provider });
@@ -85,6 +89,99 @@ router.post('/chat', authRequired, async (req, res) => {
     const validConfigs = aiConfigs.filter(c => c.provider && c.key);
     if (!validConfigs.length) {
       return res.status(400).json({ error: 'No se encontraron configuraciones de IA válidas.' });
+    }
+
+    // ── ASISTENTE LEGAL PARA CLIENTES ──────────────────
+    if (userRole === 'cliente') {
+      const clientDeals = await query(`
+        SELECT d.id, d.title, d.stage, d.tracking_code, d.updated_at, g.name as gestor_name
+        FROM crm_deals d
+        JOIN contacts c ON c.id = d.contact_id
+        LEFT JOIN gestores g ON g.user_id = d.user_id
+        WHERE c.email = ?
+        ORDER BY d.updated_at DESC LIMIT 20
+      `, [req.user.email]);
+
+      const activeDeals = clientDeals.filter(d => !['completado', 'vendido', 'perdido'].includes(d.stage));
+      const dealsContext = clientDeals.length
+        ? clientDeals.map(d => `- ${d.title} | Gestoría: ${d.gestor_name || 'N/A'} | Etapa: ${d.stage} | Código: ${d.tracking_code || 'N/A'}`).join('\n')
+        : '(Sin trámites registrados)';
+
+      const systemPrompt = `Eres LEGALIA, asistente legal vehicular especializado en trámites y regulaciones de tránsito de México.
+Tu conocimiento cubre la Ley General de Movilidad y Seguridad Vial, el Reglamento General de Tránsito, normativa de la Secretaría de Movilidad, REPUVE, verificación vehicular, tenencia, refrendo, cambio de propietario, altas y bajas de placas, placas foráneas, legalización de vehículos, adeudos vehiculares, engomado y holograma, seguros obligatorios, y regulaciones estatales de los 32 estados (Aguascalientes, Baja California, Baja California Sur, Campeche, Chiapas, Chihuahua, Ciudad de México, Coahuila, Colima, Durango, Estado de México, Guanajuato, Guerrero, Hidalgo, Jalisco, Michoacán, Morelos, Nayarit, Nuevo León, Oaxaca, Puebla, Querétaro, Quintana Roo, San Luis Potosí, Sinaloa, Sonora, Tabasco, Tamaulipas, Tlaxcala, Veracruz, Yucatán, Zacatecas).
+
+REGLAS:
+- Responde SIEMPRE en español mexicano, claro y accesible para personas sin conocimiento legal.
+- Cuando la normativa varíe por estado, indícalo explícitamente y menciona el estado relevante.
+- Cita leyes, reglamentos o artículos cuando sea posible (ej. Ley de Movilidad del Estado de México, Reglamento de Tránsito de Jalisco).
+- Si no tienes certeza sobre una tarifa, plazo o requisito específico actualizado, dilo y recomienda verificar en la oficialía o con su gestoría.
+- NO des asesoría legal vinculante; aclara que es orientación informativa.
+- Puedes explicar documentos requeridos, costos aproximados, tiempos de trámite y pasos generales.
+- Si preguntan por sus trámites en la plataforma, usa los datos abajo.
+- NO ejecutes acciones del sistema ni inventes datos de trámites.
+
+TRÁMITES DEL USUARIO (${clientDeals.length} total, ${activeDeals.length} activos):
+${dealsContext}
+
+Fecha: ${new Date().toLocaleDateString('es-MX')}`;
+
+      let reply = '';
+      let lastGlobalError = null;
+      const geminiHistory = history.map(h => ({
+        role: (h.role === 'assistant' || h.role === 'model') ? 'model' : 'user',
+        parts: [{ text: h.content }],
+      }));
+      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') geminiHistory.shift();
+
+      keyLoop: for (const cfg of validConfigs) {
+        const { provider, key } = cfg;
+        if (provider === 'gemini') {
+          const { GoogleGenerativeAI } = await import('@google/generative-ai');
+          const modelsToTry = ['gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-pro-latest'];
+          const genAI = new GoogleGenerativeAI(key);
+          for (const modelName of modelsToTry) {
+            try {
+              const model = genAI.getGenerativeModel({ model: modelName, systemInstruction: systemPrompt });
+              const chat = model.startChat({ history: geminiHistory, generationConfig: { temperature: 0.5, maxOutputTokens: 1800 } });
+              const result = await chat.sendMessage(message);
+              reply = result.response.text();
+              break keyLoop;
+            } catch (err) {
+              lastGlobalError = err;
+              if (err.message?.includes('404')) continue;
+              break;
+            }
+          }
+        } else if (provider === 'openai' || provider === 'deepseek') {
+          const endpoint = provider === 'deepseek' ? 'https://api.deepseek.com/chat/completions' : 'https://api.openai.com/v1/chat/completions';
+          const modelName = provider === 'deepseek' ? 'deepseek-chat' : 'gpt-4o-mini';
+          try {
+            const response = await fetch(endpoint, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+              body: JSON.stringify({
+                model: modelName,
+                messages: [
+                  { role: 'system', content: systemPrompt },
+                  ...history.map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content })),
+                  { role: 'user', content: message },
+                ],
+                max_tokens: 1800,
+                temperature: 0.5,
+              }),
+            });
+            if (!response.ok) { lastGlobalError = new Error(await response.text()); continue; }
+            const data = await response.json();
+            reply = data.choices?.[0]?.message?.content || '';
+            break keyLoop;
+          } catch (err) { lastGlobalError = err; continue; }
+        }
+      }
+
+      if (!reply) {
+        return res.status(502).json({ error: 'Error al conectar con IA. ' + (lastGlobalError?.message || '') });
+      }
+      return res.json({ reply });
     }
 
     // ── DATOS DEL NEGOCIO ──────────────────────────────

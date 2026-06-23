@@ -53,6 +53,13 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
     { emoji: '👥', title: 'Usuarios', speech: 'Gestiona usuarios, contraseñas y audita conversaciones.', selector: '.dash-sidebar .dash-link:nth-of-type(2)', mood: 'thinking', gesture: 'wiggle' },
     { emoji: '🎉', title: '¡Listo!', speech: 'Tienes el control total. ¡Aquí estoy si necesitas ayuda!', selector: '', mood: 'happy', gesture: 'bounce' },
   ],
+  cliente: [
+    { emoji: '⚖️', title: 'Asistente Legal', speech: 'Soy LEGALIA, tu asistente en leyes de tránsito de México. Pregúntame sobre trámites, documentos o regulaciones de cualquier estado.', selector: '', mood: 'wave', gesture: 'bounce' },
+    { emoji: '📋', title: 'Mis Trámites', speech: 'Aquí ves tus trámites activos y puedes chatear con tu gestoría.', selector: '', mood: 'happy', gesture: 'point' },
+    { emoji: '📁', title: 'Billetera', speech: 'Guarda tus documentos personales para tenerlos listos cuando los necesites.', selector: '', mood: 'excited', gesture: 'bounce' },
+    { emoji: '📜', title: 'Historial', speech: 'Consulta todos tus trámites cerrados con buscador y paginación.', selector: '', mood: 'happy', gesture: 'wiggle' },
+    { emoji: '🎉', title: '¡Listo!', speech: '¡Eso es todo! Escríbeme si tienes dudas sobre trámites vehiculares.', selector: '', mood: 'happy', gesture: 'jump' },
+  ],
 };
 
 const QUICK_QUESTIONS: Record<string, string[]> = {
@@ -73,6 +80,12 @@ const QUICK_QUESTIONS: Record<string, string[]> = {
     '¿Cómo configuro la API de IA global?',
     '¿Cómo personalizo el sitio?',
   ],
+  cliente: [
+    '¿Qué documentos necesito para cambio de propietario?',
+    '¿Cuál es el costo del refrendo vehicular?',
+    '¿Qué es la verificación vehicular y cuándo la necesito?',
+    '¿Cuáles son mis trámites activos?',
+  ],
 };
 
 @Component({
@@ -83,7 +96,7 @@ const QUICK_QUESTIONS: Record<string, string[]> = {
   styleUrl: './ai-assistant.component.css',
 })
 export class AiAssistantComponent implements OnInit, OnDestroy {
-  @Input() panelRole: 'gestor' | 'concesionaria' | 'admin' = 'gestor';
+  @Input() panelRole: 'gestor' | 'concesionaria' | 'admin' | 'cliente' = 'gestor';
 
   private http = inject(HttpClient);
   private auth = inject(AuthService);
@@ -124,11 +137,16 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   isEnabled = computed(() => {
     const u = this.auth.user();
     if (!u) return false;
+    if (this.panelRole === 'cliente') return this.hasAi();
     const val = u.panel_assistant_enabled;
     return val === undefined || val === null || val === true || val === 1;
   });
 
-  assistantName = computed(() => this.auth.user()?.panel_assistant_name?.trim() || 'VEGA');
+  assistantName = computed(() => {
+    const custom = this.auth.user()?.panel_assistant_name?.trim();
+    if (custom) return custom;
+    return this.panelRole === 'cliente' ? 'LEGALIA' : 'VEGA';
+  });
   bgColor = computed(() => this.auth.user()?.panel_assistant_bg_color || '#0f172a');
   btnColor = computed(() => this.auth.user()?.panel_assistant_btn_color || '#4F46E5');
   textColor = computed(() => this.auth.user()?.panel_assistant_text_color || '#FFFFFF');
@@ -172,6 +190,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   }
 
   private welcomeMessage() {
+    if (this.panelRole === 'cliente') {
+      return `¡Hola! Soy ${this.assistantName()}, tu asistente legal vehicular. Pregúntame sobre leyes de tránsito, trámites vehiculares y regulaciones de cualquier estado de México.`;
+    }
     return `¡Hola! Soy ${this.assistantName()}. Pregúntame lo que quieras sobre el panel.`;
   }
 
@@ -193,6 +214,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private checkAndStartTour() {
     if (!this.isEnabled()) return;
+    if (this.panelRole === 'cliente') return;
     const done = localStorage.getItem(this.TOUR_KEY());
     if (!done) this.startTour();
   }
@@ -305,9 +327,15 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
     const history = this.messages().slice(-10).map(m => ({ role: m.role, content: m.content }));
     const roleName = this.panelRole === 'gestor' ? 'Gestor de Trámites'
-      : this.panelRole === 'concesionaria' ? 'Concesionaria' : 'Administrador';
+      : this.panelRole === 'concesionaria' ? 'Concesionaria'
+      : this.panelRole === 'cliente' ? 'Cliente'
+      : 'Administrador';
 
-    const context = `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
+    const context = this.panelRole === 'cliente'
+      ? `Eres ${this.assistantName()}, asistente legal vehicular especializado en leyes de tránsito de México (todos los estados).
+Responde en español mexicano, claro y accesible. Orienta sobre trámites, documentos, costos y plazos.
+Aclara que es orientación informativa, no asesoría legal vinculante.`
+      : `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
 Responde en español mexicano, breve y amigable. Usa emojis ocasionalmente.
 Tienes acceso en tiempo real a datos del negocio: inventario, leads activos, finanzas (ingresos, gastos, balance) y perfil del usuario.
 Puedes ejecutar acciones directamente: crear leads, registrar ingresos/gastos, agregar vehículos al inventario, actualizar el perfil, enviar correos y mensajes de chat.

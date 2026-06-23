@@ -12,6 +12,44 @@ const uploadDir = path.join(__dirname, '..', '..', 'uploads');
 const router = Router();
 
 import { pipelineStagesForUser } from '../crm/stages.js';
+import { isDealClosed } from '../crm/deal-status.js';
+
+const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
+
+const DEALS_SELECT = `
+  SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, d.updated_at,
+         g.name as gestor_name, d.deal_type, d.tracking_code,
+         d.payment_status, gs.required_documents, u.role as owner_role, u.crm_stages,
+         di.id as invoice_id, di.invoice_number, di.pdf_url as invoice_pdf_url,
+         di.amount as invoice_amount, di.created_at as invoice_date
+  FROM crm_deals d
+  LEFT JOIN gestores g ON g.user_id = d.user_id
+  LEFT JOIN gestor_services gs ON gs.gestor_id = g.id AND gs.name = d.title
+  JOIN contacts c ON c.id = d.contact_id
+  LEFT JOIN users u ON u.id = d.user_id
+  LEFT JOIN deal_invoices di ON di.deal_id = d.id
+  WHERE c.email = ?
+`;
+
+function mapDealRow(d) {
+  try {
+    d.required_documents = typeof d.required_documents === 'string'
+      ? JSON.parse(d.required_documents)
+      : (d.required_documents || DEFAULT_REQUIRED_DOCS);
+  } catch {
+    d.required_documents = DEFAULT_REQUIRED_DOCS;
+  }
+  d.pipeline_stages = pipelineStagesForUser(d.owner_role || 'gestor', d.crm_stages);
+  d.is_closed = isDealClosed(d);
+  delete d.crm_stages;
+  delete d.owner_role;
+  return d;
+}
+
+async function fetchClientDeals(email) {
+  const rows = await query(`${DEALS_SELECT} ORDER BY d.updated_at DESC`, [email]);
+  return rows.map(mapDealRow);
+}
 
 async function clientOwnsDeal(email, dealId) {
   const row = await get(
@@ -23,30 +61,47 @@ async function clientOwnsDeal(email, dealId) {
   return !!row;
 }
 
-// Get all deals for the client
+// Stats for dashboard
+router.get('/deals/stats', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const deals = await fetchClientDeals(req.user.email);
+    const active = deals.filter(d => !d.is_closed).length;
+    const closed = deals.filter(d => d.is_closed).length;
+    res.json({ total: deals.length, active, closed });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener estadísticas' });
+  }
+});
+
+// Get deals — supports ?status=active|closed|all&page=1&limit=10&q=search
 router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const deals = await query(`
-      SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, g.name as gestor_name, d.deal_type, d.tracking_code,
-             d.payment_status, gs.required_documents, u.role as owner_role, u.crm_stages,
-             di.id as invoice_id, di.invoice_number, di.pdf_url as invoice_pdf_url, di.amount as invoice_amount, di.created_at as invoice_date
-      FROM crm_deals d
-      LEFT JOIN gestores g ON g.user_id = d.user_id
-      LEFT JOIN gestor_services gs ON gs.gestor_id = g.id AND gs.name = d.title
-      JOIN contacts c ON c.id = d.contact_id
-      LEFT JOIN users u ON u.id = d.user_id
-      LEFT JOIN deal_invoices di ON di.deal_id = d.id
-      WHERE c.email = ?
-      ORDER BY d.created_at DESC
-    `, [req.user.email]);
-    
-    deals.forEach(d => {
-      try { d.required_documents = typeof d.required_documents === 'string' ? JSON.parse(d.required_documents) : (d.required_documents || ['INE', 'Tarjeta de Circulación', 'Factura de Origen']); } catch(e) { d.required_documents = ['INE', 'Tarjeta de Circulación', 'Factura de Origen']; }
-      d.pipeline_stages = pipelineStagesForUser(d.owner_role || 'gestor', d.crm_stages);
-      delete d.crm_stages;
-      delete d.owner_role;
-    });
-    res.json(deals);
+    const { status = 'all', q = '' } = req.query;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const search = String(q).trim().toLowerCase();
+
+    let deals = await fetchClientDeals(req.user.email);
+
+    if (status === 'active') deals = deals.filter(d => !d.is_closed);
+    else if (status === 'closed') deals = deals.filter(d => d.is_closed);
+
+    if (search) {
+      deals = deals.filter(d =>
+        (d.title || '').toLowerCase().includes(search)
+        || (d.gestor_name || '').toLowerCase().includes(search)
+        || (d.tracking_code || '').toLowerCase().includes(search)
+        || (d.stage || '').toLowerCase().includes(search),
+      );
+    }
+
+    const total = deals.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const offset = (page - 1) * limit;
+    const items = deals.slice(offset, offset + limit);
+
+    res.json({ items, total, page, limit, totalPages });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener trámites' });
@@ -54,8 +109,11 @@ router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
 });
 
 // Get chat messages for a deal
-router.get('/deals/:id/messages', authRequired, async (req, res) => {
+router.get('/deals/:id/messages', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Trámite no encontrado' });
+    }
     const messages = await query(`
       SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
       FROM chat_messages m
@@ -71,8 +129,11 @@ router.get('/deals/:id/messages', authRequired, async (req, res) => {
 });
 
 // Send a chat message
-router.post('/deals/:id/messages', authRequired, async (req, res) => {
+router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Trámite no encontrado' });
+    }
     const { message, fileUrl } = req.body;
     if (!message && !fileUrl) {
       return res.status(400).json({ error: 'Mensaje vacío' });
@@ -182,8 +243,11 @@ router.get('/deals/:id/invoice', authRequired, requireRole('cliente'), async (re
 });
 
 // Get documents for a deal
-router.get('/deals/:id/documents', authRequired, async (req, res) => {
+router.get('/deals/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Trámite no encontrado' });
+    }
     const docs = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
     res.json(docs);
   } catch (err) {
@@ -192,8 +256,11 @@ router.get('/deals/:id/documents', authRequired, async (req, res) => {
 });
 
 // Upload a document and perform OCR
-router.post('/deals/:id/documents', authRequired, async (req, res) => {
+router.post('/deals/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Trámite no encontrado' });
+    }
     const { documentType, fileUrl } = req.body;
     if (!documentType || !fileUrl) return res.status(400).json({ error: 'Datos incompletos' });
 
@@ -269,6 +336,56 @@ No incluyas markdown como \`\`\`json.`;
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al procesar documento' });
+  }
+});
+
+// ── Billetera de documentos personales ──────────────────
+
+router.get('/wallet', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const docs = await query(
+      'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
+      [req.user.id],
+    );
+    res.json(docs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener documentos' });
+  }
+});
+
+router.post('/wallet', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const { label, category, fileUrl, notes } = req.body;
+    if (!label?.trim() || !fileUrl) {
+      return res.status(400).json({ error: 'Nombre y archivo requeridos' });
+    }
+    const id = uuid();
+    await run(
+      `INSERT INTO client_wallet_documents (id, user_id, label, category, file_url, notes)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, req.user.id, label.trim(), category?.trim() || 'Otro', fileUrl, notes?.trim() || null],
+    );
+    const doc = await get('SELECT * FROM client_wallet_documents WHERE id = ?', [id]);
+    res.status(201).json(doc);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar documento' });
+  }
+});
+
+router.delete('/wallet/:id', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const doc = await get(
+      'SELECT id FROM client_wallet_documents WHERE id = ? AND user_id = ?',
+      [req.params.id, req.user.id],
+    );
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado' });
+    await run('DELETE FROM client_wallet_documents WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar documento' });
   }
 });
 

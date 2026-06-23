@@ -39,25 +39,39 @@
       </div>
     </div>
 
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'dashboard'" (click)="activeTab.set('dashboard'); isMobileMenuOpen.set(false)">
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'dashboard'" (click)="setTab('dashboard')">
       <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Dashboard
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="activeTab.set('tramites'); closeDeal(); isMobileMenuOpen.set(false)">
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="setTab('tramites'); closeDeal()">
       <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Mis Trámites
       @if (activeDeals() > 0) {
         <span class="kanban-count">{{ activeDeals() }}</span>
       }
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="activeTab.set('facturas'); closeDeal(); isMobileMenuOpen.set(false)">
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'historial'" (click)="setTab('historial'); closeDeal()">
+      <svg lucideHistory [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Historial
+      @if (completedDeals() > 0) {
+        <span class="kanban-count">{{ completedDeals() }}</span>
+      }
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'billetera'" (click)="setTab('billetera'); closeDeal()">
+      <svg lucideWallet [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Billetera
+      @if (walletDocs().length > 0) {
+        <span class="kanban-count">{{ walletDocs().length }}</span>
+      }
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="setTab('facturas'); closeDeal()">
       <svg lucideReceipt [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Facturas
       @if (allInvoices().length > 0) {
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="activeTab.set('ajustes'); isMobileMenuOpen.set(false)">
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="setTab('ajustes')">
       <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Ajustes
     </button>
@@ -71,18 +85,18 @@
           <svg lucideLayoutDashboard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           ¡Hola, {{ auth.user()?.name }}!
         </h2>
-        <p class="card-desc">Aquí está el resumen de tus trámites vehiculares.</p>
+        <p class="card-desc">Aquí está el resumen de tus trámites vehiculares. Usa LEGALIA (botón abajo a la derecha) para consultar leyes de tránsito.</p>
 
         <div class="stats-grid">
-          <div class="stat-box client-stat-click" (click)="activeTab.set('tramites'); closeDeal()">
+          <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
             <div class="stat-num">{{ totalDeals() }}</div>
             <div class="stat-label">Total de Trámites</div>
           </div>
-          <div class="stat-box">
+          <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
             <div class="stat-num">{{ activeDeals() }}</div>
             <div class="stat-label">En Proceso</div>
           </div>
-          <div class="stat-box">
+          <div class="stat-box client-stat-click" (click)="setTab('historial')">
             <div class="stat-num">{{ completedDeals() }}</div>
             <div class="stat-label">Completados</div>
           </div>
@@ -94,9 +108,9 @@
           <svg lucideClipboardList [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Trámites Recientes
         </h3>
-        @if (loading()) {
+        @if (dashboardLoading()) {
           <div class="client-empty">Cargando tus trámites...</div>
-        } @else if (deals().length === 0) {
+        } @else if (recentDeals().length === 0) {
           <div class="client-empty">
             <div class="client-empty-icon"><svg lucideInbox [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
             <strong>No tienes trámites aún</strong>
@@ -104,7 +118,7 @@
           </div>
         } @else {
           <div class="client-deals-grid">
-            @for (deal of deals().slice(0, 4); track deal.id) {
+            @for (deal of recentDeals(); track deal.id) {
               <button type="button" class="client-deal-card" (click)="openDeal(deal)">
                 <div class="client-deal-top">
                   <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
@@ -139,21 +153,28 @@
         <div class="dash-card">
           <h2 class="card-title card-title-with-icon">
             <svg lucideClipboardList [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-            Mis Trámites
+            Mis Trámites Activos
           </h2>
-          <p class="card-desc">Haz clic en un trámite para ver los detalles y chatear con tu gestor.</p>
+          <p class="card-desc">Trámites en curso. Haz clic para ver detalles y chatear con tu gestor.</p>
 
-          @if (loading()) {
+          <div class="client-search-bar">
+            <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+            <input type="text" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, gestoría o código..."
+                   (keyup.enter)="searchTramites()">
+            <button type="button" class="btn-copy small" (click)="searchTramites()">Buscar</button>
+          </div>
+
+          @if (tramitesLoading()) {
             <div class="client-empty">Cargando...</div>
-          } @else if (deals().length === 0) {
+          } @else if (tramitesList().length === 0) {
             <div class="client-empty">
               <div class="client-empty-icon"><svg lucideInbox [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
-              <strong>No tienes trámites aún</strong>
-              <p>Tus solicitudes de servicio aparecerán aquí.</p>
+              <strong>No tienes trámites activos</strong>
+              <p>Revisa el historial para trámites cerrados.</p>
             </div>
           } @else {
             <div class="client-deals-grid">
-              @for (deal of deals(); track deal.id) {
+              @for (deal of tramitesList(); track deal.id) {
                 <button type="button" class="client-deal-card" (click)="openDeal(deal)">
                   <div class="client-deal-top">
                     <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
@@ -169,6 +190,9 @@
                     <svg lucideMapPin [size]="12" aria-hidden="true"></svg>
                     {{ deal.gestor_name || 'Agencia' }}
                   </p>
+                  @if (deal.tracking_code) {
+                    <p class="client-deal-code">Código: {{ deal.tracking_code }}</p>
+                  }
                   <div class="client-progress">
                     <div class="client-progress-fill" [style.width.%]="stageProgress(deal)"></div>
                   </div>
@@ -179,191 +203,142 @@
                 </button>
               }
             </div>
+            @if (tramitesMeta().totalPages > 1) {
+              <div class="client-pagination">
+                <button type="button" class="btn-ghost small" [disabled]="tramitesMeta().page <= 1"
+                        (click)="loadTramites(tramitesMeta().page - 1)">
+                  <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg> Anterior
+                </button>
+                <span>Página {{ tramitesMeta().page }} de {{ tramitesMeta().totalPages }} ({{ tramitesMeta().total }} trámites)</span>
+                <button type="button" class="btn-ghost small" [disabled]="tramitesMeta().page >= tramitesMeta().totalPages"
+                        (click)="loadTramites(tramitesMeta().page + 1)">
+                  Siguiente <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
           }
         </div>
       } @else {
-        <div class="client-detail">
-          <button type="button" class="client-back-link" (click)="closeDeal()">
-            <svg lucideArrowLeft [size]="16" aria-hidden="true"></svg>
-            Volver a Mis Trámites
-          </button>
+        <ng-container *ngTemplateOutlet="dealDetail"></ng-container>
+      }
+    }
 
-          <div class="client-detail-hero dash-card">
-            <div class="client-detail-main">
-              <div class="client-detail-copy">
-                <p class="client-detail-eyebrow">Seguimiento de trámite</p>
-                <h2 class="client-detail-title">{{ selectedDeal().title }}</h2>
-                <div class="client-detail-meta">
-                  <span>Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
-                  <span class="client-detail-dot">·</span>
-                  <span>Código <code class="client-code">{{ selectedDeal().tracking_code }}</code></span>
-                </div>
-              </div>
-              <span class="client-badge large" [ngClass]="stageClass(selectedDeal())">{{ stageLabel(selectedDeal()) }}</span>
-            </div>
+    @if (activeTab() === 'historial') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideHistory [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Historial de Trámites
+        </h2>
+        <p class="card-desc">Todos tus trámites cerrados o completados.</p>
 
-            <div class="client-steps">
-              @for (step of pipelineStages(selectedDeal()); track step.id; let i = $index; let last = $last) {
-                <div class="client-step"
-                     [class.done]="stageIndex(selectedDeal()) > i"
-                     [class.current]="stageIndex(selectedDeal()) === i"
-                     [class.lost]="selectedDeal().stage === 'perdido' && stageIndex(selectedDeal()) === i">
-                  <div class="client-step-dot">
-                    @if (stageIndex(selectedDeal()) > i) {
-                      <svg lucideCheck [size]="14" aria-hidden="true"></svg>
-                    } @else {
-                      {{ i + 1 }}
-                    }
-                  </div>
-                  <span>{{ step.label }}</span>
-                </div>
-                @if (!last) {
-                  <div class="client-step-line" [class.done]="stageIndex(selectedDeal()) > i"></div>
-                }
-              }
-            </div>
+        <div class="client-search-bar">
+          <svg lucideSearch [size]="16" aria-hidden="true"></svg>
+          <input type="text" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, gestoría o código..."
+                 (keyup.enter)="searchHistorial()">
+          <button type="button" class="btn-copy small" (click)="searchHistorial()">Buscar</button>
+        </div>
+
+        @if (historialLoading()) {
+          <div class="client-empty">Cargando historial...</div>
+        } @else if (historialList().length === 0) {
+          <div class="client-empty">
+            <div class="client-empty-icon"><svg lucideHistory [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
+            <strong>Sin trámites en el historial</strong>
+            <p>Los trámites completados o cerrados aparecerán aquí.</p>
           </div>
-
-          <div class="client-detail-body dash-card">
-            <div class="client-tabs">
-              <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'chat'" (click)="dealTab.set('chat')">
-                <svg lucideMessageCircle [size]="14" aria-hidden="true"></svg>
-                Chat
+        } @else {
+          <div class="client-history-list">
+            @for (deal of historialList(); track deal.id) {
+              <button type="button" class="client-history-row" (click)="openDeal(deal)">
+                <div class="client-history-main">
+                  <strong>{{ deal.title }}</strong>
+                  <span>{{ deal.gestor_name || 'Agencia' }}</span>
+                  @if (deal.tracking_code) {
+                    <code class="client-code">{{ deal.tracking_code }}</code>
+                  }
+                </div>
+                <div class="client-history-side">
+                  <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                  <span class="client-history-date">{{ deal.updated_at || deal.created_at | date:'dd MMM yyyy' }}</span>
+                  <span class="client-deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                </div>
               </button>
-              <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'docs'" (click)="dealTab.set('docs')">
-                <svg lucideFileText [size]="14" aria-hidden="true"></svg>
-                Documentos
+            }
+          </div>
+          @if (historialMeta().totalPages > 1) {
+            <div class="client-pagination">
+              <button type="button" class="btn-ghost small" [disabled]="historialMeta().page <= 1"
+                      (click)="loadHistorial(historialMeta().page - 1)">
+                <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg> Anterior
               </button>
-              @if (isPaid(selectedDeal()) || dealInvoice()) {
-                <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'factura'" (click)="dealTab.set('factura')">
-                  <svg lucideReceipt [size]="14" aria-hidden="true"></svg>
-                  Factura
-                </button>
-              }
+              <span>Página {{ historialMeta().page }} de {{ historialMeta().totalPages }} ({{ historialMeta().total }} trámites)</span>
+              <button type="button" class="btn-ghost small" [disabled]="historialMeta().page >= historialMeta().totalPages"
+                      (click)="loadHistorial(historialMeta().page + 1)">
+                Siguiente <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+              </button>
             </div>
+          }
+        }
+      </div>
+    }
 
-            @if (dealTab() === 'factura') {
-              <div class="client-invoice">
-                @if (dealInvoice()) {
-                  <div class="client-invoice-card">
-                    <div class="client-invoice-icon"><svg lucideReceipt [size]="32" aria-hidden="true"></svg></div>
-                    <div class="client-invoice-info">
-                      <strong>{{ dealInvoice().invoice_number }}</strong>
-                      <p>{{ selectedDeal().title }}</p>
-                      <span class="client-invoice-meta">
-                        {{ dealInvoice().created_at | date:'dd MMM yyyy' }} ·
-                        {{ dealInvoice().amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
-                      </span>
-                    </div>
-                    <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === dealInvoice().id"
-                            (click)="downloadInvoice(dealInvoice().id, dealInvoice().invoice_number)">
-                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
-                      {{ downloadingInvoiceId() === dealInvoice().id ? 'Descargando...' : 'Descargar PDF' }}
-                    </button>
-                  </div>
-                } @else if (isPaid(selectedDeal())) {
-                  <div class="client-empty">
-                    <p>Tu pago fue registrado. La factura estará disponible en breve.</p>
-                  </div>
-                } @else {
-                  <div class="client-empty">
-                    <p>Cuando completes el pago de este trámite, tu comprobante aparecerá aquí.</p>
-                  </div>
-                }
-              </div>
-            } @else if (dealTab() === 'chat') {
-              <div class="client-chat">
-                <div class="client-chat-toolbar">
-                  <div>
-                    <strong>Conversación</strong>
-                    <span>Con {{ selectedDeal().gestor_name }}</span>
-                  </div>
-                  <span class="client-online"><span class="client-online-dot"></span> En línea</span>
-                </div>
+    @if (activeTab() === 'billetera') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideWallet [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Billetera de Documentos
+        </h2>
+        <p class="card-desc">Guarda tus documentos personales para tenerlos listos cuando los necesites en cualquier trámite.</p>
 
-                <div class="client-chat-feed" id="chat-box">
-                  @if (chatLoading()) {
-                    <div class="client-chat-placeholder">Cargando mensajes...</div>
-                  } @else if (messages().length === 0) {
-                    <div class="client-chat-placeholder">
-                      <p>Escribe tu primer mensaje para contactar a tu gestoría.</p>
-                    </div>
-                  } @else {
-                    @for (msg of messages(); track msg.id) {
-                      <div class="client-chat-row" [class.mine]="msg.sender_id === auth.user()?.id">
-                        <div class="client-chat-avatar">
-                          {{ (msg.sender_id === auth.user()?.id ? auth.user()?.name : msg.sender_name)?.charAt(0) | uppercase }}
-                        </div>
-                        <div class="client-chat-content">
-                          <div class="client-chat-meta">
-                            <span class="client-chat-name">{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</span>
-                            <span class="client-chat-time">{{ msg.created_at | date:'dd/MM HH:mm' }}</span>
-                          </div>
-                          <div class="client-chat-bubble">
-                            <p>{{ msg.message }}</p>
-                            @if (msg.file_url) {
-                              <a [href]="msg.file_url" target="_blank" class="client-file-link">Ver documento adjunto</a>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    }
+        <div class="client-wallet-upload">
+          <h3>Subir documento</h3>
+          <div class="client-wallet-form">
+            <input type="text" class="client-wallet-input" [(ngModel)]="walletForm.label" placeholder="Nombre del documento *">
+            <select class="client-wallet-input" [(ngModel)]="walletForm.category">
+              @for (cat of walletCategories; track cat) {
+                <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            <input type="text" class="client-wallet-input" [(ngModel)]="walletForm.notes" placeholder="Notas (opcional)">
+            <label class="btn-copy small" [class.loading]="uploadingWallet()">
+              <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="onWalletFileSelected($event)">
+              <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+              {{ uploadingWallet() ? 'Subiendo...' : 'Seleccionar archivo' }}
+            </label>
+          </div>
+        </div>
+
+        @if (walletLoading()) {
+          <div class="client-empty">Cargando documentos...</div>
+        } @else if (walletDocs().length === 0) {
+          <div class="client-empty">
+            <div class="client-empty-icon"><svg lucideFolderOpen [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
+            <strong>Tu billetera está vacía</strong>
+            <p>Sube INE, licencia, tarjeta de circulación u otros documentos que uses frecuentemente.</p>
+          </div>
+        } @else {
+          <div class="client-wallet-list">
+            @for (doc of walletDocs(); track doc.id) {
+              <div class="client-wallet-row">
+                <div class="client-wallet-row-main">
+                  <strong>{{ doc.label }}</strong>
+                  <span class="client-wallet-cat">{{ doc.category }}</span>
+                  @if (doc.notes) {
+                    <span class="client-wallet-notes">{{ doc.notes }}</span>
                   }
+                  <span class="client-wallet-date">{{ doc.created_at | date:'dd MMM yyyy' }}</span>
                 </div>
-
-                <div class="client-chat-compose">
-                  <label class="client-chat-attach" [class.loading]="uploadingFile()" title="Adjuntar archivo">
-                    <input type="file" style="display:none" (change)="onFileSelected($event)">
-                    <svg lucidePaperclip [size]="18" aria-hidden="true"></svg>
-                  </label>
-                  <input
-                    type="text"
-                    class="client-chat-input"
-                    [(ngModel)]="newMessage"
-                    placeholder="Escribe un mensaje..."
-                    (keyup.enter)="sendMessage()"
-                  >
-                  <button type="button" class="btn-copy small client-chat-send" (click)="sendMessage()">Enviar</button>
-                </div>
-              </div>
-            } @else {
-              <div class="client-docs">
-                <div class="client-docs-intro">
-                  <h3>Documentos requeridos</h3>
-                  <p>Sube fotos o PDF de los archivos que te solicitó tu gestoría para avanzar con el trámite.</p>
-                </div>
-                <div class="client-docs-list">
-                  @for (doc of selectedDeal().required_documents; track doc) {
-                    <div class="client-doc-row">
-                      <div class="client-doc-info">
-                        <strong>{{ doc }}</strong>
-                        @if (getDocStatus(doc)) {
-                          <span class="client-badge badge-done">Subido</span>
-                          @if (getDocStatus(doc).extracted_data) {
-                            <span class="client-badge badge-ai">Datos extraídos</span>
-                          }
-                        } @else {
-                          <span class="client-badge badge-new">Pendiente</span>
-                        }
-                      </div>
-                      <div>
-                        @if (!getDocStatus(doc)) {
-                          <label class="btn-copy small" [class.loading]="uploadingDocType() === doc">
-                            <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*,.pdf,application/pdf">
-                            {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir archivo' }}
-                          </label>
-                        } @else {
-                          <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-ghost small">Ver archivo</a>
-                        }
-                      </div>
-                    </div>
-                  }
+                <div class="client-wallet-row-actions">
+                  <a [href]="doc.file_url" target="_blank" class="btn-ghost small">Ver</a>
+                  <button type="button" class="btn-ghost small client-wallet-delete" (click)="deleteWalletDoc(doc.id)">
+                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                  </button>
                 </div>
               </div>
             }
           </div>
-        </div>
-      }
+        }
+      </div>
     }
 
     @if (activeTab() === 'facturas') {
@@ -436,3 +411,189 @@
 
   </main>
 </div>
+
+<app-ai-assistant panelRole="cliente" />
+
+<ng-template #dealDetail>
+  <div class="client-detail">
+    <button type="button" class="client-back-link" (click)="closeDeal()">
+      <svg lucideArrowLeft [size]="16" aria-hidden="true"></svg>
+      Volver
+    </button>
+
+    <div class="client-detail-hero dash-card">
+      <div class="client-detail-main">
+        <div class="client-detail-copy">
+          <p class="client-detail-eyebrow">Seguimiento de trámite</p>
+          <h2 class="client-detail-title">{{ selectedDeal().title }}</h2>
+          <div class="client-detail-meta">
+            <span>Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
+            <span class="client-detail-dot">·</span>
+            <span>Código <code class="client-code">{{ selectedDeal().tracking_code }}</code></span>
+          </div>
+        </div>
+        <span class="client-badge large" [ngClass]="stageClass(selectedDeal())">{{ stageLabel(selectedDeal()) }}</span>
+      </div>
+
+      <div class="client-steps">
+        @for (step of pipelineStages(selectedDeal()); track step.id; let i = $index; let last = $last) {
+          <div class="client-step"
+               [class.done]="stageIndex(selectedDeal()) > i"
+               [class.current]="stageIndex(selectedDeal()) === i"
+               [class.lost]="selectedDeal().stage === 'perdido' && stageIndex(selectedDeal()) === i">
+            <div class="client-step-dot">
+              @if (stageIndex(selectedDeal()) > i) {
+                <svg lucideCheck [size]="14" aria-hidden="true"></svg>
+              } @else {
+                {{ i + 1 }}
+              }
+            </div>
+            <span>{{ step.label }}</span>
+          </div>
+          @if (!last) {
+            <div class="client-step-line" [class.done]="stageIndex(selectedDeal()) > i"></div>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="client-detail-body dash-card">
+      <div class="client-tabs">
+        <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'chat'" (click)="dealTab.set('chat')">
+          <svg lucideMessageCircle [size]="14" aria-hidden="true"></svg>
+          Chat
+        </button>
+        <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'docs'" (click)="dealTab.set('docs')">
+          <svg lucideFileText [size]="14" aria-hidden="true"></svg>
+          Documentos
+        </button>
+        @if (isPaid(selectedDeal()) || dealInvoice()) {
+          <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'factura'" (click)="dealTab.set('factura')">
+            <svg lucideReceipt [size]="14" aria-hidden="true"></svg>
+            Factura
+          </button>
+        }
+      </div>
+
+      @if (dealTab() === 'factura') {
+        <div class="client-invoice">
+          @if (dealInvoice()) {
+            <div class="client-invoice-card">
+              <div class="client-invoice-icon"><svg lucideReceipt [size]="32" aria-hidden="true"></svg></div>
+              <div class="client-invoice-info">
+                <strong>{{ dealInvoice().invoice_number }}</strong>
+                <p>{{ selectedDeal().title }}</p>
+                <span class="client-invoice-meta">
+                  {{ dealInvoice().created_at | date:'dd MMM yyyy' }} ·
+                  {{ dealInvoice().amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
+                </span>
+              </div>
+              <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === dealInvoice().id"
+                      (click)="downloadInvoice(dealInvoice().id, dealInvoice().invoice_number)">
+                <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                {{ downloadingInvoiceId() === dealInvoice().id ? 'Descargando...' : 'Descargar PDF' }}
+              </button>
+            </div>
+          } @else if (isPaid(selectedDeal())) {
+            <div class="client-empty">
+              <p>Tu pago fue registrado. La factura estará disponible en breve.</p>
+            </div>
+          } @else {
+            <div class="client-empty">
+              <p>Cuando completes el pago de este trámite, tu comprobante aparecerá aquí.</p>
+            </div>
+          }
+        </div>
+      } @else if (dealTab() === 'chat') {
+        <div class="client-chat">
+          <div class="client-chat-toolbar">
+            <div>
+              <strong>Conversación</strong>
+              <span>Con {{ selectedDeal().gestor_name }}</span>
+            </div>
+            <span class="client-online"><span class="client-online-dot"></span> En línea</span>
+          </div>
+
+          <div class="client-chat-feed" id="chat-box">
+            @if (chatLoading()) {
+              <div class="client-chat-placeholder">Cargando mensajes...</div>
+            } @else if (messages().length === 0) {
+              <div class="client-chat-placeholder">
+                <p>Escribe tu primer mensaje para contactar a tu gestoría.</p>
+              </div>
+            } @else {
+              @for (msg of messages(); track msg.id) {
+                <div class="client-chat-row" [class.mine]="msg.sender_id === auth.user()?.id">
+                  <div class="client-chat-avatar">
+                    {{ (msg.sender_id === auth.user()?.id ? auth.user()?.name : msg.sender_name)?.charAt(0) | uppercase }}
+                  </div>
+                  <div class="client-chat-content">
+                    <div class="client-chat-meta">
+                      <span class="client-chat-name">{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</span>
+                      <span class="client-chat-time">{{ msg.created_at | date:'dd/MM HH:mm' }}</span>
+                    </div>
+                    <div class="client-chat-bubble">
+                      <p>{{ msg.message }}</p>
+                      @if (msg.file_url) {
+                        <a [href]="msg.file_url" target="_blank" class="client-file-link">Ver documento adjunto</a>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+
+          <div class="client-chat-compose">
+            <label class="client-chat-attach" [class.loading]="uploadingFile()" title="Adjuntar archivo">
+              <input type="file" style="display:none" (change)="onFileSelected($event)">
+              <svg lucidePaperclip [size]="18" aria-hidden="true"></svg>
+            </label>
+            <input
+              type="text"
+              class="client-chat-input"
+              [(ngModel)]="newMessage"
+              placeholder="Escribe un mensaje..."
+              (keyup.enter)="sendMessage()"
+            >
+            <button type="button" class="btn-copy small client-chat-send" (click)="sendMessage()">Enviar</button>
+          </div>
+        </div>
+      } @else {
+        <div class="client-docs">
+          <div class="client-docs-intro">
+            <h3>Documentos requeridos</h3>
+            <p>Sube fotos o PDF de los archivos que te solicitó tu gestoría para avanzar con el trámite.</p>
+          </div>
+          <div class="client-docs-list">
+            @for (doc of selectedDeal().required_documents; track doc) {
+              <div class="client-doc-row">
+                <div class="client-doc-info">
+                  <strong>{{ doc }}</strong>
+                  @if (getDocStatus(doc)) {
+                    <span class="client-badge badge-done">Subido</span>
+                    @if (getDocStatus(doc).extracted_data) {
+                      <span class="client-badge badge-ai">Datos extraídos</span>
+                    }
+                  } @else {
+                    <span class="client-badge badge-new">Pendiente</span>
+                  }
+                </div>
+                <div>
+                  @if (!getDocStatus(doc)) {
+                    <label class="btn-copy small" [class.loading]="uploadingDocType() === doc">
+                      <input type="file" style="display:none" (change)="onDocSelected(doc, $event)" accept="image/*,.pdf,application/pdf">
+                      {{ uploadingDocType() === doc ? 'Analizando...' : 'Subir archivo' }}
+                    </label>
+                  } @else {
+                    <a [href]="getDocStatus(doc).file_url" target="_blank" class="btn-ghost small">Ver archivo</a>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</ng-template>
