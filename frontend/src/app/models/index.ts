@@ -274,6 +274,15 @@ export interface MakeFilter {
   count: number;
 }
 
+export interface CrmContactsPage {
+  contacts: CrmContact[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  tramiteOptions: string[];
+}
+
 export interface CrmContact {
   id: string;
   name: string;
@@ -285,6 +294,8 @@ export interface CrmContact {
   residenceState?: string;
   vehicleCount?: number;
   plates?: string;
+  engomados?: string[];
+  tramites?: string;
   dealCount?: number;
   createdAt?: string;
 }

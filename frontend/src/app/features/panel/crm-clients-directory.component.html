@@ -1,7 +1,7 @@
 <div class="dash-card">
   <h2 class="card-title">Directorio de clientes</h2>
   <p class="card-desc">
-    Base de datos de quienes han solicitado trámites. Registra placas, estado y engomado para alertas de verificación.
+    Base de datos de quienes han solicitado trámites. Filtra por trámite, engomado o estado y navega con paginación.
   </p>
 
   <div class="clients-toolbar">
@@ -9,14 +9,51 @@
       <label for="clients-search-input">Buscar</label>
       <div class="clients-search-field">
         <svg lucideSearch [size]="14" aria-hidden="true"></svg>
-        <input id="clients-search-input" type="search" [ngModel]="search()" (ngModelChange)="search.set($event)" placeholder="Nombre, teléfono, placa, estado...">
+        <input id="clients-search-input" type="search" [ngModel]="search()" (ngModelChange)="onSearchChange($event)" placeholder="Nombre, teléfono, placa, email...">
       </div>
     </div>
     <button type="button" class="deal-outline-btn clients-action-btn" (click)="openAddForm()">
       <svg lucidePlus [size]="14" aria-hidden="true"></svg>
       Agregar cliente
     </button>
+    @if (hasActiveFilters()) {
+      <button type="button" class="deal-outline-btn clients-action-btn" (click)="clearFilters()">Limpiar filtros</button>
+    }
     <button type="button" class="deal-outline-btn clients-action-btn" (click)="load()">Actualizar</button>
+  </div>
+
+  <div class="clients-filters">
+    <div class="clients-filter">
+      <label for="filter-tramite">Trámite</label>
+      <select id="filter-tramite" [ngModel]="filterTramite()" (ngModelChange)="filterTramite.set($event); onFilterChange()">
+        <option value="">Todos los trámites</option>
+        @for (t of tramiteOptions(); track t) {
+          <option [value]="t">{{ t }}</option>
+        }
+      </select>
+    </div>
+    <div class="clients-filter">
+      <label for="filter-engomado">Engomado</label>
+      <select id="filter-engomado" [ngModel]="filterEngomado()" (ngModelChange)="filterEngomado.set($event); onFilterChange()">
+        <option value="">Todos</option>
+        @for (c of engomadoColors; track c.id) {
+          <option [value]="c.id">{{ c.label }}</option>
+        }
+      </select>
+    </div>
+    <div class="clients-filter">
+      <label for="filter-estado">Estado</label>
+      <select id="filter-estado" [ngModel]="filterEstado()" (ngModelChange)="filterEstado.set($event); onFilterChange()">
+        <option value="">Todos</option>
+        @for (st of mexicoStates; track st) {
+          <option [value]="st">{{ st }}</option>
+        }
+      </select>
+    </div>
+    <div class="clients-filter">
+      <label>Resultados</label>
+      <input type="text" readonly [value]="totalItems() + ' cliente(s)'">
+    </div>
   </div>
 
   @if (showAddForm()) {
@@ -61,18 +98,26 @@
 
   @if (isLoading()) {
     <p class="card-desc">Cargando clientes...</p>
-  } @else if (filtered().length === 0) {
-    <p class="card-desc">No hay clientes registrados todavía. Agrégalos manualmente o se crearán cuando alguien solicite un trámite.</p>
+  } @else if (clients().length === 0) {
+    <p class="card-desc">
+      @if (hasActiveFilters()) {
+        No hay clientes con esos filtros. Prueba otros criterios o limpia los filtros.
+      } @else {
+        No hay clientes registrados todavía. Agrégalos manualmente o se crearán cuando alguien solicite un trámite.
+      }
+    </p>
   } @else {
     <div class="client-row-head">
       <span>Cliente</span>
       <span>Contacto</span>
       <span>Estado</span>
       <span>Autos</span>
+      <span>Engomado</span>
       <span>Placas</span>
+      <span>Trámites</span>
     </div>
     <div class="clients-table">
-      @for (c of filtered(); track c.id) {
+      @for (c of clients(); track c.id) {
         <button type="button" class="client-row" (click)="openContact.emit(c.id)">
           <div>
             <div class="client-name deal-meta-with-icon">
@@ -94,9 +139,33 @@
               {{ c.vehicleCount || 0 }}
             </span>
           </div>
+          <div class="client-meta">
+            @if (c.engomados?.length) {
+              @for (e of c.engomados; track e) {
+                <span class="engomado-tag">{{ engomadoLabel(e) }}</span>
+              }
+            } @else {
+              —
+            }
+          </div>
           <div class="client-meta">{{ c.plates || '—' }}</div>
+          <div class="client-meta">{{ c.tramites || '—' }}</div>
         </button>
       }
     </div>
+
+    @if (totalPages() > 1 || totalItems() > 0) {
+      <div class="pagination">
+        <button type="button" class="page-btn" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">
+          <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg>
+          Anterior
+        </button>
+        <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }} · {{ totalItems() }} clientes</span>
+        <button type="button" class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">
+          Siguiente
+          <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+        </button>
+      </div>
+    }
   }
 </div>

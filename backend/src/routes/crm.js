@@ -776,19 +776,99 @@ router.get('/contacts/:id', async (req, res) => {
 
 router.get('/contacts', async (req, res) => {
   try {
+    const uid = req.orgId;
+    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(100, Math.max(5, parseInt(req.query.limit, 10) || 20));
+    const offset = (page - 1) * limit;
+    const q = String(req.query.q || '').trim();
+    const tramite = String(req.query.tramite || '').trim();
+    const engomado = String(req.query.engomado || '').trim();
+    const estado = String(req.query.estado || '').trim();
+
+    const where = ['c.user_id = ?'];
+    const params = [uid];
+
+    if (q) {
+      where.push(`(
+        c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR c.whatsapp LIKE ?
+        OR c.residence_state LIKE ?
+        OR EXISTS (
+          SELECT 1 FROM contact_vehicles cvq
+          WHERE cvq.contact_id = c.id AND cvq.plate LIKE ?
+        )
+      )`);
+      const like = `%${q}%`;
+      params.push(like, like, like, like, like, like);
+    }
+
+    if (estado) {
+      where.push('c.residence_state = ?');
+      params.push(estado);
+    }
+
+    if (engomado) {
+      where.push(`EXISTS (
+        SELECT 1 FROM contact_vehicles cve
+        WHERE cve.contact_id = c.id AND cve.engomado_color = ?
+      )`);
+      params.push(engomado);
+    }
+
+    if (tramite) {
+      where.push(`EXISTS (
+        SELECT 1 FROM crm_deals dt
+        WHERE dt.contact_id = c.id AND dt.user_id = ? AND dt.title = ?
+      )`);
+      params.push(uid, tramite);
+    }
+
+    const whereSql = where.join(' AND ');
+
+    const countRow = await get(`
+      SELECT COUNT(DISTINCT c.id) as total
+      FROM contacts c
+      WHERE ${whereSql}
+    `, params);
+
     const rows = await query(`
       SELECT c.*,
         COUNT(DISTINCT d.id) as dealCount,
         COUNT(DISTINCT cv.id) as vehicleCount,
-        GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates
+        GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates,
+        GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
+        GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
-      LEFT JOIN crm_deals d ON d.contact_id = c.id
+      LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ?
       LEFT JOIN contact_vehicles cv ON cv.contact_id = c.id
-      WHERE c.user_id = ?
+      WHERE ${whereSql}
       GROUP BY c.id
       ORDER BY c.updated_at DESC
-    `, [req.orgId]);
-    res.json(rows.map(r => ({ ...contactRow(r), dealCount: Number(r.dealCount || 0) })));
+      LIMIT ? OFFSET ?
+    `, [uid, ...params, limit, offset]);
+
+    const tramiteOptions = await query(`
+      SELECT DISTINCT title
+      FROM crm_deals
+      WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != ''
+      ORDER BY title ASC
+    `, [uid]);
+
+    const total = Number(countRow?.total || 0);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    res.json({
+      contacts: rows.map((r) => ({
+        ...contactRow(r),
+        dealCount: Number(r.dealCount || 0),
+        engomados: r.engomados ? r.engomados.split(',').filter(Boolean) : [],
+        tramites: r.tramites || undefined,
+      })),
+      total,
+      page,
+      pageSize: limit,
+      totalPages,
+      tramiteOptions: tramiteOptions.map((t) => t.title),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar contactos' });

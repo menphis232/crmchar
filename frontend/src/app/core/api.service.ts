@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmContactVehicle, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
+  CrmContact, CrmContact360, CrmContactVehicle, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -98,7 +98,23 @@ export class CrmService {
   replyDeal(dealId: string, reply: string) {
     return this.http.post(`${this.base}/deals/${dealId}/reply`, { reply });
   }
-  getContacts() { return this.http.get<CrmContact[]>(`${this.base}/contacts`); }
+  getContacts(params?: {
+    page?: number;
+    limit?: number;
+    q?: string;
+    tramite?: string;
+    engomado?: string;
+    estado?: string;
+  }) {
+    let httpParams = new HttpParams();
+    if (params?.page) httpParams = httpParams.set('page', String(params.page));
+    if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
+    if (params?.q) httpParams = httpParams.set('q', params.q);
+    if (params?.tramite) httpParams = httpParams.set('tramite', params.tramite);
+    if (params?.engomado) httpParams = httpParams.set('engomado', params.engomado);
+    if (params?.estado) httpParams = httpParams.set('estado', params.estado);
+    return this.http.get<CrmContactsPage>(`${this.base}/contacts`, { params: httpParams });
+  }
   createContact(data: {
     name: string;
     email?: string;
