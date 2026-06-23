@@ -162,7 +162,8 @@
 }
 app-gestor-showcase-gallery {
   display: block;
-  margin: 28px 0 36px;
+  margin: 0 0 40px;
+  width: 100%;
 }
 .section-title {
   font-family: var(--f-display);

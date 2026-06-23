@@ -204,15 +204,15 @@
             <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div>
           </div>
           <p class="bio">{{ g.bio }}</p>
-
-          @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería" />
-          }
         </div>
       </header>
 
       <div class="profile-content">
-        <div>
+        <div class="main-column">
+          @if (g.galleryImages?.length) {
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería" />
+          }
+
           <h3 class="section-title">Servicios y Tarifas</h3>
           <div class="services-list">
             @for (s of g.services; track s.id) {
