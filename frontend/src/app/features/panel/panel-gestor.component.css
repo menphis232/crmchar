@@ -758,12 +758,22 @@ select option { background: #111111; color: #ffffff; }
   background: #000;
   max-width: 520px;
 }
-.share-og-preview img {
-  display: block;
-  width: 100%;
-  height: auto;
+.share-og-preview-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   aspect-ratio: 1200 / 630;
-  object-fit: cover;
+  background: #000;
+  padding: 8%;
+  box-sizing: border-box;
+}
+.share-og-preview-image img {
+  display: block;
+  max-width: 72%;
+  max-height: 72%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
   image-rendering: auto;
 }
 .share-og-caption {

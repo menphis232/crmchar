@@ -57,7 +57,7 @@ import {
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
-import { getGestorOgImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
+import { getGestorOgImageUrl, getGestorPanelPreviewImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import {
   GESTOR_BANNER_ASPECT,
@@ -374,6 +374,20 @@ export class PanelGestorComponent implements OnInit {
       photoUrl: p.photoUrl,
       bannerUrl: p.bannerUrl,
     });
+  }
+
+  get panelSharePreviewImageUrl(): string | null {
+    const p = this.profile();
+    if (!p) return null;
+    return getGestorPanelPreviewImageUrl(p, this.profileLogoUrl || p.logoUrl);
+  }
+
+  onSharePreviewImageError(event: Event) {
+    const img = event.target as HTMLImageElement;
+    const og = this.publicShareOgImageUrl;
+    if (!og || img.dataset.fallback === '1') return;
+    img.dataset.fallback = '1';
+    img.src = `${og}?t=${Date.now()}`;
   }
 
   get gestorShareSubtitle(): string {

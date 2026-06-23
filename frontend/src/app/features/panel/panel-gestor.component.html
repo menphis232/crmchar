@@ -246,9 +246,15 @@
         </h2>
         <p class="card-desc">Comparte este enlace para que tus clientes vean tu ficha con imagen y título en WhatsApp y redes.</p>
         @if (profile(); as p) {
-          @if (publicShareOgImageUrl) {
+          @if (panelSharePreviewImageUrl) {
             <div class="share-og-preview" aria-hidden="true">
-              <img [src]="publicShareOgImageUrl" alt="" width="1200" height="630" loading="lazy">
+              <div class="share-og-preview-image">
+                <img
+                  [src]="panelSharePreviewImageUrl"
+                  alt=""
+                  (error)="onSharePreviewImageError($event)"
+                >
+              </div>
               <div class="share-og-caption">
                 <strong>{{ gestorShareTagline }}</strong>
                 <span>{{ gestorShareSubtitle }}</span>
@@ -390,9 +396,15 @@
             <button type="button" class="btn-copy" (click)="copyPublicPageLink()">Copiar link</button>
             <a [routerLink]="['/gestores', publicSlug]" target="_blank" class="btn-copy small">Ver mi página</a>
           </div>
-          @if (publicShareOgImageUrl) {
+          @if (panelSharePreviewImageUrl) {
             <div class="share-og-preview share-og-preview--perfil" aria-hidden="true">
-              <img [src]="publicShareOgImageUrl" alt="" width="1200" height="630" loading="lazy">
+              <div class="share-og-preview-image">
+                <img
+                  [src]="panelSharePreviewImageUrl"
+                  alt=""
+                  (error)="onSharePreviewImageError($event)"
+                >
+              </div>
               <div class="share-og-caption">
                 <strong>{{ gestorShareTagline }}</strong>
                 <span>{{ gestorShareSubtitle }}</span>

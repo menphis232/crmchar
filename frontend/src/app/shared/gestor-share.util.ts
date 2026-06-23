@@ -12,6 +12,14 @@ export function getGestorOgImageUrl(gestor: Pick<Gestor, 'slug' | 'logoUrl' | 'p
   return null;
 }
 
+/** Vista previa en panel: logo real del gestor (siempre carga en el navegador). */
+export function getGestorPanelPreviewImageUrl(
+  gestor: Pick<Gestor, 'logoUrl' | 'photoUrl' | 'bannerUrl'>,
+  logoOverride?: string,
+): string | null {
+  return toAbsoluteUrl(logoOverride || gestor.logoUrl || gestor.photoUrl || gestor.bannerUrl || null);
+}
+
 export function getGestorShareUrl(gestor: Pick<Gestor, 'slug'>, origin?: string): string {
   const base = (origin || (typeof window !== 'undefined' ? window.location.origin : '')).replace(/\/$/, '');
   return `${base}/sg/${gestor.slug}`;
