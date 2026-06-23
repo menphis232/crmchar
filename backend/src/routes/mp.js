@@ -16,7 +16,7 @@ function getMpClient(accessToken) {
 // POST /api/mp/generate-link/:dealId  (authenticated)
 router.post('/generate-link/:dealId', authRequired, async (req, res) => {
   try {
-    const dealId = Number(req.params.dealId);
+    const dealId = req.params.dealId;
     if (!dealId) return res.status(400).json({ error: 'dealId inválido' });
 
     const deal = await get(
