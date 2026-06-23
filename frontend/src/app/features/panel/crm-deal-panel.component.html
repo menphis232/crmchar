@@ -107,7 +107,7 @@
               
               @if (paymentLink()) {
                 <div class="deal-payment-link-box">
-                  <p class="deal-payment-link-label">Link generado. Cópialo y envíalo al cliente:</p>
+                  <p class="deal-payment-link-label">Link Stripe generado. Cópialo y envíalo al cliente:</p>
                   <div class="deal-payment-link-row">
                     <input type="text" readonly [value]="paymentLink()" #linkInput>
                     <button type="button" class="btn-copy small" (click)="copyToClipboard(linkInput.value)">Copiar</button>
@@ -116,6 +116,25 @@
               }
               @if (paymentError()) {
                 <p class="deal-payment-error">{{ paymentError() }}</p>
+              }
+
+              @if (d.paymentStatus !== 'paid') {
+                <button type="button" class="btn-ghost small btn-with-icon btn-mp" (click)="generateMpLink()" [disabled]="isGeneratingMpPayment()">
+                  <svg lucideWallet [size]="14" aria-hidden="true"></svg>
+                  {{ isGeneratingMpPayment() ? 'Generando...' : 'Cobrar con MercadoPago' }}
+                </button>
+              }
+              @if (mpPaymentLink()) {
+                <div class="deal-payment-link-box">
+                  <p class="deal-payment-link-label">Link MercadoPago generado. Cópialo y envíalo al cliente:</p>
+                  <div class="deal-payment-link-row">
+                    <input type="text" readonly [value]="mpPaymentLink()" #mpLinkInput>
+                    <button type="button" class="btn-copy small" (click)="copyToClipboard(mpLinkInput.value)">Copiar</button>
+                  </div>
+                </div>
+              }
+              @if (mpPaymentError()) {
+                <p class="deal-payment-error">{{ mpPaymentError() }}</p>
               }
             </div>
           }

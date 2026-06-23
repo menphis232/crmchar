@@ -34,6 +34,8 @@ export interface User {
   stripe_secret_key?: string;
   stripe_public_key?: string;
   stripe_price_id?: string;
+  mp_access_token?: string;
+  mp_public_key?: string;
   page_builder_config?: PageBuilderConfig;
   ai_provider?: 'gemini' | 'openai';
   ai_api_key?: string;

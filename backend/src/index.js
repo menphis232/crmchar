@@ -20,6 +20,7 @@ import webhooksRoutes from './routes/webhooks.js';
 import aiRoutes from './routes/ai.js';
 import shareRoutes from './routes/share.js';
 import ogRoutes from './routes/og.js';
+import mpRoutes from './routes/mp.js';
 import { testConnection } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -67,6 +68,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/client', clientRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);
+app.use('/api/mp', mpRoutes);
 app.use('/og', ogRoutes);
 // Rutas cortas para compartir con OG tags
 app.use('/s', shareRoutes);   // /s/:id  → autos

@@ -488,3 +488,27 @@ export class BillingService {
   resubscribe() { return this.http.post<{ success: boolean; checkoutUrl?: string }>(`${this.base}/resubscribe`, {}); }
 }
 
+@Injectable({ providedIn: 'root' })
+export class MpService {
+  private base = `${environment.apiUrl}/mp`;
+  constructor(private http: HttpClient) {}
+
+  generateLink(dealId: string) {
+    return this.http.post<{ url: string }>(`${this.base}/generate-link/${dealId}`, {});
+  }
+
+  getPaymentInfo(token: string) {
+    return this.http.get<{ publicKey: string; amount: number; description: string; gestorName: string }>(`${this.base}/payment-info/${token}`);
+  }
+
+  processPayment(token: string, body: {
+    cardToken: string;
+    payerEmail: string;
+    installments?: number;
+    identificationType?: string;
+    identificationNumber?: string;
+  }) {
+    return this.http.post<{ success: boolean; status: string; orderId?: string; requiresAction?: boolean; actionUrl?: string; message?: string }>(`${this.base}/process-payment/${token}`, body);
+  }
+}
+

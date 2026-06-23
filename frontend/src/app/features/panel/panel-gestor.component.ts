@@ -54,6 +54,7 @@ import {
   LucideStar,
   LucideCar,
   LucideZap,
+  LucideWallet,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -103,7 +104,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],
@@ -145,6 +146,8 @@ export class PanelGestorComponent implements OnInit {
   googleAnalyticsId = '';
   stripePublicKey = '';
   stripeSecretKey = '';
+  mpAccessToken = '';
+  mpPublicKey = '';
 
   aiConfigs: { provider: string, key: string }[] = [{ provider: '', key: '' }];
   chatbotBgColor = '#000000';
@@ -424,6 +427,8 @@ export class PanelGestorComponent implements OnInit {
       this.googleAnalyticsId = res.user.google_analytics_id || '';
       this.stripeSecretKey = res.user.stripe_secret_key || '';
       this.stripePublicKey = res.user.stripe_public_key || '';
+      this.mpAccessToken = res.user.mp_access_token || '';
+      this.mpPublicKey = res.user.mp_public_key || '';
       
       const rawApiKey = res.user.ai_api_key || '';
       try {
@@ -821,6 +826,8 @@ export class PanelGestorComponent implements OnInit {
               google_analytics_id: this.googleAnalyticsId,
               stripe_secret_key: this.stripeSecretKey,
               stripe_public_key: this.stripePublicKey,
+              mp_access_token: this.mpAccessToken,
+              mp_public_key: this.mpPublicKey,
               ...(syncedBuilder ? { page_builder_config: syncedBuilder } : {}),
             }).subscribe({
               next: () => {

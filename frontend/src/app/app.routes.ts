@@ -10,6 +10,7 @@ export const routes: Routes = [
   { path: 'gestores/:slug', loadComponent: () => import('./features/gestores/gestor-detail.component').then(m => m.GestorDetailComponent) },
   { path: 'review/:dealId', loadComponent: () => import('./features/site/pages/review.component').then(m => m.ReviewComponent) },
   { path: 'pay/success', loadComponent: () => import('./features/site/pay-success.component').then(m => m.PaySuccessComponent) },
+  { path: 'pay/mp/:token', loadComponent: () => import('./features/payment/mp-checkout.component').then(m => m.MpCheckoutComponent) },
   { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
   { path: 'registro-pendiente', loadComponent: () => import('./features/auth/registro-pendiente.component').then(m => m.RegistroPendienteComponent) },
   { path: 'subscription/success', loadComponent: () => import('./features/auth/subscription-success.component').then(m => m.SubscriptionSuccessComponent) },

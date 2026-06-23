@@ -882,6 +882,25 @@ async function migrate() {
       console.log('Migración v40 (gestor service sort) aplicada.');
     }
     
+    const v41Path = path.join(__dirname, '..', 'sql', 'migration-v41-mercadopago.sql');
+    if (fs.existsSync(v41Path)) {
+      const v41 = fs.readFileSync(v41Path, 'utf8');
+      const conn41 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn41.query('USE tramites_vehiculares');
+      for (const stmt of v41.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn41.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn41.end();
+      console.log('Migración v41 (MercadoPago) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

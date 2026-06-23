@@ -16,8 +16,9 @@ import {
   LucideTimer,
   LucideUser,
   LucideX,
+  LucideWallet,
 } from '@lucide/angular';
-import { CrmService, UploadService } from '../../core/api.service';
+import { CrmService, MpService, UploadService } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
@@ -28,7 +29,7 @@ import { ToastService } from '../../core/toast.service';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideWallet],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
@@ -689,6 +690,10 @@ export class CrmDealPanelComponent implements OnDestroy {
   paymentLink = signal('');
   paymentError = signal('');
 
+  isGeneratingMpPayment = signal(false);
+  mpPaymentLink = signal('');
+  mpPaymentError = signal('');
+
   // Chat
   messages: any[] = [];
   newMessage = '';
@@ -708,7 +713,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   toast = inject(ToastService);
   private socketService = inject(SocketService);
 
-  constructor(private crmService: CrmService, private http: HttpClient, private zone: NgZone) {
+  constructor(private crmService: CrmService, private mpService: MpService, private http: HttpClient, private zone: NgZone) {
     effect(() => {
       const id = this.dealId();
       if (id) this.loadDeal(id);
@@ -740,6 +745,8 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.lostReason = d.lostReason || '';
       this.paymentLink.set('');
       this.paymentError.set('');
+      this.mpPaymentLink.set('');
+      this.mpPaymentError.set('');
 
       this.loadDocuments(id);
       this.loadMessages(id);
@@ -1132,6 +1139,27 @@ export class CrmDealPanelComponent implements OnDestroy {
         this.paymentError.set(err.error?.error || 'Error al generar link de pago');
         this.isGeneratingPayment.set(false);
       }
+    });
+  }
+
+  generateMpLink() {
+    if (!this.dealId()) return;
+    if (!this.estimatedValue || this.estimatedValue <= 0) {
+      this.mpPaymentError.set('Debes asignar un "Valor estimado" mayor a 0 antes de cobrar.');
+      return;
+    }
+    this.isGeneratingMpPayment.set(true);
+    this.mpPaymentError.set('');
+    this.mpPaymentLink.set('');
+    this.mpService.generateLink(this.dealId()!).subscribe({
+      next: (res) => {
+        this.mpPaymentLink.set(res.url);
+        this.isGeneratingMpPayment.set(false);
+      },
+      error: (err) => {
+        this.mpPaymentError.set(err.error?.error || 'Error al generar link de MercadoPago');
+        this.isGeneratingMpPayment.set(false);
+      },
     });
   }
 
