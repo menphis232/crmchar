@@ -128,9 +128,9 @@ async function buildGestorHtml(slug) {
   );
   if (!row) return null;
 
-  const imageUrl = row.logo_url
+  const imageUrl = (row.logo_url || row.photo_url || row.banner_url)
     ? `${SITE_BASE}/og/gestor/${row.slug}.jpg`
-    : absoluteUrl(row.photo_url || row.banner_url || null);
+    : null;
   const pageUrl  = `${SITE_BASE}/gestores/${row.slug}`;
   const shareUrl = `${SITE_BASE}/sg/${row.slug}`;
   const subtitle = `${row.name} — ${row.location || 'México'}`;

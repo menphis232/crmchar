@@ -34,14 +34,18 @@ router.get('/gestor/:slug.jpg', async (req, res) => {
   try {
     const { slug } = req.params;
     const row = await get(
-      "SELECT slug, logo_url FROM users WHERE slug = ? AND role = 'gestor'",
+      `SELECT g.slug, u.logo_url, g.photo_url, g.banner_url
+       FROM gestores g
+       JOIN users u ON g.user_id = u.id
+       WHERE g.slug = ?`,
       [slug],
     );
-    if (!row?.logo_url) {
+    const logoSource = row?.logo_url || row?.photo_url || row?.banner_url;
+    if (!logoSource) {
       return res.status(404).type('text/plain').send('Logo no encontrado');
     }
 
-    const filePath = await generateGestorOgImage(row.logo_url, row.slug);
+    const filePath = await generateGestorOgImage(logoSource, row.slug);
     if (!filePath) {
       return res.status(404).type('text/plain').send('No se pudo generar la imagen');
     }

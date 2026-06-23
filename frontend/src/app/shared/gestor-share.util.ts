@@ -6,10 +6,10 @@ export function getGestorShareSubtitle(gestor: Pick<Gestor, 'name' | 'location'>
 }
 
 export function getGestorOgImageUrl(gestor: Pick<Gestor, 'slug' | 'logoUrl' | 'photoUrl' | 'bannerUrl'>): string | null {
-  if (gestor.logoUrl && gestor.slug) {
+  if (gestor.slug && (gestor.logoUrl || gestor.photoUrl || gestor.bannerUrl)) {
     return toAbsoluteUrl(`/og/gestor/${gestor.slug}.jpg`);
   }
-  return toAbsoluteUrl(gestor.photoUrl || gestor.bannerUrl || null);
+  return null;
 }
 
 export function getGestorShareUrl(gestor: Pick<Gestor, 'slug'>, origin?: string): string {
