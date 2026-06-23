@@ -53,6 +53,7 @@ import {
   LucideImage,
   LucideStar,
   LucideCar,
+  LucideZap,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -102,7 +103,7 @@ const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],

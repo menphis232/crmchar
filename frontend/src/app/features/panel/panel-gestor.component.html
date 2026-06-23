@@ -92,7 +92,7 @@
     }
     @if (hasPerm('perfil')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'automatizaciones'" (click)="setTab('automatizaciones'); isMobileMenuOpen.set(false)">
-        <svg lucideBot [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        <svg lucideZap [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
         Automatizaciones
       </button>
     }
@@ -875,7 +875,7 @@
     @if (tab() === 'automatizaciones') {
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
-          <svg lucideBot [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          <svg lucideZap [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Automatizaciones de Embudo
         </h2>
         <p class="card-desc">Haz que el CRM trabaje por ti. Configura reglas para enviar correos automáticos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
