@@ -39,13 +39,12 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
       @if (lightboxIdx() !== null) {
         <div #lightboxRoot class="gg-lightbox" (click)="close()" role="dialog" aria-modal="true" aria-label="Vista ampliada">
           <div class="gg-lb-panel" (click)="$event.stopPropagation()">
-            <button type="button" class="gg-lb-close" (click)="close($event)" aria-label="Cerrar">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-
             <div class="gg-lb-frame">
+              <button type="button" class="gg-lb-close" (click)="close($event)" aria-label="Cerrar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
               @if (images().length > 1) {
                 <button type="button" class="gg-lb-nav gg-lb-prev" (click)="prev($event)" aria-label="Foto anterior">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -146,42 +145,47 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
 
     .gg-lb-panel {
       position: relative;
-      width: min(92vw, 720px);
+      width: min(92vw, 640px);
       max-height: 92vh;
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow: visible;
     }
 
-    /* Círculo blanco con X — siempre visible */
     .gg-lb-close {
       position: absolute;
-      top: -18px;
-      right: -18px;
-      z-index: 5;
-      width: 52px;
-      height: 52px;
-      border: none;
+      top: 14px;
+      right: 14px;
+      z-index: 10;
+      width: 46px;
+      height: 46px;
+      border: 2px solid #ffffff;
       border-radius: 50%;
-      background: #ffffff;
-      color: #111111;
+      background: #000000;
+      color: #ffffff;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55);
-      transition: transform 0.15s, background 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+      transition: transform 0.15s, background 0.15s, border-color 0.15s;
+      padding: 0;
     }
 
-    .gg-lb-close svg { width: 22px; height: 22px; }
+    .gg-lb-close svg {
+      width: 20px;
+      height: 20px;
+      stroke: #ffffff;
+    }
 
     .gg-lb-close:hover {
-      transform: scale(1.08);
-      background: #f3f4f6;
-      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.65);
+      transform: scale(1.06);
+      background: #111111;
+      border-color: #ffffff;
     }
 
-    .gg-lb-close:active { transform: scale(0.96); }
+    .gg-lb-close:active { transform: scale(0.95); }
 
     .gg-lb-frame {
       position: relative;
@@ -189,15 +193,15 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
       aspect-ratio: 1 / 1;
       border-radius: 12px;
       overflow: hidden;
-      background: #0a0a0a;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      background: #000000;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
     }
 
     .gg-lb-img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: cover;
       object-position: center;
       display: block;
       user-select: none;
@@ -208,23 +212,24 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      z-index: 2;
-      width: 44px;
-      height: 44px;
-      border: none;
+      z-index: 3;
+      width: 42px;
+      height: 42px;
+      border: 2px solid #ffffff;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.92);
-      color: #111;
+      background: #000000;
+      color: #ffffff;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
       transition: transform 0.15s, background 0.15s;
+      padding: 0;
     }
 
-    .gg-lb-nav:hover { transform: translateY(-50%) scale(1.06); background: #fff; }
-    .gg-lb-nav svg { width: 20px; height: 20px; }
+    .gg-lb-nav svg { width: 18px; height: 18px; stroke: #ffffff; }
+    .gg-lb-nav:hover { transform: translateY(-50%) scale(1.06); background: #111111; }
     .gg-lb-prev { left: 12px; }
     .gg-lb-next { right: 12px; }
 
@@ -240,13 +245,8 @@ import { GESTOR_GALLERY_COLUMNS } from './gestor-media.constants';
     @media (max-width: 768px) {
       .gg-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
       .gg-lightbox { padding: 16px 12px; }
-      .gg-lb-panel { width: min(96vw, 520px); }
-      .gg-lb-close {
-        top: -14px;
-        right: -8px;
-        width: 48px;
-        height: 48px;
-      }
+      .gg-lb-panel { width: min(96vw, 480px); }
+      .gg-lb-close { top: 10px; right: 10px; width: 44px; height: 44px; }
       .gg-lb-nav { width: 38px; height: 38px; }
       .gg-lb-prev { left: 8px; }
       .gg-lb-next { right: 8px; }
