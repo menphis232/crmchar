@@ -343,6 +343,9 @@ export class SiteService {
   get(pageKey: string) { return this.http.get<SiteSettings>(`${this.base}/${pageKey}`); }
 }
 
+export const CHAT_ATTACHMENT_ACCEPT =
+  'image/*,.pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+
 @Injectable({ providedIn: 'root' })
 export class UploadService {
   private base = `${environment.apiUrl}/upload`;
@@ -358,6 +361,11 @@ export class UploadService {
     const formData = new FormData();
     formData.append('file', file);
     return this.http.post<{ url: string; fileName: string }>(`${this.base}/document`, formData);
+  }
+
+  uploadChatAttachment(file: File) {
+    const isImage = file.type.startsWith('image/') || /\.(jpe?g|png|webp|gif)$/i.test(file.name);
+    return isImage ? this.uploadFile(file) : this.uploadDocument(file);
   }
 
   uploadVideo(file: File) {

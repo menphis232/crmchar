@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
-import { UploadService } from '../../core/api.service';
+import { UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { io, Socket } from 'socket.io-client';
@@ -79,6 +79,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   http = inject(HttpClient);
   uploadService = inject(UploadService);
+  readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
   toast = inject(ToastService);
   zone = inject(NgZone);
 
@@ -406,13 +407,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
     this.uploadingFile.set(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    this.http.post<{ url: string }>(`${environment.apiUrl}/upload`, formData).subscribe({
+    this.uploadService.uploadChatAttachment(file).subscribe({
       next: res => {
         const dealId = this.selectedDeal()?.id;
         if (!dealId) return;
@@ -429,9 +429,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
           this.scrollToBottom();
           this.socket.emit('send_message', { dealId, ...saved });
           this.uploadingFile.set(false);
+          input.value = '';
         });
       },
-      error: () => this.uploadingFile.set(false),
+      error: (e) => {
+        this.uploadingFile.set(false);
+        this.toast.error(e.error?.error || 'Error al subir archivo', 'Error');
+        input.value = '';
+      },
     });
   }
 

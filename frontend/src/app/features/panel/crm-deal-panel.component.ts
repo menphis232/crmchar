@@ -17,7 +17,7 @@ import {
   LucideUser,
   LucideX,
 } from '@lucide/angular';
-import { CrmService, MpService, UploadService } from '../../core/api.service';
+import { CrmService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
@@ -1168,23 +1168,31 @@ export class CrmDealPanelComponent implements OnDestroy {
     });
   }
 
-  onChatFileSelected(event: any) {
+  onChatFileSelected(event: Event) {
     const d = this.deal();
     if (!d) return;
-    const file = event.target.files[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    this.http.post<{url: string}>(`${environment.apiUrl}/upload`, formData).subscribe(res => {
-      this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, { message: 'He subido un documento.', fileUrl: res.url }).subscribe(saved => {
-        if (!this.messages.find(m => m.id === saved.id)) {
-          this.messages.push({ dealId: d.id, ...saved });
-          this.scrollToBottom();
-        }
-        this.socketService.emit('send_message', { dealId: d.id, ...saved });
-      });
+
+    this.uploadService.uploadChatAttachment(file).subscribe({
+      next: res => {
+        const message = /\.(pdf|docx?|xlsx?)$/i.test(file.name)
+          ? `Documento adjunto: ${file.name}`
+          : 'He subido un documento.';
+        this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, { message, fileUrl: res.url }).subscribe(saved => {
+          if (!this.messages.find(m => m.id === saved.id)) {
+            this.messages.push({ dealId: d.id, ...saved });
+            this.scrollToBottom();
+          }
+          this.socketService.emit('send_message', { dealId: d.id, ...saved });
+          input.value = '';
+        });
+      },
+      error: (e) => {
+        this.toast.error(e.error?.error || 'Error al subir archivo');
+        input.value = '';
+      },
     });
   }
 
@@ -1311,6 +1319,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   clientDocuments = signal<any[]>([]);
   isUploading = signal(false);
   uploadService = inject(UploadService);
+  readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
 
   generatePaymentLink() {
     if (!this.dealId()) return;
@@ -1581,7 +1590,7 @@ export class CrmDealPanelComponent implements OnDestroy {
         this.updated.emit();
         alert('Datos aplicados correctamente');
       },
-      error: () => alert('Error al aplicar datos OCR')
+      error: () => alert('Error al aplicar datos')
     });
   }
 

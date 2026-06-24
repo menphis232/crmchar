@@ -82,7 +82,7 @@
               <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
                 <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
               </button>
-              <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
+              <input type="file" #fileInput style="display:none" [accept]="chatAttachmentAccept" (change)="onChatFileSelected($event)">
               <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
               <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
             </div>
@@ -153,10 +153,10 @@
           }
         </div>
 
-        <!-- DOCUMENTOS DEL CLIENTE (OCR) -->
+        <!-- DOCUMENTOS DEL CLIENTE -->
         @if (!isConcesionaria()) {
         <div class="deal-section deal-subsection deal-subsection--ocr">
-          <h4>Documentos del Cliente (OCR)</h4>
+          <h4>Documentos del Cliente</h4>
           @if (clientDocuments().length > 0) {
             <div style="display:flex; flex-direction:column; gap:8px;">
               @for (doc of clientDocuments(); track doc.id) {
@@ -196,8 +196,6 @@
                         </p>
                       }
                     </div>
-                  } @else {
-                    <p style="font-size:11px; color:var(--muted); margin:4px 0 0;">Sin datos OCR</p>
                   }
                 </div>
               }

@@ -546,7 +546,7 @@
 
           <div class="client-chat-compose">
             <label class="client-chat-attach" [class.loading]="uploadingFile()" title="Adjuntar archivo">
-              <input type="file" style="display:none" (change)="onFileSelected($event)">
+              <input type="file" style="display:none" [accept]="chatAttachmentAccept" (change)="onFileSelected($event)">
               <svg lucidePaperclip [size]="18" aria-hidden="true"></svg>
             </label>
             <input
