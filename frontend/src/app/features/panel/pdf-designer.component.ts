@@ -8,6 +8,11 @@ import { ColorPickerComponent } from '../../shared/color-picker.component';
 import { TVM_LOGO_URL } from '../../shared/brand.constants';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
 import { GESTOR_LOGO_ASPECT } from '../../shared/gestor-media.constants';
+import {
+  DEFAULT_QUOTE_BONUS,
+  DEFAULT_QUOTE_INCLUDES,
+  DEFAULT_QUOTE_REQUIREMENTS,
+} from '../../shared/quote-checklist.utils';
 
 export interface PdfBlockDef {
   id: string;
@@ -29,8 +34,10 @@ const GESTOR_BLOCKS: PdfBlockDef[] = [
   { id: 'title', name: 'Título de la Cotización' },
   { id: 'client', name: 'Datos del Cliente' },
   { id: 'tramite', name: 'Trámite' },
-  { id: 'financial', name: 'Honorarios' },
-  { id: 'items', name: 'Conceptos / Servicios' },
+  { id: 'includes', name: 'Qué incluye' },
+  { id: 'requirements', name: 'Requisitos' },
+  { id: 'bonus', name: 'Bonus' },
+  { id: 'total', name: 'Total (al final)' },
   { id: 'footer', name: 'Pie de Página' },
 ];
 
@@ -51,9 +58,21 @@ function defaultFooterForRole(role?: string): string {
 function normalizeLayout(layout: string[], role?: string): string[] {
   const catalog = blocksForRole(role);
   const allowed = new Set(catalog.map(b => b.id));
-  const filtered = layout.filter(id => allowed.has(id) && !(role === 'gestor' && id === 'auto'));
+  const legacyGestorSkip = new Set(['items', 'financial', 'auto']);
+  const filtered = layout.filter((id) => {
+    if (role === 'gestor' && legacyGestorSkip.has(id)) return false;
+    return allowed.has(id) && !(role === 'gestor' && id === 'auto');
+  });
   for (const block of catalog) {
     if (!filtered.includes(block.id)) filtered.push(block.id);
+  }
+  if (role === 'gestor') {
+    const totalIdx = filtered.indexOf('total');
+    const footerIdx = filtered.indexOf('footer');
+    if (totalIdx >= 0 && footerIdx >= 0 && totalIdx > footerIdx) {
+      filtered.splice(totalIdx, 1);
+      filtered.splice(footerIdx, 0, 'total');
+    }
   }
   return filtered;
 }
@@ -95,6 +114,10 @@ export class PdfDesignerComponent implements OnInit {
     if (this.auth.user()?.logo_url) return 'profile';
     return 'tvm';
   });
+
+  readonly previewIncludes = DEFAULT_QUOTE_INCLUDES.slice(0, 5);
+  readonly previewRequirements = DEFAULT_QUOTE_REQUIREMENTS.slice(0, 4);
+  readonly previewBonus = DEFAULT_QUOTE_BONUS;
 
   ngOnInit() {
     this.loadSettings();

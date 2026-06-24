@@ -43,7 +43,7 @@ async function resolvePdfLogoBuffer(concesionaria) {
 }
 
 const CONCESIONARIA_DEFAULT_LAYOUT = ['header', 'title', 'client', 'auto', 'financial', 'items', 'footer'];
-const GESTOR_DEFAULT_LAYOUT = ['header', 'title', 'client', 'tramite', 'includes', 'requirements', 'bonus', 'financial', 'footer'];
+const GESTOR_DEFAULT_LAYOUT = ['header', 'title', 'client', 'tramite', 'includes', 'requirements', 'bonus', 'total', 'footer'];
 
 function parseChecklistForPdf(val) {
   if (!val) return [];
@@ -86,9 +86,26 @@ function normalizePdfLayout(layout, role) {
   const allowed = new Set(isGestor ? GESTOR_DEFAULT_LAYOUT : CONCESIONARIA_DEFAULT_LAYOUT);
   const defaultLayout = isGestor ? GESTOR_DEFAULT_LAYOUT : CONCESIONARIA_DEFAULT_LAYOUT;
   const source = Array.isArray(layout) && layout.length > 0 ? layout : defaultLayout;
-  const filtered = source.filter(id => allowed.has(id) && !(isGestor && id === 'auto'));
+  const legacyGestorSkip = new Set(['auto', 'items', 'financial']);
+  const filtered = source.filter((id) => {
+    if (isGestor && legacyGestorSkip.has(id)) return false;
+    return allowed.has(id) && !(isGestor && id === 'auto');
+  });
   for (const id of defaultLayout) {
     if (!filtered.includes(id)) filtered.push(id);
+  }
+  if (isGestor) {
+    const totalIdx = filtered.indexOf('total');
+    const footerIdx = filtered.indexOf('footer');
+    if (totalIdx >= 0 && footerIdx >= 0 && totalIdx > footerIdx) {
+      filtered.splice(totalIdx, 1);
+      filtered.splice(footerIdx, 0, 'total');
+    }
+    if (!filtered.includes('total')) {
+      const fIdx = filtered.indexOf('footer');
+      if (fIdx >= 0) filtered.splice(fIdx, 0, 'total');
+      else filtered.push('total');
+    }
   }
   return filtered;
 }
@@ -246,8 +263,36 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
       renderChecklistBlock(doc, 'BONUS', parseChecklistForPdf(quote.bonus_list), GOLD, BLACK);
     },
 
+    total: async () => {
+      if (!isGestor) return;
+
+      let items = [];
+      try { items = typeof quote?.items === 'string' ? JSON.parse(quote.items) : (quote?.items || []); } catch (e) {}
+      const itemsTotal = Array.isArray(items)
+        ? items.reduce((sum, item) => sum + Number(item?.price || 0), 0)
+        : 0;
+      const honorarios = itemsTotal > 0
+        ? itemsTotal
+        : Number(quote?.total || deal.estimated_value || 0);
+
+      doc.moveDown(0.5);
+      doc.fillColor(GOLD).fontSize(12).text('TOTAL DE LA COTIZACIÓN');
+      doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
+      doc.moveDown(1.2);
+      doc.fillColor(GRAY).fontSize(10).text('Honorarios del trámite:', 50, doc.y, { continued: false });
+      doc.fillColor(BLACK).fontSize(10).text(formatMoney(honorarios), 350, doc.y - 12, { width: 150, align: 'right' });
+      doc.moveDown(1);
+      doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GOLD).lineWidth(1).stroke();
+      doc.moveDown(0.8);
+      doc.fillColor(BLACK).fontSize(14).text('TOTAL:', 50, doc.y, { continued: false });
+      doc.fillColor(BLACK).fontSize(14).text(formatMoney(honorarios), 350, doc.y - 16, { width: 150, align: 'right' });
+      doc.moveDown(2);
+    },
+
     financial: async () => {
-      doc.fillColor(GOLD).fontSize(12).text(isGestor ? 'HONORARIOS' : 'DESGLOSE FINANCIERO');
+      if (isGestor) return;
+
+      doc.fillColor(GOLD).fontSize(12).text('DESGLOSE FINANCIERO');
       doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
       doc.moveDown(1.5);
 
@@ -258,24 +303,6 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
         doc.text(formatMoney(value), 350, doc.y - (isTotal ? 14 : 12), { width: 150, align: 'right' });
         doc.moveDown(0.5);
       };
-
-      if (isGestor) {
-        let items = [];
-        try { items = typeof quote?.items === 'string' ? JSON.parse(quote.items) : (quote?.items || []); } catch (e) {}
-        const itemsTotal = Array.isArray(items)
-          ? items.reduce((sum, item) => sum + Number(item?.price || 0), 0)
-          : 0;
-        const honorarios = itemsTotal > 0
-          ? itemsTotal
-          : Number(quote?.total || deal.estimated_value || 0);
-        drawRow('Honorarios del trámite:', honorarios);
-        doc.moveDown(0.5);
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GRAY).lineWidth(0.5).stroke();
-        doc.moveDown(1);
-        drawRow('Total:', honorarios, true);
-        doc.moveDown(2);
-        return;
-      }
 
       drawRow('Precio del Vehículo:', deal.estimated_value);
       

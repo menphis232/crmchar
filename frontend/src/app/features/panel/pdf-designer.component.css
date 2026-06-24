@@ -356,6 +356,25 @@
   font-size: 14px;
 }
 
+.block-total-end {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 2px dashed rgba(0, 0, 0, 0.08);
+}
+
+.mock-checklist {
+  margin: 0;
+  padding: 0 0 0 4px;
+  list-style: none;
+}
+
+.mock-checklist li {
+  font-size: 12px;
+  color: #333;
+  line-height: 1.55;
+  margin-bottom: 6px;
+}
+
 .mock-plazo {
   font-size: 13px;
   margin-top: 10px;
