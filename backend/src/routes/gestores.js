@@ -7,6 +7,7 @@ import { createDealFromSolicitud } from '../crm/helpers.js';
 import { pipelineStagesForUser } from '../crm/stages.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
+import { getFrontendBase } from '../utils/frontend-url.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
@@ -490,6 +491,54 @@ function extractCreateLeadAction(text) {
   return null;
 }
 
+async function notifyGestorNewLeadByEmail(gestorUserId, { clientName, serviceName, clientEmail, clientPhone, location, dealId }) {
+  try {
+    const owner = await get('SELECT email, name FROM users WHERE id = ?', [gestorUserId]);
+    if (!owner?.email) return;
+
+    const deal = await get('SELECT tracking_code, title FROM crm_deals WHERE id = ?', [dealId]);
+    const panelUrl = `${getFrontendBase()}/panel/gestor?deal=${dealId}`;
+    const contactLines = [
+      clientEmail ? `<li><strong>Email:</strong> ${clientEmail}</li>` : '',
+      clientPhone ? `<li><strong>Teléfono:</strong> ${clientPhone}</li>` : '',
+      location ? `<li><strong>Ubicación:</strong> ${location}</li>` : '',
+      deal?.tracking_code ? `<li><strong>Código de seguimiento:</strong> ${deal.tracking_code}</li>` : '',
+    ].filter(Boolean).join('');
+
+    const html = `
+      <h2 style="color:#ffffff;font-size:20px;font-weight:600;margin:0 0 12px;">Nueva solicitud recibida</h2>
+      <p style="color:rgba(255,255,255,0.72);font-size:15px;line-height:1.65;margin:0 0 20px;">
+        Hola ${owner.name || 'Gestor'}, tienes un nuevo lead en tu panel.
+      </p>
+      <div style="background:#0f1117;border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:18px 20px;margin-bottom:24px;">
+        <p style="color:#c8a94a;font-size:12px;margin:0 0 10px;text-transform:uppercase;letter-spacing:0.1em;">Detalle del lead</p>
+        <ul style="color:#ffffff;font-size:15px;margin:0;padding-left:18px;line-height:1.7;">
+          <li><strong>Cliente:</strong> ${clientName}</li>
+          <li><strong>Trámite:</strong> ${deal?.title || serviceName}</li>
+          ${contactLines}
+        </ul>
+      </div>
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${panelUrl}" style="background:linear-gradient(135deg,#c8a94a,#d4af37);color:#000;padding:14px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px;display:inline-block;">
+          Ver en el panel
+        </a>
+      </div>
+      <p style="color:rgba(255,255,255,0.45);font-size:13px;text-align:center;margin:0;">
+        También recibirás una notificación en tiempo real dentro del panel.
+      </p>
+    `;
+
+    await sendEmail(
+      owner.email,
+      `Nuevo lead: ${serviceName} — ${clientName}`,
+      `Nueva solicitud de ${clientName} para ${serviceName}. Revisa tu panel: ${panelUrl}`,
+      html,
+    );
+  } catch (e) {
+    console.error('Error enviando correo de nuevo lead al gestor:', e);
+  }
+}
+
 async function processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData = null) {
   if (!gestor?.id || !gestor?.user_id) {
     throw new Error('Gestor inválido: falta id o user_id');
@@ -561,6 +610,15 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
     [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`, dealId]
   );
+
+  await notifyGestorNewLeadByEmail(gestor.user_id, {
+    clientName,
+    serviceName,
+    clientEmail,
+    clientPhone,
+    location,
+    dealId,
+  });
 
   return { id, dealId };
 }
