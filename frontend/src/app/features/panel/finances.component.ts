@@ -31,8 +31,10 @@ import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from 
 import {
   buildActiveFormMethods,
   buildFinPaymentMethodsPayload,
+  DEFAULT_ACTIVE_PREDEFINED_IDS,
   finPaymentMethodLabel,
   FinPaymentMethodOption,
+  mergeFormPaymentMethods,
   parseFinPaymentMethods,
 } from '../../shared/fin-payment-methods.utils';
 import { formatMoney } from '../../shared/format-amount.util';
@@ -841,6 +843,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
       const saved = res.methods || [];
       if (saved.length === 0) {
+        this.selectedMethodIds = ['stripe', ...DEFAULT_ACTIVE_PREDEFINED_IDS];
         this.paymentMethodCatalog.set([]);
         this.updateEnabledMethods();
         return;
@@ -881,9 +884,9 @@ export class FinancesComponent implements OnInit, OnDestroy {
     this.fin.getPaymentMethods().subscribe({
       next: (res) => {
         const fromApi = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
-        const methods = fromApi.length > 0 ? fromApi : fromConfig;
+        const methods = mergeFormPaymentMethods(fromConfig, fromApi);
         this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
-        this.applyFormMethods(methods);
+        this.applyFormMethods(methods.length > 0 ? methods : fromConfig);
       },
       error: () => this.applyFormMethods(fromConfig),
     });

@@ -8,6 +8,12 @@ const PREDEFINED_LABELS = {
   general: 'General',
 };
 
+const DEFAULT_ACTIVE_PREDEFINED = ['efectivo', 'transferencia', 'mercadopago'];
+
+function isPredefinedMethodId(id) {
+  return Boolean(id && PREDEFINED_LABELS[id]);
+}
+
 export function parseFinPaymentMethodsJson(raw) {
   if (raw == null) return null;
   try {
@@ -31,10 +37,25 @@ export function serializeFinPaymentMethodsForDb(methods) {
   return JSON.stringify(Array.isArray(methods) ? methods : []);
 }
 
+/** Si solo hay métodos personalizados guardados, incluir los predefinidos activos por defecto. */
+export function normalizeStoredPaymentMethods(methods) {
+  const list = Array.isArray(methods) ? [...methods] : [];
+  if (!list.length) return [];
+
+  const hasActivePredefined = list.some((m) => {
+    if (typeof m === 'string') return m !== 'stripe';
+    if (m?.id && isPredefinedMethodId(m.id)) return m.enabled !== false;
+    return false;
+  });
+
+  if (hasActivePredefined) return list;
+  return [...DEFAULT_ACTIVE_PREDEFINED, ...list];
+}
+
 /** IDs habilitados para registro manual (excluye stripe por defecto). */
 export function enabledManualPaymentMethodIds(methodsJson, { includeStripe = false } = {}) {
-  const parsed = parseFinPaymentMethodsJson(methodsJson);
-  if (!parsed?.length) return [];
+  const parsed = normalizeStoredPaymentMethods(parseFinPaymentMethodsJson(methodsJson) ?? []);
+  if (!parsed.length) return [];
   const ids = [];
 
   for (const m of parsed) {

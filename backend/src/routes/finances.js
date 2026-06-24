@@ -1,6 +1,7 @@
 import express from 'express';
 import {
   enabledManualPaymentMethodIds,
+  normalizeStoredPaymentMethods,
   parseFinPaymentMethodsJson,
   resolvePaymentMethodLabel,
   serializeFinPaymentMethodsForDb,
@@ -36,7 +37,8 @@ router.get('/payment-methods', async (req, res) => {
   try {
     const user = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
     const parsed = parseFinPaymentMethodsJson(user?.fin_payment_methods);
-    res.json({ methods: parsed ?? [] });
+    const methods = normalizeStoredPaymentMethods(parsed ?? []);
+    res.json({ methods });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener métodos de pago' });
@@ -61,7 +63,7 @@ router.put('/payment-methods', async (req, res) => {
     }
 
     const user = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
-    const saved = parseFinPaymentMethodsJson(user?.fin_payment_methods) ?? methods;
+    const saved = normalizeStoredPaymentMethods(parseFinPaymentMethodsJson(user?.fin_payment_methods) ?? methods);
     res.json({ success: true, methods: saved });
   } catch (err) {
     console.error(err);

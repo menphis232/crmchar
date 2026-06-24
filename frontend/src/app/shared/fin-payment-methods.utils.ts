@@ -16,6 +16,8 @@ const PREDEFINED_MAP = Object.fromEntries(
   FIN_ALL_METHODS.map((m) => [m.id, { ...m }]),
 ) as Record<string, FinPaymentMethodOption>;
 
+export const DEFAULT_ACTIVE_PREDEFINED_IDS = ['efectivo', 'transferencia', 'mercadopago'] as const;
+
 const FALLBACK_LABELS: Record<string, string> = {
   stripe: 'Stripe',
   efectivo: 'Efectivo',
@@ -119,4 +121,18 @@ export function buildActiveFormMethods(
   );
   const custom = customMethods.filter((m) => selectedMethodIds.includes(m.id));
   return [...predefined, ...custom];
+}
+
+/** Une listas de métodos; la primera lista gana en caso de duplicados. */
+export function mergeFormPaymentMethods(
+  ...lists: FinPaymentMethodOption[][]
+): FinPaymentMethodOption[] {
+  const map = new Map<string, FinPaymentMethodOption>();
+  for (const list of lists) {
+    for (const m of list) {
+      if (m.id === 'stripe') continue;
+      if (!map.has(m.id)) map.set(m.id, m);
+    }
+  }
+  return [...map.values()];
 }
