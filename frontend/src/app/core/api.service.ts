@@ -158,6 +158,19 @@ export class CrmService {
   getQuotes(dealId: string) {
     return this.http.get<any[]>(`${this.base}/deals/${dealId}/quotes`);
   }
+  getQuoteBootstrap(dealId: string) {
+    return this.http.get<{
+      templates: { includes: string[]; requirements: string[]; bonus: string[] };
+      service: { required_documents: string[]; includes: string[]; bonus: string[]; price: number | null } | null;
+      defaults: { includes: { text: string; checked: boolean }[]; requirements: { text: string; checked: boolean }[]; bonus: { text: string; checked: boolean }[] };
+    }>(`${this.base}/deals/${dealId}/quote-bootstrap`);
+  }
+  getQuoteTemplates() {
+    return this.http.get<{ includes: string[]; requirements: string[]; bonus: string[] }>(`${this.base}/quote-templates`);
+  }
+  saveQuoteTemplates(data: { includes: string[]; requirements: string[]; bonus: string[] }) {
+    return this.http.put<{ includes: string[]; requirements: string[]; bonus: string[] }>(`${this.base}/quote-templates`, data);
+  }
   createQuote(dealId: string, data: any) {
     return this.http.post<{ id: string }>(`${this.base}/deals/${dealId}/quotes`, data);
   }

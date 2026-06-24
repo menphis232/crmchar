@@ -14,6 +14,14 @@ import {
   stagesForRole, stageLabelsForUser,
 } from '../crm/stages.js';
 import { generateQuotePdf } from '../crm/pdf-generator.js';
+import {
+  checklistFromTexts,
+  getUserQuoteTemplates,
+  mergeTemplateLists,
+  parseChecklist,
+  parseJsonArray,
+  syncUserQuoteTemplates,
+} from '../crm/quote-defaults.js';
 import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
 import Stripe from 'stripe';
 
@@ -1165,6 +1173,87 @@ router.delete('/tasks/:id', async (req, res) => {
 
 // --- FASE 3.1: COTIZACIONES ---
 
+function parseQuoteRow(r) {
+  return {
+    ...r,
+    items: parseJsonArray(r.items),
+    includes_list: parseChecklist(r.includes_list),
+    requirements_list: parseChecklist(r.requirements_list),
+    bonus_list: parseChecklist(r.bonus_list),
+  };
+}
+
+router.get('/quote-templates', async (req, res) => {
+  try {
+    const templates = await getUserQuoteTemplates(req.orgId);
+    res.json(templates);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener plantillas de cotización' });
+  }
+});
+
+router.put('/quote-templates', async (req, res) => {
+  try {
+    const { includes, requirements, bonus } = req.body;
+    await syncUserQuoteTemplates(req.orgId, {
+      includes: checklistFromTexts(includes || []),
+      requirements: checklistFromTexts(requirements || []),
+      bonus: checklistFromTexts(bonus || []),
+    });
+    const templates = await getUserQuoteTemplates(req.orgId);
+    res.json(templates);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar plantillas de cotización' });
+  }
+});
+
+router.get('/deals/:id/quote-bootstrap', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const deal = await get(
+      'SELECT id, title, estimated_value FROM crm_deals WHERE id = ? AND user_id = ?',
+      [req.params.id, uid],
+    );
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    const templates = await getUserQuoteTemplates(uid);
+    const gestor = await get('SELECT id FROM gestores WHERE user_id = ?', [uid]);
+    let service = null;
+    if (gestor?.id && deal.title) {
+      service = await get(
+        'SELECT required_documents, includes, bonus, price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
+        [gestor.id, deal.title],
+      );
+    }
+
+    const serviceReqs = parseJsonArray(service?.required_documents);
+    const serviceIncludes = parseJsonArray(service?.includes);
+    const serviceBonus = parseJsonArray(service?.bonus);
+
+    res.json({
+      templates,
+      service: service
+        ? {
+            required_documents: serviceReqs,
+            includes: serviceIncludes,
+            bonus: serviceBonus,
+            price: service.price,
+          }
+        : null,
+      defaults: {
+        includes: checklistFromTexts(mergeTemplateLists(serviceIncludes, templates.includes)),
+        requirements: checklistFromTexts(mergeTemplateLists(serviceReqs, templates.requirements)),
+        bonus: checklistFromTexts(mergeTemplateLists(serviceBonus, templates.bonus)),
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar datos de cotización' });
+  }
+});
+
 router.get('/deals/:id/quotes', async (req, res) => {
   try {
     const uid = req.orgId;
@@ -1174,11 +1263,7 @@ router.get('/deals/:id/quotes', async (req, res) => {
       ORDER BY created_at DESC
     `, [req.params.id, uid]);
     
-    // Parse JSON items
-    const parsed = rows.map(r => ({
-      ...r,
-      items: typeof r.items === 'string' ? JSON.parse(r.items) : (r.items || [])
-    }));
+    const parsed = rows.map(parseQuoteRow);
     res.json(parsed);
   } catch (err) {
     console.error(err);
@@ -1246,6 +1331,9 @@ router.post('/deals/:id/quotes', async (req, res) => {
       clientName,
       clientEmail,
       clientPhone,
+      includesList,
+      requirementsList,
+      bonusList,
     } = req.body;
     
     const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
@@ -1266,9 +1354,27 @@ router.post('/deals/:id/quotes', async (req, res) => {
     const vUntil = validUntil || new Date(Date.now() + 15 * 86400000).toISOString().slice(0,19).replace('T', ' ');
 
     await run(`
-      INSERT INTO crm_quotes (id, deal_id, user_id, items, total, valid_until, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'draft')
-    `, [quoteId, req.params.id, uid, JSON.stringify(items || []), total || 0, vUntil]);
+      INSERT INTO crm_quotes (id, deal_id, user_id, items, total, valid_until, status, includes_list, requirements_list, bonus_list)
+      VALUES (?, ?, ?, ?, ?, ?, 'draft', ?, ?, ?)
+    `, [
+      quoteId,
+      req.params.id,
+      uid,
+      JSON.stringify(items || []),
+      total || 0,
+      vUntil,
+      JSON.stringify(includesList || []),
+      JSON.stringify(requirementsList || []),
+      JSON.stringify(bonusList || []),
+    ]);
+
+    if (includesList || requirementsList || bonusList) {
+      await syncUserQuoteTemplates(uid, {
+        includes: includesList || [],
+        requirements: requirementsList || [],
+        bonus: bonusList || [],
+      });
+    }
 
     res.status(201).json({ id: quoteId });
   } catch (err) {
@@ -1295,6 +1401,9 @@ router.patch('/quotes/:id', async (req, res) => {
       clientName,
       clientEmail,
       clientPhone,
+      includesList,
+      requirementsList,
+      bonusList,
     } = req.body;
 
     await syncQuoteDealAndContact(quote.deal_id, uid, {
@@ -1322,14 +1431,31 @@ router.patch('/quotes/:id', async (req, res) => {
       sets.push('valid_until = ?');
       params.push(validUntil);
     }
+    if (includesList !== undefined) {
+      sets.push('includes_list = ?');
+      params.push(JSON.stringify(includesList));
+    }
+    if (requirementsList !== undefined) {
+      sets.push('requirements_list = ?');
+      params.push(JSON.stringify(requirementsList));
+    }
+    if (bonusList !== undefined) {
+      sets.push('bonus_list = ?');
+      params.push(JSON.stringify(bonusList));
+    }
     params.push(req.params.id, uid);
     await run(`UPDATE crm_quotes SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`, params);
 
+    if (includesList !== undefined || requirementsList !== undefined || bonusList !== undefined) {
+      await syncUserQuoteTemplates(uid, {
+        includes: includesList ?? parseChecklist(quote.includes_list),
+        requirements: requirementsList ?? parseChecklist(quote.requirements_list),
+        bonus: bonusList ?? parseChecklist(quote.bonus_list),
+      });
+    }
+
     const updated = await get('SELECT * FROM crm_quotes WHERE id = ?', [req.params.id]);
-    res.json({
-      ...updated,
-      items: typeof updated.items === 'string' ? JSON.parse(updated.items) : (updated.items || []),
-    });
+    res.json(parseQuoteRow(updated));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar cotización' });

@@ -241,7 +241,7 @@
         @if (!isConcesionaria()) {
           <div class="deal-section deal-quote-editor">
             <h4>Cotización</h4>
-            <p class="card-desc">Los datos del cliente se cargan de su solicitud. Edita el trámite y los conceptos, guarda y genera el PDF.</p>
+            <p class="card-desc">Los datos del cliente se cargan de su solicitud. Revisa qué incluye, requisitos y bonus; guarda y genera el PDF.</p>
             @if (d.contact?.id) {
               <button type="button" class="btn-ghost small" style="margin-bottom:10px;" (click)="openContact.emit(d.contact!.id!)">
                 Ver / editar ficha del cliente
@@ -289,33 +289,77 @@
 
               <div class="form-group" style="margin-bottom: 12px;">
                 <label>Honorarios del trámite (MXN)</label>
-                <input type="number" [(ngModel)]="quoteHonorarios" min="0" step="1" [disabled]="quoteItems.length > 0">
-                @if (quoteItems.length > 0) {
-                  <p class="card-desc" style="margin-top:6px;">Con conceptos en la lista, el total se calcula de los conceptos.</p>
-                }
+                <input type="number" [(ngModel)]="quoteHonorarios" min="0" step="1">
               </div>
 
-              <div class="quote-items-header">
-                <h5>Conceptos / servicios</h5>
-                <button type="button" class="deal-outline-btn btn-with-icon" (click)="addQuoteItem()">
-                  <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-                  Agregar concepto
-                </button>
+              <div class="quote-checklist-block">
+                <h5>Qué incluye</h5>
+                @if (quoteIncludes.length === 0) {
+                  <p class="card-desc">Sin ítems. Agrega opciones o guarda para cargar la plantilla predeterminada.</p>
+                } @else {
+                  @for (item of quoteIncludes; track item.id) {
+                    <div class="quote-checklist-row">
+                      <input type="checkbox" [(ngModel)]="item.checked">
+                      <input type="text" [(ngModel)]="item.text" placeholder="Descripción del servicio incluido">
+                      <button type="button" class="quote-item-remove" title="Quitar" (click)="removeChecklistItem('includes', item.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  }
+                }
+                <div class="quote-checklist-actions">
+                  <button type="button" class="deal-outline-btn btn-with-icon" (click)="addChecklistItem('includes')">
+                    <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                    Agregar ítem
+                  </button>
+                </div>
               </div>
 
-              @if (quoteItems.length === 0) {
-                <p class="card-desc">Sin conceptos adicionales. Usa «Agregar concepto» para desglosar la cotización.</p>
-              } @else {
-                @for (item of quoteItems; track item.id) {
-                  <div class="quote-item-row">
-                    <input type="text" [(ngModel)]="item.description" placeholder="Descripción del concepto">
-                    <input type="number" [(ngModel)]="item.price" min="0" step="1" placeholder="Precio">
-                    <button type="button" class="quote-item-remove" title="Quitar concepto" (click)="removeQuoteItem(item.id)">
-                      <svg lucideX [size]="14" aria-hidden="true"></svg>
-                    </button>
-                  </div>
+              <div class="quote-checklist-block">
+                <h5>Requisitos</h5>
+                @if (quoteRequirements.length === 0) {
+                  <p class="card-desc">Se cargan del servicio y de tu plantilla. Agrega los que necesites.</p>
+                } @else {
+                  @for (item of quoteRequirements; track item.id) {
+                    <div class="quote-checklist-row">
+                      <input type="checkbox" [(ngModel)]="item.checked">
+                      <input type="text" [(ngModel)]="item.text" placeholder="Documento o requisito">
+                      <button type="button" class="quote-item-remove" title="Quitar" (click)="removeChecklistItem('requirements', item.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  }
                 }
-              }
+                <div class="quote-checklist-actions">
+                  <button type="button" class="deal-outline-btn btn-with-icon" (click)="addChecklistItem('requirements')">
+                    <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                    Agregar requisito
+                  </button>
+                </div>
+              </div>
+
+              <div class="quote-checklist-block">
+                <h5>Bonus</h5>
+                @if (quoteBonus.length === 0) {
+                  <p class="card-desc">Beneficios adicionales para el cliente.</p>
+                } @else {
+                  @for (item of quoteBonus; track item.id) {
+                    <div class="quote-checklist-row">
+                      <input type="checkbox" [(ngModel)]="item.checked">
+                      <input type="text" [(ngModel)]="item.text" placeholder="Beneficio bonus">
+                      <button type="button" class="quote-item-remove" title="Quitar" (click)="removeChecklistItem('bonus', item.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  }
+                }
+                <div class="quote-checklist-actions">
+                  <button type="button" class="deal-outline-btn btn-with-icon" (click)="addChecklistItem('bonus')">
+                    <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                    Agregar bonus
+                  </button>
+                </div>
+              </div>
 
               <div class="quote-total-row">
                 <span>Total cotización</span>

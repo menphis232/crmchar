@@ -395,7 +395,17 @@
         <div class="form-group" style="margin-bottom: 15px;">
           <label>Documentos Requeridos (separados por coma)</label>
           <input [(ngModel)]="newService.requiredDocumentsStr" placeholder="Ej: INE, Tarjeta de Circulación, Factura">
-          <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas en blanco, se pedirá por defecto: INE, Tarjeta de Circulación, Factura de Origen.</p>
+          <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas en blanco, se pedirá por defecto: INE, Tarjeta de Circulación, Factura de Origen. Se cargan automáticamente en la cotización.</p>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>Qué incluye (separados por coma)</label>
+          <input [(ngModel)]="newService.includesStr" placeholder="Ej: Alta de placas, Engomado, Cambio de propietario">
+          <p class="card-desc" style="font-size:11px; margin-top:4px;">Opcional. Se suman a tu plantilla al crear cotizaciones de este trámite.</p>
+        </div>
+        <div class="form-group" style="margin-bottom: 15px;">
+          <label>Bonus (separados por coma)</label>
+          <input [(ngModel)]="newService.bonusStr" placeholder="Ej: Envío gratis, MSI con tarjeta">
+          <p class="card-desc" style="font-size:11px; margin-top:4px;">Opcional. Beneficios extra que aparecerán en la cotización.</p>
         </div>
         <button class="btn-copy btn-with-icon" (click)="addService()">
           <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>

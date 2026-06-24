@@ -24,6 +24,14 @@ import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import {
+  QuoteCheckItem,
+  checklistFromApi,
+  checklistFromTexts,
+  checklistToPayload,
+  nextChecklistId,
+  resetChecklistSeq,
+} from '../../shared/quote-checklist.utils';
 
 @Component({
   selector: 'app-crm-deal-panel',
@@ -764,6 +772,43 @@ import { ToastService } from '../../core/toast.service';
       margin-top: 12px;
     }
 
+    .quote-checklist-block {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 12px;
+    }
+    .quote-checklist-block h5 {
+      margin: 0 0 10px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.50);
+    }
+    .quote-checklist-row {
+      display: grid;
+      grid-template-columns: 24px 1fr 36px;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .quote-checklist-row input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #c8a94a;
+      cursor: pointer;
+    }
+    .quote-checklist-row input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .quote-checklist-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
     /* Upload area */
     .deal-upload-area { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
 
@@ -809,12 +854,13 @@ export class CrmDealPanelComponent implements OnDestroy {
   quoteDealTitle = '';
   quoteValidUntil = '';
   quoteHonorarios = 0;
-  quoteItems: { id: string; description: string; price: number | null }[] = [];
+  quoteIncludes: QuoteCheckItem[] = [];
+  quoteRequirements: QuoteCheckItem[] = [];
+  quoteBonus: QuoteCheckItem[] = [];
   contactVehicles: CrmContactVehicle[] = [];
   isSavingQuote = signal(false);
   isLoadingQuote = signal(false);
   isDownloadingQuote = signal(false);
-  private quoteItemSeq = 0;
 
   isGeneratingPayment = signal(false);
   isWatchingPayment = signal(false);
@@ -931,11 +977,6 @@ export class CrmDealPanelComponent implements OnDestroy {
     return `${base} 23:59:59`;
   }
 
-  private nextQuoteItemId(): string {
-    this.quoteItemSeq += 1;
-    return `qi-${this.quoteItemSeq}`;
-  }
-
   loadQuote(dealId: string) {
     this.isLoadingQuote.set(true);
     this.crmService.getQuotes(dealId).subscribe({
@@ -946,27 +987,60 @@ export class CrmDealPanelComponent implements OnDestroy {
           const q = quotes[0];
           this.quoteId = q.id;
           this.quoteValidUntil = this.toDateInput(q.valid_until);
-          this.quoteItems = (q.items || []).map((item: { description?: string; price?: number }, i: number) => ({
-            id: `qi-${i}`,
-            description: item.description || '',
-            price: item.price ?? null,
-          }));
-          this.quoteItemSeq = this.quoteItems.length;
-          if (this.quoteItems.length === 0) {
-            this.quoteHonorarios = Number(q.total) || d.estimatedValue || 0;
+          resetChecklistSeq();
+          this.quoteIncludes = checklistFromApi(q.includes_list);
+          this.quoteRequirements = checklistFromApi(q.requirements_list);
+          this.quoteBonus = checklistFromApi(q.bonus_list);
+          if (!this.quoteIncludes.length && !this.quoteRequirements.length && !this.quoteBonus.length) {
+            this.bootstrapQuoteChecklists(dealId, d);
+            return;
           }
+          this.quoteHonorarios = Number(q.total) || d.estimatedValue || 0;
+          this.syncQuoteClientFromDeal(d);
+          this.isLoadingQuote.set(false);
         } else {
-          this.initQuoteFormFromDeal(d);
+          this.initQuoteFormFromDeal(d, dealId);
         }
+      },
+      error: () => {
+        const d = this.deal();
+        if (d) this.initQuoteFormFromDeal(d, dealId);
+        this.isLoadingQuote.set(false);
+      },
+    });
+  }
+
+  private bootstrapQuoteChecklists(dealId: string, d: CrmDeal) {
+    this.crmService.getQuoteBootstrap(dealId).subscribe({
+      next: (boot) => {
+        resetChecklistSeq();
+        this.quoteIncludes = checklistFromApi(boot.defaults.includes);
+        this.quoteRequirements = checklistFromApi(boot.defaults.requirements);
+        this.quoteBonus = checklistFromApi(boot.defaults.bonus);
+        this.quoteHonorarios = Number(boot.service?.price ?? d.estimatedValue ?? 0) || 0;
         this.syncQuoteClientFromDeal(d);
         this.isLoadingQuote.set(false);
       },
       error: () => {
-        const d = this.deal();
-        if (d) this.initQuoteFormFromDeal(d);
+        this.initQuoteFormFromDeal(d, dealId, true);
         this.isLoadingQuote.set(false);
       },
     });
+  }
+
+  private initQuoteFormFromDeal(d: CrmDeal, dealId?: string, skipBootstrap = false) {
+    this.quoteId = null;
+    this.quoteValidUntil = this.defaultValidUntil();
+    resetChecklistSeq();
+    this.quoteIncludes = [];
+    this.quoteRequirements = [];
+    this.quoteBonus = [];
+    this.syncQuoteClientFromDeal(d);
+    if (dealId && !skipBootstrap) {
+      this.bootstrapQuoteChecklists(dealId, d);
+      return;
+    }
+    this.isLoadingQuote.set(false);
   }
 
   private syncQuoteClientFromDeal(d: CrmDeal) {
@@ -974,50 +1048,33 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.quoteClientEmail = d.contact?.email || '';
     this.quoteClientPhone = d.contact?.phone || d.contact?.whatsapp || '';
     this.quoteDealTitle = d.title || '';
-    this.quoteHonorarios = d.estimatedValue || 0;
+    if (!this.quoteHonorarios) {
+      this.quoteHonorarios = d.estimatedValue || 0;
+    }
   }
 
-  private initQuoteFormFromDeal(d: CrmDeal) {
-    this.quoteId = null;
-    this.quoteValidUntil = this.defaultValidUntil();
-    this.quoteItems = [];
-    this.quoteItemSeq = 0;
-    this.syncQuoteClientFromDeal(d);
+  addChecklistItem(section: 'includes' | 'requirements' | 'bonus') {
+    const item: QuoteCheckItem = { id: nextChecklistId(section), text: '', checked: true };
+    if (section === 'includes') this.quoteIncludes = [...this.quoteIncludes, item];
+    if (section === 'requirements') this.quoteRequirements = [...this.quoteRequirements, item];
+    if (section === 'bonus') this.quoteBonus = [...this.quoteBonus, item];
   }
 
-  addQuoteItem() {
-    this.quoteItems = [
-      ...this.quoteItems,
-      { id: this.nextQuoteItemId(), description: '', price: null },
-    ];
-  }
-
-  removeQuoteItem(itemId: string) {
-    this.quoteItems = this.quoteItems.filter(i => i.id !== itemId);
-  }
-
-  quoteItemsTotal(): number {
-    return this.quoteItems.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+  removeChecklistItem(section: 'includes' | 'requirements' | 'bonus', itemId: string) {
+    if (section === 'includes') this.quoteIncludes = this.quoteIncludes.filter(i => i.id !== itemId);
+    if (section === 'requirements') this.quoteRequirements = this.quoteRequirements.filter(i => i.id !== itemId);
+    if (section === 'bonus') this.quoteBonus = this.quoteBonus.filter(i => i.id !== itemId);
   }
 
   quoteDisplayTotal(): number {
-    if (this.quoteItems.length > 0) {
-      return this.quoteItemsTotal();
-    }
     return Number(this.quoteHonorarios) || 0;
   }
 
   private buildQuotePayload() {
-    const items = this.quoteItems
-      .filter(i => i.description.trim() || Number(i.price))
-      .map(i => ({
-        description: i.description.trim() || 'Concepto',
-        price: Number(i.price) || 0,
-      }));
-    const total = items.length > 0 ? this.quoteItemsTotal() : Number(this.quoteHonorarios) || 0;
+    const total = this.quoteDisplayTotal();
 
     return {
-      items,
+      items: [],
       total,
       validUntil: this.toValidUntilDatetime(this.quoteValidUntil),
       dealTitle: this.quoteDealTitle.trim() || undefined,
@@ -1025,6 +1082,9 @@ export class CrmDealPanelComponent implements OnDestroy {
       clientEmail: this.quoteClientEmail.trim() || undefined,
       clientPhone: this.quoteClientPhone.trim() || undefined,
       estimatedValue: total,
+      includesList: checklistToPayload(this.quoteIncludes),
+      requirementsList: checklistToPayload(this.quoteRequirements),
+      bonusList: checklistToPayload(this.quoteBonus),
     };
   }
 

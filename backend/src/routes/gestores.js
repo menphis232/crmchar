@@ -13,18 +13,27 @@ import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
 
 const GESTOR_SERVICES_SELECT = `
-  SELECT id, name, time_estimate as timeEstimate, price, required_documents
+  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus
   FROM gestor_services WHERE gestor_id = ?
   ORDER BY sort_order ASC, name ASC
 `;
 
+function parseServiceJsonField(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function parseGestorServices(rows) {
   return rows.map(s => {
-    try {
-      s.required_documents = typeof s.required_documents === 'string'
-        ? JSON.parse(s.required_documents)
-        : s.required_documents;
-    } catch (e) { /* keep raw */ }
+    s.required_documents = parseServiceJsonField(s.required_documents);
+    s.includes = parseServiceJsonField(s.includes);
+    s.bonus = parseServiceJsonField(s.bonus);
     return s;
   });
 }
@@ -250,7 +259,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
 router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
-    const { name, timeEstimate, price, required_documents } = req.body;
+    const { name, timeEstimate, price, required_documents, includes, bonus } = req.body;
     if (!name || !timeEstimate) {
       return res.status(400).json({ error: 'Datos incompletos' });
     }
@@ -269,6 +278,20 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     }
     if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
+    let includesList = [];
+    if (includes && Array.isArray(includes)) {
+      includesList = includes;
+    } else if (typeof includes === 'string') {
+      includesList = includes.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    let bonusList = [];
+    if (bonus && Array.isArray(bonus)) {
+      bonusList = bonus;
+    } else if (typeof bonus === 'string') {
+      bonusList = bonus.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
     const maxOrder = await get(
       'SELECT COALESCE(MAX(sort_order), -1) as maxOrder FROM gestor_services WHERE gestor_id = ?',
       [row.id],
@@ -276,10 +299,10 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     const sortOrder = (maxOrder?.maxOrder ?? -1) + 1;
 
     await run(
-      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), sortOrder],
+      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, includes, bonus, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), sortOrder],
     );
-    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs });
+    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs, includes: includesList, bonus: bonusList });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
   }

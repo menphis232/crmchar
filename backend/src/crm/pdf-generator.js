@@ -43,7 +43,33 @@ async function resolvePdfLogoBuffer(concesionaria) {
 }
 
 const CONCESIONARIA_DEFAULT_LAYOUT = ['header', 'title', 'client', 'auto', 'financial', 'items', 'footer'];
-const GESTOR_DEFAULT_LAYOUT = ['header', 'title', 'client', 'tramite', 'financial', 'items', 'footer'];
+const GESTOR_DEFAULT_LAYOUT = ['header', 'title', 'client', 'tramite', 'includes', 'requirements', 'bonus', 'financial', 'footer'];
+
+function parseChecklistForPdf(val) {
+  if (!val) return [];
+  let arr = val;
+  if (typeof val === 'string') {
+    try { arr = JSON.parse(val); } catch { return []; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((item) => {
+      if (typeof item === 'string') return { text: item, checked: true };
+      return { text: String(item?.text || '').trim(), checked: item?.checked !== false };
+    })
+    .filter((item) => item.text && item.checked);
+}
+
+function renderChecklistBlock(doc, title, items, GOLD, BLACK) {
+  if (!items.length) return;
+  doc.fillColor(GOLD).fontSize(12).text(title);
+  doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
+  doc.moveDown(1.2);
+  for (const item of items) {
+    doc.fillColor(BLACK).fontSize(10).text(`✓ ${item.text}`, { lineGap: 4 });
+  }
+  doc.moveDown(1.5);
+}
 
 const CONCESIONARIA_DEFAULT_FOOTER =
   'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
@@ -203,6 +229,21 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
 
       doc.fillColor(BLACK).fontSize(11).text(deal.title || 'Trámite vehicular', { bold: true });
       doc.moveDown(1);
+    },
+
+    includes: async () => {
+      if (!isGestor) return;
+      renderChecklistBlock(doc, 'QUÉ INCLUYE', parseChecklistForPdf(quote.includes_list), GOLD, BLACK);
+    },
+
+    requirements: async () => {
+      if (!isGestor) return;
+      renderChecklistBlock(doc, 'REQUISITOS', parseChecklistForPdf(quote.requirements_list), GOLD, BLACK);
+    },
+
+    bonus: async () => {
+      if (!isGestor) return;
+      renderChecklistBlock(doc, 'BONUS', parseChecklistForPdf(quote.bonus_list), GOLD, BLACK);
     },
 
     financial: async () => {

@@ -939,6 +939,25 @@ async function migrate() {
       console.log('Migración v43 (client wallet) aplicada.');
     }
 
+    const v44Path = path.join(__dirname, '..', 'sql', 'migration-v44-quote-checklists.sql');
+    if (fs.existsSync(v44Path)) {
+      const v44 = fs.readFileSync(v44Path, 'utf8');
+      const conn44 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn44.query('USE tramites_vehiculares');
+      for (const stmt of v44.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn44.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn44.end();
+      console.log('Migración v44 (quote checklists) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

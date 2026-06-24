@@ -194,7 +194,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   verificationAlerts = signal<CrmVerificationAlert[]>([]);
   isAiLoading = signal(false);
   message = signal('');
-  newService = { name: '', timeEstimate: '', price: null as number | null, requiredDocumentsStr: '' };
+  newService = { name: '', timeEstimate: '', price: null as number | null, requiredDocumentsStr: '', includesStr: '', bonusStr: '' };
   newTemplate = { name: '', content: '' };
   automations = signal<any[]>([]);
   newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
@@ -1158,16 +1158,20 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   addService() {
     if (!this.newService.name || !this.newService.timeEstimate) return;
     const docs = this.newService.requiredDocumentsStr.split(',').map(s => s.trim()).filter(Boolean);
+    const includes = this.newService.includesStr.split(',').map(s => s.trim()).filter(Boolean);
+    const bonus = this.newService.bonusStr.split(',').map(s => s.trim()).filter(Boolean);
     const payload: any = {
       name: this.newService.name,
       timeEstimate: this.newService.timeEstimate,
       price: this.newService.price,
     };
     if (docs.length > 0) payload.required_documents = docs;
+    if (includes.length > 0) payload.includes = includes;
+    if (bonus.length > 0) payload.bonus = bonus;
     
     this.gestoresService.addService(payload).subscribe({
       next: () => {
-        this.newService = { name: '', timeEstimate: '', price: null, requiredDocumentsStr: '' };
+        this.newService = { name: '', timeEstimate: '', price: null, requiredDocumentsStr: '', includesStr: '', bonusStr: '' };
         this.loadProfile();
         this.message.set('Servicio agregado');
       },

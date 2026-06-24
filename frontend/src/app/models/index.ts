@@ -359,11 +359,19 @@ export interface CrmQuoteItem {
   price: number;
 }
 
+export interface QuoteCheckItemPayload {
+  text: string;
+  checked: boolean;
+}
+
 export interface CrmQuote {
   id: string;
   deal_id: string;
   user_id: string;
   items: CrmQuoteItem[];
+  includes_list?: QuoteCheckItemPayload[];
+  requirements_list?: QuoteCheckItemPayload[];
+  bonus_list?: QuoteCheckItemPayload[];
   total: number;
   valid_until: string;
   status: 'draft' | 'sent' | 'accepted' | 'rejected';
