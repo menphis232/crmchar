@@ -1,5 +1,5 @@
-<div class="login-page" [class.login-page--portal]="role() === 'concesionaria' || role() === 'gestor'">
-  @if (role() !== 'concesionaria' && role() !== 'gestor') {
+<div class="login-page" [class.login-page--portal]="role() === 'concesionaria' || role() === 'gestor' || role() === 'cliente'">
+  @if (role() !== 'concesionaria' && role() !== 'gestor' && role() !== 'cliente') {
     <div class="bg-particles"></div>
   }
   <a [routerLink]="backHomeLink()" class="btn-back-top">← VOLVER AL INICIO</a>
