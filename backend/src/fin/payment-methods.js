@@ -9,13 +9,26 @@ const PREDEFINED_LABELS = {
 };
 
 export function parseFinPaymentMethodsJson(raw) {
-  if (!raw) return null;
+  if (raw == null) return null;
   try {
-    const arr = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    return Array.isArray(arr) ? arr : null;
+    let value = raw;
+    if (Buffer.isBuffer(value)) value = value.toString('utf8');
+    if (typeof value === 'string') {
+      value = JSON.parse(value);
+      if (typeof value === 'string') {
+        try { value = JSON.parse(value); } catch { /* keep */ }
+      }
+    }
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === 'object') return Object.values(value);
+    return null;
   } catch {
     return null;
   }
+}
+
+export function serializeFinPaymentMethodsForDb(methods) {
+  return JSON.stringify(Array.isArray(methods) ? methods : []);
 }
 
 /** IDs habilitados para registro manual (excluye stripe por defecto). */
@@ -35,8 +48,7 @@ export function enabledManualPaymentMethodIds(methodsJson, { includeStripe = fal
     }
   }
 
-  const unique = [...new Set(ids)];
-  return unique;
+  return [...new Set(ids)];
 }
 
 export function resolvePaymentMethodLabel(method, methodsJson = null) {

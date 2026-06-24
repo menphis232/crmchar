@@ -1309,13 +1309,16 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.fin.getPaymentMethods().subscribe({
       next: (res) => {
         const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
+        if (!methods.length) {
+          this.toast.warning('Ve a Finanzas → Métodos de Pago, activa tus métodos y pulsa Guardar configuración.', 'Sin métodos configurados');
+          return;
+        }
         this.manualPaymentMethods.set(methods);
-        if (methods[0]) this.manualPaymentMethod = methods[0].id;
+        this.manualPaymentMethod = methods[0].id;
         this.registerPaymentModalOpen.set(true);
       },
       error: () => {
-        this.manualPaymentMethods.set([]);
-        this.registerPaymentModalOpen.set(true);
+        this.toast.error('No se pudieron cargar los métodos de cobro.', 'Error');
       },
     });
   }

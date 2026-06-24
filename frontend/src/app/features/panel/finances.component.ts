@@ -29,6 +29,7 @@ import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from '../../models';
 import {
+  buildActiveFormMethods,
   buildFinPaymentMethodsPayload,
   finPaymentMethodLabel,
   FinPaymentMethodOption,
@@ -275,7 +276,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             <svg lucideSettings [size]="18" aria-hidden="true"></svg>
             Métodos de pago
           </h3>
-          <p class="config-desc">Activa o desactiva métodos predefinidos y crea métodos personalizados. Stripe siempre está disponible desde webhooks automáticos.</p>
+          <p class="config-desc">Activa o desactiva métodos predefinidos y crea métodos personalizados. Stripe siempre está disponible desde webhooks automáticos. Recuerda pulsar <strong>Guardar configuración</strong> para que aparezcan en ingresos y egresos.</p>
 
           <!-- Métodos predefinidos -->
           <div class="config-section-label">Métodos predefinidos</div>
@@ -840,7 +841,6 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
       const saved = res.methods || [];
       if (saved.length === 0) {
-        this.selectedMethodIds = ['stripe', 'efectivo', 'transferencia', 'mercadopago'];
         this.paymentMethodCatalog.set([]);
         this.updateEnabledMethods();
         return;
@@ -868,6 +868,24 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
       this.paymentMethodCatalog.set(parseFinPaymentMethods(saved, { onlyEnabled: false }));
       this.updateEnabledMethods();
+    });
+  }
+
+  private applyFormMethods(methods: FinPaymentMethodOption[]) {
+    this.formMethods.set(methods);
+    this.newTx.payment_method = methods[0]?.id || '';
+  }
+
+  private refreshFormMethods() {
+    const fromConfig = buildActiveFormMethods(this.allMethods, this.customMethods, this.selectedMethodIds);
+    this.fin.getPaymentMethods().subscribe({
+      next: (res) => {
+        const fromApi = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
+        const methods = fromApi.length > 0 ? fromApi : fromConfig;
+        this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
+        this.applyFormMethods(methods);
+      },
+      error: () => this.applyFormMethods(fromConfig),
     });
   }
 
@@ -914,12 +932,16 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
   savePaymentMethods() {
     const toSave = buildFinPaymentMethodsPayload(this.allMethods, this.customMethods, this.selectedMethodIds);
+    const activeCount = buildActiveFormMethods(this.allMethods, this.customMethods, this.selectedMethodIds).length;
+    if (!toSave.length || activeCount === 0) {
+      this.toast.warning('Activa al menos un método de pago antes de guardar.', 'Sin métodos activos');
+      return;
+    }
 
     this.savingMethods = true;
     this.fin.savePaymentMethods(toSave).subscribe({
-      next: (res) => {
+      next: () => {
         this.savingMethods = false;
-        const saved = res.methods ?? toSave;
         this.loadPaymentMethods();
         this.toast.success('La configuración de métodos de pago fue guardada.', 'Configuración guardada');
       },
@@ -933,15 +955,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
   openForm() {
     this.fin.getPendingDeals().subscribe(d => this.pendingDeals.set(d));
     this.newTx = this.emptyTx();
-
-    // Reload methods fresh from API so the select always reflects the saved config
-    this.fin.getPaymentMethods().subscribe(res => {
-      const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
-      this.formMethods.set(methods);
-      this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
-      this.newTx.payment_method = methods[0]?.id || '';
-    });
-
+    this.refreshFormMethods();
     this.showForm.set(true);
   }
   closeForm() { this.showForm.set(false); }

@@ -38,11 +38,14 @@ export function parseFinPaymentMethods(
   for (const m of raw || []) {
     if (typeof m === 'string') {
       if (excludeStripe && m === 'stripe') continue;
+      if (seen.has(m)) continue;
+      seen.add(m);
       const pre = PREDEFINED_MAP[m];
-      if (pre && !seen.has(m)) {
-        seen.add(m);
-        methods.push({ ...pre, enabled: true });
-      }
+      methods.push(
+        pre
+          ? { ...pre, enabled: true }
+          : { id: m, label: m, icon: '💰', color: '#C8A94A', enabled: true },
+      );
       continue;
     }
 
@@ -103,4 +106,17 @@ export function buildFinPaymentMethodsPayload(
   }
 
   return payload;
+}
+
+/** Métodos activos listos para selects (ingresos, egresos, pago externo). */
+export function buildActiveFormMethods(
+  allPredefined: readonly FinPaymentMethodOption[],
+  customMethods: FinPaymentMethodOption[],
+  selectedMethodIds: string[],
+): FinPaymentMethodOption[] {
+  const predefined = allPredefined.filter(
+    (m) => m.id !== 'stripe' && selectedMethodIds.includes(m.id),
+  );
+  const custom = customMethods.filter((m) => selectedMethodIds.includes(m.id));
+  return [...predefined, ...custom];
 }

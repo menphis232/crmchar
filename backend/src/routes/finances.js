@@ -3,6 +3,7 @@ import {
   enabledManualPaymentMethodIds,
   parseFinPaymentMethodsJson,
   resolvePaymentMethodLabel,
+  serializeFinPaymentMethodsForDb,
 } from '../fin/payment-methods.js';
 import { get, query, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
@@ -46,8 +47,22 @@ router.put('/payment-methods', async (req, res) => {
   try {
     const { methods } = req.body;
     if (!Array.isArray(methods)) return res.status(400).json({ error: 'methods debe ser un array' });
-    await run('UPDATE users SET fin_payment_methods = ? WHERE id = ?', [JSON.stringify(methods), req.orgId]);
-    res.json({ success: true, methods });
+    if (methods.length === 0) {
+      return res.status(400).json({ error: 'Activa al menos un método de pago antes de guardar' });
+    }
+
+    const json = serializeFinPaymentMethodsForDb(methods);
+    const result = await run(
+      'UPDATE users SET fin_payment_methods = CAST(? AS JSON) WHERE id = ?',
+      [json, req.orgId],
+    );
+    if (!result?.affectedRows) {
+      return res.status(404).json({ error: 'No se encontró la organización para guardar métodos' });
+    }
+
+    const user = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+    const saved = parseFinPaymentMethodsJson(user?.fin_payment_methods) ?? methods;
+    res.json({ success: true, methods: saved });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al guardar métodos de pago' });
