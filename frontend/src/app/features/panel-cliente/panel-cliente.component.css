@@ -1268,6 +1268,79 @@
   padding: 14px;
 }
 
+.client-vehicle-card {
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: rgba(255,255,255,0.02);
+}
+
+.client-vehicle-add {
+  border-style: dashed;
+}
+
+.client-vehicle-add h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.client-vehicle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.client-vehicle-plate {
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  color: var(--gold);
+}
+
+.client-vehicle-mmy {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+}
+
+.client-vehicle-delete {
+  color: #ff9b9b !important;
+}
+
+.client-vehicle-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.client-vehicle-form-mmy {
+  grid-column: 1 / -1;
+}
+
+.client-vehicle-form label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: rgba(255,255,255,0.45);
+}
+
+.client-vehicle-add-btn {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+@media (max-width: 640px) {
+  .client-vehicle-form {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 640px) {
   .client-wallet-form {
     grid-template-columns: 1fr;

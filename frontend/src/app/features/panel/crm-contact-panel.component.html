@@ -66,7 +66,12 @@
           @for (v of c360.vehicles; track v.id) {
             <div class="vehicle-card">
               <div class="vehicle-card-top">
-                <span class="vehicle-plate">{{ v.plate }}</span>
+                <div>
+                  <span class="vehicle-plate">{{ v.plate }}</span>
+                  @if (v.make || v.model || v.year) {
+                    <p class="vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
+                  }
+                </div>
                 @if (v.verificationStatus && v.verificationStatus !== 'ok' && v.verificationStatus !== 'unknown') {
                   <span class="verification-badge" [class]="v.verificationStatus">{{ v.verificationLabel }}</span>
                 } @else if (v.verificationLabel) {
@@ -74,6 +79,16 @@
                 }
               </div>
               <div class="vehicle-form-grid">
+                <div class="full">
+                  <app-vehicle-mmy-select
+                    [make]="v.make || ''"
+                    (makeChange)="updateVehicle(v, 'make', $event)"
+                    [submodel]="v.model || ''"
+                    (submodelChange)="updateVehicle(v, 'model', $event)"
+                    [year]="v.year ?? null"
+                    (yearChange)="updateVehicle(v, 'year', $event)"
+                  />
+                </div>
                 <div>
                   <label>Estado (placas)</label>
                   <select [ngModel]="v.state || ''" (ngModelChange)="updateVehicle(v, 'state', $event)">
@@ -100,8 +115,8 @@
                   }
                 </div>
                 <div class="full">
-                  <label>Notas del auto</label>
-                  <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Marca, modelo, año...">
+                  <label>Notas adicionales</label>
+                  <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Color, versión, observaciones...">
                 </div>
               </div>
 
@@ -169,6 +184,13 @@
           <div class="vehicle-card" style="border-style:dashed;">
             <h5 style="margin:0 0 10px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Agregar vehículo</h5>
             <div class="vehicle-form-grid">
+              <div class="full">
+                <app-vehicle-mmy-select
+                  [(make)]="newMake"
+                  [(submodel)]="newModel"
+                  [(year)]="newYear"
+                />
+              </div>
               <div>
                 <label>Placa</label>
                 <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
@@ -192,8 +214,8 @@
                 </select>
               </div>
               <div>
-                <label>Notas</label>
-                <input type="text" [(ngModel)]="newVehicleNotes" placeholder="Marca, modelo...">
+                <label>Notas adicionales</label>
+                <input type="text" [(ngModel)]="newVehicleNotes" placeholder="Color, versión...">
               </div>
             </div>
             <button type="button" class="deal-outline-btn btn-with-icon" style="margin-top:10px;" (click)="addVehicle()" [disabled]="isAddingVehicle()">

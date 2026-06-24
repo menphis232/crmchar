@@ -64,6 +64,13 @@
         <span class="kanban-count">{{ walletDocs().length }}</span>
       }
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'vehiculos'" (click)="setTab('vehiculos'); closeDeal()">
+      <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Mis Vehículos
+      @if (vehicles().length > 0) {
+        <span class="kanban-count">{{ vehicles().length }}</span>
+      }
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="setTab('facturas'); closeDeal()">
       <svg lucideReceipt [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Facturas
@@ -376,6 +383,92 @@
                 </div>
               </div>
             }
+          </div>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'vehiculos') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Mis Vehículos
+        </h2>
+        <p class="card-desc">Registra los autos de tu familia con marca, submarca y año. Tu gestoría verá la misma información.</p>
+
+        @if (vehiclesLoading()) {
+          <div class="client-empty">Cargando vehículos...</div>
+        } @else {
+          @for (v of vehicles(); track v.id) {
+            <div class="client-vehicle-card">
+              <div class="client-vehicle-head">
+                <div>
+                  <strong class="client-vehicle-plate">{{ v.plate }}</strong>
+                  @if (v.make || v.model || v.year) {
+                    <p class="client-vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
+                  }
+                </div>
+                <button type="button" class="btn-ghost small client-vehicle-delete" (click)="removeVehicle(v)">
+                  <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                  Quitar
+                </button>
+              </div>
+              <div class="client-vehicle-form">
+                <app-vehicle-mmy-select
+                  class="client-vehicle-form-mmy"
+                  [make]="v.make || ''"
+                  (makeChange)="updateClientVehicle(v, 'make', $event)"
+                  [submodel]="v.model || ''"
+                  (submodelChange)="updateClientVehicle(v, 'model', $event)"
+                  [year]="v.year ?? null"
+                  (yearChange)="updateClientVehicle(v, 'year', $event)"
+                />
+                <div>
+                  <label>Estado (placas)</label>
+                  <select [ngModel]="v.state || ''" (ngModelChange)="updateClientVehicle(v, 'state', $event)">
+                    <option value="">—</option>
+                    @for (st of mexicoStates; track st) {
+                      <option [value]="st">{{ st }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (!vehicles().length) {
+            <div class="client-empty" style="margin-bottom:16px;">
+              <p>Aún no tienes vehículos registrados.</p>
+            </div>
+          }
+
+          <div class="client-vehicle-card client-vehicle-add">
+            <h3>Agregar vehículo</h3>
+            <div class="client-vehicle-form">
+              <app-vehicle-mmy-select
+                class="client-vehicle-form-mmy"
+                [(make)]="newMake"
+                [(submodel)]="newModel"
+                [(year)]="newYear"
+              />
+              <div>
+                <label>Placa</label>
+                <input type="text" class="client-wallet-input" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
+              </div>
+              <div>
+                <label>Estado (placas)</label>
+                <select class="client-wallet-input" [(ngModel)]="newVehicleState">
+                  <option value="">—</option>
+                  @for (st of mexicoStates; track st) {
+                    <option [value]="st">{{ st }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <button type="button" class="btn-copy client-vehicle-add-btn" (click)="addVehicle()" [disabled]="isAddingVehicle()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              {{ isAddingVehicle() ? 'Agregando...' : 'Agregar vehículo' }}
+            </button>
           </div>
         }
       </div>

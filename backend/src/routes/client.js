@@ -14,6 +14,7 @@ const router = Router();
 import { pipelineStagesForUser } from '../crm/stages.js';
 import { isDealClosed } from '../crm/deal-status.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
+import { vehicleRowWithVerification } from '../crm/verification-utils.js';
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
@@ -409,6 +410,157 @@ router.delete('/wallet/:id', authRequired, requireRole('cliente'), async (req, r
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar documento' });
+  }
+});
+
+async function clientContacts(email) {
+  return query(
+    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
+    [email],
+  );
+}
+
+async function clientOwnsVehicle(email, vehicleId) {
+  const row = await get(
+    `SELECT cv.id FROM contact_vehicles cv
+     JOIN contacts c ON c.id = cv.contact_id
+     WHERE cv.id = ? AND LOWER(c.email) = LOWER(?)`,
+    [vehicleId, email],
+  );
+  return !!row;
+}
+
+function dedupeVehiclesByPlate(rows) {
+  const seen = new Set();
+  const out = [];
+  for (const row of rows) {
+    const key = String(row.plate || '').toUpperCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(vehicleRowWithVerification(row));
+  }
+  return out;
+}
+
+router.get('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT cv.* FROM contact_vehicles cv
+       JOIN contacts c ON c.id = cv.contact_id
+       WHERE LOWER(c.email) = LOWER(?)
+       ORDER BY cv.updated_at DESC, cv.created_at DESC`,
+      [req.user.email],
+    );
+    res.json(dedupeVehiclesByPlate(rows));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar vehículos' });
+  }
+});
+
+router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const { plate, make, model, year, state, engomadoColor, vehicleNotes } = req.body;
+    if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
+    if (!make?.trim() || !model?.trim() || year == null || year === '') {
+      return res.status(400).json({ error: 'Selecciona marca, submarca y año' });
+    }
+
+    const contacts = await clientContacts(req.user.email);
+    if (!contacts.length) {
+      return res.status(400).json({
+        error: 'Aún no tienes trámites con una gestoría. Solicita un servicio para registrar tus vehículos.',
+      });
+    }
+
+    let firstRow = null;
+    for (const contact of contacts) {
+      const id = uuid();
+      await run(`
+        INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [
+        id, contact.id, contact.user_id,
+        String(plate).trim().toUpperCase(),
+        make.trim(),
+        model.trim(),
+        Number(year),
+        state || null,
+        engomadoColor || null,
+        vehicleNotes || null,
+      ]);
+      if (!firstRow) {
+        firstRow = await get('SELECT * FROM contact_vehicles WHERE id = ?', [id]);
+      }
+    }
+
+    res.status(201).json(vehicleRowWithVerification(firstRow));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al agregar vehículo' });
+  }
+});
+
+router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    const { plate, make, model, year, state, engomadoColor, vehicleNotes } = req.body;
+    const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    const plateKey = plate ? String(plate).trim().toUpperCase() : row?.plate;
+
+    await run(
+      `UPDATE contact_vehicles cv
+       JOIN contacts c ON c.id = cv.contact_id
+       SET cv.plate = COALESCE(?, cv.plate),
+           cv.make = COALESCE(?, cv.make),
+           cv.model = COALESCE(?, cv.model),
+           cv.year = COALESCE(?, cv.year),
+           cv.state = COALESCE(?, cv.state),
+           cv.engomado_color = COALESCE(?, cv.engomado_color),
+           cv.vehicle_notes = COALESCE(?, cv.vehicle_notes),
+           cv.updated_at = NOW()
+       WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
+      [
+        plate ? String(plate).trim().toUpperCase() : null,
+        make ?? null,
+        model ?? null,
+        year != null && year !== '' ? Number(year) : null,
+        state ?? null,
+        engomadoColor ?? null,
+        vehicleNotes ?? null,
+        req.user.email,
+        plateKey,
+      ],
+    );
+
+    const updated = await get('SELECT * FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    res.json(vehicleRowWithVerification(updated));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar vehículo' });
+  }
+});
+
+router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    await run(
+      `DELETE cv FROM contact_vehicles cv
+       JOIN contacts c ON c.id = cv.contact_id
+       WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
+      [req.user.email, row.plate],
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar vehículo' });
   }
 });
 

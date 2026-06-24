@@ -132,10 +132,26 @@ export class CrmService {
   updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string }) {
     return this.http.patch<CrmContact>(`${this.base}/contacts/${id}`, data);
   }
-  addContactVehicle(contactId: string, data: { plate: string; state?: string; engomadoColor?: string; vehicleNotes?: string }) {
+  addContactVehicle(contactId: string, data: {
+    plate: string;
+    make?: string;
+    model?: string;
+    year?: number | null;
+    state?: string;
+    engomadoColor?: string;
+    vehicleNotes?: string;
+  }) {
     return this.http.post<CrmContactVehicle>(`${this.base}/contacts/${contactId}/vehicles`, data);
   }
-  updateContactVehicle(vehicleId: string, data: Partial<{ plate: string; state: string; engomadoColor: string; vehicleNotes: string }>) {
+  updateContactVehicle(vehicleId: string, data: Partial<{
+    plate: string;
+    make: string;
+    model: string;
+    year: number | null;
+    state: string;
+    engomadoColor: string;
+    vehicleNotes: string;
+  }>) {
     return this.http.patch<CrmContactVehicle>(`${this.base}/contact-vehicles/${vehicleId}`, data);
   }
   deleteContactVehicle(vehicleId: string) {

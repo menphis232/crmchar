@@ -977,6 +977,25 @@ async function migrate() {
       console.log('Migración v45 (contact vehicle documents) aplicada.');
     }
 
+    const v46Path = path.join(__dirname, '..', 'sql', 'migration-v46-vehicle-make-model-year.sql');
+    if (fs.existsSync(v46Path)) {
+      const v46 = fs.readFileSync(v46Path, 'utf8');
+      const conn46 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn46.query('USE tramites_vehiculares');
+      for (const stmt of v46.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn46.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn46.end();
+      console.log('Migración v46 (vehicle make model year) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

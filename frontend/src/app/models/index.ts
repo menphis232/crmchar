@@ -306,6 +306,9 @@ export interface CrmContactVehicle {
   id: string;
   contactId: string;
   plate: string;
+  make?: string;
+  model?: string;
+  year?: number | null;
   state?: string;
   engomadoColor?: string;
   vehicleNotes?: string;

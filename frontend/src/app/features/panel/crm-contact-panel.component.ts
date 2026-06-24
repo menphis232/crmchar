@@ -9,11 +9,13 @@ import { CrmContact360, CrmContactVehicle, CrmContactVehicleDocument } from '../
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
 import { environment } from '../../../environments/environment';
+import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.component';
+import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 
 @Component({
   selector: 'app-crm-contact-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
+  imports: [FormsModule, DatePipe, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
   templateUrl: './crm-contact-panel.component.html',
   styleUrls: ['./panel-dashboard.css', './crm-side-panel.theme.css'],
   styles: [`
@@ -57,6 +59,11 @@ import { environment } from '../../../environments/environment';
       letter-spacing: 0.06em;
       color: var(--gold);
     }
+    .vehicle-mmy {
+      margin: 0;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
     .verification-badge {
       font-size: 11px;
       padding: 3px 8px;
@@ -72,6 +79,7 @@ import { environment } from '../../../environments/environment';
       gap: 8px;
     }
     @media (max-width: 640px) { .vehicle-form-grid { grid-template-columns: 1fr; } }
+    .vehicle-form-grid .full { grid-column: 1 / -1; }
     .engomado-dot {
       display: inline-block;
       width: 10px;
@@ -221,6 +229,9 @@ export class CrmContactPanelComponent {
   editNotes = '';
 
   newPlate = '';
+  newMake = '';
+  newModel = '';
+  newYear: number | null = null;
   newVehicleState = '';
   newEngomado = '';
   newVehicleNotes = '';
@@ -228,6 +239,7 @@ export class CrmContactPanelComponent {
   readonly mexicoStates = MEXICO_STATES;
   readonly engomadoColors = ENGOMADO_COLORS;
   readonly engomadoLabel = engomadoLabel;
+  readonly formatVehicleLabel = formatVehicleLabel;
 
   vehicleCount = computed(() => this.data()?.vehicles?.length ?? 0);
 
@@ -286,9 +298,16 @@ export class CrmContactPanelComponent {
       this.toast.error('Indica la placa del vehículo');
       return;
     }
+    if (!this.newMake || !this.newModel || !this.newYear) {
+      this.toast.error('Selecciona marca, submarca y año');
+      return;
+    }
     this.isAddingVehicle.set(true);
     this.crmService.addContactVehicle(id, {
       plate: this.newPlate.trim(),
+      make: this.newMake,
+      model: this.newModel,
+      year: this.newYear,
       state: this.newVehicleState || undefined,
       engomadoColor: this.newEngomado || undefined,
       vehicleNotes: this.newVehicleNotes.trim() || undefined,
@@ -296,6 +315,9 @@ export class CrmContactPanelComponent {
       next: () => {
         this.isAddingVehicle.set(false);
         this.newPlate = '';
+        this.newMake = '';
+        this.newModel = '';
+        this.newYear = null;
         this.newVehicleState = '';
         this.newEngomado = '';
         this.newVehicleNotes = '';
@@ -310,8 +332,8 @@ export class CrmContactPanelComponent {
     });
   }
 
-  updateVehicle(v: CrmContactVehicle, field: string, value: string) {
-    const payload: Record<string, string> = { [field]: value };
+  updateVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
+    const payload: Record<string, string | number | null> = { [field]: value };
     this.crmService.updateContactVehicle(v.id, payload).subscribe({
       next: () => {
         const id = this.contactId();

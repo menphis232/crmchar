@@ -12,6 +12,10 @@ import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
 import { isShippedStage } from '../../shared/payment-stage.utils';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.component';
+import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
+import { MEXICO_STATES } from '../../shared/mexico-states';
+import { CrmContactVehicle } from '../../models';
 import {
   LucideArrowLeft,
   LucideBot,
@@ -37,6 +41,7 @@ import {
   LucideReceipt,
   LucideDownload,
   LucideWallet,
+  LucidePlus,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -47,18 +52,18 @@ interface PaginatedDeals {
   totalPages: number;
 }
 
-type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'ajustes';
+type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'ajustes';
 
 @Component({
   selector: 'app-panel-cliente',
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet,
-    PanelUserMenuComponent, AiAssistantComponent,
+    PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet, LucideSettings,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload,
-    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2,
+    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen,
   ],
   templateUrl: './panel-cliente.component.html',
@@ -131,6 +136,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   uploadingWallet = signal(false);
   walletForm = { label: '', category: 'Otro', notes: '' };
 
+  vehicles = signal<CrmContactVehicle[]>([]);
+  vehiclesLoading = signal(false);
+  isAddingVehicle = signal(false);
+  newPlate = '';
+  newMake = '';
+  newModel = '';
+  newYear: number | null = null;
+  newVehicleState = '';
+  readonly mexicoStates = MEXICO_STATES;
+  readonly formatVehicleLabel = formatVehicleLabel;
+
   messages = signal<any[]>([]);
   newMessage = '';
   socket!: Socket;
@@ -193,6 +209,74 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (tab === 'tramites' && !this.selectedDeal()) this.loadTramites(1);
     if (tab === 'historial') this.loadHistorial(1);
     if (tab === 'billetera') this.loadWallet();
+    if (tab === 'vehiculos') this.loadVehicles();
+  }
+
+  loadVehicles() {
+    this.vehiclesLoading.set(true);
+    this.http.get<CrmContactVehicle[]>(`${environment.apiUrl}/client/vehicles`).subscribe({
+      next: list => {
+        this.vehicles.set(list);
+        this.vehiclesLoading.set(false);
+      },
+      error: () => {
+        this.vehiclesLoading.set(false);
+        this.toast.error('No se pudieron cargar tus vehículos', 'Error');
+      },
+    });
+  }
+
+  addVehicle() {
+    if (!this.newPlate.trim()) {
+      this.toast.warning('Indica la placa del vehículo', 'Datos incompletos');
+      return;
+    }
+    if (!this.newMake || !this.newModel || !this.newYear) {
+      this.toast.warning('Selecciona marca, submarca y año', 'Datos incompletos');
+      return;
+    }
+    this.isAddingVehicle.set(true);
+    this.http.post<CrmContactVehicle>(`${environment.apiUrl}/client/vehicles`, {
+      plate: this.newPlate.trim(),
+      make: this.newMake,
+      model: this.newModel,
+      year: this.newYear,
+      state: this.newVehicleState || undefined,
+    }).subscribe({
+      next: () => {
+        this.isAddingVehicle.set(false);
+        this.newPlate = '';
+        this.newMake = '';
+        this.newModel = '';
+        this.newYear = null;
+        this.newVehicleState = '';
+        this.loadVehicles();
+        this.toast.success('Vehículo registrado', 'Listo');
+      },
+      error: (e) => {
+        this.isAddingVehicle.set(false);
+        this.toast.error(e.error?.error || 'No se pudo agregar el vehículo', 'Error');
+      },
+    });
+  }
+
+  updateClientVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
+    const payload: Record<string, string | number | null> = { [field]: value };
+    this.http.patch<CrmContactVehicle>(`${environment.apiUrl}/client/vehicles/${v.id}`, payload).subscribe({
+      next: () => this.loadVehicles(),
+      error: () => this.toast.error('No se pudo actualizar el vehículo', 'Error'),
+    });
+  }
+
+  removeVehicle(v: CrmContactVehicle) {
+    if (!confirm('¿Eliminar este vehículo de tu perfil?')) return;
+    this.http.delete(`${environment.apiUrl}/client/vehicles/${v.id}`).subscribe({
+      next: () => {
+        this.loadVehicles();
+        this.toast.success('Vehículo eliminado', 'Listo');
+      },
+      error: () => this.toast.error('No se pudo eliminar el vehículo', 'Error'),
+    });
   }
 
   loadDashboard() {

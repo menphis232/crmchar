@@ -1024,7 +1024,7 @@ router.patch('/contacts/:id', async (req, res) => {
 router.post('/contacts/:id/vehicles', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes } = req.body;
+    const { plate, state, engomadoColor, vehicleNotes, make, model, year } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
 
     const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ?', [req.params.id, uid]);
@@ -1032,11 +1032,14 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
 
     const id = uuid();
     await run(`
-      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, state, engomado_color, vehicle_notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.params.id, uid,
       String(plate).trim().toUpperCase(),
+      make?.trim() || null,
+      model?.trim() || null,
+      year != null && year !== '' ? Number(year) : null,
       state || null,
       engomadoColor || null,
       vehicleNotes || null,
@@ -1053,10 +1056,13 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
 router.patch('/contact-vehicles/:id', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes } = req.body;
+    const { plate, state, engomadoColor, vehicleNotes, make, model, year } = req.body;
     const result = await run(`
       UPDATE contact_vehicles SET
         plate = COALESCE(?, plate),
+        make = COALESCE(?, make),
+        model = COALESCE(?, model),
+        year = COALESCE(?, year),
         state = COALESCE(?, state),
         engomado_color = COALESCE(?, engomado_color),
         vehicle_notes = COALESCE(?, vehicle_notes),
@@ -1064,6 +1070,9 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       WHERE id = ? AND user_id = ?
     `, [
       plate ? String(plate).trim().toUpperCase() : null,
+      make ?? null,
+      model ?? null,
+      year != null && year !== '' ? Number(year) : null,
       state ?? null,
       engomadoColor ?? null,
       vehicleNotes ?? null,
