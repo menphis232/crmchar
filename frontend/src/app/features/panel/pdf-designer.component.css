@@ -142,15 +142,33 @@
   border: 1px solid rgba(0, 0, 0, 0.18) !important;
   border-radius: 6px;
   padding: 10px 12px;
-  color: var(--brand-black) !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  caret-color: #111111 !important;
   font-size: 14px;
   resize: vertical;
 }
 
+:host ::ng-deep .designer-sidebar textarea.form-control {
+  background: #ffffff !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
+  caret-color: #111111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.18) !important;
+}
+
+:host ::ng-deep .designer-sidebar textarea.form-control::placeholder {
+  color: rgba(0, 0, 0, 0.35) !important;
+  opacity: 1;
+}
+
 .form-control:focus {
   outline: none;
-  border-color: var(--brand-black) !important;
+  border-color: #111111 !important;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.08);
+  background: #ffffff !important;
+  color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
 }
 
 .actions {
