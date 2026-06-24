@@ -50,6 +50,42 @@
           </div>
         </div>
 
+        <!-- CHAT INTERNO -->
+        <div class="deal-section">
+          <h4>Chat interno</h4>
+          <div class="chat-container deal-chat">
+            <div class="chat-messages" id="gestor-chat-box">
+              @for (msg of messages; track msg.id) {
+                <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
+                  <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
+                    <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
+                    <span>{{ msg.created_at | date:'shortTime' }}</span>
+                  </div>
+                  <div style="font-size: 13px; line-height: 1.4;">
+                    {{ msg.message }}
+                    @if (msg.file_url) {
+                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
+                        <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
+                          <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
+                          Ver Documento
+                        </a>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="chat-input">
+              <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
+                <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
+              </button>
+              <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
+              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
+              <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
+            </div>
+          </div>
+        </div>
+
         <!-- ETAPA -->
         <div class="deal-section">
           <h4>Etapa del trámite</h4>
@@ -408,42 +444,6 @@
             </button>
           </div>
         }
-
-        <!-- CHAT CON CLIENTE -->
-        <div class="deal-section">
-          <h4>Chat con Cliente</h4>
-          <div class="chat-container deal-chat">
-            <div class="chat-messages" id="gestor-chat-box">
-              @for (msg of messages; track msg.id) {
-                <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
-                  <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
-                    <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
-                    <span>{{ msg.created_at | date:'shortTime' }}</span>
-                  </div>
-                  <div style="font-size: 13px; line-height: 1.4;">
-                    {{ msg.message }}
-                    @if (msg.file_url) {
-                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
-                        <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
-                          <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
-                          Ver Documento
-                        </a>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            <div class="chat-input">
-              <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
-                <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
-              </button>
-              <input type="file" #fileInput style="display:none" (change)="onChatFileSelected($event)">
-              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
-              <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
-            </div>
-          </div>
-        </div>
 
         <!-- AGREGAR NOTA -->
         <div class="deal-section">

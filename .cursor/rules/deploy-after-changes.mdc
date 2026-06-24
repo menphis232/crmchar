@@ -1,0 +1,42 @@
+---
+description: Tras cada cambio, hacer commit a git y deploy al servidor de producción
+alwaysApply: true
+---
+
+# Commit y deploy obligatorio
+
+Al terminar cualquier tarea con cambios en el código o configuración del proyecto:
+
+1. **Git commit** — Hacer commit de todos los archivos relevantes (no incluir secretos como `.env`).
+2. **Git push** — Subir a `origin/main` (o la rama de trabajo acordada).
+3. **Deploy al servidor** — Desplegar en producción sin esperar a que el usuario lo pida.
+
+## Servidor de producción
+
+- **Host:** `2.25.197.82` (usuario `root`)
+- **Proyecto:** `/root/crmchar`
+- **URL:** `https://central.tramitesvehicularesdemexico.com`
+- **Script local:** `deploy-servidor.bat` (PuTTY/plink)
+
+## Flujo de deploy
+
+```bash
+cd /root/crmchar
+git pull origin main
+docker compose build backend frontend   # o solo el servicio afectado
+docker compose up -d backend frontend
+docker exec tramites-backend node src/migrate.js   # si hubo migraciones
+```
+
+En Windows, usar `deploy-servidor.bat` o plink con el mismo flujo. Si PowerShell interfiere con `&&`, ejecutar vía `cmd /c`.
+
+## Excepciones
+
+- No hacer commit vacío ni commitear si no hay cambios.
+- No commitear archivos con credenciales.
+- No hacer `git push --force` a `main` salvo petición explícita.
+- Si el usuario pide solo revisar o explicar sin tocar código, no aplica commit ni deploy.
+
+## Mensaje al usuario
+
+Al cerrar una tarea con cambios, confirmar brevemente: commit hash, push realizado y estado del deploy.
