@@ -1371,7 +1371,7 @@ export class CrmDealPanelComponent implements OnDestroy {
     upload$.subscribe({
       next: (res) => {
         this.crmService.addDocument(d.id, {
-          fileName: res.fileName || file.name,
+          fileName: ('fileName' in res ? res.fileName : null) || file.name,
           fileUrl: res.url,
           docKind: 'entrega',
         }).subscribe({
