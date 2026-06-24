@@ -13,6 +13,7 @@ const router = Router();
 
 import { pipelineStagesForUser } from '../crm/stages.js';
 import { isDealClosed } from '../crm/deal-status.js';
+import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
@@ -152,22 +153,26 @@ router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (
       WHERE m.id = ?
     `, [id]);
     
-    // Send notification to Gestor/Concesionaria
+    // Notificar al gestor y actualizar chat en tiempo real
     const deal = await get('SELECT user_id, title FROM crm_deals WHERE id = ?', [req.params.id]);
-    if (deal && deal.user_id) {
+    if (deal?.user_id) {
       const notifId = uuid();
       const title = 'Nuevo mensaje del Cliente';
       const body = message ? message.substring(0, 100) : 'El cliente envió un archivo.';
       await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
         [notifId, deal.user_id, title, body, req.params.id]);
-      
-      const io = req.app.get('io');
-      if (io) {
-        io.to('user_' + deal.user_id).emit('notification', {
-          id: notifId, type: 'new_message', title, body, ref_id: req.params.id, is_read: 0, created_at: new Date().toISOString()
-        });
-      }
+
+      emitUserNotification(deal.user_id, {
+        id: notifId,
+        type: 'new_message',
+        title,
+        body,
+        ref_id: req.params.id,
+        is_read: 0,
+        created_at: new Date().toISOString(),
+      });
     }
+    emitChatMessage(req.params.id, saved);
 
     res.status(201).json(saved);
   } catch (err) {

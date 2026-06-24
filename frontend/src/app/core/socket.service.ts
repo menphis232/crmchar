@@ -21,7 +21,7 @@ export class SocketService implements OnDestroy {
     }
 
     this.socket = io(environment.apiUrl.replace('/api', ''), {
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 8,
       reconnectionDelay: 2000,

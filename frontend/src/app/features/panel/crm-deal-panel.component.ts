@@ -909,7 +909,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   private ensureSocket() {
     const user = this.auth.user();
     if (!user) return;
-    this.socketService.connect(user.id);
+    this.socketService.connect(user.id, user.parent_id || user.id);
     this.socketService.off('receive_message', this.onReceiveMessage);
     this.socketService.on('receive_message', this.onReceiveMessage);
     this.socketService.off('deal_payment_paid', this.onDealPaymentPaid);

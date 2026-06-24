@@ -23,6 +23,7 @@ import {
   syncUserQuoteTemplates,
 } from '../crm/quote-defaults.js';
 import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
+import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -1801,21 +1802,25 @@ router.post('/deals/:id/messages', async (req, res) => {
       FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
     `, [id]);
 
-    // Send notification to client
+    // Notificar al cliente y actualizar chat en tiempo real
     if (deal.client_user_id) {
       const notifId = uuid();
       const title = 'Nuevo mensaje de tu Gestor/Concesionaria';
       const body = message ? message.substring(0, 100) : 'Te han enviado un archivo.';
       await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
         [notifId, deal.client_user_id, title, body, deal.id]);
-      
-      const io = req.app.get('io');
-      if (io) {
-        io.to('user_' + deal.client_user_id).emit('notification', {
-          id: notifId, type: 'new_message', title, body, ref_id: deal.id, is_read: 0, created_at: new Date().toISOString()
-        });
-      }
+
+      emitUserNotification(deal.client_user_id, {
+        id: notifId,
+        type: 'new_message',
+        title,
+        body,
+        ref_id: deal.id,
+        is_read: 0,
+        created_at: new Date().toISOString(),
+      });
     }
+    emitChatMessage(req.params.id, saved);
 
     res.status(201).json(saved);
   } catch (err) {

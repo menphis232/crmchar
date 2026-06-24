@@ -12,3 +12,15 @@ export function emitDealPaymentPaid({ dealId, userId, paymentStatus = 'paid', st
   if (userId) ioRef.to(`user_${userId}`).emit('deal_payment_paid', payload);
   ioRef.to(String(dealId)).emit('deal_payment_paid', payload);
 }
+
+/** Difunde un mensaje de chat a quienes tengan abierto el trámite. */
+export function emitChatMessage(dealId, saved) {
+  if (!ioRef || !dealId || !saved) return;
+  ioRef.to(String(dealId)).emit('receive_message', { dealId: String(dealId), ...saved });
+}
+
+/** Notificación en tiempo real a un usuario (gestor, cliente, etc.). */
+export function emitUserNotification(userId, notif) {
+  if (!ioRef || !userId || !notif) return;
+  ioRef.to(`user_${userId}`).emit('notification', notif);
+}

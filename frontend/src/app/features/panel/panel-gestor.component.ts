@@ -123,7 +123,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private socketService = inject(SocketService);
   private onCrmNotification = (payload: unknown) => {
-    const notif = payload as { type?: string; ref_id?: string };
+    const notif = payload as { type?: string; ref_id?: string; title?: string; body?: string };
     if (notif.type === 'nuevo_lead') {
       this.loadCrmSummary();
       if (this.tab() !== 'pipeline') {
@@ -138,6 +138,19 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
           this.openDeal(notif.ref_id);
         }
       });
+      return;
+    }
+    if (notif.type === 'new_message') {
+      this.loadCrmSummary();
+      if (notif.ref_id) {
+        this.crmService.getDeals({
+          q: this.searchQuery || undefined,
+          stage: this.filterStage || undefined,
+        }).subscribe(d => this.deals.set(d));
+        if (this.selectedDealId() !== notif.ref_id) {
+          this.openDeal(notif.ref_id);
+        }
+      }
     }
   };
 

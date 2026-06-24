@@ -122,13 +122,22 @@ export class NotificationBellComponent implements OnInit {
   private socketReady = false;
   private onNotification = (notif: any) => {
     this.zone.run(() => {
-      this.notifications.update(list => [notif, ...list]);
+      const normalized = {
+        id: notif.id,
+        type: notif.type,
+        title: notif.title,
+        body: notif.body,
+        refId: notif.ref_id ?? notif.refId,
+        isRead: notif.is_read ?? notif.isRead ?? 0,
+        createdAt: notif.created_at ?? notif.createdAt ?? new Date().toISOString(),
+      };
+      this.notifications.update(list => [normalized, ...list]);
       this.unreadCount.update(c => c + 1);
 
-      this.toast.info(notif.body, notif.title, () => {
-        if (notif.ref_id) {
+      this.toast.info(normalized.body, normalized.title, () => {
+        if (normalized.refId) {
           const currentPath = this.router.url.split('?')[0];
-          this.router.navigate([currentPath], { queryParams: { deal: notif.ref_id }, queryParamsHandling: 'merge' });
+          this.router.navigate([currentPath], { queryParams: { deal: normalized.refId }, queryParamsHandling: 'merge' });
         }
       });
     });
@@ -190,20 +199,21 @@ export class NotificationBellComponent implements OnInit {
   }
 
   readNotif(n: any) {
+    const refId = n.refId ?? n.ref_id;
     if (!n.isRead) {
       this.crmService.markNotificationRead(n.id).subscribe(() => {
         n.isRead = 1;
         this.notifications.set([...this.notifications()]);
         this.unreadCount.update(c => Math.max(0, c - 1));
-        if (n.ref_id) {
+        if (refId) {
           const currentPath = this.router.url.split('?')[0];
-          this.router.navigate([currentPath], { queryParams: { deal: n.ref_id }, queryParamsHandling: 'merge' });
+          this.router.navigate([currentPath], { queryParams: { deal: refId }, queryParamsHandling: 'merge' });
         }
       });
     } else {
-      if (n.ref_id) {
+      if (refId) {
         const currentPath = this.router.url.split('?')[0];
-        this.router.navigate([currentPath], { queryParams: { deal: n.ref_id }, queryParamsHandling: 'merge' });
+        this.router.navigate([currentPath], { queryParams: { deal: refId }, queryParamsHandling: 'merge' });
       }
     }
   }
