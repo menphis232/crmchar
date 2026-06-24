@@ -33,7 +33,7 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS, CrmStageConfig } from '../../shared/payment-stage.utils';
 
 @Component({
   selector: 'app-crm-deal-panel',
@@ -870,6 +870,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   dealId = input<string | null>(null);
   stages = input<string[]>([]);
   stageLabels = input<Record<string, string>>({});
+  stagesConfig = input<CrmStageConfig[]>([]);
   templates = input<MessageTemplate[]>([]);
   showReply = input(false);
   whatsappNumber = input('');
@@ -1283,6 +1284,8 @@ export class CrmDealPanelComponent implements OnDestroy {
   isPaymentLocked(): boolean {
     const d = this.deal();
     if (!d) return false;
+    const config = this.stagesConfig();
+    if (config.length) return isDealPaymentLocked(d, config);
     return isDealPaymentLocked(d, this.stageLabels());
   }
 

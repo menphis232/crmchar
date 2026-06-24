@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
-import { isDealPaymentLocked } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -91,7 +91,7 @@ const AUTOMATION_VARIABLES = [
   { key: 'gestor', label: 'Tu nombre', example: 'Gestoría Pérez' },
 ] as const;
 
-const DEFAULT_GESTOR_STAGES: { id: string; label: string }[] = [
+const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   { id: 'nuevo', label: 'Nuevo' },
   { id: 'contactado', label: 'Contactado' },
   { id: 'en_tramite', label: 'En trámite' },
@@ -215,7 +215,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly automationVariables = AUTOMATION_VARIABLES;
   isMobileMenuOpen = signal(false);
 
-  crmStages: { id: string, label: string }[] = [];
+  crmStages: CrmStageConfig[] = [];
 
   showManualLeadForm = signal(false);
   savingManualLead = signal(false);
@@ -564,10 +564,15 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   syncCrmStagesFromDashboard() {
     const dash = this.crmDashboard();
     if (dash?.stages?.length) {
-      this.crmStages = dash.stages.map(id => ({
-        id,
-        label: dash.stageLabels[id] || id,
-      }));
+      const prev = new Map(this.crmStages.map(s => [s.id, s]));
+      this.crmStages = dash.stages.map(id => {
+        const existing = prev.get(id);
+        return {
+          id,
+          label: dash.stageLabels[id] || existing?.label || id,
+          isPayment: existing?.isPayment,
+        };
+      });
       return;
     }
     if (!this.crmStages.length) {
@@ -626,8 +631,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
-    const stageLabels = this.crmDashboard()?.stageLabels ?? {};
-    if (isDealPaymentLocked(deal, stageLabels) && stage !== deal.stage) {
+    if (isDealPaymentLocked(deal, this.crmStages) && stage !== deal.stage) {
       this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
       this.loadDeals();
       return;
@@ -652,7 +656,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     });
   }
 
-  onStagesChange(stages: { id: string; label: string }[]) {
+  onStagesChange(stages: CrmStageConfig[]) {
     this.auth.updateMe({ crm_stages: stages }).subscribe({
       next: () => {
         this.toast.success('Etapas guardadas');

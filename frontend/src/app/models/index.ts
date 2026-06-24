@@ -55,7 +55,7 @@ export interface User {
   phone?: string;
   address?: string;
   map_embed_url?: string;
-  crm_stages?: { id: string; label: string }[];
+  crm_stages?: { id: string; label: string; isPayment?: boolean }[];
 }
 
 export type AutoStatus = 'draft' | 'published' | 'baja';

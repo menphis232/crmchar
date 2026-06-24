@@ -21,8 +21,16 @@ function parseStages(stagesJson) {
   }
 }
 
+function explicitPaymentStageId(stagesJson) {
+  const stages = parseStages(stagesJson);
+  const found = stages.find((s) => s.isPayment === true);
+  return found?.id || null;
+}
+
 export function isPaymentStageId(stageId, stagesJson = null) {
   if (!stageId) return false;
+  const explicitId = explicitPaymentStageId(stagesJson);
+  if (explicitId) return explicitId === stageId;
   if (isPaymentLike(stageId)) return true;
   const stages = parseStages(stagesJson);
   const stage = stages.find((s) => s.id === stageId);

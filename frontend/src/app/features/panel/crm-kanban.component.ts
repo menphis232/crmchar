@@ -7,17 +7,18 @@ import {
   LucideClock,
   LucideLightbulb,
   LucidePlus,
+  LucideTrash2,
 } from '@lucide/angular';
 import { CrmDeal } from '../../models';
-import { isDealPaymentLocked, isPaymentStage } from '../../shared/payment-stage.utils';
+import { CrmStageConfig, isDealPaymentLocked, isPaymentStage } from '../../shared/payment-stage.utils';
 import { ToastService } from '../../core/toast.service';
 
-export interface KanbanStage { id: string; label: string; }
+export interface KanbanStage extends CrmStageConfig {}
 
 @Component({
   selector: 'app-crm-kanban',
   standalone: true,
-  imports: [DecimalPipe, LucideLightbulb, LucideChevronLeft, LucideChevronRight, LucideBanknote, LucideClock, LucidePlus],
+  imports: [DecimalPipe, LucideLightbulb, LucideChevronLeft, LucideChevronRight, LucideBanknote, LucideClock, LucidePlus, LucideTrash2],
   templateUrl: './crm-kanban.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
@@ -206,14 +207,41 @@ export interface KanbanStage { id: string; label: string; }
     .kanban-col-payment .kanban-col-header {
       border-bottom-color: rgba(251, 191, 36, 0.35);
     }
+    .col-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      margin-left: 4px;
+    }
+    .col-action-btn {
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      transition: color 0.15s, background 0.15s;
+    }
+    .col-action-btn:hover { color: #fff; background: rgba(255,255,255,0.10); }
+    .col-action-btn.active { color: #fbbf24; }
+    .col-action-btn.active:hover { color: #fcd34d; background: rgba(251,191,36,0.12); }
+    .col-action-btn.danger:hover { color: #f87171; background: rgba(248,113,113,0.12); }
+    .kanban-col-header { display: flex; align-items: center; gap: 4px; }
   `],
 })
 export class CrmKanbanComponent {
   stages      = input.required<string[]>();
   stageLabels = input.required<Record<string, string>>();
+  stagesConfig = input<KanbanStage[] | null>(null);
   deals       = input.required<CrmDeal[]>();
   showValue   = input(false);
   editable    = input(false);
+  paymentStageEditable = input(false);
 
   dealSelect   = output<CrmDeal>();
   stageChange  = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
@@ -250,6 +278,11 @@ export class CrmKanbanComponent {
     }
     // Sync localStages from inputs whenever they change
     effect(() => {
+      const config = this.stagesConfig();
+      if (config?.length) {
+        this.localStages.set(config.map(s => ({ ...s })));
+        return;
+      }
       const ids    = this.stages();
       const labels = this.stageLabels();
       this.localStages.set(ids.map(id => ({ id, label: labels[id] || id })));
@@ -372,6 +405,41 @@ export class CrmKanbanComponent {
 
   cancelAddColumn() { this.showAddCol.set(false); }
 
+  togglePaymentStage(stageId: string, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.editable() || !this.paymentStageEditable()) return;
+    const isCurrentlyPayment = this.localStages().find(s => s.id === stageId)?.isPayment === true;
+    this.localStages.update(list =>
+      list.map(s => ({ ...s, isPayment: isCurrentlyPayment ? false : s.id === stageId }))
+    );
+    this.emitStagesChange();
+    if (!isCurrentlyPayment) {
+      this.toast.success('Columna marcada como etapa de pago. Los trámites aquí quedarán bloqueados hasta registrar el cobro.');
+    }
+  }
+
+  deleteColumn(stageId: string, stageIndex: number, event: Event) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!this.editable()) return;
+    const count = this.dealsInStage(stageId, stageIndex).length;
+    if (count > 0) {
+      this.toast.warning(
+        `No se puede eliminar: hay ${count} trámite${count === 1 ? '' : 's'} en esta columna. Muévelos antes de borrarla.`,
+        'Columna con trámites',
+      );
+      return;
+    }
+    if (this.localStages().length <= 1) {
+      this.toast.warning('Debe existir al menos una columna en el embudo.', 'No se puede eliminar');
+      return;
+    }
+    this.localStages.update(list => list.filter(s => s.id !== stageId));
+    this.emitStagesChange();
+    this.toast.success('Columna eliminada');
+  }
+
   // ════════════════════════════════════════
   // CARD DRAG & DROP  (existing logic)
   // ════════════════════════════════════════
@@ -468,11 +536,18 @@ export class CrmKanbanComponent {
   }
 
   isPaymentLocked(deal: CrmDeal): boolean {
-    return isDealPaymentLocked(deal, this.stageLabels());
+    return isDealPaymentLocked(deal, this.paymentStagesConfig());
   }
 
   isPaymentStageCol(stageId: string): boolean {
-    return isPaymentStage(stageId, this.stageLabels());
+    return isPaymentStage(stageId, this.paymentStagesConfig());
+  }
+
+  private paymentStagesConfig(): KanbanStage[] | Record<string, string> {
+    if (this.localStages().length) return this.localStages();
+    const config = this.stagesConfig();
+    if (config?.length) return config;
+    return this.stageLabels();
   }
 
   canAdvance(deal: CrmDeal): boolean {

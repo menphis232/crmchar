@@ -3,7 +3,7 @@
   @if (isTouchDevice()) {
     <span>Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.</span>
   } @else if (editable()) {
-    <span>Arrastra la cabecera para reordenar columnas · Doble clic en el nombre para editarlo · Arrastra tarjetas entre columnas.</span>
+    <span>Arrastra la cabecera para reordenar · Doble clic para renombrar@if (paymentStageEditable()) { · Icono <strong>$</strong> marca la columna de pago} · Papelera elimina columnas vacías.</span>
   } @else {
     <span>Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle completo.</span>
   }
@@ -53,6 +53,30 @@
             (dblclick)="startEdit(stage.id, $event)"
             [title]="editable() ? 'Arrastra para mover · Doble clic para renombrar' : ''"
           >{{ stage.label }}</span>
+        }
+
+        @if (editable()) {
+          <div class="col-header-actions">
+            @if (paymentStageEditable()) {
+              <button
+                type="button"
+                class="col-action-btn"
+                [class.active]="stage.isPayment"
+                [title]="stage.isPayment ? 'Columna de pago (clic para quitar)' : 'Marcar como columna de pago'"
+                (click)="togglePaymentStage(stage.id, $event)"
+              >
+                <svg lucideBanknote [size]="13" aria-hidden="true"></svg>
+              </button>
+            }
+            <button
+              type="button"
+              class="col-action-btn danger"
+              title="Eliminar columna"
+              (click)="deleteColumn(stage.id, idx, $event)"
+            >
+              <svg lucideTrash2 [size]="13" aria-hidden="true"></svg>
+            </button>
+          </div>
         }
 
         <span class="kanban-count">{{ dealsInStage(stage.id, idx).length }}</span>
