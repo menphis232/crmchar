@@ -10,7 +10,7 @@ import {
   LucideTrash2,
 } from '@lucide/angular';
 import { CrmDeal } from '../../models';
-import { CrmStageConfig, isDealPaymentLocked, isPaymentStage } from '../../shared/payment-stage.utils';
+import { CrmStageConfig, isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isPaymentStage } from '../../shared/payment-stage.utils';
 import { ToastService } from '../../core/toast.service';
 
 export interface KanbanStage extends CrmStageConfig {}
@@ -474,6 +474,15 @@ export class CrmKanbanComponent {
     if (event.dataTransfer?.types.includes('text/x-col-id')) return; // ignore col drags
     event.preventDefault();
     event.stopPropagation();
+    const dealId =
+      this.draggedDealId ||
+      event.dataTransfer?.getData('application/x-deal-id') ||
+      event.dataTransfer?.getData('text/plain');
+    const deal = dealId ? this.deals().find(d => d.id === dealId) : null;
+    if (deal && !this.canMoveToStage(deal, stage)) {
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'none';
+      return;
+    }
     if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
     this.dragOverStage.set(stage);
   }
@@ -503,8 +512,12 @@ export class CrmKanbanComponent {
 
     const deal = this.deals().find(d => d.id === dealId);
     if (!deal || deal.stage === stage) return;
-    if (this.isPaymentLocked(deal)) {
-      this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+    if (!this.canMoveToStage(deal, stage)) {
+      if (this.isPaymentLocked(deal)) {
+        this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      } else {
+        this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
+      }
       return;
     }
     this.stageChange.emit({ deal, stage, fromDrag: true });
@@ -524,8 +537,13 @@ export class CrmKanbanComponent {
     if (!(event as InputEvent).isTrusted) return;
     const select = event.target as HTMLSelectElement;
     const stage = select.value;
-    if (this.isPaymentLocked(deal)) {
+    if (!this.canMoveToStage(deal, stage)) {
       select.value = deal.stage;
+      if (this.isPaymentLocked(deal)) {
+        this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      } else if (stage && stage !== deal.stage) {
+        this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
+      }
       return;
     }
     if (stage && stage !== deal.stage && this.localStages().map(s=>s.id).includes(stage)) {
@@ -554,7 +572,22 @@ export class CrmKanbanComponent {
     if (this.isPaymentLocked(deal)) return false;
     const stages = this.localStages();
     const idx = stages.findIndex(s => s.id === deal.stage);
-    return idx >= 0 && idx < stages.length - 1;
+    if (idx < 0 || idx >= stages.length - 1) return false;
+    return this.canMoveToStage(deal, stages[idx + 1].id);
+  }
+
+  selectableStages(deal: CrmDeal): KanbanStage[] {
+    const stages = this.localStages();
+    if (deal.paymentStatus !== 'paid') return stages;
+    const idx = stages.findIndex(s => s.id === deal.stage);
+    if (idx < 0) return stages;
+    return stages.slice(idx);
+  }
+
+  canMoveToStage(deal: CrmDeal, targetStage: string): boolean {
+    if (this.isPaymentLocked(deal)) return false;
+    if (!targetStage || targetStage === deal.stage) return true;
+    return !isPaidDealBackwardMoveBlocked(deal, this.paymentStagesConfig(), targetStage);
   }
 
   moveDeal(deal: CrmDeal, event: Event) {

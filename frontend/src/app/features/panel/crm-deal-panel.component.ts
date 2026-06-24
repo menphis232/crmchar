@@ -33,7 +33,7 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
 
 @Component({
@@ -1280,6 +1280,11 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
       return;
     }
+    const stagesConfig = this.stagesConfig().length ? this.stagesConfig() : this.stageLabels();
+    if (isPaidDealBackwardMoveBlocked(d, stagesConfig, stage)) {
+      this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
+      return;
+    }
     if (stage === 'perdido' && !this.lostReason) {
       this.deal.update(cur => (cur ? { ...cur, stage } : cur));
       return;
@@ -1298,6 +1303,15 @@ export class CrmDealPanelComponent implements OnDestroy {
     const config = this.stagesConfig();
     if (config.length) return isDealPaymentLocked(d, config);
     return isDealPaymentLocked(d, this.stageLabels());
+  }
+
+  selectableStages(): string[] {
+    const d = this.deal();
+    const all = this.stages();
+    if (!d || d.paymentStatus !== 'paid') return all;
+    const idx = all.indexOf(d.stage);
+    if (idx < 0) return all;
+    return all.slice(idx);
   }
 
   openRegisterPaymentModal() {

@@ -141,7 +141,7 @@
               (touchstart)="stopClick($event)"
               (change)="onSelectStage(deal, $event)"
             >
-              @for (s of localStages(); track s.id) {
+              @for (s of selectableStages(deal); track s.id) {
                 <option [value]="s.id" [selected]="s.id === deal.stage">{{ s.label }}</option>
               }
             </select>

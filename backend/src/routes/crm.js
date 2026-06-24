@@ -24,7 +24,7 @@ import {
 } from '../crm/quote-defaults.js';
 import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
-import { isDealPaymentLocked } from '../crm/payment-stage.js';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
@@ -616,6 +616,12 @@ router.patch('/deals/:id', async (req, res) => {
     if (stage !== undefined && stage !== deal.stage && isDealPaymentLocked(deal, userRow?.crm_stages)) {
       return res.status(400).json({
         error: 'Este trámite está en etapa de Pago. Registra el pago antes de moverlo a otra columna.',
+      });
+    }
+
+    if (stage !== undefined && stage !== deal.stage && isPaidDealBackwardMoveBlocked(deal, role, userRow?.crm_stages, stage)) {
+      return res.status(400).json({
+        error: 'Los trámites ya pagados solo pueden avanzar a etapas posteriores, no retroceder.',
       });
     }
 

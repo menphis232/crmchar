@@ -46,3 +46,43 @@ export function isDealPaymentLocked(
 ): boolean {
   return isPaymentStage(deal.stage || '', stagesConfig) && deal.paymentStatus !== 'paid';
 }
+
+export function orderedStageIds(
+  stagesConfig: CrmStageConfig[] | Record<string, string> | string[] = {},
+): string[] {
+  if (Array.isArray(stagesConfig)) {
+    if (stagesConfig.length && typeof stagesConfig[0] === 'object' && stagesConfig[0] && 'id' in stagesConfig[0]) {
+      return (stagesConfig as CrmStageConfig[]).map((s) => s.id);
+    }
+    if (stagesConfig.length && typeof stagesConfig[0] === 'string') {
+      return stagesConfig as string[];
+    }
+  }
+  if (stagesConfig && typeof stagesConfig === 'object') {
+    return Object.keys(stagesConfig);
+  }
+  return [];
+}
+
+export function isBackwardStageMove(
+  stagesConfig: CrmStageConfig[] | Record<string, string> | string[],
+  fromStageId: string,
+  toStageId: string,
+): boolean {
+  if (!fromStageId || !toStageId || fromStageId === toStageId) return false;
+  const ids = orderedStageIds(stagesConfig);
+  const fromIdx = ids.indexOf(fromStageId);
+  const toIdx = ids.indexOf(toStageId);
+  if (fromIdx < 0 || toIdx < 0) return false;
+  return toIdx < fromIdx;
+}
+
+/** Trámites pagados no pueden retroceder en el embudo. */
+export function isPaidDealBackwardMoveBlocked(
+  deal: { stage?: string; paymentStatus?: string },
+  stagesConfig: CrmStageConfig[] | Record<string, string> | string[],
+  toStageId: string,
+): boolean {
+  if (deal.paymentStatus !== 'paid') return false;
+  return isBackwardStageMove(stagesConfig, deal.stage || '', toStageId);
+}

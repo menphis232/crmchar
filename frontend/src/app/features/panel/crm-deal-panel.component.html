@@ -93,7 +93,7 @@
         <div class="deal-section">
           <h4>Etapa del trámite</h4>
           <select [ngModel]="d.stage" (ngModelChange)="changeStage($event)" [disabled]="isPaymentLocked()">
-            @for (s of stages(); track s) {
+            @for (s of selectableStages(); track s) {
               <option [value]="s">{{ stageLabels()[s] || s }}</option>
             }
           </select>

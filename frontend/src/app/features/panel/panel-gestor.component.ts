@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
-import { isDealPaymentLocked, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -633,6 +633,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
     if (isDealPaymentLocked(deal, this.crmStages) && stage !== deal.stage) {
       this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      this.loadDeals();
+      return;
+    }
+    if (isPaidDealBackwardMoveBlocked(deal, this.crmStages, stage)) {
+      this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
       this.loadDeals();
       return;
     }

@@ -15,6 +15,7 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
+import { isPaidDealBackwardMoveBlocked } from '../../shared/payment-stage.utils';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
@@ -333,6 +334,11 @@ export class PanelConcesionariaComponent implements OnInit {
   }
 
   onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
+    if (isPaidDealBackwardMoveBlocked(deal, this.crmStages, stage)) {
+      this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
+      this.loadCrm();
+      return;
+    }
     if (stage === 'perdido') {
       this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
       if (fromDrag) {

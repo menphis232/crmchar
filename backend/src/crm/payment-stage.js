@@ -1,3 +1,5 @@
+import { stagesForRole } from './stages.js';
+
 function normalizeStageKey(value) {
   return String(value || '')
     .normalize('NFD')
@@ -36,6 +38,25 @@ export function isPaymentStageId(stageId, stagesJson = null) {
   const stage = stages.find((s) => s.id === stageId);
   if (stage?.label && isPaymentLike(stage.label)) return true;
   return false;
+}
+
+function orderedStageIdsForUser(role, stagesJson) {
+  return stagesForRole(role, stagesJson);
+}
+
+export function isBackwardStageMove(stageIds, fromStageId, toStageId) {
+  if (!fromStageId || !toStageId || fromStageId === toStageId) return false;
+  const fromIdx = stageIds.indexOf(fromStageId);
+  const toIdx = stageIds.indexOf(toStageId);
+  if (fromIdx < 0 || toIdx < 0) return false;
+  return toIdx < fromIdx;
+}
+
+/** Trámites pagados no pueden retroceder en el embudo. */
+export function isPaidDealBackwardMoveBlocked(deal, role, stagesJson, toStageId) {
+  if (!deal || deal.payment_status !== 'paid') return false;
+  const ids = orderedStageIdsForUser(role, stagesJson);
+  return isBackwardStageMove(ids, deal.stage, toStageId);
 }
 
 export function isDealPaymentLocked(deal, stagesJson = null) {
