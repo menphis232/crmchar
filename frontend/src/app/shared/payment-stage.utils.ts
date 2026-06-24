@@ -126,24 +126,3 @@ export function isShippedStage(
 
   return false;
 }
-
-export function isShippedStage(
-  stageId: string,
-  stagesConfig: CrmStageConfig[] | Record<string, string> | string[] = {},
-): boolean {
-  if (!stageId) return false;
-
-  const idKey = normalizeStageKey(stageId);
-  if (idKey === 'enviado' || /\benviad/.test(idKey)) return true;
-
-  if (Array.isArray(stagesConfig) && stagesConfig.length && typeof stagesConfig[0] === 'object') {
-    const stage = (stagesConfig as CrmStageConfig[]).find((s) => s.id === stageId);
-    const label = normalizeStageKey(stage?.label || '');
-    if (label === 'enviado' || /\benviad/.test(label)) return true;
-  } else if (stagesConfig && typeof stagesConfig === 'object' && !Array.isArray(stagesConfig)) {
-    const label = normalizeStageKey((stagesConfig as Record<string, string>)[stageId] || '');
-    if (label === 'enviado' || /\benviad/.test(label)) return true;
-  }
-
-  return false;
-}
