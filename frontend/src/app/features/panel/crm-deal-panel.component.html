@@ -64,11 +64,14 @@
                   <div style="font-size: 13px; line-height: 1.4;">
                     {{ msg.message }}
                     @if (msg.file_url) {
-                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
+                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px; display:flex; gap:8px; flex-wrap:wrap;">
                         <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
                           <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
                           Ver Documento
                         </a>
+                        <button type="button" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline; background:none; border:none; padding:0; cursor:pointer; font-size:inherit;" (click)="downloadDocument({ file_url: msg.file_url })">
+                          Descargar
+                        </button>
                       </div>
                     }
                   </div>
@@ -165,6 +168,7 @@
                     </div>
                     <div style="display:flex; gap:8px;">
                       <a [href]="doc.file_url" target="_blank" class="btn-ghost small" style="padding:2px 8px; font-size:11px;">Ver archivo</a>
+                      <button type="button" class="btn-ghost small" style="padding:2px 8px; font-size:11px;" (click)="downloadDocument(doc)">Descargar</button>
                     </div>
                   </div>
                   @if (doc.extracted_data) {

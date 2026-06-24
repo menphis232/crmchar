@@ -1547,12 +1547,16 @@ export class CrmDealPanelComponent implements OnDestroy {
     });
   }
 
-  downloadDocument(doc: { file_url: string; file_name: string }) {
+  downloadDocument(doc: { file_url: string; file_name?: string; document_type?: string }) {
+    const fromUrl = doc.file_url.split('/').pop()?.split('?')[0] || '';
+    const hasExt = fromUrl.includes('.');
+    const name = doc.file_name
+      || (hasExt ? fromUrl : `${(doc.document_type || 'documento').replace(/\s+/g, '_')}.pdf`);
     const a = document.createElement('a');
     a.href = doc.file_url;
     a.target = '_blank';
     a.rel = 'noopener';
-    a.download = doc.file_name || 'cotizacion.pdf';
+    a.download = name;
     a.click();
   }
 
