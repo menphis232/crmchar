@@ -8,8 +8,6 @@ const PREDEFINED_LABELS = {
   general: 'General',
 };
 
-const DEFAULT_METHODS = ['efectivo', 'transferencia', 'mercadopago'];
-
 export function parseFinPaymentMethodsJson(raw) {
   if (!raw) return null;
   try {
@@ -23,10 +21,10 @@ export function parseFinPaymentMethodsJson(raw) {
 /** IDs habilitados para registro manual (excluye stripe por defecto). */
 export function enabledManualPaymentMethodIds(methodsJson, { includeStripe = false } = {}) {
   const parsed = parseFinPaymentMethodsJson(methodsJson);
-  const source = parsed?.length ? parsed : DEFAULT_METHODS;
+  if (!parsed?.length) return [];
   const ids = [];
 
-  for (const m of source) {
+  for (const m of parsed) {
     if (typeof m === 'string') {
       if (!includeStripe && m === 'stripe') continue;
       ids.push(m);
@@ -38,7 +36,7 @@ export function enabledManualPaymentMethodIds(methodsJson, { includeStripe = fal
   }
 
   const unique = [...new Set(ids)];
-  return unique.length ? unique : ['efectivo', 'transferencia', 'tarjeta', 'otro'];
+  return unique;
 }
 
 export function resolvePaymentMethodLabel(method, methodsJson = null) {

@@ -33,12 +33,9 @@ router.use(authRequired, finRoles, requireActiveSubscription);
 
 router.get('/payment-methods', async (req, res) => {
   try {
-    const [user] = await query('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
-    let methods = ['efectivo', 'transferencia', 'mercadopago'];
-    if (user?.fin_payment_methods) {
-      try { methods = JSON.parse(user.fin_payment_methods); } catch {}
-    }
-    res.json({ methods });
+    const user = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+    const parsed = parseFinPaymentMethodsJson(user?.fin_payment_methods);
+    res.json({ methods: parsed ?? [] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener métodos de pago' });
@@ -50,7 +47,7 @@ router.put('/payment-methods', async (req, res) => {
     const { methods } = req.body;
     if (!Array.isArray(methods)) return res.status(400).json({ error: 'methods debe ser un array' });
     await run('UPDATE users SET fin_payment_methods = ? WHERE id = ?', [JSON.stringify(methods), req.orgId]);
-    res.json({ success: true });
+    res.json({ success: true, methods });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al guardar métodos de pago' });
@@ -358,8 +355,8 @@ router.get('/export/csv', async (req, res) => {
     // Load custom methods for this user
     let userMethods = [];
     try {
-      const [uRow] = await query('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
-      if (uRow?.fin_payment_methods) userMethods = JSON.parse(uRow.fin_payment_methods);
+      const uRow = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+      userMethods = parseFinPaymentMethodsJson(uRow?.fin_payment_methods) || [];
     } catch {}
 
     const linkCol = req.user?.role === 'concesionaria' ? 'Vehículo Relacionado' : 'Trámite Relacionado';
@@ -435,8 +432,8 @@ router.get('/export/pdf', async (req, res) => {
 
     let userMethods = [];
     try {
-      const [uRow] = await query('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
-      if (uRow?.fin_payment_methods) userMethods = JSON.parse(uRow.fin_payment_methods);
+      const uRow = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+      userMethods = parseFinPaymentMethodsJson(uRow?.fin_payment_methods) || [];
     } catch {}
 
     const label = exportPeriodLabel(req.query.from, req.query.to);

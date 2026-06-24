@@ -439,7 +439,6 @@ import { formatMoney } from '../../shared/format-amount.util';
                       @for (m of formMethods(); track m.id) {
                         <option [ngValue]="m.id">{{ m.icon }} {{ m.label }}</option>
                       }
-                      <option ngValue="general">General</option>
                     </select>
                     <span class="select-arrow">▾</span>
                   </div>
@@ -474,7 +473,7 @@ import { formatMoney } from '../../shared/format-amount.util';
 
             <div class="modal-footer">
               <button class="btn-ghost" (click)="closeForm()">Cancelar</button>
-              <button class="btn-new" (click)="saveTx()" [disabled]="!newTx.amount || !newTx.description || !newTx.date">
+              <button class="btn-new" (click)="saveTx()" [disabled]="!newTx.amount || !newTx.description || !newTx.date || (formMethods().length > 0 && !newTx.payment_method)">
                 Guardar transacción
               </button>
             </div>
@@ -755,7 +754,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
       category: 'general',
       date: new Date().toISOString().split('T')[0],
       deal_id: null as string | null,
-      payment_method: 'efectivo',
+      payment_method: '',
       referencia: '',
     };
   }
@@ -839,7 +838,15 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.customMethods = [];
       this.selectedMethodIds = ['stripe'];
 
-      for (const m of res.methods) {
+      const saved = res.methods || [];
+      if (saved.length === 0) {
+        this.selectedMethodIds = ['stripe', 'efectivo', 'transferencia', 'mercadopago'];
+        this.paymentMethodCatalog.set([]);
+        this.updateEnabledMethods();
+        return;
+      }
+
+      for (const m of saved) {
         if (typeof m === 'string') {
           if (m !== 'stripe' && !this.selectedMethodIds.includes(m)) {
             this.selectedMethodIds.push(m);
@@ -848,7 +855,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
           if (!this.customMethods.find(x => x.id === m.id)) {
             this.customMethods.push({
               id: m.id,
-              label: m.label,
+              label: m.label || m.id,
               icon: m.icon || '💰',
               color: '#C8A94A',
             });
@@ -859,7 +866,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
         }
       }
 
-      this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
+      this.paymentMethodCatalog.set(parseFinPaymentMethods(saved, { onlyEnabled: false }));
       this.updateEnabledMethods();
     });
   }
@@ -910,9 +917,10 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
     this.savingMethods = true;
     this.fin.savePaymentMethods(toSave).subscribe({
-      next: () => {
+      next: (res) => {
         this.savingMethods = false;
-        this.paymentMethodCatalog.set(parseFinPaymentMethods(toSave, { onlyEnabled: false }));
+        const saved = res.methods ?? toSave;
+        this.loadPaymentMethods();
         this.toast.success('La configuración de métodos de pago fue guardada.', 'Configuración guardada');
       },
       error: () => {
@@ -931,9 +939,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
       const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
       this.formMethods.set(methods);
       this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
-
-      const first = methods[0];
-      this.newTx.payment_method = first?.id || 'general';
+      this.newTx.payment_method = methods[0]?.id || '';
     });
 
     this.showForm.set(true);
@@ -942,6 +948,11 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
   saveTx() {
     const txType = this.newTx.type;
+    const allowedIds = new Set(this.formMethods().map(m => m.id));
+    if (!this.newTx.payment_method || !allowedIds.has(this.newTx.payment_method)) {
+      this.toast.warning('Selecciona un método de cobro/pago configurado en Finanzas.', 'Método requerido');
+      return;
+    }
     this.fin.createTransaction(this.newTx as any).subscribe({
       next: () => {
         this.closeForm();
