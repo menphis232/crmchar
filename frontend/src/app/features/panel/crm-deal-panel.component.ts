@@ -388,8 +388,17 @@ import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS, CrmStageConfig } from '../
       background: #111 !important;
       border: 1px solid rgba(255,255,255,0.18) !important;
       color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
       border-radius: 8px;
       padding: 10px 12px;
+    }
+    .register-payment-form select {
+      color-scheme: dark;
+      cursor: pointer;
+    }
+    .register-payment-form select option {
+      background: #1a1a1a;
+      color: #ffffff;
     }
     .register-payment-actions {
       display: flex;
