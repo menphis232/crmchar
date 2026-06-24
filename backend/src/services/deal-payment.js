@@ -3,6 +3,7 @@ import { get, run } from '../db.js';
 import { generateInvoicePdfFile } from '../crm/invoice-pdf.js';
 import { sendEmail } from '../utils/mailer.js';
 import { emitDealPaymentPaid } from '../utils/socket-events.js';
+import { isPaymentStageId, paymentMethodLabel } from '../crm/payment-stage.js';
 async function nextInvoiceNumber(userId) {
   const year = new Date().getFullYear();
   const row = await get(
@@ -31,22 +32,32 @@ export async function finalizeDealPayment(dealId, {
   amount,
   mpOrderId = null,
   paymentMethod = 'mercadopago',
+  keepStage = null,
+  notes = null,
 } = {}) {
   const deal = await loadDealForPayment(dealId);
   if (!deal) throw new Error('Trámite no encontrado');
 
+  const orgUserRow = await get('SELECT crm_stages FROM users WHERE id = ?', [deal.user_id]);
+  const shouldKeepStage = keepStage ?? isPaymentStageId(deal.stage, orgUserRow?.crm_stages);
+
   const existingInvoice = await get('SELECT * FROM deal_invoices WHERE deal_id = ?', [dealId]);
   if (existingInvoice) {
     if (deal.payment_status !== 'paid') {
-      await run(
-        "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?",
-        [dealId],
-      );
+      if (shouldKeepStage) {
+        await run("UPDATE crm_deals SET payment_status = 'paid' WHERE id = ?", [dealId]);
+      } else {
+        await run(
+          "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?",
+          [dealId],
+        );
+      }
+      const refreshed = await get('SELECT stage FROM crm_deals WHERE id = ?', [dealId]);
       emitDealPaymentPaid({
         dealId,
         userId: deal.user_id,
         paymentStatus: 'paid',
-        stage: 'completado',
+        stage: refreshed?.stage || deal.stage,
       });
     }
     return existingInvoice;
@@ -57,20 +68,33 @@ export async function finalizeDealPayment(dealId, {
     throw new Error('Monto de pago inválido');
   }
 
-  await run(
-    `UPDATE crm_deals
-     SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW(),
-         mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
-     WHERE id = ?`,
-    [mpOrderId, dealId],
-  );
+  if (shouldKeepStage) {
+    await run(
+      `UPDATE crm_deals
+       SET payment_status = 'paid', mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
+       WHERE id = ?`,
+      [mpOrderId, dealId],
+    );
+  } else {
+    await run(
+      `UPDATE crm_deals
+       SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW(),
+           mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
+       WHERE id = ?`,
+      [mpOrderId, dealId],
+    );
+  }
 
+  const methodLabel = paymentMethodLabel(paymentMethod);
   const finExists = await get(
     "SELECT id FROM fin_transactions WHERE deal_id = ? AND category = 'pago_tramite' LIMIT 1",
     [dealId],
   );
   if (!finExists) {
-    const ref = mpOrderId ? mpOrderId.slice(-8) : 'PAGO';
+    const ref = mpOrderId ? mpOrderId.slice(-8) : `PAGO-${Date.now().toString().slice(-6)}`;
+    const description = notes?.trim()
+      ? `${methodLabel} - ${deal.title || 'Trámite'} (${notes.trim()})`
+      : `${methodLabel} - ${deal.title || 'Trámite'}`;
     await run(
       `INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, date, category, payment_method, referencia)
        VALUES (?, ?, ?, 'income', ?, ?, NOW(), 'pago_tramite', ?, ?)`,
@@ -79,7 +103,7 @@ export async function finalizeDealPayment(dealId, {
         deal.user_id,
         dealId,
         paidAmount,
-        `${paymentMethod === 'mercadopago' ? 'MercadoPago' : paymentMethod} - ${deal.title || 'Trámite'}`,
+        description,
         paymentMethod,
         ref,
       ],
@@ -150,7 +174,7 @@ export async function finalizeDealPayment(dealId, {
     dealId,
     userId: deal.user_id,
     paymentStatus: 'paid',
-    stage: 'completado',
+    stage: shouldKeepStage ? deal.stage : 'completado',
   });
 
   return get('SELECT * FROM deal_invoices WHERE id = ?', [invoiceId]);

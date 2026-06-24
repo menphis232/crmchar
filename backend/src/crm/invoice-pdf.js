@@ -32,6 +32,10 @@ function paymentMethodLabel(method) {
     mercadopago: 'Mercado Pago',
     stripe: 'Tarjeta (Stripe)',
     manual: 'Manual',
+    efectivo: 'Efectivo',
+    transferencia: 'Transferencia bancaria',
+    tarjeta: 'Tarjeta',
+    otro: 'Otro',
   };
   return map[method] || method;
 }

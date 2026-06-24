@@ -92,11 +92,14 @@
         <!-- ETAPA -->
         <div class="deal-section">
           <h4>Etapa del trámite</h4>
-          <select [ngModel]="d.stage" (ngModelChange)="changeStage($event)">
+          <select [ngModel]="d.stage" (ngModelChange)="changeStage($event)" [disabled]="isPaymentLocked()">
             @for (s of stages(); track s) {
               <option [value]="s">{{ stageLabels()[s] || s }}</option>
             }
           </select>
+          @if (isPaymentLocked()) {
+            <p class="deal-payment-lock-note">Este trámite está en <strong>Pago</strong>. Regístralo abajo para poder moverlo.</p>
+          }
           @if (d.stage === 'perdido' || d.lostReason) {
             <label class="card-desc" style="margin-top:10px;display:block;">Motivo de pérdida</label>
             <select [(ngModel)]="lostReason" (change)="changeStage('perdido')">
@@ -140,6 +143,10 @@
                   <button type="button" class="btn-ghost small btn-with-icon" (click)="generatePaymentLink()" [disabled]="isGeneratingPayment()">
                     <svg lucideCreditCard [size]="14" aria-hidden="true"></svg>
                     {{ isGeneratingPayment() ? 'Generando...' : 'Copiar link de cobro' }}
+                  </button>
+                  <button type="button" class="btn-copy small btn-with-icon" (click)="openRegisterPaymentModal()">
+                    <svg lucideBanknote [size]="14" aria-hidden="true"></svg>
+                    Registrar pago externo
                   </button>
                 }
               </div>
@@ -552,6 +559,41 @@
       </div>
 
       <button type="button" class="pay-method-cancel" (click)="cancelPaymentMethodModal()">Cancelar</button>
+    </div>
+  </div>
+}
+
+@if (registerPaymentModalOpen()) {
+  <div class="pay-method-overlay" (click)="closeRegisterPaymentModal()">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="closeRegisterPaymentModal()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Pago externo</p>
+      <h3 class="pay-method-title">Registrar pago recibido</h3>
+      <p class="pay-method-desc">Usa esto para efectivo, transferencia u otro método fuera de Stripe/Mercado Pago. Se registrará en Finanzas y desbloqueará el trámite.</p>
+
+      <div class="register-payment-form">
+        <label>Monto (MXN)</label>
+        <input type="number" [(ngModel)]="manualPaymentAmount" min="1" step="1">
+
+        <label>Método de cobro</label>
+        <select [(ngModel)]="manualPaymentMethod">
+          @for (m of manualPaymentMethods; track m.id) {
+            <option [value]="m.id">{{ m.label }}</option>
+          }
+        </select>
+
+        <label>Notas (opcional)</label>
+        <textarea [(ngModel)]="manualPaymentNotes" rows="2" placeholder="Referencia, folio, banco..."></textarea>
+      </div>
+
+      <div class="register-payment-actions">
+        <button type="button" class="pay-method-cancel" (click)="closeRegisterPaymentModal()">Cancelar</button>
+        <button type="button" class="btn-copy small" (click)="submitManualPayment()" [disabled]="isRegisteringPayment()">
+          {{ isRegisteringPayment() ? 'Registrando...' : 'Confirmar pago' }}
+        </button>
+      </div>
     </div>
   </div>
 }

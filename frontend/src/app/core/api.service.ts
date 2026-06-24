@@ -92,6 +92,9 @@ export class CrmService {
   updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
+  registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string }) {
+    return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-payment`, data);
+  }
   addActivity(dealId: string, content: string, activityType = 'note') {
     return this.http.post(`${this.base}/deals/${dealId}/activities`, { content, activityType });
   }

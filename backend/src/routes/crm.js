@@ -24,6 +24,8 @@ import {
 } from '../crm/quote-defaults.js';
 import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
+import { isDealPaymentLocked } from '../crm/payment-stage.js';
+import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
 
 const router = Router();
@@ -608,6 +610,12 @@ router.patch('/deals/:id', async (req, res) => {
     }
     if (stage === 'perdido' && !lostReason && !deal.lost_reason) {
       return res.status(400).json({ error: 'Indica el motivo de pérdida' });
+    }
+
+    if (stage !== undefined && stage !== deal.stage && isDealPaymentLocked(deal, userRow?.crm_stages)) {
+      return res.status(400).json({
+        error: 'Este trámite está en etapa de Pago. Registra el pago antes de moverlo a otra columna.',
+      });
     }
 
     const oldStage = deal.stage;
@@ -1733,6 +1741,50 @@ router.post('/deals/:id/checkout', async (req, res) => {
   } catch (err) {
     console.error('Stripe Checkout Error:', err);
     res.status(500).json({ error: 'Error al generar link de pago: ' + err.message });
+  }
+});
+
+router.post('/deals/:id/register-payment', async (req, res) => {
+  try {
+    const dealId = req.params.id;
+    const { amount, paymentMethod, notes } = req.body;
+    const allowed = ['efectivo', 'transferencia', 'tarjeta', 'otro', 'mercadopago', 'stripe'];
+    if (!paymentMethod || !allowed.includes(paymentMethod)) {
+      return res.status(400).json({ error: 'Método de pago inválido' });
+    }
+
+    const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [dealId, req.orgId]);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    if (deal.payment_status === 'paid') {
+      return res.status(400).json({ error: 'Este trámite ya está marcado como pagado' });
+    }
+
+    const paidAmount = Number(amount ?? deal.estimated_value ?? 0);
+    if (!paidAmount || paidAmount <= 0) {
+      return res.status(400).json({ error: 'Indica un monto válido para registrar el pago' });
+    }
+
+    await finalizeDealPayment(dealId, {
+      amount: paidAmount,
+      paymentMethod,
+      keepStage: true,
+      notes: notes?.trim() || null,
+    });
+
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'note', ?)`,
+      [uuid(), dealId, req.orgId, `Pago registrado manualmente (${paymentMethod}) por $${paidAmount} MXN`],
+    );
+
+    const updated = await get(`
+      SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
+      FROM crm_deals d WHERE d.id = ? AND d.user_id = ?
+    `, [dealId, req.orgId]);
+
+    res.json(dealRow(updated));
+  } catch (err) {
+    console.error('register-payment error:', err);
+    res.status(500).json({ error: err.message || 'Error al registrar el pago' });
   }
 });
 

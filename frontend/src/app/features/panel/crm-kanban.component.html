@@ -21,6 +21,7 @@
       class="kanban-col"
       [class.drag-over]="dragOverStage() === stage.id"
       [class.kanban-col-lost]="stage.id === 'perdido'"
+      [class.kanban-col-payment]="isPaymentStageCol(stage.id)"
       [class.col-dragging]="colDraggingId() === stage.id"
       [class.col-drag-over-left]="colDragOverId() === stage.id && colDragSide() === 'left'"
       [class.col-drag-over-right]="colDragOverId() === stage.id && colDragSide() === 'right'"
@@ -67,7 +68,8 @@
           <div
             class="kanban-card"
             [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage.id !== 'completado' && stage.id !== 'vendido' && stage.id !== 'perdido'"
-            [attr.draggable]="!isTouchDevice()"
+            [class.payment-locked]="isPaymentLocked(deal)"
+            [attr.draggable]="!isTouchDevice() && !isPaymentLocked(deal)"
             (dragstart)="onDragStart($event, deal)"
             (dragend)="onDragEnd()"
             (click)="onCardClickIfDesktop(deal)"
@@ -102,9 +104,14 @@
               </span>
             }
 
+            @if (isPaymentLocked(deal)) {
+              <span class="kanban-payment-lock">Pago pendiente — registra el cobro para mover</span>
+            }
+
             <label class="kanban-select-label">Mover a etapa</label>
             <select
               class="kanban-stage-select"
+              [disabled]="isPaymentLocked(deal)"
               (click)="stopClick($event)"
               (mousedown)="stopClick($event)"
               (touchstart)="stopClick($event)"

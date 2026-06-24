@@ -16,6 +16,7 @@ import {
   LucideTimer,
   LucideUser,
   LucideX,
+  LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
@@ -32,11 +33,12 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
+import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS } from '../../shared/payment-stage.utils';
 
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideBanknote],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
@@ -350,6 +352,47 @@ import {
       border-top: none !important;
     }
     .deal-payment-status {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .deal-payment-lock-note {
+      margin: 8px 0 0;
+      font-size: 12px;
+      color: #fbbf24;
+      line-height: 1.45;
+    }
+    .register-payment-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .register-payment-form label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+    }
+    .register-payment-form input,
+    .register-payment-form select,
+    .register-payment-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #111 !important;
+      border: 1px solid rgba(255,255,255,0.18) !important;
+      color: #fff !important;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .register-payment-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+    }
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
@@ -389,7 +432,8 @@ import {
       background: rgba(74,222,128,0.10) !important;
       border: 1px solid rgba(74,222,128,0.22) !important;
     }
-    .deal-payment-status .btn-ghost.small {
+    .deal-payment-status .btn-ghost.small,
+    .deal-payment-status .btn-copy.small {
       width: 100% !important;
       justify-content: center !important;
       padding: 11px 18px !important;
@@ -866,6 +910,12 @@ export class CrmDealPanelComponent implements OnDestroy {
   isWatchingPayment = signal(false);
   paymentMethodModalOpen = signal(false);
   paymentProviders = signal<{ stripe: boolean; mercadopago: boolean } | null>(null);
+  registerPaymentModalOpen = signal(false);
+  isRegisteringPayment = signal(false);
+  manualPaymentAmount = 0;
+  manualPaymentMethod = 'efectivo';
+  manualPaymentNotes = '';
+  readonly manualPaymentMethods = MANUAL_PAYMENT_METHODS;
 
   private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
   private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
@@ -1216,6 +1266,10 @@ export class CrmDealPanelComponent implements OnDestroy {
   changeStage(stage: string) {
     const d = this.deal();
     if (!d || stage === d.stage) return;
+    if (this.isPaymentLocked()) {
+      this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      return;
+    }
     if (stage === 'perdido' && !this.lostReason) {
       this.deal.update(cur => (cur ? { ...cur, stage } : cur));
       return;
@@ -1224,7 +1278,54 @@ export class CrmDealPanelComponent implements OnDestroy {
     if (stage === 'perdido') payload.lostReason = this.lostReason;
     this.crmService.updateDeal(d.id, payload).subscribe({
       next: () => { this.loadDeal(d.id); this.updated.emit(); },
-      error: (e) => alert(e.error?.error || 'Error al cambiar etapa'),
+      error: (e) => this.toast.error(e.error?.error || 'Error al cambiar etapa'),
+    });
+  }
+
+  isPaymentLocked(): boolean {
+    const d = this.deal();
+    if (!d) return false;
+    return isDealPaymentLocked(d, this.stageLabels());
+  }
+
+  openRegisterPaymentModal() {
+    const d = this.deal();
+    if (!d || d.paymentStatus === 'paid') return;
+    this.manualPaymentAmount = Number(d.estimatedValue) || 0;
+    this.manualPaymentMethod = 'efectivo';
+    this.manualPaymentNotes = '';
+    this.registerPaymentModalOpen.set(true);
+  }
+
+  closeRegisterPaymentModal() {
+    this.registerPaymentModalOpen.set(false);
+  }
+
+  submitManualPayment() {
+    const d = this.deal();
+    if (!d) return;
+    const amount = Number(this.manualPaymentAmount);
+    if (!amount || amount <= 0) {
+      this.toast.warning('Indica un monto válido.', 'Pago');
+      return;
+    }
+    this.isRegisteringPayment.set(true);
+    this.crmService.registerManualPayment(d.id, {
+      amount,
+      paymentMethod: this.manualPaymentMethod,
+      notes: this.manualPaymentNotes.trim() || undefined,
+    }).subscribe({
+      next: () => {
+        this.isRegisteringPayment.set(false);
+        this.registerPaymentModalOpen.set(false);
+        this.toast.success('Pago registrado. Ya puedes mover el trámite y aparecerá en Finanzas.', '¡Pagado!');
+        this.loadDeal(d.id);
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.isRegisteringPayment.set(false);
+        this.toast.error(e.error?.error || 'No se pudo registrar el pago', 'Error');
+      },
     });
   }
 

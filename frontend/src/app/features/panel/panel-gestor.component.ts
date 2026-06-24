@@ -8,6 +8,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
+import { isDealPaymentLocked } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -625,6 +626,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   onStageChange({ deal, stage, fromDrag }: { deal: CrmDeal; stage: string; fromDrag?: boolean }) {
+    const stageLabels = this.crmDashboard()?.stageLabels ?? {};
+    if (isDealPaymentLocked(deal, stageLabels) && stage !== deal.stage) {
+      this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      this.loadDeals();
+      return;
+    }
     if (stage === 'perdido') {
       this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
       if (fromDrag) {
@@ -639,7 +646,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.crmService.updateDeal(deal.id, { stage }).subscribe({
       next: () => this.loadDeals(),
       error: () => {
-        this.message.set('No se pudo mover la tarjeta');
+        this.toast.error('No se pudo mover la tarjeta');
         this.loadDeals();
       },
     });

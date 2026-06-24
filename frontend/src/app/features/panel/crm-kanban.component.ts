@@ -9,6 +9,8 @@ import {
   LucidePlus,
 } from '@lucide/angular';
 import { CrmDeal } from '../../models';
+import { isDealPaymentLocked, isPaymentStage } from '../../shared/payment-stage.utils';
+import { ToastService } from '../../core/toast.service';
 
 export interface KanbanStage { id: string; label: string; }
 
@@ -189,6 +191,21 @@ export interface KanbanStage { id: string; label: string; }
       color: #ffffff;
       background: rgba(255,255,255,0.06);
     }
+    .kanban-card.payment-locked {
+      border-color: rgba(251, 191, 36, 0.45);
+      box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.15);
+    }
+    .kanban-payment-lock {
+      display: block;
+      margin-top: 6px;
+      font-size: 10px;
+      line-height: 1.35;
+      color: #fbbf24;
+      font-weight: 600;
+    }
+    .kanban-col-payment .kanban-col-header {
+      border-bottom-color: rgba(251, 191, 36, 0.35);
+    }
   `],
 })
 export class CrmKanbanComponent {
@@ -222,6 +239,7 @@ export class CrmKanbanComponent {
   dragOverStage   = signal<string | null>(null);
   isTouchDevice   = signal(false);
   private platformId     = inject(PLATFORM_ID);
+  private toast          = inject(ToastService);
   private draggedDealId: string | null = null;
   private didDrag = false;
   private suppressClickUntil = 0;
@@ -358,6 +376,11 @@ export class CrmKanbanComponent {
   // CARD DRAG & DROP  (existing logic)
   // ════════════════════════════════════════
   onDragStart(event: DragEvent, deal: CrmDeal) {
+    if (this.isPaymentLocked(deal)) {
+      event.preventDefault();
+      this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      return;
+    }
     this.didDrag = true;
     this.suppressClickUntil = Date.now() + 600;
     this.draggedDealId = deal.id;
@@ -411,9 +434,12 @@ export class CrmKanbanComponent {
     if (!dealId) return;
 
     const deal = this.deals().find(d => d.id === dealId);
-    if (deal && deal.stage !== stage) {
-      this.stageChange.emit({ deal, stage, fromDrag: true });
+    if (!deal || deal.stage === stage) return;
+    if (this.isPaymentLocked(deal)) {
+      this.toast.warning('Registra el pago antes de mover este trámite de la etapa Pago.', 'Pago pendiente');
+      return;
     }
+    this.stageChange.emit({ deal, stage, fromDrag: true });
   }
 
   onCardClick(deal: CrmDeal) {
@@ -430,6 +456,10 @@ export class CrmKanbanComponent {
     if (!(event as InputEvent).isTrusted) return;
     const select = event.target as HTMLSelectElement;
     const stage = select.value;
+    if (this.isPaymentLocked(deal)) {
+      select.value = deal.stage;
+      return;
+    }
     if (stage && stage !== deal.stage && this.localStages().map(s=>s.id).includes(stage)) {
       this.stageChange.emit({ deal, stage, fromDrag: false });
     } else if (stage && stage !== deal.stage) {
@@ -437,7 +467,16 @@ export class CrmKanbanComponent {
     }
   }
 
+  isPaymentLocked(deal: CrmDeal): boolean {
+    return isDealPaymentLocked(deal, this.stageLabels());
+  }
+
+  isPaymentStageCol(stageId: string): boolean {
+    return isPaymentStage(stageId, this.stageLabels());
+  }
+
   canAdvance(deal: CrmDeal): boolean {
+    if (this.isPaymentLocked(deal)) return false;
     const stages = this.localStages();
     const idx = stages.findIndex(s => s.id === deal.stage);
     return idx >= 0 && idx < stages.length - 1;
