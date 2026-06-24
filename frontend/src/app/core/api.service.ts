@@ -472,9 +472,11 @@ export class FinancesService {
 
   getPendingDeals() { return this.http.get<any[]>(`${this.base}/deals/pending`); }
 
-  getPaymentMethods() { return this.http.get<{ methods: string[] }>(`${this.base}/payment-methods`); }
+  getPaymentMethods() {
+    return this.http.get<{ methods: (string | { id: string; label: string; icon?: string; enabled?: boolean })[] }>(`${this.base}/payment-methods`);
+  }
 
-  savePaymentMethods(methods: (string | { id: string; label: string; icon: string })[]) {
+  savePaymentMethods(methods: (string | { id: string; label?: string; icon?: string; enabled?: boolean })[]) {
     return this.http.put<{ success: boolean }>(`${this.base}/payment-methods`, { methods });
   }
 

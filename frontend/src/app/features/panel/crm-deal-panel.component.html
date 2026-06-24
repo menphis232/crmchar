@@ -579,8 +579,8 @@
 
         <label>Método de cobro</label>
         <select [(ngModel)]="manualPaymentMethod">
-          @for (m of manualPaymentMethods; track m.id) {
-            <option [value]="m.id">{{ m.label }}</option>
+          @for (m of manualPaymentMethods(); track m.id) {
+            <option [value]="m.id">{{ m.icon }} {{ m.label }}</option>
           }
         </select>
 

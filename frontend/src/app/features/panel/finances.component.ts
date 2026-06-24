@@ -28,6 +28,12 @@ import { FinancesService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from '../../models';
+import {
+  buildFinPaymentMethodsPayload,
+  finPaymentMethodLabel,
+  FinPaymentMethodOption,
+  parseFinPaymentMethods,
+} from '../../shared/fin-payment-methods.utils';
 import { formatMoney } from '../../shared/format-amount.util';
 
 @Component({
@@ -708,14 +714,15 @@ export class FinancesComponent implements OnInit, OnDestroy {
   quickRange = 'all';
 
   // Payment methods config
-  enabledMethods = signal<{ id: string; label: string; icon: string; color: string }[]>([]);
+  enabledMethods = signal<FinPaymentMethodOption[]>([]);
+  paymentMethodCatalog = signal<FinPaymentMethodOption[]>([]);
   allMethods = [...FIN_ALL_METHODS];
-  customMethods: { id: string; label: string; icon: string; color: string }[] = [];
+  customMethods: FinPaymentMethodOption[] = [];
   selectedMethodIds: string[] = ['efectivo', 'transferencia', 'mercadopago', 'stripe'];
   savingMethods = false;
 
   // Methods shown inside the transaction form (refreshed on each open)
-  formMethods = signal<{ id: string; label: string; icon: string; color: string }[]>([]);
+  formMethods = signal<FinPaymentMethodOption[]>([]);
 
   // Custom method form
   newMethodName = '';
@@ -829,23 +836,30 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
   loadPaymentMethods() {
     this.fin.getPaymentMethods().subscribe(res => {
-      // res.methods can contain predefined IDs AND custom method objects {id, label, icon}
-      const predefinedIds = this.allMethods.map(m => m.id);
       this.customMethods = [];
       this.selectedMethodIds = ['stripe'];
 
       for (const m of res.methods) {
         if (typeof m === 'string') {
-          this.selectedMethodIds.push(m);
-        } else if (m && typeof m === 'object') {
-          // Custom method object
-          const cm = m as any;
-          if (!this.customMethods.find(x => x.id === cm.id)) {
-            this.customMethods.push({ id: cm.id, label: cm.label, icon: cm.icon || '💰', color: '#C8A94A' });
+          if (m !== 'stripe' && !this.selectedMethodIds.includes(m)) {
+            this.selectedMethodIds.push(m);
           }
-          this.selectedMethodIds.push(cm.id);
+        } else if (m?.id) {
+          if (!this.customMethods.find(x => x.id === m.id)) {
+            this.customMethods.push({
+              id: m.id,
+              label: m.label,
+              icon: m.icon || '💰',
+              color: '#C8A94A',
+            });
+          }
+          if (m.enabled !== false && !this.selectedMethodIds.includes(m.id)) {
+            this.selectedMethodIds.push(m.id);
+          }
         }
       }
+
+      this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
       this.updateEnabledMethods();
     });
   }
@@ -892,29 +906,13 @@ export class FinancesComponent implements OnInit, OnDestroy {
   }
 
   savePaymentMethods() {
-    // Build set of predefined IDs as plain strings to avoid literal-type includes() error
-    const predefinedSet = new Set<string>(this.allMethods.map(m => String(m.id)));
-    const toSave: (string | { id: string; label: string; icon: string })[] = [];
-
-    for (const id of this.selectedMethodIds) {
-      if (id === 'stripe') continue;
-      if (predefinedSet.has(id)) {
-        toSave.push(id);
-      } else {
-        const cm = this.customMethods.find(m => m.id === id);
-        if (cm) toSave.push({ id: cm.id, label: cm.label, icon: cm.icon });
-      }
-    }
-    // Also persist disabled custom methods so they aren't lost on next load
-    for (const cm of this.customMethods) {
-      const alreadyIn = toSave.some(x => (typeof x === 'object' ? x.id : x) === cm.id);
-      if (!alreadyIn) toSave.push({ id: cm.id, label: cm.label, icon: cm.icon });
-    }
+    const toSave = buildFinPaymentMethodsPayload(this.allMethods, this.customMethods, this.selectedMethodIds);
 
     this.savingMethods = true;
     this.fin.savePaymentMethods(toSave).subscribe({
       next: () => {
         this.savingMethods = false;
+        this.paymentMethodCatalog.set(parseFinPaymentMethods(toSave, { onlyEnabled: false }));
         this.toast.success('La configuración de métodos de pago fue guardada.', 'Configuración guardada');
       },
       error: () => {
@@ -930,29 +928,12 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
     // Reload methods fresh from API so the select always reflects the saved config
     this.fin.getPaymentMethods().subscribe(res => {
-      const predefinedMap: Record<string, { id: string; label: string; icon: string; color: string }> = {
-        stripe:        { id: 'stripe',        label: 'Stripe',        icon: '⚡', color: '#6366f1' },
-        efectivo:      { id: 'efectivo',      label: 'Efectivo',      icon: '💵', color: '#22c55e' },
-        transferencia: { id: 'transferencia', label: 'Transferencia', icon: '🏦', color: '#3b82f6' },
-        mercadopago:   { id: 'mercadopago',   label: 'MercadoPago',   icon: '💳', color: '#a855f7' },
-      };
-
-      const methods: { id: string; label: string; icon: string; color: string }[] = [];
-      for (const m of res.methods) {
-        if (typeof m === 'string') {
-          if (predefinedMap[m]) methods.push(predefinedMap[m]);
-        } else if (m && typeof m === 'object') {
-          const cm = m as any;
-          methods.push({ id: cm.id, label: cm.label, icon: cm.icon || '💰', color: '#C8A94A' });
-        }
-      }
-
+      const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
       this.formMethods.set(methods);
+      this.paymentMethodCatalog.set(parseFinPaymentMethods(res.methods, { onlyEnabled: false }));
 
-      // Set smart default: first configured method, not stripe (manual entry)
-      const first = methods.find(x => x.id !== 'stripe') || methods[0];
-      if (first) this.newTx.payment_method = first.id;
-      else this.newTx.payment_method = 'general';
+      const first = methods[0];
+      this.newTx.payment_method = first?.id || 'general';
     });
 
     this.showForm.set(true);
@@ -1007,18 +988,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
   }
 
   methodLabel(method: string): string {
-    const labels: Record<string, string> = {
-      stripe: 'Stripe',
-      efectivo: 'Efectivo',
-      transferencia: 'Transferencia',
-      mercadopago: 'MercadoPago',
-      general: 'General',
-    };
-    if (labels[method]) return labels[method];
-    // Check custom methods
-    const custom = this.customMethods.find(m => m.id === method);
-    if (custom) return `${custom.icon} ${custom.label}`;
-    return method;
+    return finPaymentMethodLabel(method, this.paymentMethodCatalog());
   }
 
   hasMethodData(): boolean {

@@ -1,4 +1,8 @@
-import express from 'express';
+import {
+  enabledManualPaymentMethodIds,
+  parseFinPaymentMethodsJson,
+  resolvePaymentMethodLabel,
+} from '../fin/payment-methods.js';
 import { get, query, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
@@ -596,20 +600,8 @@ router.get('/export/pdf', async (req, res) => {
 // HELPERS
 // ──────────────────────────────────────────────
 
-// customLabels is optional: array of {id, label, icon} for user-defined methods
 function methodLabel(method, customMethods = []) {
-  const labels = {
-    stripe: 'Stripe',
-    efectivo: 'Efectivo',
-    transferencia: 'Transferencia',
-    mercadopago: 'MercadoPago',
-    general: 'General',
-  };
-  if (labels[method]) return labels[method];
-  // Look up in custom methods
-  const found = customMethods.find(m => (typeof m === 'object' ? m.id : m) === method);
-  if (found && typeof found === 'object' && found.label) return found.label;
-  return method;
+  return resolvePaymentMethodLabel(method, customMethods);
 }
 
 function fmtNum(n) {

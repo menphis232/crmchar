@@ -18,7 +18,7 @@ import {
   LucideX,
   LucideBanknote,
 } from '@lucide/angular';
-import { CrmService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
+import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
 import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
@@ -33,7 +33,8 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
 
 @Component({
   selector: 'app-crm-deal-panel',
@@ -923,7 +924,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   manualPaymentAmount = 0;
   manualPaymentMethod = 'efectivo';
   manualPaymentNotes = '';
-  readonly manualPaymentMethods = MANUAL_PAYMENT_METHODS;
+  manualPaymentMethods = signal<FinPaymentMethodOption[]>([]);
 
   private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
   private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
@@ -954,6 +955,7 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   auth = inject(AuthService);
   toast = inject(ToastService);
+  private fin = inject(FinancesService);
   private socketService = inject(SocketService);
 
   constructor(private crmService: CrmService, private mpService: MpService, private http: HttpClient, private zone: NgZone) {
@@ -1304,7 +1306,18 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.manualPaymentAmount = Number(d.estimatedValue) || 0;
     this.manualPaymentMethod = 'efectivo';
     this.manualPaymentNotes = '';
-    this.registerPaymentModalOpen.set(true);
+    this.fin.getPaymentMethods().subscribe({
+      next: (res) => {
+        const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
+        this.manualPaymentMethods.set(methods);
+        if (methods[0]) this.manualPaymentMethod = methods[0].id;
+        this.registerPaymentModalOpen.set(true);
+      },
+      error: () => {
+        this.manualPaymentMethods.set([]);
+        this.registerPaymentModalOpen.set(true);
+      },
+    });
   }
 
   closeRegisterPaymentModal() {

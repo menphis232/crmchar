@@ -3,7 +3,8 @@ import { get, run } from '../db.js';
 import { generateInvoicePdfFile } from '../crm/invoice-pdf.js';
 import { sendEmail } from '../utils/mailer.js';
 import { emitDealPaymentPaid } from '../utils/socket-events.js';
-import { isPaymentStageId, paymentMethodLabel } from '../crm/payment-stage.js';
+import { isPaymentStageId } from '../crm/payment-stage.js';
+import { resolvePaymentMethodLabel } from '../fin/payment-methods.js';
 async function nextInvoiceNumber(userId) {
   const year = new Date().getFullYear();
   const row = await get(
@@ -38,7 +39,7 @@ export async function finalizeDealPayment(dealId, {
   const deal = await loadDealForPayment(dealId);
   if (!deal) throw new Error('Trámite no encontrado');
 
-  const orgUserRow = await get('SELECT crm_stages FROM users WHERE id = ?', [deal.user_id]);
+  const orgUserRow = await get('SELECT crm_stages, fin_payment_methods FROM users WHERE id = ?', [deal.user_id]);
   const shouldKeepStage = keepStage ?? isPaymentStageId(deal.stage, orgUserRow?.crm_stages);
 
   const existingInvoice = await get('SELECT * FROM deal_invoices WHERE deal_id = ?', [dealId]);
@@ -85,7 +86,7 @@ export async function finalizeDealPayment(dealId, {
     );
   }
 
-  const methodLabel = paymentMethodLabel(paymentMethod);
+  const methodLabel = resolvePaymentMethodLabel(paymentMethod, orgUserRow?.fin_payment_methods);
   const finExists = await get(
     "SELECT id FROM fin_transactions WHERE deal_id = ? AND category = 'pago_tramite' LIMIT 1",
     [dealId],

@@ -46,10 +46,3 @@ export function isDealPaymentLocked(
 ): boolean {
   return isPaymentStage(deal.stage || '', stagesConfig) && deal.paymentStatus !== 'paid';
 }
-
-export const MANUAL_PAYMENT_METHODS = [
-  { id: 'efectivo', label: 'Efectivo' },
-  { id: 'transferencia', label: 'Transferencia' },
-  { id: 'tarjeta', label: 'Tarjeta (terminal externa)' },
-  { id: 'otro', label: 'Otro' },
-] as const;

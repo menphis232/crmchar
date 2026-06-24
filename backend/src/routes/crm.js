@@ -25,6 +25,7 @@ import {
 import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { isDealPaymentLocked } from '../crm/payment-stage.js';
+import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
 
@@ -1748,9 +1749,10 @@ router.post('/deals/:id/register-payment', async (req, res) => {
   try {
     const dealId = req.params.id;
     const { amount, paymentMethod, notes } = req.body;
-    const allowed = ['efectivo', 'transferencia', 'tarjeta', 'otro', 'mercadopago', 'stripe'];
+    const orgUser = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+    const allowed = enabledManualPaymentMethodIds(orgUser?.fin_payment_methods);
     if (!paymentMethod || !allowed.includes(paymentMethod)) {
-      return res.status(400).json({ error: 'Método de pago inválido' });
+      return res.status(400).json({ error: 'Método de pago inválido o no configurado en Finanzas' });
     }
 
     const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [dealId, req.orgId]);
