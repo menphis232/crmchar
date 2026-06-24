@@ -561,6 +561,30 @@
         </div>
       } @else {
         <div class="client-docs">
+          @if (deliveryFiles().length > 0) {
+            <div class="client-delivery-preview">
+              <div class="client-docs-intro">
+                <h3>Tu trámite está listo</h3>
+                <p>Descarga o previsualiza el archivo que tu gestoría compartió contigo.</p>
+              </div>
+              @for (file of deliveryFiles(); track file.id) {
+                <div class="client-delivery-card">
+                  <div class="client-delivery-card-head">
+                    <strong>{{ file.document_type || 'Documento final' }}</strong>
+                    <a [href]="previewFileUrl(file.file_url)" target="_blank" rel="noopener" class="btn-copy small">Descargar</a>
+                  </div>
+                  @if (isPdfUrl(file.file_url)) {
+                    <iframe class="client-delivery-frame" [src]="safePreviewUrl(file.file_url)" title="Vista previa del documento"></iframe>
+                  } @else if (isImageUrl(file.file_url)) {
+                    <img class="client-delivery-image" [src]="previewFileUrl(file.file_url)" [alt]="file.document_type || 'Documento final'">
+                  } @else {
+                    <a [href]="previewFileUrl(file.file_url)" target="_blank" rel="noopener" class="btn-ghost small">Abrir archivo</a>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <div class="client-docs-intro">
             <h3>Documentos requeridos</h3>
             <p>Sube un archivo nuevo o elige uno que ya tengas en tu billetera.</p>

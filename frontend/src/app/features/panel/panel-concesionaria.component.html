@@ -269,11 +269,14 @@
           [dealId]="selectedDealId()"
           [stages]="crm.stages"
           [stageLabels]="crm.stageLabels"
+          [stagesConfig]="crmStages"
           [templates]="templates()"
           [showReply]="true"
           [isConcesionaria]="true"
+          [promptDeliveryUpload]="promptDeliveryUploadDealId() === selectedDealId()"
           (closed)="selectedDealId.set(null)"
           (updated)="onDealUpdated()"
+          (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
           (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
         />
       }

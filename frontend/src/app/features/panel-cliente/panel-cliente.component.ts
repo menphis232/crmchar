@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
+import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/auth.service';
@@ -82,6 +83,15 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
   toast = inject(ToastService);
   zone = inject(NgZone);
+  private sanitizer = inject(DomSanitizer);
+
+  deliveryFiles = computed(() =>
+    this.documents().filter(d => d.source === 'gestor_entrega' || d.doc_kind === 'entrega'),
+  );
+
+  clientUploadedDocs = computed(() =>
+    this.documents().filter(d => d.source !== 'gestor_entrega' && d.doc_kind !== 'entrega'),
+  );
 
   activeTab = signal<ClientTab>('dashboard');
   isMobileMenuOpen = signal(false);
@@ -341,7 +351,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       error: () => this.chatLoading.set(false),
     });
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
-      next: docs => this.documents.set(docs),
+      next: docs => {
+        this.documents.set(docs);
+        if (this.isTerminalStage(deal) || deal.stage === 'completado' || deal.stage === 'vendido') {
+          this.dealTab.set('docs');
+        }
+      },
     });
     if (!this.walletDocs().length) {
       this.loadWallet();
@@ -469,7 +484,26 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   getDocStatus(docType: string) {
-    return this.documents().find(d => d.document_type === docType);
+    return this.clientUploadedDocs().find(d => d.document_type === docType);
+  }
+
+  previewFileUrl(url: string): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+  }
+
+  safePreviewUrl(url: string) {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.previewFileUrl(url));
+  }
+
+  isPdfUrl(url: string): boolean {
+    return /\.pdf($|\?)/i.test(url || '');
+  }
+
+  isImageUrl(url: string): boolean {
+    return /\.(jpe?g|png|webp|gif)($|\?)/i.test(url || '') || /^data:image\//i.test(url || '');
   }
 
   hasWalletOptions(): boolean {

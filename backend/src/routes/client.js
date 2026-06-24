@@ -253,8 +253,26 @@ router.get('/deals/:id/documents', authRequired, requireRole('cliente'), async (
     if (!await clientOwnsDeal(req.user.email, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
-    const docs = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
-    res.json(docs);
+    const clientDocs = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
+    const deliveryDocs = await query(
+      `SELECT id, deal_id, file_name, file_url, notes, doc_kind, created_at
+       FROM crm_documents
+       WHERE deal_id = ? AND doc_kind = 'entrega'
+       ORDER BY created_at DESC`,
+      [req.params.id],
+    );
+    const mappedDelivery = deliveryDocs.map((d) => ({
+      id: d.id,
+      deal_id: d.deal_id,
+      document_type: d.file_name,
+      file_url: d.file_url,
+      status: 'approved',
+      source: 'gestor_entrega',
+      doc_kind: 'entrega',
+      notes: d.notes,
+      created_at: d.created_at,
+    }));
+    res.json([...mappedDelivery, ...clientDocs]);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener documentos' });
   }

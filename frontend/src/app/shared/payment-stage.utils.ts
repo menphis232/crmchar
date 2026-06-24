@@ -86,3 +86,22 @@ export function isPaidDealBackwardMoveBlocked(
   if (deal.paymentStatus !== 'paid') return false;
   return isBackwardStageMove(stagesConfig, deal.stage || '', toStageId);
 }
+
+export function isCompletedStage(
+  stageId: string,
+  stagesConfig: CrmStageConfig[] | Record<string, string> | string[] = {},
+): boolean {
+  if (!stageId) return false;
+  if (stageId === 'completado' || stageId === 'vendido') return true;
+
+  if (Array.isArray(stagesConfig) && stagesConfig.length && typeof stagesConfig[0] === 'object') {
+    const stage = (stagesConfig as CrmStageConfig[]).find((s) => s.id === stageId);
+    const label = normalizeStageKey(stage?.label || '');
+    if (label === 'completado' || label === 'vendido' || /\bcompletad/.test(label)) return true;
+  } else if (stagesConfig && typeof stagesConfig === 'object' && !Array.isArray(stagesConfig)) {
+    const label = normalizeStageKey((stagesConfig as Record<string, string>)[stageId] || '');
+    if (label === 'completado' || label === 'vendido' || /\bcompletad/.test(label)) return true;
+  }
+
+  return false;
+}

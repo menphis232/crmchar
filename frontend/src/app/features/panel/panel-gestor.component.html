@@ -1021,8 +1021,10 @@
       [stagesConfig]="crmStages"
       [templates]="templates()"
       [whatsappNumber]="profile()?.whatsapp || ''"
+      [promptDeliveryUpload]="promptDeliveryUploadDealId() === dealId"
       (closed)="selectedDealId.set(null)"
       (updated)="onDealUpdated(); loadVerificationAlerts()"
+      (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
       (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
     />
   }

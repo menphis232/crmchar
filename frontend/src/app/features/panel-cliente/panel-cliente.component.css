@@ -1215,6 +1215,45 @@
   color: rgba(255, 100, 100, 0.8) !important;
 }
 
+.client-delivery-preview {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.client-delivery-card {
+  background: rgba(34, 197, 94, 0.06);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.client-delivery-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.client-delivery-frame {
+  width: 100%;
+  min-height: 420px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: #111;
+}
+
+.client-delivery-image {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #111;
+}
+
 @media (max-width: 640px) {
   .client-wallet-form {
     grid-template-columns: 1fr;

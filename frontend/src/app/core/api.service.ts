@@ -188,7 +188,7 @@ export class CrmService {
   getDocuments(dealId: string) {
     return this.http.get<CrmDocument[]>(`${this.base}/deals/${dealId}/documents`);
   }
-  addDocument(dealId: string, data: { fileName: string; fileUrl: string; notes?: string; docKind?: 'attachment' | 'cotizacion' }) {
+  addDocument(dealId: string, data: { fileName: string; fileUrl: string; notes?: string; docKind?: 'attachment' | 'cotizacion' | 'entrega' }) {
     return this.http.post<CrmDocument>(`${this.base}/deals/${dealId}/documents`, {
       fileName: data.fileName,
       fileUrl: data.fileUrl,

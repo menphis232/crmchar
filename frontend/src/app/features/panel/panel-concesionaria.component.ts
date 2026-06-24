@@ -15,7 +15,7 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
-import { isPaidDealBackwardMoveBlocked } from '../../shared/payment-stage.utils';
+import { isPaidDealBackwardMoveBlocked, isCompletedStage } from '../../shared/payment-stage.utils';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
@@ -104,6 +104,7 @@ export class PanelConcesionariaComponent implements OnInit {
   deals = signal<CrmDeal[]>([]);
   templates = signal<MessageTemplate[]>([]);
   selectedDealId = signal<string | null>(null);
+  promptDeliveryUploadDealId = signal<string | null>(null);
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   filterStage = '';
@@ -351,7 +352,13 @@ export class PanelConcesionariaComponent implements OnInit {
     }
     this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
     this.crmService.updateDeal(deal.id, { stage }).subscribe({
-      next: () => this.loadCrm(),
+      next: () => {
+        this.loadCrm();
+        if (isCompletedStage(stage, this.crmStages)) {
+          this.selectedDealId.set(deal.id);
+          this.promptDeliveryUploadDealId.set(deal.id);
+        }
+      },
       error: () => {
         this.message.set('No se pudo mover la tarjeta');
         this.loadCrm();

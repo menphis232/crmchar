@@ -33,7 +33,7 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
 
 @Component({
@@ -873,11 +873,37 @@ import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin
     h4     { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; font-size: 9px !important; letter-spacing: 0.22em !important; text-transform: uppercase !important; font-weight: 700 !important; }
     label:not(.deal-outline-btn) { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
     small  { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
+    .deal-delivery-section {
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.06);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .deal-delivery-hint { margin: 8px 0 0; color: rgba(255,255,255,0.45); }
+    .deal-delivery-upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 16px 0;
+      padding: 28px 20px;
+      border: 1px dashed rgba(255,255,255,0.28);
+      border-radius: 12px;
+      cursor: pointer;
+      text-align: center;
+      color: rgba(255,255,255,0.85);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .deal-delivery-upload-zone:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.04); }
+    .deal-delivery-upload-zone.loading { opacity: 0.6; pointer-events: none; }
+    .deal-delivery-upload-zone span { font-size: 12px; color: rgba(255,255,255,0.45); }
     a      { color: rgba(255,255,255,0.75) !important; }
   `],
 })
 export class CrmDealPanelComponent implements OnDestroy {
   dealId = input<string | null>(null);
+  promptDeliveryUpload = input(false);
   stages = input<string[]>([]);
   stageLabels = input<Record<string, string>>({});
   stagesConfig = input<CrmStageConfig[]>([]);
@@ -889,6 +915,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   closed = output<void>();
   updated = output<void>();
   openContact = output<string>();
+  deliveryUploadDismissed = output<void>();
 
   deal = signal<CrmDeal | null>(null);
   noteText = '';
@@ -920,6 +947,8 @@ export class CrmDealPanelComponent implements OnDestroy {
   paymentMethodModalOpen = signal(false);
   paymentProviders = signal<{ stripe: boolean; mercadopago: boolean } | null>(null);
   registerPaymentModalOpen = signal(false);
+  deliveryUploadModalOpen = signal(false);
+  isUploadingDelivery = signal(false);
   isRegisteringPayment = signal(false);
   manualPaymentAmount = 0;
   manualPaymentMethod = 'efectivo';
@@ -963,6 +992,13 @@ export class CrmDealPanelComponent implements OnDestroy {
       const id = this.dealId();
       if (id) this.loadDeal(id);
       else this.deal.set(null);
+    });
+    effect(() => {
+      if (!this.promptDeliveryUpload()) return;
+      const d = this.deal();
+      if (!d || !this.isDealCompleted()) return;
+      this.deliveryUploadModalOpen.set(true);
+      this.deliveryUploadDismissed.emit();
     });
   }
 
@@ -1292,8 +1328,73 @@ export class CrmDealPanelComponent implements OnDestroy {
     const payload: { stage: string; lostReason?: string } = { stage };
     if (stage === 'perdido') payload.lostReason = this.lostReason;
     this.crmService.updateDeal(d.id, payload).subscribe({
-      next: () => { this.loadDeal(d.id); this.updated.emit(); },
+      next: () => {
+        this.loadDeal(d.id);
+        this.updated.emit();
+        if (isCompletedStage(stage, stagesConfig)) {
+          this.deliveryUploadModalOpen.set(true);
+        }
+      },
       error: (e) => this.toast.error(e.error?.error || 'Error al cambiar etapa'),
+    });
+  }
+
+  isDealCompleted(): boolean {
+    const d = this.deal();
+    if (!d) return false;
+    const config = this.stagesConfig();
+    if (config.length) return isCompletedStage(d.stage, config);
+    return isCompletedStage(d.stage, this.stageLabels());
+  }
+
+  closeDeliveryUploadModal() {
+    this.deliveryUploadModalOpen.set(false);
+  }
+
+  uploadDeliveryDocument(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const d = this.deal();
+    if (!d) return;
+
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Sube un PDF o una imagen (JPG, PNG, WebP).');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingDelivery.set(true);
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
+      next: (res) => {
+        this.crmService.addDocument(d.id, {
+          fileName: res.fileName || file.name,
+          fileUrl: res.url,
+          docKind: 'entrega',
+        }).subscribe({
+          next: () => {
+            this.loadDocuments(d.id);
+            this.isUploadingDelivery.set(false);
+            this.deliveryUploadModalOpen.set(false);
+            this.updated.emit();
+            this.toast.success('Archivo publicado. El cliente ya puede verlo en su panel.', 'Trámite completado');
+            input.value = '';
+          },
+          error: (e) => {
+            this.toast.error(e.error?.error || 'Error al guardar el archivo');
+            this.isUploadingDelivery.set(false);
+            input.value = '';
+          },
+        });
+      },
+      error: (e) => {
+        this.toast.error(e.error?.error || 'Error al subir el archivo');
+        this.isUploadingDelivery.set(false);
+        input.value = '';
+      },
     });
   }
 
@@ -1472,6 +1573,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   isUploadingQuote = signal(false);
 
   documents = signal<any[]>([]);
+  deliveryDocuments = signal<any[]>([]);
   clientDocuments = signal<any[]>([]);
   isUploading = signal(false);
   uploadService = inject(UploadService);
@@ -1617,7 +1719,8 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.crmService.getDocuments(dealId).subscribe(docs => {
       const all = docs as any[];
       this.quoteDocuments.set(all.filter(doc => doc.doc_kind === 'cotizacion'));
-      this.documents.set(all.filter(doc => doc.doc_kind !== 'cotizacion'));
+      this.deliveryDocuments.set(all.filter(doc => doc.doc_kind === 'entrega'));
+      this.documents.set(all.filter(doc => doc.doc_kind !== 'cotizacion' && doc.doc_kind !== 'entrega'));
     });
     if (!this.isConcesionaria()) {
       this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => {
