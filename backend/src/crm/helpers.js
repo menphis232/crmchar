@@ -5,7 +5,7 @@ import { get, query, run } from '../db.js';
 import { sendEmail } from '../utils/mailer.js';
 import {
   dealTypeForRole, mapDealStageToSolicitudStatus, mapInquiryStatus, mapSolicitudStatus, templateCategoryForRole,
-  stagesForRole,
+  firstStageForGestor,
 } from './stages.js';
 
 const DEFAULT_TEMPLATES = {
@@ -72,9 +72,7 @@ export async function createDealFromSolicitud(solicitud, gestorUserId, extra = {
 
   const dealId = uuid();
   const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [gestorUserId]);
-  const defaultStage = mapSolicitudStatus(solicitud.status);
-  const pipelineStages = stagesForRole('gestor', userRow?.crm_stages);
-  const initialStage = pipelineStages.includes(defaultStage) ? defaultStage : (pipelineStages[0] || 'nuevo');
+  const initialStage = firstStageForGestor(userRow?.crm_stages);
   const title = solicitud.service_name || solicitud.serviceName || 'Trámite vehicular';
   const estimatedValue = extra.estimatedValue || 0;
   
