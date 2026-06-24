@@ -3,6 +3,16 @@
   gap: 30px;
   height: 100%;
   align-items: flex-start;
+  width: 100%;
+}
+
+/* Aísla la vista previa del tema oscuro del panel (hereda --text blanco) */
+:host {
+  display: block;
+  width: 100%;
+  --text: #111111;
+  --muted: #555555;
+  --mx-white: #111111;
 }
 
 .designer-sidebar {
@@ -181,38 +191,65 @@
   flex: 1;
   display: flex;
   justify-content: center;
-  background: rgba(0,0,0,0.1);
+  align-items: flex-start;
+  background: #4a4a4a;
   padding: 30px;
   border-radius: var(--card-radius);
   overflow-y: auto;
   max-height: calc(100vh - 120px);
+  min-height: 480px;
 }
 
 .preview-paper {
   width: 100%;
   max-width: 600px;
-  background: #fff;
+  background: #ffffff !important;
   border-radius: 4px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  padding: 40px;
-  color: #333;
-  font-family: Arial, sans-serif;
-  min-height: 848px; /* A4 proportion approx */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  padding: 40px 40px 56px;
+  color: #111111 !important;
+  font-family: Arial, Helvetica, sans-serif;
+  min-height: auto;
+  height: auto;
+  flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
+  isolation: isolate;
+}
+
+.preview-paper h3 {
+  color: #111111 !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+}
+
+.preview-paper .mock-text,
+.preview-paper .mock-meta,
+.preview-paper .mock-contact,
+.preview-paper .mock-row,
+.preview-paper .mock-row span,
+.preview-paper .mock-checklist li,
+.preview-paper .mock-plazo {
+  color: #333333 !important;
+}
+
+.preview-paper .total-row,
+.preview-paper .total-row strong {
+  color: #111111 !important;
 }
 
 .preview-block {
-  padding: 10px;
-  border: 1px dashed transparent;
-  transition: all 0.2s;
-  border-radius: 4px;
+  padding: 4px 0;
+  border: none !important;
+  background: transparent !important;
+  transition: none;
+  border-radius: 0;
 }
 
 .preview-block:hover {
-  border-color: #ccc;
-  background: #f9fafb;
+  border: none !important;
+  background: transparent !important;
 }
 
 .block-header {
@@ -329,6 +366,8 @@
   margin: 0;
   font-size: 14px;
   text-transform: uppercase;
+  font-family: Arial, Helvetica, sans-serif !important;
+  letter-spacing: 0.04em;
 }
 
 .mock-text {
@@ -357,9 +396,9 @@
 }
 
 .block-total-end {
-  margin-top: 8px;
-  padding-top: 12px;
-  border-top: 2px dashed rgba(0, 0, 0, 0.08);
+  margin-top: 12px;
+  padding-top: 16px;
+  border-top: 2px solid #e5e7eb;
 }
 
 .mock-checklist {
@@ -370,7 +409,7 @@
 
 .mock-checklist li {
   font-size: 12px;
-  color: #333;
+  color: #333333 !important;
   line-height: 1.55;
   margin-bottom: 6px;
 }
@@ -381,9 +420,10 @@
 }
 
 .block-footer {
-  margin-top: auto;
+  margin-top: 20px;
   text-align: center;
   font-size: 10px;
-  color: #666;
-  padding-top: 40px;
+  color: #666666 !important;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
 }
