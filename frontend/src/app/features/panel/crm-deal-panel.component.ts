@@ -1154,17 +1154,27 @@ export class CrmDealPanelComponent implements OnDestroy {
   }
 
   sendMessage() {
-    const d = this.deal();
-    if (!d || !this.newMessage.trim()) return;
+    if (!this.newMessage.trim()) return;
     const txt = this.newMessage;
     this.newMessage = '';
-    
-    this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, { message: txt }).subscribe(saved => {
-      if (!this.messages.find(m => m.id === saved.id)) {
-        this.messages.push({ dealId: d.id, ...saved });
-        this.scrollToBottom();
-      }
-      this.socketService.emit('send_message', { dealId: d.id, ...saved });
+    this.postChatMessage(txt);
+  }
+
+  private postChatMessage(message: string, fileUrl?: string) {
+    const d = this.deal();
+    if (!d || !message.trim()) return;
+    this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/messages`, {
+      message: message.trim(),
+      fileUrl: fileUrl || undefined,
+    }).subscribe({
+      next: saved => {
+        if (!this.messages.find(m => m.id === saved.id)) {
+          this.messages.push({ dealId: d.id, ...saved });
+          this.scrollToBottom();
+        }
+        this.socketService.emit('send_message', { dealId: d.id, ...saved });
+      },
+      error: (e) => this.toast.error(e.error?.error || 'Error al enviar mensaje al chat'),
     });
   }
 
@@ -1231,11 +1241,16 @@ export class CrmDealPanelComponent implements OnDestroy {
   addNote() {
     const d = this.deal();
     if (!d || !this.noteText.trim()) return;
-    this.crmService.addActivity(d.id, this.noteText.trim()).subscribe(() => {
-      this.noteText = '';
-      this.loadDeal(d.id);
-      this.toast.success('Nota agregada');
-      this.updated.emit();
+    const txt = this.noteText.trim();
+    this.crmService.addActivity(d.id, txt).subscribe({
+      next: () => {
+        this.noteText = '';
+        this.postChatMessage(txt);
+        this.loadDeal(d.id);
+        this.toast.success('Nota agregada y enviada al chat');
+        this.updated.emit();
+      },
+      error: (e) => this.toast.error(e.error?.error || 'Error al agregar nota'),
     });
   }
 
