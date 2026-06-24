@@ -37,7 +37,7 @@ const GESTOR_BLOCKS: PdfBlockDef[] = [
   { id: 'includes', name: 'Qué incluye' },
   { id: 'requirements', name: 'Requisitos' },
   { id: 'bonus', name: 'Bonus' },
-  { id: 'total', name: 'Total' },
+  { id: 'total', name: 'Costo Total' },
   { id: 'footer', name: 'Pie de Página' },
 ];
 

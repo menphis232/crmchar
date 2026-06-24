@@ -284,7 +284,7 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
       doc.moveDown(1);
       doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GOLD).lineWidth(1).stroke();
       doc.moveDown(0.8);
-      doc.fillColor(BLACK).fontSize(14).text('TOTAL:', 50, doc.y, { continued: false });
+      doc.fillColor(BLACK).fontSize(14).text('COSTO TOTAL:', 50, doc.y, { continued: false });
       doc.fillColor(BLACK).fontSize(14).text(formatMoney(honorarios), 350, doc.y - 16, { width: 150, align: 'right' });
       doc.moveDown(2);
     },
