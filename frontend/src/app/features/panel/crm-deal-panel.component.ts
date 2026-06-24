@@ -356,6 +356,10 @@ import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS } from '../../shared/paymen
       flex-wrap: wrap;
       gap: 8px;
       align-items: center;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 14px !important;
+      font-family: var(--f-display) !important;
     }
     .deal-payment-lock-note {
       margin: 8px 0 0;
@@ -392,12 +396,6 @@ import { isDealPaymentLocked, MANUAL_PAYMENT_METHODS } from '../../shared/paymen
       justify-content: flex-end;
       gap: 10px;
       margin-top: 16px;
-    }
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: stretch !important;
-      gap: 14px !important;
-      font-family: var(--f-display) !important;
     }
     .deal-payment-status > span {
       display: flex !important;
