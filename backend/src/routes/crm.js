@@ -1538,7 +1538,7 @@ router.post('/deals/:id/documents', async (req, res) => {
     const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
-    const kind = docKind === 'cotizacion' ? 'cotizacion' : docKind === 'entrega' ? 'entrega' : 'attachment';
+    const kind = docKind === 'cotizacion' ? 'cotizacion' : docKind === 'entrega' ? 'entrega' : docKind === 'envio' ? 'envio' : 'attachment';
     const docId = uuid();
     await run(`
       INSERT INTO crm_documents (id, deal_id, user_id, file_name, file_url, notes, doc_kind)

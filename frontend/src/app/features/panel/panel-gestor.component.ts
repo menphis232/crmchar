@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
-import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
 import { CrmTodayInboxComponent } from './crm-today-inbox.component';
@@ -169,6 +169,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   templates = signal<MessageTemplate[]>([]);
   selectedDealId = signal<string | null>(null);
   promptDeliveryUploadDealId = signal<string | null>(null);
+  promptShippingUploadDealId = signal<string | null>(null);
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   filterStage = '';
@@ -656,6 +657,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.crmService.updateDeal(deal.id, { stage }).subscribe({
       next: () => {
         this.loadDeals();
+        if (isShippedStage(stage, this.crmStages)) {
+          this.selectedDealId.set(deal.id);
+          this.promptShippingUploadDealId.set(deal.id);
+        }
         if (isCompletedStage(stage, this.crmStages)) {
           this.selectedDealId.set(deal.id);
           this.promptDeliveryUploadDealId.set(deal.id);

@@ -257,22 +257,22 @@ router.get('/deals/:id/documents', authRequired, requireRole('cliente'), async (
     const deliveryDocs = await query(
       `SELECT id, deal_id, file_name, file_url, notes, doc_kind, created_at
        FROM crm_documents
-       WHERE deal_id = ? AND doc_kind = 'entrega'
+       WHERE deal_id = ? AND doc_kind IN ('entrega', 'envio')
        ORDER BY created_at DESC`,
       [req.params.id],
     );
-    const mappedDelivery = deliveryDocs.map((d) => ({
+    const mappedGestorDocs = deliveryDocs.map((d) => ({
       id: d.id,
       deal_id: d.deal_id,
-      document_type: d.file_name,
+      document_type: d.doc_kind === 'envio' ? (d.file_name || 'Guía de envío') : d.file_name,
       file_url: d.file_url,
       status: 'approved',
-      source: 'gestor_entrega',
-      doc_kind: 'entrega',
+      source: d.doc_kind === 'envio' ? 'gestor_envio' : 'gestor_entrega',
+      doc_kind: d.doc_kind,
       notes: d.notes,
       created_at: d.created_at,
     }));
-    res.json([...mappedDelivery, ...clientDocs]);
+    res.json([...mappedGestorDocs, ...clientDocs]);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener documentos' });
   }

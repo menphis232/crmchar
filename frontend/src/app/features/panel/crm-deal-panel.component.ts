@@ -33,7 +33,7 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
 
 @Component({
@@ -886,6 +886,19 @@ import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin
     }
     .deal-delivery-desc { margin: 0 0 12px !important; }
     .deal-delivery-list { margin-top: 12px; }
+    .deal-shipping-section {
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      background: rgba(59, 130, 246, 0.06);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .deal-shipping-section-head h4 {
+      margin: 0 0 6px !important;
+      color: #93c5fd !important;
+      font-size: 10px !important;
+    }
+    .deal-shipping-desc { margin: 0 0 12px !important; }
+    .deal-shipping-list { margin-top: 12px; }
     .deal-delivery-upload-zone {
       display: flex;
       flex-direction: column;
@@ -910,6 +923,7 @@ import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin
 export class CrmDealPanelComponent implements OnDestroy {
   dealId = input<string | null>(null);
   promptDeliveryUpload = input(false);
+  promptShippingUpload = input(false);
   stages = input<string[]>([]);
   stageLabels = input<Record<string, string>>({});
   stagesConfig = input<CrmStageConfig[]>([]);
@@ -922,6 +936,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   updated = output<void>();
   openContact = output<string>();
   deliveryUploadDismissed = output<void>();
+  shippingUploadDismissed = output<void>();
 
   deal = signal<CrmDeal | null>(null);
   noteText = '';
@@ -954,7 +969,9 @@ export class CrmDealPanelComponent implements OnDestroy {
   paymentProviders = signal<{ stripe: boolean; mercadopago: boolean } | null>(null);
   registerPaymentModalOpen = signal(false);
   deliveryUploadModalOpen = signal(false);
+  shippingUploadModalOpen = signal(false);
   isUploadingDelivery = signal(false);
+  isUploadingShipping = signal(false);
   isRegisteringPayment = signal(false);
   manualPaymentAmount = 0;
   manualPaymentMethod = 'efectivo';
@@ -1005,6 +1022,13 @@ export class CrmDealPanelComponent implements OnDestroy {
       if (!d || !this.isDealCompleted()) return;
       this.deliveryUploadModalOpen.set(true);
       this.deliveryUploadDismissed.emit();
+    });
+    effect(() => {
+      if (!this.promptShippingUpload()) return;
+      const d = this.deal();
+      if (!d || !this.isDealShipped()) return;
+      this.shippingUploadModalOpen.set(true);
+      this.shippingUploadDismissed.emit();
     });
   }
 
@@ -1337,6 +1361,9 @@ export class CrmDealPanelComponent implements OnDestroy {
       next: () => {
         this.loadDeal(d.id);
         this.updated.emit();
+        if (isShippedStage(stage, stagesConfig)) {
+          this.shippingUploadModalOpen.set(true);
+        }
         if (isCompletedStage(stage, stagesConfig)) {
           this.deliveryUploadModalOpen.set(true);
         }
@@ -1360,6 +1387,71 @@ export class CrmDealPanelComponent implements OnDestroy {
     if (configCols.length && configCols[configCols.length - 1].id === d.stage) return true;
 
     return false;
+  }
+
+  isDealShipped(): boolean {
+    const d = this.deal();
+    if (!d?.stage) return false;
+    const config = this.stagesConfig();
+    if (config.length && isShippedStage(d.stage, config)) return true;
+    return isShippedStage(d.stage, this.stageLabels());
+  }
+
+  closeShippingUploadModal() {
+    this.shippingUploadModalOpen.set(false);
+    setTimeout(() => this.scrollToShippingSection(), 150);
+  }
+
+  private scrollToShippingSection() {
+    const el = document.getElementById('deal-shipping-section');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  uploadShippingDocument(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const d = this.deal();
+    if (!d) return;
+
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Sube un PDF o una imagen (JPG, PNG, WebP).');
+      input.value = '';
+      return;
+    }
+
+    this.isUploadingShipping.set(true);
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
+      next: (res) => {
+        this.crmService.addDocument(d.id, {
+          fileName: file.name,
+          fileUrl: res.url,
+          docKind: 'envio',
+        }).subscribe({
+          next: () => {
+            this.loadDocuments(d.id);
+            this.isUploadingShipping.set(false);
+            this.shippingUploadModalOpen.set(false);
+            this.updated.emit();
+            this.toast.success('Etiqueta publicada. El cliente ya puede descargar su guía.', 'Enviado');
+            input.value = '';
+          },
+          error: (e) => {
+            this.toast.error(e.error?.error || 'Error al guardar la etiqueta');
+            this.isUploadingShipping.set(false);
+            input.value = '';
+          },
+        });
+      },
+      error: (e) => {
+        this.toast.error(e.error?.error || 'Error al subir el archivo');
+        this.isUploadingShipping.set(false);
+        input.value = '';
+      },
+    });
   }
 
   closeDeliveryUploadModal() {
@@ -1595,6 +1687,7 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   documents = signal<any[]>([]);
   deliveryDocuments = signal<any[]>([]);
+  shippingDocuments = signal<any[]>([]);
   clientDocuments = signal<any[]>([]);
   isUploading = signal(false);
   uploadService = inject(UploadService);
@@ -1741,7 +1834,8 @@ export class CrmDealPanelComponent implements OnDestroy {
       const all = docs as any[];
       this.quoteDocuments.set(all.filter(doc => doc.doc_kind === 'cotizacion'));
       this.deliveryDocuments.set(all.filter(doc => doc.doc_kind === 'entrega'));
-      this.documents.set(all.filter(doc => doc.doc_kind !== 'cotizacion' && doc.doc_kind !== 'entrega'));
+      this.shippingDocuments.set(all.filter(doc => doc.doc_kind === 'envio'));
+      this.documents.set(all.filter(doc => !['cotizacion', 'entrega', 'envio'].includes(doc.doc_kind)));
     });
     if (!this.isConcesionaria()) {
       this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${dealId}/client-documents`).subscribe(docs => {

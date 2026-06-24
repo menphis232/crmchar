@@ -10,6 +10,7 @@ import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
+import { isShippedStage } from '../../shared/payment-stage.utils';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import {
   LucideArrowLeft,
@@ -89,8 +90,15 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.documents().filter(d => d.source === 'gestor_entrega' || d.doc_kind === 'entrega'),
   );
 
+  shippingFiles = computed(() =>
+    this.documents().filter(d => d.source === 'gestor_envio' || d.doc_kind === 'envio'),
+  );
+
   clientUploadedDocs = computed(() =>
-    this.documents().filter(d => d.source !== 'gestor_entrega' && d.doc_kind !== 'entrega'),
+    this.documents().filter(d =>
+      d.source !== 'gestor_entrega' && d.doc_kind !== 'entrega' &&
+      d.source !== 'gestor_envio' && d.doc_kind !== 'envio',
+    ),
   );
 
   activeTab = signal<ClientTab>('dashboard');
@@ -353,7 +361,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
       next: docs => {
         this.documents.set(docs);
-        if (this.isTerminalStage(deal) || deal.stage === 'completado' || deal.stage === 'vendido') {
+        if (this.isShippedDeal(deal) || this.isTerminalStage(deal) || deal.stage === 'completado' || deal.stage === 'vendido') {
           this.dealTab.set('docs');
         }
       },
@@ -481,6 +489,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         input.value = '';
       },
     });
+  }
+
+  isShippedDeal(deal: any): boolean {
+    if (!deal?.stage) return false;
+    if (deal.pipeline_stages?.length) return isShippedStage(deal.stage, deal.pipeline_stages);
+    return isShippedStage(deal.stage, {});
   }
 
   getDocStatus(docType: string) {

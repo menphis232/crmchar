@@ -1254,6 +1254,20 @@
   background: #111;
 }
 
+.client-shipping-preview {
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.client-shipping-card {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 12px;
+  padding: 14px;
+}
+
 @media (max-width: 640px) {
   .client-wallet-form {
     grid-template-columns: 1fr;

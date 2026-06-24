@@ -385,7 +385,7 @@ export interface CrmDocument {
   file_name: string;
   file_url: string;
   notes?: string | null;
-  doc_kind?: 'attachment' | 'cotizacion' | 'entrega';
+  doc_kind?: 'attachment' | 'cotizacion' | 'entrega' | 'envio';
   created_at?: string;
 }
 

@@ -1022,9 +1022,11 @@
       [templates]="templates()"
       [whatsappNumber]="profile()?.whatsapp || ''"
       [promptDeliveryUpload]="promptDeliveryUploadDealId() === dealId"
+      [promptShippingUpload]="promptShippingUploadDealId() === dealId"
       (closed)="selectedDealId.set(null)"
       (updated)="onDealUpdated(); loadVerificationAlerts()"
       (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
+      (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
       (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
     />
   }

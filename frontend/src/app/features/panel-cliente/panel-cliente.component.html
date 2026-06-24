@@ -561,6 +561,30 @@
         </div>
       } @else {
         <div class="client-docs">
+          @if (shippingFiles().length > 0) {
+            <div class="client-shipping-preview">
+              <div class="client-docs-intro">
+                <h3>Tu guía de envío</h3>
+                <p>Descarga o previsualiza la etiqueta o guía que tu gestoría compartió contigo.</p>
+              </div>
+              @for (file of shippingFiles(); track file.id) {
+                <div class="client-shipping-card">
+                  <div class="client-delivery-card-head">
+                    <strong>{{ file.document_type || 'Guía de envío' }}</strong>
+                    <a [href]="previewFileUrl(file.file_url)" target="_blank" rel="noopener" class="btn-copy small">Descargar guía</a>
+                  </div>
+                  @if (isPdfUrl(file.file_url)) {
+                    <iframe class="client-delivery-frame" [src]="safePreviewUrl(file.file_url)" title="Vista previa de la guía"></iframe>
+                  } @else if (isImageUrl(file.file_url)) {
+                    <img class="client-delivery-image" [src]="previewFileUrl(file.file_url)" [alt]="file.document_type || 'Guía de envío'">
+                  } @else {
+                    <a [href]="previewFileUrl(file.file_url)" target="_blank" rel="noopener" class="btn-ghost small">Abrir guía</a>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           @if (deliveryFiles().length > 0) {
             <div class="client-delivery-preview">
               <div class="client-docs-intro">

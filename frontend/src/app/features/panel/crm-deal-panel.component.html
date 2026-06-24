@@ -23,6 +23,41 @@
       <!-- ── BODY ── -->
       <div class="deal-panel-body">
 
+        @if (isDealShipped()) {
+          <div id="deal-shipping-section" class="deal-section deal-shipping-section">
+            <div class="deal-shipping-section-head">
+              <h4>Etiqueta / guía de envío</h4>
+              <p class="card-desc deal-shipping-desc">Sube la etiqueta o guía para que el cliente la descargue desde su panel.</p>
+            </div>
+
+            <label class="deal-delivery-upload-zone deal-shipping-upload-zone" [class.loading]="isUploadingShipping()">
+              <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadShippingDocument($event)" [disabled]="isUploadingShipping()">
+              <svg lucidePlus [size]="28" aria-hidden="true"></svg>
+              <strong>{{ isUploadingShipping() ? 'Subiendo...' : 'Haz clic para subir etiqueta o guía' }}</strong>
+              <span>JPG, PNG, WebP o PDF</span>
+            </label>
+
+            @if (shippingDocuments().length > 0) {
+              <div class="quote-doc-list deal-shipping-list">
+                @for (doc of shippingDocuments(); track doc.id) {
+                  <div class="quote-doc-item">
+                    <div class="quote-doc-info">
+                      <strong>{{ doc.file_name }}</strong>
+                      <span class="card-desc">Visible para el cliente · {{ doc.created_at | date:'short' }}</span>
+                    </div>
+                    <div class="quote-doc-actions">
+                      <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                      <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
         @if (isDealCompleted()) {
           <div id="deal-delivery-section" class="deal-section deal-delivery-section">
             <div class="deal-delivery-section-head">
@@ -628,6 +663,30 @@
         <button type="button" class="btn-copy small" (click)="submitManualPayment()" [disabled]="isRegisteringPayment()">
           {{ isRegisteringPayment() ? 'Registrando...' : 'Confirmar' }}
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (shippingUploadModalOpen()) {
+  <div class="pay-method-overlay" (click)="closeShippingUploadModal()">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="closeShippingUploadModal()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Trámite enviado</p>
+      <h3 class="pay-method-title">Subir etiqueta o guía</h3>
+      <p class="pay-method-desc">El trámite pasó a Enviado. Sube la etiqueta o guía de envío para que tu cliente pueda descargarla desde su panel.</p>
+
+      <label class="deal-delivery-upload-zone deal-shipping-upload-zone" [class.loading]="isUploadingShipping()">
+        <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadShippingDocument($event)" [disabled]="isUploadingShipping()">
+        <svg lucidePlus [size]="28" aria-hidden="true"></svg>
+        <strong>{{ isUploadingShipping() ? 'Subiendo...' : 'Seleccionar etiqueta o guía' }}</strong>
+        <span>JPG, PNG, WebP o PDF</span>
+      </label>
+
+      <div class="register-payment-actions">
+        <button type="button" class="pay-method-cancel" (click)="closeShippingUploadModal()">Usar el apartado del panel</button>
       </div>
     </div>
   </div>

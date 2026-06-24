@@ -15,7 +15,7 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
-import { isPaidDealBackwardMoveBlocked, isCompletedStage } from '../../shared/payment-stage.utils';
+import { isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage } from '../../shared/payment-stage.utils';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
@@ -105,6 +105,7 @@ export class PanelConcesionariaComponent implements OnInit {
   templates = signal<MessageTemplate[]>([]);
   selectedDealId = signal<string | null>(null);
   promptDeliveryUploadDealId = signal<string | null>(null);
+  promptShippingUploadDealId = signal<string | null>(null);
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   filterStage = '';
@@ -354,6 +355,10 @@ export class PanelConcesionariaComponent implements OnInit {
     this.crmService.updateDeal(deal.id, { stage }).subscribe({
       next: () => {
         this.loadCrm();
+        if (isShippedStage(stage, this.crmStages)) {
+          this.selectedDealId.set(deal.id);
+          this.promptShippingUploadDealId.set(deal.id);
+        }
         if (isCompletedStage(stage, this.crmStages)) {
           this.selectedDealId.set(deal.id);
           this.promptDeliveryUploadDealId.set(deal.id);

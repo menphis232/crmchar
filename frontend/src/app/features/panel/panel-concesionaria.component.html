@@ -274,9 +274,11 @@
           [showReply]="true"
           [isConcesionaria]="true"
           [promptDeliveryUpload]="promptDeliveryUploadDealId() === selectedDealId()"
+          [promptShippingUpload]="promptShippingUploadDealId() === selectedDealId()"
           (closed)="selectedDealId.set(null)"
           (updated)="onDealUpdated()"
           (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
+          (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
           (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
         />
       }
