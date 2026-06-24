@@ -958,6 +958,25 @@ async function migrate() {
       console.log('Migración v44 (quote checklists) aplicada.');
     }
 
+    const v45Path = path.join(__dirname, '..', 'sql', 'migration-v45-contact-vehicle-documents.sql');
+    if (fs.existsSync(v45Path)) {
+      const v45 = fs.readFileSync(v45Path, 'utf8');
+      const conn45 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn45.query('USE tramites_vehiculares');
+      for (const stmt of v45.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn45.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn45.end();
+      console.log('Migración v45 (contact vehicle documents) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

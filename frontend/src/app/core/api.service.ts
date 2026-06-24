@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmContactVehicle, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
+  CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -140,6 +140,15 @@ export class CrmService {
   }
   deleteContactVehicle(vehicleId: string) {
     return this.http.delete(`${this.base}/contact-vehicles/${vehicleId}`);
+  }
+  addContactVehicleDocument(vehicleId: string, data: { fileName: string; fileUrl: string; label?: string }) {
+    return this.http.post<CrmContactVehicleDocument>(`${this.base}/contact-vehicles/${vehicleId}/documents`, data);
+  }
+  updateContactVehicleDocument(docId: string, label: string) {
+    return this.http.patch<CrmContactVehicleDocument>(`${this.base}/contact-vehicle-documents/${docId}`, { label });
+  }
+  deleteContactVehicleDocument(docId: string) {
+    return this.http.delete(`${this.base}/contact-vehicle-documents/${docId}`);
   }
   getVerificationAlerts() {
     return this.http.get<CrmVerificationAlert[]>(`${this.base}/verification-alerts`);

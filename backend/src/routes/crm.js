@@ -785,12 +785,31 @@ router.get('/contacts/:id', async (req, res) => {
       [req.params.id, uid],
     );
 
+    const vehicleIds = vehicles.map((v) => v.id);
+    const docsByVehicle = {};
+    if (vehicleIds.length) {
+      const placeholders = vehicleIds.map(() => '?').join(',');
+      const docs = await query(
+        `SELECT * FROM contact_vehicle_documents
+         WHERE vehicle_id IN (${placeholders}) AND user_id = ?
+         ORDER BY created_at DESC`,
+        [...vehicleIds, uid],
+      );
+      for (const doc of docs) {
+        if (!docsByVehicle[doc.vehicle_id]) docsByVehicle[doc.vehicle_id] = [];
+        docsByVehicle[doc.vehicle_id].push(vehicleDocumentRow(doc));
+      }
+    }
+
     res.json({
       contact: contactRow(contact),
       deals: deals.map(dealRow),
       activities,
       tasks: tasks.map(taskRow),
-      vehicles: vehicles.map(vehicleRowWithVerification),
+      vehicles: vehicles.map((v) => ({
+        ...vehicleRowWithVerification(v),
+        documents: docsByVehicle[v.id] || [],
+      })),
     });
   } catch (err) {
     console.error(err);
@@ -1058,6 +1077,88 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar vehículo' });
+  }
+});
+
+function vehicleDocumentRow(row) {
+  return {
+    id: row.id,
+    vehicleId: row.vehicle_id,
+    label: row.label,
+    fileName: row.file_name,
+    fileUrl: row.file_url,
+    createdAt: row.created_at,
+  };
+}
+
+router.post('/contact-vehicles/:id/documents', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { fileName, fileUrl, label } = req.body;
+    if (!fileName || !fileUrl) {
+      return res.status(400).json({ error: 'Faltan datos del documento' });
+    }
+
+    const vehicle = await get(
+      'SELECT id FROM contact_vehicles WHERE id = ? AND user_id = ?',
+      [req.params.id, uid],
+    );
+    if (!vehicle) return res.status(404).json({ error: 'Vehículo no encontrado' });
+
+    const docId = uuid();
+    await run(`
+      INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, label, file_name, file_url)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `, [
+      docId,
+      req.params.id,
+      uid,
+      label?.trim() || null,
+      fileName,
+      fileUrl,
+    ]);
+
+    const row = await get('SELECT * FROM contact_vehicle_documents WHERE id = ?', [docId]);
+    res.status(201).json(vehicleDocumentRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al agregar documento' });
+  }
+});
+
+router.patch('/contact-vehicle-documents/:id', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const { label } = req.body;
+    if (!label?.trim()) {
+      return res.status(400).json({ error: 'Indica una etiqueta para el documento' });
+    }
+
+    const result = await run(
+      'UPDATE contact_vehicle_documents SET label = ? WHERE id = ? AND user_id = ?',
+      [label.trim(), req.params.id, uid],
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: 'Documento no encontrado' });
+
+    const row = await get('SELECT * FROM contact_vehicle_documents WHERE id = ?', [req.params.id]);
+    res.json(vehicleDocumentRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar etiqueta' });
+  }
+});
+
+router.delete('/contact-vehicle-documents/:id', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const result = await run(
+      'DELETE FROM contact_vehicle_documents WHERE id = ? AND user_id = ?',
+      [req.params.id, uid],
+    );
+    if (!result.affectedRows) return res.status(404).json({ error: 'Documento no encontrado' });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar documento' });
   }
 });
 

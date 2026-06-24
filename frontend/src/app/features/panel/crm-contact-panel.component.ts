@@ -1,17 +1,19 @@
-import { Component, input, output, signal, effect, computed } from '@angular/core';
+import { Component, input, output, signal, effect, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { LucideCircle, LucideCircleCheck, LucideMail, LucidePhone, LucidePlus, LucideSave, LucideTrash2, LucideX } from '@lucide/angular';
-import { CrmService } from '../../core/api.service';
+import { DomSanitizer } from '@angular/platform-browser';
+import { LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail, LucidePhone, LucidePlus, LucideSave, LucideTag, LucideTrash2, LucideUpload, LucideX } from '@lucide/angular';
+import { CrmService, UploadService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
-import { CrmContact360, CrmContactVehicle } from '../../models';
+import { CrmContact360, CrmContactVehicle, CrmContactVehicleDocument } from '../../models';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-crm-contact-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2],
+  imports: [FormsModule, DatePipe, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
   templateUrl: './crm-contact-panel.component.html',
   styleUrls: ['./panel-dashboard.css', './crm-side-panel.theme.css'],
   styles: [`
@@ -85,6 +87,109 @@ import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
     .engomado-dot.verde { background: #27ae60; }
     .engomado-dot.azul { background: #3498db; }
     .contact-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .vehicle-docs {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .vehicle-docs h5 {
+      margin: 0 0 8px;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+    }
+    .vehicle-doc-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .vehicle-doc-row:last-child { border-bottom: none; }
+    .vehicle-doc-name {
+      flex: 1;
+      min-width: 120px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.85);
+    }
+    .vehicle-doc-label {
+      font-size: 11px;
+      color: var(--gold);
+      display: block;
+    }
+    .vehicle-doc-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .vehicle-doc-actions button {
+      font-size: 11px;
+      padding: 4px 8px;
+    }
+    .vehicle-upload-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: flex-end;
+      margin-top: 8px;
+    }
+    .vehicle-upload-row input[type="text"] {
+      flex: 1;
+      min-width: 140px;
+    }
+    .vehicle-label-edit {
+      display: flex;
+      gap: 6px;
+      flex: 1;
+      min-width: 180px;
+    }
+    .doc-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1200;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .doc-preview-box {
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .doc-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .doc-preview-body {
+      flex: 1;
+      overflow: auto;
+      padding: 12px;
+      min-height: 200px;
+    }
+    .doc-preview-frame {
+      width: 100%;
+      min-height: 70vh;
+      border: none;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .doc-preview-image {
+      max-width: 100%;
+      border-radius: 8px;
+    }
   `],
 })
 export class CrmContactPanelComponent {
@@ -98,6 +203,15 @@ export class CrmContactPanelComponent {
   data = signal<CrmContact360 | null>(null);
   isSaving = signal(false);
   isAddingVehicle = signal(false);
+  uploadingVehicleId = signal<string | null>(null);
+  previewDoc = signal<CrmContactVehicleDocument | null>(null);
+  labelingDocId = signal<string | null>(null);
+  labelDraft = '';
+
+  uploadLabelByVehicle: Record<string, string> = {};
+
+  private uploadService = inject(UploadService);
+  private sanitizer = inject(DomSanitizer);
 
   editName = '';
   editEmail = '';
@@ -217,6 +331,130 @@ export class CrmContactPanelComponent {
         this.updated.emit();
       },
       error: () => this.toast.error('Error al eliminar vehículo'),
+    });
+  }
+
+  uploadVehicleDocument(vehicle: CrmContactVehicle, event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Sube un PDF o una imagen (JPG, PNG, WebP).');
+      input.value = '';
+      return;
+    }
+
+    this.uploadingVehicleId.set(vehicle.id);
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
+      next: (res) => {
+        const label = (this.uploadLabelByVehicle[vehicle.id] || '').trim() || file.name.replace(/\.[^.]+$/, '');
+        this.crmService.addContactVehicleDocument(vehicle.id, {
+          fileName: file.name,
+          fileUrl: res.url,
+          label,
+        }).subscribe({
+          next: () => {
+            this.uploadingVehicleId.set(null);
+            this.uploadLabelByVehicle[vehicle.id] = '';
+            input.value = '';
+            const id = this.contactId();
+            if (id) this.load(id);
+            this.updated.emit();
+            this.toast.success('Documento subido');
+          },
+          error: (e) => {
+            this.uploadingVehicleId.set(null);
+            input.value = '';
+            this.toast.error(e.error?.error || 'Error al guardar el documento');
+          },
+        });
+      },
+      error: (e) => {
+        this.uploadingVehicleId.set(null);
+        input.value = '';
+        this.toast.error(e.error?.error || 'Error al subir el archivo');
+      },
+    });
+  }
+
+  openPreview(doc: CrmContactVehicleDocument) {
+    this.previewDoc.set(doc);
+  }
+
+  closePreview() {
+    this.previewDoc.set(null);
+  }
+
+  previewFileUrl(url: string): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+  }
+
+  safePreviewUrl(url: string) {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.previewFileUrl(url));
+  }
+
+  isPdfUrl(url: string): boolean {
+    return /\.pdf($|\?)/i.test(url || '');
+  }
+
+  isImageUrl(url: string): boolean {
+    return /\.(jpe?g|png|webp|gif)($|\?)/i.test(url || '');
+  }
+
+  downloadDocument(doc: CrmContactVehicleDocument) {
+    const name = doc.fileName || doc.label || 'documento';
+    const a = document.createElement('a');
+    a.href = this.previewFileUrl(doc.fileUrl);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.download = name;
+    a.click();
+  }
+
+  startLabelEdit(doc: CrmContactVehicleDocument) {
+    this.labelingDocId.set(doc.id);
+    this.labelDraft = doc.label || doc.fileName || '';
+  }
+
+  cancelLabelEdit() {
+    this.labelingDocId.set(null);
+    this.labelDraft = '';
+  }
+
+  saveLabel(doc: CrmContactVehicleDocument) {
+    const label = this.labelDraft.trim();
+    if (!label) {
+      this.toast.error('Escribe una etiqueta para el documento');
+      return;
+    }
+    this.crmService.updateContactVehicleDocument(doc.id, label).subscribe({
+      next: () => {
+        this.labelingDocId.set(null);
+        this.labelDraft = '';
+        const id = this.contactId();
+        if (id) this.load(id);
+        this.toast.success('Etiqueta actualizada');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'Error al guardar etiqueta'),
+    });
+  }
+
+  deleteVehicleDocument(doc: CrmContactVehicleDocument) {
+    if (!confirm('¿Eliminar este documento del vehículo?')) return;
+    this.crmService.deleteContactVehicleDocument(doc.id).subscribe({
+      next: () => {
+        const id = this.contactId();
+        if (id) this.load(id);
+        this.updated.emit();
+        this.toast.success('Documento eliminado');
+      },
+      error: () => this.toast.error('Error al eliminar documento'),
     });
   }
 

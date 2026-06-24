@@ -313,6 +313,16 @@ export interface CrmContactVehicle {
   verificationStatus?: 'due' | 'soon' | 'overdue' | 'ok' | 'unknown';
   verificationLabel?: string;
   createdAt?: string;
+  documents?: CrmContactVehicleDocument[];
+}
+
+export interface CrmContactVehicleDocument {
+  id: string;
+  vehicleId: string;
+  label?: string;
+  fileName: string;
+  fileUrl: string;
+  createdAt?: string;
 }
 
 export interface CrmVerificationAlert extends CrmContactVehicle {

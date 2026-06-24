@@ -104,6 +104,61 @@
                   <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Marca, modelo, año...">
                 </div>
               </div>
+
+              <div class="vehicle-docs">
+                <h5>Documentos del vehículo</h5>
+                @if (v.documents?.length) {
+                  @for (doc of v.documents; track doc.id) {
+                    <div class="vehicle-doc-row">
+                      @if (labelingDocId() === doc.id) {
+                        <div class="vehicle-label-edit">
+                          <input type="text" [(ngModel)]="labelDraft" placeholder="Etiqueta del documento">
+                          <button type="button" class="deal-outline-btn small" (click)="saveLabel(doc)">Guardar</button>
+                          <button type="button" class="btn-ghost small" (click)="cancelLabelEdit()">Cancelar</button>
+                        </div>
+                      } @else {
+                        <div class="vehicle-doc-name">
+                          @if (doc.label) {
+                            <span class="vehicle-doc-label">{{ doc.label }}</span>
+                          }
+                          <span>{{ doc.fileName }}</span>
+                        </div>
+                        <div class="vehicle-doc-actions">
+                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="openPreview(doc)">
+                            <svg lucideEye [size]="12" aria-hidden="true"></svg>
+                            Previsualizar
+                          </button>
+                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="startLabelEdit(doc)">
+                            <svg lucideTag [size]="12" aria-hidden="true"></svg>
+                            Etiquetar
+                          </button>
+                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="downloadDocument(doc)">
+                            <svg lucideDownload [size]="12" aria-hidden="true"></svg>
+                            Descargar
+                          </button>
+                          <button type="button" class="btn-ghost small" style="color:#ff9b9b;" (click)="deleteVehicleDocument(doc)">
+                            <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                } @else {
+                  <p class="card-desc" style="margin:0 0 8px;">Sin documentos. Sube tarjeta de circulación, factura, póliza, etc.</p>
+                }
+                <div class="vehicle-upload-row">
+                  <div style="flex:1;min-width:140px;">
+                    <label style="font-size:11px;color:rgba(255,255,255,0.45);">Etiqueta (opcional)</label>
+                    <input type="text" [(ngModel)]="uploadLabelByVehicle[v.id]" placeholder="Ej. Tarjeta de circulación">
+                  </div>
+                  <label class="deal-outline-btn btn-with-icon" [class.loading]="uploadingVehicleId() === v.id" style="cursor:pointer;margin:0;">
+                    <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+                    {{ uploadingVehicleId() === v.id ? 'Subiendo...' : 'Subir documento' }}
+                    <input type="file" accept="image/*,.pdf,application/pdf" style="display:none" (change)="uploadVehicleDocument(v, $event)" [disabled]="uploadingVehicleId() === v.id">
+                  </label>
+                </div>
+              </div>
+
               <button type="button" class="btn-ghost small" style="margin-top:8px;color:#ff9b9b;" (click)="removeVehicle(v.id)">
                 <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
                 Quitar vehículo
@@ -194,4 +249,27 @@
       </div>
     </div>
   </div>
+
+  @if (previewDoc(); as doc) {
+    <div class="doc-preview-overlay" (click)="closePreview()">
+      <div class="doc-preview-box" (click)="$event.stopPropagation()">
+        <div class="doc-preview-header">
+          <strong>{{ doc.label || doc.fileName }}</strong>
+          <button type="button" class="deal-panel-close" (click)="closePreview()" aria-label="Cerrar">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
+        </div>
+        <div class="doc-preview-body">
+          @if (isPdfUrl(doc.fileUrl)) {
+            <iframe class="doc-preview-frame" [src]="safePreviewUrl(doc.fileUrl)" [title]="doc.label || doc.fileName"></iframe>
+          } @else if (isImageUrl(doc.fileUrl)) {
+            <img class="doc-preview-image" [src]="previewFileUrl(doc.fileUrl)" [alt]="doc.label || doc.fileName">
+          } @else {
+            <p class="card-desc">Vista previa no disponible para este tipo de archivo.</p>
+            <a [href]="previewFileUrl(doc.fileUrl)" target="_blank" rel="noopener" class="deal-outline-btn">Abrir archivo</a>
+          }
+        </div>
+      </div>
+    </div>
+  }
 }
