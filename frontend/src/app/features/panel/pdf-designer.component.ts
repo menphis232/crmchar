@@ -45,7 +45,7 @@ const CONCESIONARIA_DEFAULT_FOOTER =
   'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
 
 const GESTOR_DEFAULT_FOOTER =
-  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los honorarios pueden variar según requisitos adicionales del trámite.';
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los gastos de operación pueden variar según requisitos adicionales del trámite.';
 
 function blocksForRole(role?: string): PdfBlockDef[] {
   return role === 'gestor' ? [...GESTOR_BLOCKS] : [...CONCESIONARIA_BLOCKS];

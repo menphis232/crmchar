@@ -75,7 +75,7 @@ const CONCESIONARIA_DEFAULT_FOOTER =
   'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los cálculos de financiamiento pueden variar dependiendo del historial crediticio del solicitante.';
 
 const GESTOR_DEFAULT_FOOTER =
-  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los honorarios pueden variar según requisitos adicionales del trámite.';
+  'Esta cotización es de carácter informativo y está sujeta a cambios sin previo aviso. Los gastos de operación pueden variar según requisitos adicionales del trámite.';
 
 function isGestorRole(role) {
   return role === 'gestor';
@@ -279,7 +279,7 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
       doc.fillColor(GOLD).fontSize(12).text('TOTAL DE LA COTIZACIÓN');
       doc.rect(doc.x, doc.y + 5, 500, 1).fill(GOLD);
       doc.moveDown(1.2);
-      doc.fillColor(GRAY).fontSize(10).text('Honorarios del trámite:', 50, doc.y, { continued: false });
+      doc.fillColor(GRAY).fontSize(10).text('Gastos de Operación:', 50, doc.y, { continued: false });
       doc.fillColor(BLACK).fontSize(10).text(formatMoney(honorarios), 350, doc.y - 12, { width: 150, align: 'right' });
       doc.moveDown(1);
       doc.moveTo(50, doc.y).lineTo(550, doc.y).strokeColor(GOLD).lineWidth(1).stroke();
