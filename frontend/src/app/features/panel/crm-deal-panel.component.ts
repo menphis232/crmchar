@@ -879,7 +879,13 @@ import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin
       border-radius: 12px;
       padding: 14px;
     }
-    .deal-delivery-hint { margin: 8px 0 0; color: rgba(255,255,255,0.45); }
+    .deal-delivery-section-head h4 {
+      margin: 0 0 6px !important;
+      color: #86efac !important;
+      font-size: 10px !important;
+    }
+    .deal-delivery-desc { margin: 0 0 12px !important; }
+    .deal-delivery-list { margin-top: 12px; }
     .deal-delivery-upload-zone {
       display: flex;
       flex-direction: column;
@@ -1341,14 +1347,29 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   isDealCompleted(): boolean {
     const d = this.deal();
-    if (!d) return false;
+    if (!d?.stage) return false;
+
     const config = this.stagesConfig();
-    if (config.length) return isCompletedStage(d.stage, config);
-    return isCompletedStage(d.stage, this.stageLabels());
+    if (config.length && isCompletedStage(d.stage, config)) return true;
+    if (isCompletedStage(d.stage, this.stageLabels())) return true;
+
+    const stageIds = this.stages().filter((s) => s !== 'perdido');
+    if (stageIds.length && stageIds[stageIds.length - 1] === d.stage) return true;
+
+    const configCols = config.filter((s) => s.id !== 'perdido');
+    if (configCols.length && configCols[configCols.length - 1].id === d.stage) return true;
+
+    return false;
   }
 
   closeDeliveryUploadModal() {
     this.deliveryUploadModalOpen.set(false);
+    setTimeout(() => this.scrollToDeliverySection(), 150);
+  }
+
+  private scrollToDeliverySection() {
+    const el = document.getElementById('deal-delivery-section');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   uploadDeliveryDocument(event: Event) {

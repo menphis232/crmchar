@@ -23,6 +23,41 @@
       <!-- ── BODY ── -->
       <div class="deal-panel-body">
 
+        @if (isDealCompleted()) {
+          <div id="deal-delivery-section" class="deal-section deal-delivery-section">
+            <div class="deal-delivery-section-head">
+              <h4>Archivo para el cliente</h4>
+              <p class="card-desc deal-delivery-desc">Sube el documento final para que el cliente lo previsualice en su panel (PDF o imagen).</p>
+            </div>
+
+            <label class="deal-delivery-upload-zone" [class.loading]="isUploadingDelivery()">
+              <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadDeliveryDocument($event)" [disabled]="isUploadingDelivery()">
+              <svg lucidePlus [size]="28" aria-hidden="true"></svg>
+              <strong>{{ isUploadingDelivery() ? 'Subiendo...' : 'Haz clic para subir archivo' }}</strong>
+              <span>JPG, PNG, WebP o PDF</span>
+            </label>
+
+            @if (deliveryDocuments().length > 0) {
+              <div class="quote-doc-list deal-delivery-list">
+                @for (doc of deliveryDocuments(); track doc.id) {
+                  <div class="quote-doc-item">
+                    <div class="quote-doc-info">
+                      <strong>{{ doc.file_name }}</strong>
+                      <span class="card-desc">Visible para el cliente · {{ doc.created_at | date:'short' }}</span>
+                    </div>
+                    <div class="quote-doc-actions">
+                      <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                      <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+
         <!-- CONTACTO -->
         <div class="deal-section">
           <h4>Contacto</h4>
@@ -116,42 +151,6 @@
             </p>
           }
         </div>
-
-        @if (isDealCompleted()) {
-          <div class="deal-section deal-delivery-section">
-            <div class="deal-attach-header">
-              <div>
-                <h4>Archivo para el cliente</h4>
-                <p class="card-desc" style="margin:0;">Sube el documento final (tarjeta, factura, comprobante, etc.) para que el cliente lo vea en su panel.</p>
-              </div>
-              <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploadingDelivery()">
-                <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadDeliveryDocument($event)" [disabled]="isUploadingDelivery()">
-                <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-                {{ isUploadingDelivery() ? 'Subiendo...' : 'Subir archivo' }}
-              </label>
-            </div>
-            @if (deliveryDocuments().length > 0) {
-              <div class="quote-doc-list">
-                @for (doc of deliveryDocuments(); track doc.id) {
-                  <div class="quote-doc-item">
-                    <div class="quote-doc-info">
-                      <strong>{{ doc.file_name }}</strong>
-                      <span class="card-desc">Visible para el cliente · {{ doc.created_at | date:'short' }}</span>
-                    </div>
-                    <div class="quote-doc-actions">
-                      <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
-                      <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
-                        <svg lucideX [size]="14" aria-hidden="true"></svg>
-                      </button>
-                    </div>
-                  </div>
-                }
-              </div>
-            } @else {
-              <p class="card-desc deal-delivery-hint">Aún no has subido el archivo de entrega.</p>
-            }
-          </div>
-        }
 
         <!-- VALOR ESTIMADO -->
         <div class="deal-section">
@@ -652,7 +651,7 @@
       </label>
 
       <div class="register-payment-actions">
-        <button type="button" class="pay-method-cancel" (click)="closeDeliveryUploadModal()">Subir después</button>
+        <button type="button" class="pay-method-cancel" (click)="closeDeliveryUploadModal()">Usar el apartado del panel</button>
       </div>
     </div>
   </div>
