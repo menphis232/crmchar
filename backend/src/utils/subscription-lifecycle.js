@@ -54,7 +54,14 @@ export function buildSubscriptionCheckoutParams({
     metadata: { user_id: userId, role },
   };
   if (withTrial) {
-    params.subscription_data = { trial_period_days: STRIPE_TRIAL_DAYS };
+    // Trial sin tarjeta: Stripe solo pedirá método de pago al terminar el trial.
+    params.payment_method_collection = 'if_required';
+    params.subscription_data = {
+      trial_period_days: STRIPE_TRIAL_DAYS,
+      trial_settings: {
+        end_behavior: { missing_payment_method: 'cancel' },
+      },
+    };
   }
   if (customerId) {
     params.customer = customerId;
