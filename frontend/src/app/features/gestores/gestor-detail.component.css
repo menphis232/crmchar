@@ -490,6 +490,14 @@ aside {
   font-weight: bold;
   margin: 8px 0;
 }
+.track-result-status-label {
+  color: rgba(255, 255, 255, 0.55);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  margin-right: 4px;
+}
 .track-result-date {
   font-size: 11px;
   color: rgba(255, 255, 255, 0.45);

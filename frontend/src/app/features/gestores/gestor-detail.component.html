@@ -118,7 +118,7 @@
                       @if (trackResult()) {
                         <div class="track-result">
                           <strong class="track-result-title">{{ trackResult()?.title }}</strong>
-                          <p class="track-result-stage">{{ trackResult()?.stageLabel }}</p>
+                          <p class="track-result-stage"><span class="track-result-status-label">Status:</span> {{ trackResult()?.stageLabel }}</p>
                           <p class="track-result-date">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
                         </div>
                       }
@@ -297,7 +297,7 @@
             @if (trackResult()) {
               <div class="track-result">
                 <strong class="track-result-title">{{ trackResult()?.title }}</strong>
-                <p class="track-result-stage">{{ trackResult()?.stageLabel }}</p>
+                <p class="track-result-stage"><span class="track-result-status-label">Status:</span> {{ trackResult()?.stageLabel }}</p>
                 <p class="track-result-date">Última actualización: {{ trackResult()?.updatedAt | date:'short' }}</p>
               </div>
             }
