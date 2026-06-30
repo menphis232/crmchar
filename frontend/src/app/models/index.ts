@@ -23,6 +23,7 @@ export interface User {
   payment_failed_count?: number;
   parent_id?: string;
   permissions?: string[];
+  avatar_url?: string;
   logo_url?: string;
   pdf_settings?: {
     layout: string[];

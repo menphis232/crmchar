@@ -136,6 +136,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   uploadingWallet = signal(false);
   walletForm = { label: '', category: 'Otro', notes: '' };
 
+  avatarUploading = signal(false);
+
   vehicles = signal<CrmContactVehicle[]>([]);
   vehiclesLoading = signal(false);
   isAddingVehicle = signal(false);
@@ -276,6 +278,52 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.toast.success('Vehículo eliminado', 'Listo');
       },
       error: () => this.toast.error('No se pudo eliminar el vehículo', 'Error'),
+    });
+  }
+
+  uploadAvatar(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.toast.error('Usa una imagen (JPG, PNG, WebP).', 'Formato no válido');
+      input.value = '';
+      return;
+    }
+    this.avatarUploading.set(true);
+    this.uploadService.uploadFile(file).subscribe({
+      next: ({ url }) => {
+        this.auth.updateMe({ avatar_url: url }).subscribe({
+          next: () => {
+            this.avatarUploading.set(false);
+            this.toast.success('Foto de perfil actualizada', 'Listo');
+          },
+          error: () => {
+            this.avatarUploading.set(false);
+            this.toast.error('No se pudo guardar la foto', 'Error');
+          },
+        });
+      },
+      error: (e) => {
+        this.avatarUploading.set(false);
+        this.toast.error(e.error?.error || 'Error al subir la imagen', 'Error');
+      },
+    });
+    input.value = '';
+  }
+
+  removeAvatar() {
+    if (!confirm('¿Quitar tu foto de perfil?')) return;
+    this.avatarUploading.set(true);
+    this.auth.updateMe({ avatar_url: null }).subscribe({
+      next: () => {
+        this.avatarUploading.set(false);
+        this.toast.success('Foto de perfil eliminada', 'Listo');
+      },
+      error: () => {
+        this.avatarUploading.set(false);
+        this.toast.error('No se pudo quitar la foto', 'Error');
+      },
     });
   }
 

@@ -15,7 +15,11 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
         <span class="panel-user-name">{{ name }}</span>
       }
       <button type="button" class="panel-avatar" (click)="toggleMenu($event)" [title]="name || 'Cuenta'">
-        {{ initials }}
+        @if (avatarUrl) {
+          <img [src]="avatarUrl" [alt]="name || 'Avatar'" class="panel-avatar-img" />
+        } @else {
+          {{ initials }}
+        }
       </button>
 
       @if (menuOpen()) {
@@ -85,6 +89,13 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       font-family: var(--f-display, sans-serif);
     }
     .panel-avatar:hover { box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+    .panel-avatar-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
     .avatar-dropdown {
       position: absolute;
       top: calc(100% + 8px);
@@ -141,6 +152,7 @@ export class PanelUserMenuComponent {
   @Input({ required: true }) name = '';
   @Input() email = '';
   @Input() initials = '?';
+  @Input() avatarUrl = '';
   @Input() showBilling = true;
   @Input() showName = false;
   @Output() logout = new EventEmitter<void>();

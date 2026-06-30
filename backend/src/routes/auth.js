@@ -256,7 +256,7 @@ router.post('/forgot-password', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
@@ -339,7 +339,7 @@ router.patch('/me', authRequired, async (req, res) => {
       return res.status(403).json({ error: 'No tienes permiso para editar el perfil' });
     }
 
-    const { name, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, description, phone, address, map_embed_url, crm_stages } = req.body;
+    const { name, avatar_url, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, description, phone, address, map_embed_url, crm_stages } = req.body;
     
     const sets = [];
     const params = [];
@@ -377,8 +377,13 @@ router.patch('/me', authRequired, async (req, res) => {
       params.push(updateId);
       await run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, params);
     }
+
+    // La foto de perfil es personal: siempre se guarda en el usuario autenticado, no en la organización.
+    if (avatar_url !== undefined) {
+      await run('UPDATE users SET avatar_url = ? WHERE id = ?', [avatar_url || null, req.user.id]);
+    }
     
-    const user = await get('SELECT id, email, role, name, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {
       try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}

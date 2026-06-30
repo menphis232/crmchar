@@ -15,6 +15,7 @@
         [name]="auth.user()?.name || ''"
         [email]="auth.user()?.email || ''"
         [initials]="initials(auth.user()?.name)"
+        [avatarUrl]="auth.user()?.avatar_url || ''"
         [showName]="true"
         [showBilling]="false"
         (logout)="logout()"
@@ -30,6 +31,7 @@
         [name]="auth.user()?.name || ''"
         [email]="auth.user()?.email || ''"
         [initials]="initials(auth.user()?.name)"
+        [avatarUrl]="auth.user()?.avatar_url || ''"
         [showBilling]="false"
         (logout)="logout()"
       />
@@ -487,6 +489,37 @@
           <div>
             <strong>Cambiar contraseña o correo</strong>
             <p>Haz clic en tu avatar en la barra superior y elige «Cambiar contraseña / correo».</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <h3 class="card-title card-title-with-icon" style="font-size:16px;">
+          <svg lucideUser [size]="16" aria-hidden="true"></svg>
+          Foto de perfil
+        </h3>
+        <p class="card-desc">Opcional. Personaliza tu cuenta con una foto. Aparecerá en tu menú de usuario.</p>
+
+        <div class="client-avatar-row">
+          <div class="client-avatar-preview">
+            @if (auth.user()?.avatar_url) {
+              <img [src]="auth.user()?.avatar_url" alt="Foto de perfil" />
+            } @else {
+              <span>{{ initials(auth.user()?.name) }}</span>
+            }
+          </div>
+          <div class="client-avatar-actions">
+            <input type="file" accept="image/*" hidden #avatarInput (change)="uploadAvatar($event)">
+            <button type="button" class="btn-copy" (click)="avatarInput.click()" [disabled]="avatarUploading()">
+              <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+              {{ avatarUploading() ? 'Subiendo...' : (auth.user()?.avatar_url ? 'Cambiar foto' : 'Subir foto') }}
+            </button>
+            @if (auth.user()?.avatar_url) {
+              <button type="button" class="btn-ghost small client-avatar-remove" (click)="removeAvatar()" [disabled]="avatarUploading()">
+                <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                Quitar
+              </button>
+            }
           </div>
         </div>
       </div>

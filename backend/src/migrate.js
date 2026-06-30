@@ -996,6 +996,25 @@ async function migrate() {
       console.log('Migración v46 (vehicle make model year) aplicada.');
     }
 
+    const v47Path = path.join(__dirname, '..', 'sql', 'migration-v47-user-avatar.sql');
+    if (fs.existsSync(v47Path)) {
+      const v47 = fs.readFileSync(v47Path, 'utf8');
+      const conn47 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn47.query('USE tramites_vehiculares');
+      for (const stmt of v47.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn47.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn47.end();
+      console.log('Migración v47 (user avatar) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }
