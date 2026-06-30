@@ -314,7 +314,8 @@ export interface CrmContactVehicle {
   engomadoColor?: string;
   vehicleNotes?: string;
   insuranceExpiry?: string | null;
-  tenencia2026?: 'si' | 'no' | 'pendiente' | string | null;
+  tenenciaStatus?: 'si' | 'no' | 'pendiente' | string | null;
+  tenenciaYear?: number | null;
   verificationMonth?: number | null;
   verificationStatus?: 'due' | 'soon' | 'overdue' | 'ok' | 'unknown';
   verificationLabel?: string;

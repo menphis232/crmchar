@@ -248,6 +248,7 @@ export class CrmContactPanelComponent {
     { value: 'no', label: 'No pagada' },
     { value: 'pendiente', label: 'Pendiente' },
   ];
+  readonly currentYear = new Date().getFullYear();
 
   vehicleCount = computed(() => this.data()?.vehicles?.length ?? 0);
 
@@ -320,7 +321,7 @@ export class CrmContactPanelComponent {
       engomadoColor: this.newEngomado || undefined,
       vehicleNotes: this.newVehicleNotes.trim() || undefined,
       insuranceExpiry: this.newInsuranceExpiry || undefined,
-      tenencia2026: this.newTenencia || undefined,
+      tenenciaStatus: this.newTenencia || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);

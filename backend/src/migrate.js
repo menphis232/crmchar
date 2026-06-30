@@ -1034,6 +1034,25 @@ async function migrate() {
       console.log('Migración v48 (vehicle insurance & tenencia) aplicada.');
     }
 
+    const v49Path = path.join(__dirname, '..', 'sql', 'migration-v49-tenencia-year.sql');
+    if (fs.existsSync(v49Path)) {
+      const v49 = fs.readFileSync(v49Path, 'utf8');
+      const conn49 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn49.query('USE tramites_vehiculares');
+      for (const stmt of v49.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn49.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR'].includes(e.code)) throw e;
+        }
+      }
+      await conn49.end();
+      console.log('Migración v49 (tenencia year) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

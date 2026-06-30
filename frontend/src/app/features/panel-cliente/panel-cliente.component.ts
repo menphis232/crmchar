@@ -163,6 +163,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     { value: 'no', label: 'No pagada' },
     { value: 'pendiente', label: 'Pendiente' },
   ];
+  readonly currentYear = new Date().getFullYear();
 
   tenenciaLabel(value?: string | null): string {
     return this.tenenciaOptions.find(o => o.value === value)?.label || '';
@@ -265,7 +266,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       state: this.newVehicleState || undefined,
       engomadoColor: this.newEngomado || undefined,
       insuranceExpiry: this.newInsuranceExpiry || undefined,
-      tenencia2026: this.newTenencia || undefined,
+      tenenciaStatus: this.newTenencia || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);

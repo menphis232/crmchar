@@ -413,8 +413,8 @@
                     @if (v.engomadoColor) {
                       <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ v.engomadoColor }}</span>
                     }
-                    @if (v.tenencia2026) {
-                      <span class="client-vehicle-tag tenencia-{{ v.tenencia2026 }}">Tenencia 2026: {{ tenenciaLabel(v.tenencia2026) }}</span>
+                    @if (v.tenenciaStatus) {
+                      <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia {{ v.tenenciaYear || currentYear }}: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
                     }
                     @if (v.insuranceExpiry) {
                       <span class="client-vehicle-tag">Seguro vence {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}</span>
@@ -459,8 +459,8 @@
                   <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateClientVehicle(v, 'insuranceExpiry', $event)">
                 </div>
                 <div>
-                  <label>Refrendo / tenencia 2026</label>
-                  <select [ngModel]="v.tenencia2026 || ''" (ngModelChange)="updateClientVehicle(v, 'tenencia2026', $event)">
+                  <label>Refrendo / tenencia {{ currentYear }}</label>
+                  <select [ngModel]="v.tenenciaStatus || ''" (ngModelChange)="updateClientVehicle(v, 'tenenciaStatus', $event)">
                     <option value="">—</option>
                     @for (t of tenenciaOptions; track t.value) {
                       <option [value]="t.value">{{ t.label }}</option>
@@ -513,7 +513,7 @@
                 <input type="date" class="client-wallet-input" [(ngModel)]="newInsuranceExpiry">
               </div>
               <div>
-                <label>Refrendo / tenencia 2026</label>
+                <label>Refrendo / tenencia {{ currentYear }}</label>
                 <select class="client-wallet-input" [(ngModel)]="newTenencia">
                   <option value="">—</option>
                   @for (t of tenenciaOptions; track t.value) {

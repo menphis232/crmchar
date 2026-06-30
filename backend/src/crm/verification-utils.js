@@ -73,7 +73,8 @@ export function vehicleRowWithVerification(row) {
           ? row.insurance_expiry.toISOString().slice(0, 10)
           : String(row.insurance_expiry).slice(0, 10))
       : null,
-    tenencia2026: row.tenencia_2026 || null,
+    tenenciaStatus: row.tenencia_2026 || null,
+    tenenciaYear: row.tenencia_year != null ? Number(row.tenencia_year) : null,
     verificationMonth: verification.month,
     verificationStatus: verification.status,
     verificationLabel: verification.label,
