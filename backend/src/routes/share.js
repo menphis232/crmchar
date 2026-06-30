@@ -28,17 +28,21 @@ function parseImages(val) {
 }
 
 function buildHtml({ tagline, subtitle, shareUrl, pageUrl, imgMeta = '' }) {
+  // La URL canónica siempre es la página real (/gestores/:slug, /autos/:id, etc.),
+  // así los buscadores consolidan el SEO en el enlace bonito y no en el corto.
+  const canonicalUrl = pageUrl || shareUrl;
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <title>${escapeHtml(subtitle)}</title>
   <meta name="description" content="${escapeHtml(subtitle)}">
+  <link rel="canonical" href="${escapeHtml(canonicalUrl)}">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Tr\u00e1mites Vehiculares de M\u00e9xico">
   <meta property="og:title" content="${escapeHtml(tagline)}">
   <meta property="og:description" content="${escapeHtml(subtitle)}">
-  <meta property="og:url" content="${escapeHtml(shareUrl)}">
+  <meta property="og:url" content="${escapeHtml(canonicalUrl)}">
   ${imgMeta}
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="${escapeHtml(tagline)}">
