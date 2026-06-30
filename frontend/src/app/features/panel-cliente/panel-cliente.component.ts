@@ -678,15 +678,30 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   pipelineStages(deal: any): { id: string; label: string }[] {
-    if (deal?.pipeline_stages?.length) return deal.pipeline_stages;
-    return [
-      { id: 'nuevo', label: 'Nuevo' },
-      { id: 'contactado', label: 'Contactado' },
-      { id: 'en_tramite', label: 'En trámite' },
-      { id: 'documentacion', label: 'Documentación' },
-      { id: 'completado', label: 'Completado' },
-      { id: 'perdido', label: 'Perdido' },
-    ];
+    const stages = deal?.pipeline_stages?.length
+      ? deal.pipeline_stages
+      : [
+          { id: 'nuevo', label: 'Nuevo' },
+          { id: 'contactado', label: 'Contactado' },
+          { id: 'en_tramite', label: 'En trámite' },
+          { id: 'documentacion', label: 'Documentación' },
+          { id: 'completado', label: 'Completado' },
+          { id: 'perdido', label: 'Perdido' },
+        ];
+    return stages.filter((s: { id: string; label: string }) => !this.isHiddenClientStage(s));
+  }
+
+  private isHiddenClientStage(stage: { id?: string; label?: string }): boolean {
+    const normalize = (v?: string) =>
+      (v || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .trim();
+    const id = normalize(stage?.id);
+    const label = normalize(stage?.label);
+    const hidden = ['lead', 'resena'];
+    return hidden.includes(id) || hidden.includes(label);
   }
 
   stageIndex(deal: any): number {
