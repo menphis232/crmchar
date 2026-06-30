@@ -563,7 +563,7 @@
         @if (isPaid(selectedDeal()) || dealInvoice()) {
           <button type="button" class="client-tab client-tab-with-icon" [class.active]="dealTab() === 'factura'" (click)="dealTab.set('factura')">
             <svg lucideReceipt [size]="14" aria-hidden="true"></svg>
-            Factura
+            Comprobante de pago
           </button>
         }
       </div>
@@ -589,7 +589,7 @@
             </div>
           } @else if (isPaid(selectedDeal())) {
             <div class="client-empty">
-              <p>Tu pago fue registrado. La factura estará disponible en breve.</p>
+              <p>Tu pago fue registrado. Tu comprobante de pago estará disponible en breve.</p>
             </div>
           } @else {
             <div class="client-empty">
