@@ -57,6 +57,37 @@ import { getVehicleMakes, getVehicleModels, getVehicleYears } from './mexico-veh
     select {
       width: 100%;
       box-sizing: border-box;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+      background-color: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 10px 34px 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      line-height: 1.2;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c8a94a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+    select:hover:not(:disabled) {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--gold, #c8a94a);
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+    select:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    select option {
+      background-color: #1a1a1a;
+      color: #fff;
     }
     :host-context(.client-vehicle-form) label {
       color: rgba(255,255,255,0.55);
