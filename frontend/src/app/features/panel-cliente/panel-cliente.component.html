@@ -409,6 +409,17 @@
                   @if (v.make || v.model || v.year) {
                     <p class="client-vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
                   }
+                  <div class="client-vehicle-tags">
+                    @if (v.engomadoColor) {
+                      <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ v.engomadoColor }}</span>
+                    }
+                    @if (v.tenencia2026) {
+                      <span class="client-vehicle-tag tenencia-{{ v.tenencia2026 }}">Tenencia 2026: {{ tenenciaLabel(v.tenencia2026) }}</span>
+                    }
+                    @if (v.insuranceExpiry) {
+                      <span class="client-vehicle-tag">Seguro vence {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}</span>
+                    }
+                  </div>
                 </div>
                 <button type="button" class="btn-ghost small client-vehicle-delete" (click)="removeVehicle(v)">
                   <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
@@ -431,6 +442,28 @@
                     <option value="">—</option>
                     @for (st of mexicoStates; track st) {
                       <option [value]="st">{{ st }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Engomado</label>
+                  <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateClientVehicle(v, 'engomadoColor', $event)">
+                    <option value="">—</option>
+                    @for (c of engomadoColors; track c.value) {
+                      <option [value]="c.value">{{ c.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Vencimiento póliza de seguro</label>
+                  <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateClientVehicle(v, 'insuranceExpiry', $event)">
+                </div>
+                <div>
+                  <label>Refrendo / tenencia 2026</label>
+                  <select [ngModel]="v.tenencia2026 || ''" (ngModelChange)="updateClientVehicle(v, 'tenencia2026', $event)">
+                    <option value="">—</option>
+                    @for (t of tenenciaOptions; track t.value) {
+                      <option [value]="t.value">{{ t.label }}</option>
                     }
                   </select>
                 </div>
@@ -463,6 +496,28 @@
                   <option value="">—</option>
                   @for (st of mexicoStates; track st) {
                     <option [value]="st">{{ st }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Engomado</label>
+                <select class="client-wallet-input" [(ngModel)]="newEngomado">
+                  <option value="">—</option>
+                  @for (c of engomadoColors; track c.value) {
+                    <option [value]="c.value">{{ c.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Vencimiento póliza de seguro</label>
+                <input type="date" class="client-wallet-input" [(ngModel)]="newInsuranceExpiry">
+              </div>
+              <div>
+                <label>Refrendo / tenencia 2026</label>
+                <select class="client-wallet-input" [(ngModel)]="newTenencia">
+                  <option value="">—</option>
+                  @for (t of tenenciaOptions; track t.value) {
+                    <option [value]="t.value">{{ t.label }}</option>
                   }
                 </select>
               </div>

@@ -313,6 +313,8 @@ export interface CrmContactVehicle {
   state?: string;
   engomadoColor?: string;
   vehicleNotes?: string;
+  insuranceExpiry?: string | null;
+  tenencia2026?: 'si' | 'no' | 'pendiente' | string | null;
   verificationMonth?: number | null;
   verificationStatus?: 'due' | 'soon' | 'overdue' | 'ok' | 'unknown';
   verificationLabel?: string;

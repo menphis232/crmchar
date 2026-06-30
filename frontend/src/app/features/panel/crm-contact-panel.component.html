@@ -114,6 +114,19 @@
                     </p>
                   }
                 </div>
+                <div>
+                  <label>Vencimiento póliza de seguro</label>
+                  <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateVehicle(v, 'insuranceExpiry', $event)">
+                </div>
+                <div>
+                  <label>Refrendo / tenencia 2026</label>
+                  <select [ngModel]="v.tenencia2026 || ''" (ngModelChange)="updateVehicle(v, 'tenencia2026', $event)">
+                    <option value="">—</option>
+                    @for (t of tenenciaOptions; track t.value) {
+                      <option [value]="t.value">{{ t.label }}</option>
+                    }
+                  </select>
+                </div>
                 <div class="full">
                   <label>Notas adicionales</label>
                   <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Color, versión, observaciones...">
@@ -210,6 +223,19 @@
                   <option value="">—</option>
                   @for (c of engomadoColors; track c.id) {
                     <option [value]="c.id">{{ c.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Vencimiento póliza de seguro</label>
+                <input type="date" [(ngModel)]="newInsuranceExpiry">
+              </div>
+              <div>
+                <label>Refrendo / tenencia 2026</label>
+                <select [(ngModel)]="newTenencia">
+                  <option value="">—</option>
+                  @for (t of tenenciaOptions; track t.value) {
+                    <option [value]="t.value">{{ t.label }}</option>
                   }
                 </select>
               </div>

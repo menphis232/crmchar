@@ -1024,7 +1024,7 @@ router.patch('/contacts/:id', async (req, res) => {
 router.post('/contacts/:id/vehicles', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes, make, model, year } = req.body;
+    const { plate, state, engomadoColor, vehicleNotes, make, model, year, insuranceExpiry, tenencia2026 } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
 
     const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ?', [req.params.id, uid]);
@@ -1032,8 +1032,8 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
 
     const id = uuid();
     await run(`
-      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes, insurance_expiry, tenencia_2026)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.params.id, uid,
       String(plate).trim().toUpperCase(),
@@ -1043,6 +1043,8 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
       state || null,
       engomadoColor || null,
       vehicleNotes || null,
+      insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null,
+      ['si', 'no', 'pendiente'].includes(tenencia2026) ? tenencia2026 : null,
     ]);
 
     const row = await get('SELECT * FROM contact_vehicles WHERE id = ?', [id]);
@@ -1056,7 +1058,13 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
 router.patch('/contact-vehicles/:id', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes, make, model, year } = req.body;
+    const { plate, state, engomadoColor, vehicleNotes, make, model, year, insuranceExpiry, tenencia2026 } = req.body;
+    const insExpiry = insuranceExpiry !== undefined
+      ? (insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null)
+      : undefined;
+    const tenencia = tenencia2026 !== undefined
+      ? (['si', 'no', 'pendiente'].includes(tenencia2026) ? tenencia2026 : null)
+      : undefined;
     const result = await run(`
       UPDATE contact_vehicles SET
         plate = COALESCE(?, plate),
@@ -1066,6 +1074,8 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
         state = COALESCE(?, state),
         engomado_color = COALESCE(?, engomado_color),
         vehicle_notes = COALESCE(?, vehicle_notes),
+        insurance_expiry = ${insExpiry !== undefined ? '?' : 'insurance_expiry'},
+        tenencia_2026 = ${tenencia !== undefined ? '?' : 'tenencia_2026'},
         updated_at = NOW()
       WHERE id = ? AND user_id = ?
     `, [
@@ -1076,6 +1086,8 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       state ?? null,
       engomadoColor ?? null,
       vehicleNotes ?? null,
+      ...(insExpiry !== undefined ? [insExpiry] : []),
+      ...(tenencia !== undefined ? [tenencia] : []),
       req.params.id,
       uid,
     ]);

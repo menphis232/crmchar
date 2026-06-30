@@ -68,6 +68,12 @@ export function vehicleRowWithVerification(row) {
     state: row.state,
     engomadoColor: row.engomado_color,
     vehicleNotes: row.vehicle_notes,
+    insuranceExpiry: row.insurance_expiry
+      ? (row.insurance_expiry instanceof Date
+          ? row.insurance_expiry.toISOString().slice(0, 10)
+          : String(row.insurance_expiry).slice(0, 10))
+      : null,
+    tenencia2026: row.tenencia_2026 || null,
     verificationMonth: verification.month,
     verificationStatus: verification.status,
     verificationLabel: verification.label,

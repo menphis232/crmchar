@@ -140,6 +140,8 @@ export class CrmService {
     state?: string;
     engomadoColor?: string;
     vehicleNotes?: string;
+    insuranceExpiry?: string | null;
+    tenencia2026?: string | null;
   }) {
     return this.http.post<CrmContactVehicle>(`${this.base}/contacts/${contactId}/vehicles`, data);
   }
@@ -151,6 +153,8 @@ export class CrmService {
     state: string;
     engomadoColor: string;
     vehicleNotes: string;
+    insuranceExpiry: string | null;
+    tenencia2026: string | null;
   }>) {
     return this.http.patch<CrmContactVehicle>(`${this.base}/contact-vehicles/${vehicleId}`, data);
   }

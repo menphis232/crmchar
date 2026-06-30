@@ -80,6 +80,7 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
     }
     @media (max-width: 640px) { .vehicle-form-grid { grid-template-columns: 1fr; } }
     .vehicle-form-grid .full { grid-column: 1 / -1; }
+    .vehicle-form-grid input[type="date"] { color-scheme: dark; }
     .engomado-dot {
       display: inline-block;
       width: 10px;
@@ -235,11 +236,18 @@ export class CrmContactPanelComponent {
   newVehicleState = '';
   newEngomado = '';
   newVehicleNotes = '';
+  newInsuranceExpiry = '';
+  newTenencia = '';
 
   readonly mexicoStates = MEXICO_STATES;
   readonly engomadoColors = ENGOMADO_COLORS;
   readonly engomadoLabel = engomadoLabel;
   readonly formatVehicleLabel = formatVehicleLabel;
+  readonly tenenciaOptions = [
+    { value: 'si', label: 'Sí, pagada' },
+    { value: 'no', label: 'No pagada' },
+    { value: 'pendiente', label: 'Pendiente' },
+  ];
 
   vehicleCount = computed(() => this.data()?.vehicles?.length ?? 0);
 
@@ -311,6 +319,8 @@ export class CrmContactPanelComponent {
       state: this.newVehicleState || undefined,
       engomadoColor: this.newEngomado || undefined,
       vehicleNotes: this.newVehicleNotes.trim() || undefined,
+      insuranceExpiry: this.newInsuranceExpiry || undefined,
+      tenencia2026: this.newTenencia || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
@@ -321,6 +331,8 @@ export class CrmContactPanelComponent {
         this.newVehicleState = '';
         this.newEngomado = '';
         this.newVehicleNotes = '';
+        this.newInsuranceExpiry = '';
+        this.newTenencia = '';
         this.toast.success('Vehículo agregado');
         this.load(id);
         this.updated.emit();

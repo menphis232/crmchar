@@ -460,11 +460,13 @@ router.get('/vehicles', authRequired, requireRole('cliente'), async (req, res) =
 
 router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const { plate, make, model, year, state, engomadoColor, vehicleNotes } = req.body;
+    const { plate, make, model, year, state, engomadoColor, vehicleNotes, insuranceExpiry, tenencia2026 } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
     if (!make?.trim() || !model?.trim() || year == null || year === '') {
       return res.status(400).json({ error: 'Selecciona marca, submarca y año' });
     }
+    const insExpiry = insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null;
+    const tenencia = ['si', 'no', 'pendiente'].includes(tenencia2026) ? tenencia2026 : null;
 
     const contacts = await clientContacts(req.user.email);
     if (!contacts.length) {
@@ -477,8 +479,8 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
     for (const contact of contacts) {
       const id = uuid();
       await run(`
-        INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes, insurance_expiry, tenencia_2026)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         id, contact.id, contact.user_id,
         String(plate).trim().toUpperCase(),
@@ -488,6 +490,8 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
         state || null,
         engomadoColor || null,
         vehicleNotes || null,
+        insExpiry,
+        tenencia,
       ]);
       if (!firstRow) {
         firstRow = await get('SELECT * FROM contact_vehicles WHERE id = ?', [id]);
@@ -507,9 +511,16 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
       return res.status(404).json({ error: 'Vehículo no encontrado' });
     }
 
-    const { plate, make, model, year, state, engomadoColor, vehicleNotes } = req.body;
+    const { plate, make, model, year, state, engomadoColor, vehicleNotes, insuranceExpiry, tenencia2026 } = req.body;
     const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
     const plateKey = plate ? String(plate).trim().toUpperCase() : row?.plate;
+
+    const insExpiry = insuranceExpiry !== undefined
+      ? (insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null)
+      : undefined;
+    const tenencia = tenencia2026 !== undefined
+      ? (['si', 'no', 'pendiente'].includes(tenencia2026) ? tenencia2026 : null)
+      : undefined;
 
     await run(
       `UPDATE contact_vehicles cv
@@ -521,6 +532,8 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
            cv.state = COALESCE(?, cv.state),
            cv.engomado_color = COALESCE(?, cv.engomado_color),
            cv.vehicle_notes = COALESCE(?, cv.vehicle_notes),
+           cv.insurance_expiry = ${insExpiry !== undefined ? '?' : 'cv.insurance_expiry'},
+           cv.tenencia_2026 = ${tenencia !== undefined ? '?' : 'cv.tenencia_2026'},
            cv.updated_at = NOW()
        WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
       [
@@ -531,6 +544,8 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
         state ?? null,
         engomadoColor ?? null,
         vehicleNotes ?? null,
+        ...(insExpiry !== undefined ? [insExpiry] : []),
+        ...(tenencia !== undefined ? [tenencia] : []),
         req.user.email,
         plateKey,
       ],

@@ -146,8 +146,27 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   newModel = '';
   newYear: number | null = null;
   newVehicleState = '';
+  newEngomado = '';
+  newInsuranceExpiry = '';
+  newTenencia = '';
   readonly mexicoStates = MEXICO_STATES;
   readonly formatVehicleLabel = formatVehicleLabel;
+  readonly engomadoColors = [
+    { value: 'amarillo', label: 'Amarillo' },
+    { value: 'rosa', label: 'Rosa' },
+    { value: 'rojo', label: 'Rojo' },
+    { value: 'verde', label: 'Verde' },
+    { value: 'azul', label: 'Azul' },
+  ];
+  readonly tenenciaOptions = [
+    { value: 'si', label: 'Sí, pagada' },
+    { value: 'no', label: 'No pagada' },
+    { value: 'pendiente', label: 'Pendiente' },
+  ];
+
+  tenenciaLabel(value?: string | null): string {
+    return this.tenenciaOptions.find(o => o.value === value)?.label || '';
+  }
 
   messages = signal<any[]>([]);
   newMessage = '';
@@ -244,6 +263,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       model: this.newModel,
       year: this.newYear,
       state: this.newVehicleState || undefined,
+      engomadoColor: this.newEngomado || undefined,
+      insuranceExpiry: this.newInsuranceExpiry || undefined,
+      tenencia2026: this.newTenencia || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
@@ -252,6 +274,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.newModel = '';
         this.newYear = null;
         this.newVehicleState = '';
+        this.newEngomado = '';
+        this.newInsuranceExpiry = '';
+        this.newTenencia = '';
         this.loadVehicles();
         this.toast.success('Vehículo registrado', 'Listo');
       },
