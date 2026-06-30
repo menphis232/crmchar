@@ -73,7 +73,7 @@
     </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="setTab('facturas'); closeDeal()">
       <svg lucideReceipt [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Facturas
+      Comprobantes de pago
       @if (allInvoices().length > 0) {
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
@@ -352,16 +352,16 @@
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideReceipt [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Mis Facturas
+          Mis Comprobantes de pago
         </h2>
         <p class="card-desc">Comprobantes de pago de tus trámites vehiculares.</p>
 
         @if (invoicesLoading()) {
-          <div class="client-empty">Cargando facturas...</div>
+          <div class="client-empty">Cargando comprobantes...</div>
         } @else if (allInvoices().length === 0) {
           <div class="client-empty">
             <div class="client-empty-icon"><svg lucideReceipt [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
-            <strong>No tienes facturas aún</strong>
+            <strong>No tienes comprobantes aún</strong>
             <p>Cuando pagues un trámite, tu comprobante aparecerá aquí y te llegará por correo.</p>
           </div>
         } @else {
