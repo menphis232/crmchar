@@ -45,6 +45,10 @@
       <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Dashboard
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="setTab('ajustes')">
+      <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Perfil
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="setTab('tramites'); closeDeal()">
       <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Mis Trámites
@@ -79,10 +83,6 @@
       @if (allInvoices().length > 0) {
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
-    </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="setTab('ajustes')">
-      <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Ajustes
     </button>
   </aside>
 
@@ -534,8 +534,8 @@
     @if (activeTab() === 'ajustes') {
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
-          <svg lucideSettings [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Ajustes de Cuenta
+          <svg lucideUser [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Mi Perfil
         </h2>
         <p class="card-desc">Gestiona tu perfil y seguridad desde el menú de tu avatar (arriba a la derecha).</p>
 

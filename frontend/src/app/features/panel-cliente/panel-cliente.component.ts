@@ -34,7 +34,6 @@ import {
   LucideMessageCircle,
   LucidePaperclip,
   LucideSearch,
-  LucideSettings,
   LucideTrash2,
   LucideUpload,
   LucideUser,
@@ -60,7 +59,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet,
     PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent,
-    LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet, LucideSettings,
+    LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
