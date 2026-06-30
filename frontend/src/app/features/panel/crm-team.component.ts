@@ -1,9 +1,10 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucidePlus, LucideUsers } from '@lucide/angular';
+import { LucidePlus, LucideUsers, LucideTrophy } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { CrmTeamPerformance } from '../../models';
 
 interface Employee {
   id?: string;
@@ -38,9 +39,43 @@ const CONCESIONARIA_MODULES = [
 @Component({
   selector: 'app-crm-team',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideUsers, LucidePlus],
+  imports: [CommonModule, FormsModule, LucideUsers, LucidePlus, LucideTrophy],
   host: { '[class.theme-dark]': 'isConcesionaria' },
   template: `
+    <div class="dash-card team-panel perf-panel">
+      <h2 class="card-title card-title-with-icon">
+        <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
+        Desempeño del equipo
+      </h2>
+      <p class="card-desc">{{ perfDesc }}</p>
+
+      @if (performance().length) {
+        <div class="perf-table">
+          <div class="perf-row perf-head">
+            <span class="perf-col-rank">#</span>
+            <span class="perf-col-name">Vendedor</span>
+            <span class="perf-col-num">Cerrados</span>
+            <span class="perf-col-num">Activos</span>
+            <span class="perf-col-money">Ingresos</span>
+          </div>
+          @for (p of performance(); track p.id; let i = $index) {
+            <div class="perf-row" [class.perf-top]="i === 0 && p.dealsClosed > 0">
+              <span class="perf-col-rank">{{ medal(i) }}</span>
+              <span class="perf-col-name">
+                {{ p.name }}
+                @if (p.isOwner) { <span class="perf-owner-tag">Admin</span> }
+              </span>
+              <span class="perf-col-num perf-strong">{{ p.dealsClosed }}</span>
+              <span class="perf-col-num">{{ p.assignedActive }}</span>
+              <span class="perf-col-money">{{ p.revenueClosed | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="perf-empty">Aún no hay trámites cerrados asignados. Asigna leads a tu equipo desde cada trámite para ver el ranking.</p>
+      }
+    </div>
+
     <div class="dash-card team-panel">
       <h2 class="card-title card-title-with-icon">
         <svg lucideUsers [size]="20" class="card-title-icon" aria-hidden="true"></svg>
@@ -412,6 +447,84 @@ const CONCESIONARIA_MODULES = [
 
     .team-panel { margin-bottom: 0; }
 
+    .perf-panel { margin-bottom: 18px; }
+    .perf-table { display: flex; flex-direction: column; gap: 4px; }
+    .perf-row {
+      display: grid;
+      grid-template-columns: 40px minmax(120px, 1fr) 90px 80px 120px;
+      gap: 10px;
+      align-items: center;
+      padding: 11px 14px;
+      background: #faf9f7;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 8px;
+    }
+    .perf-row.perf-head {
+      background: transparent;
+      border: none;
+      padding: 4px 14px;
+    }
+    .perf-head span {
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--muted, #979797);
+    }
+    .perf-row.perf-top {
+      border-color: rgba(200,169,74,0.45);
+      background: rgba(200,169,74,0.08);
+    }
+    .perf-col-rank { font-size: 15px; text-align: center; }
+    .perf-col-name {
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-weight: 700;
+      color: var(--brand-black, #000);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .perf-owner-tag {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.06);
+      color: var(--muted, #6b6b6b);
+    }
+    .perf-col-num, .perf-col-money {
+      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-size: 14px;
+      color: var(--brand-black, #000);
+      text-align: right;
+    }
+    .perf-col-num { text-align: center; }
+    .perf-strong { font-weight: 800; }
+    .perf-empty {
+      font-size: 13px;
+      color: var(--muted, #979797);
+      line-height: 1.5;
+      margin: 4px 0 0;
+    }
+
+    :host.theme-dark .perf-row { background: #181818; border-color: rgba(255,255,255,0.10); }
+    :host.theme-dark .perf-row.perf-head { background: transparent; border: none; }
+    :host.theme-dark .perf-col-name, :host.theme-dark .perf-col-num, :host.theme-dark .perf-col-money { color: #fff; }
+    :host.theme-dark .perf-row.perf-top { background: rgba(200,169,74,0.12); border-color: rgba(200,169,74,0.45); }
+    :host.theme-dark .perf-owner-tag { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.65); }
+    :host.theme-dark .perf-empty { color: rgba(255,255,255,0.45); }
+
+    @media (max-width: 800px) {
+      .perf-row {
+        grid-template-columns: 30px 1fr 56px 56px;
+      }
+      .perf-col-money { display: none; }
+    }
+
     .team-alert {
       padding: 10px 14px;
       background: rgba(34, 197, 94, 0.12);
@@ -720,6 +833,7 @@ const CONCESIONARIA_MODULES = [
 })
 export class CrmTeamComponent implements OnInit {
   team = signal<Employee[]>([]);
+  performance = signal<CrmTeamPerformance[]>([]);
   showForm = signal(false);
   editingId = signal<string | null>(null);
   message = signal('');
@@ -736,6 +850,16 @@ export class CrmTeamComponent implements OnInit {
     return this.auth.user()?.role === 'concesionaria';
   }
 
+  get perfDesc(): string {
+    return this.isConcesionaria
+      ? 'Ranking de ventas cerradas por vendedor. Queda registro permanente de quién cierra más.'
+      : 'Ranking de trámites cerrados por vendedor. Queda registro permanente de quién cierra más.';
+  }
+
+  medal(i: number): string {
+    return ['🥇', '🥈', '🥉'][i] || String(i + 1);
+  }
+
   form: Employee = { name: '', email: '', password: '', permissions: [] };
 
   constructor(private crm: CrmService, private auth: AuthService) {}
@@ -747,12 +871,20 @@ export class CrmTeamComponent implements OnInit {
       this.emailPlaceholder = 'juan@concesionaria.com';
     }
     this.loadTeam();
+    this.loadPerformance();
   }
 
   loadTeam() {
     this.crm.request('GET', '/team').subscribe({
       next: (data) => this.team.set(data),
       error: () => this.message.set('Error al cargar equipo')
+    });
+  }
+
+  loadPerformance() {
+    this.crm.getTeamPerformance().subscribe({
+      next: (data) => this.performance.set(data),
+      error: () => {},
     });
   }
 
@@ -795,12 +927,12 @@ export class CrmTeamComponent implements OnInit {
 
     if (this.editingId()) {
       this.crm.request('PUT', `/team/${this.editingId()}`, this.form).subscribe({
-        next: () => { this.loadTeam(); this.closeForm(); },
+        next: () => { this.loadTeam(); this.loadPerformance(); this.closeForm(); },
         error: (e) => this.message.set(e.error?.error || 'Error al guardar')
       });
     } else {
       this.crm.request('POST', '/team', this.form).subscribe({
-        next: () => { this.loadTeam(); this.closeForm(); },
+        next: () => { this.loadTeam(); this.loadPerformance(); this.closeForm(); },
         error: (e) => this.message.set(e.error?.error || 'Error al guardar')
       });
     }
@@ -816,7 +948,7 @@ export class CrmTeamComponent implements OnInit {
   deleteEmp(emp: Employee) {
     if (confirm(`¿Eliminar a ${emp.name}?`)) {
       this.crm.request('DELETE', `/team/${emp.id}`).subscribe({
-        next: () => this.loadTeam(),
+        next: () => { this.loadTeam(); this.loadPerformance(); },
         error: (e) => this.message.set(e.error?.error || 'Error al eliminar')
       });
     }

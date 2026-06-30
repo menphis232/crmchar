@@ -187,6 +187,28 @@
           }
         </div>
 
+        <!-- VENDEDOR ASIGNADO -->
+        @if (isOwner()) {
+          <div class="deal-section">
+            <h4>Vendedor asignado</h4>
+            <select [ngModel]="assignedToModel" (ngModelChange)="assignDeal($event)">
+              <option value="">— Sin asignar —</option>
+              <option [value]="auth.user()?.id">{{ auth.user()?.name }} (yo)</option>
+              @for (m of teamMembers(); track m.id) {
+                <option [value]="m.id">{{ m.name }}</option>
+              }
+            </select>
+            @if (d.closedByName) {
+              <p class="card-desc" style="margin-top:8px;">Cerrado por: <strong>{{ d.closedByName }}</strong></p>
+            }
+          </div>
+        } @else if (d.assignedToName) {
+          <div class="deal-section">
+            <h4>Vendedor asignado</h4>
+            <p class="section-sub">{{ d.assignedToName }}</p>
+          </div>
+        }
+
         <!-- VALOR ESTIMADO -->
         <div class="deal-section">
           <h4>Valor estimado (MXN)</h4>

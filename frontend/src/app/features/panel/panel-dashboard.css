@@ -1100,6 +1100,20 @@ select option {
 .kanban-contact { font-size: 12px; color: var(--brand-black); display: block; margin-bottom: 2px; font-weight: 600; }
 .kanban-meta, .kanban-days { font-size: 11px; color: var(--muted); display: block; margin-top: 2px; }
 .kanban-value { font-size: 11px; color: var(--brand-black); display: block; margin-top: 4px; font-weight: 700; }
+.kanban-assignee {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1d4ed8;
+  background: rgba(37,99,235,0.12);
+  border: 1px solid rgba(37,99,235,0.28);
+  border-radius: 999px;
+}
 
 .kanban-stage-select {
   width: 100%;

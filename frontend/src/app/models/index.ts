@@ -369,6 +369,31 @@ export interface CrmDeal {
   tradeInValue?: number;
   termMonths?: number;
   trackingCode?: string;
+
+  // Asignación a vendedor
+  assignedTo?: string | null;
+  assignedToName?: string | null;
+  assignedAt?: string | null;
+  closedBy?: string | null;
+  closedByName?: string | null;
+}
+
+export interface CrmTeamMember {
+  id: string;
+  email: string;
+  name: string;
+  permissions?: string[];
+  created_at?: string;
+}
+
+export interface CrmTeamPerformance {
+  id: string;
+  name: string;
+  email: string;
+  isOwner: boolean;
+  dealsClosed: number;
+  revenueClosed: number;
+  assignedActive: number;
 }
 
 export interface CrmQuoteItem {

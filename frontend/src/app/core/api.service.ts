@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
+  CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -68,12 +68,15 @@ export class CrmService {
   }
 
   getToday() { return this.http.get<CrmTodayInbox>(`${this.base}/today`); }
-  getDeals(filters?: { q?: string; stage?: string }) {
+  getDeals(filters?: { q?: string; stage?: string; assignedTo?: string }) {
     let params = new HttpParams();
     if (filters?.q) params = params.set('q', filters.q);
     if (filters?.stage) params = params.set('stage', filters.stage);
+    if (filters?.assignedTo) params = params.set('assignedTo', filters.assignedTo);
     return this.http.get<CrmDeal[]>(`${this.base}/deals`, { params });
   }
+  getTeam() { return this.http.get<CrmTeamMember[]>(`${this.base}/team`); }
+  getTeamPerformance() { return this.http.get<CrmTeamPerformance[]>(`${this.base}/team/performance`); }
   createDeal(data: {
     clientName: string;
     clientEmail?: string;
@@ -89,7 +92,7 @@ export class CrmService {
     return this.http.post<CrmDeal>(`${this.base}/deals`, data);
   }
   getDeal(id: string) { return this.http.get<CrmDeal>(`${this.base}/deals/${id}`); }
-  updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string }) {
+  updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
   registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string }) {

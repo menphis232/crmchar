@@ -372,6 +372,11 @@ export function dealRow(row) {
     trackingCode: row.tracking_code,
     paymentStatus: row.payment_status,
     paymentSessionId: row.payment_session_id,
+    assignedTo: row.assigned_to || null,
+    assignedToName: row.assigned_to_name || null,
+    assignedAt: row.assigned_at || null,
+    closedBy: row.closed_by || null,
+    closedByName: row.closed_by_name || null,
   };
 }
 

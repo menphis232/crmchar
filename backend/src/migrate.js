@@ -1053,6 +1053,25 @@ async function migrate() {
       console.log('Migración v49 (tenencia year) aplicada.');
     }
 
+    const v50Path = path.join(__dirname, '..', 'sql', 'migration-v50-deal-assignment.sql');
+    if (fs.existsSync(v50Path)) {
+      const v50 = fs.readFileSync(v50Path, 'utf8');
+      const conn50 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn50.query('USE tramites_vehiculares');
+      for (const stmt of v50.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn50.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn50.end();
+      console.log('Migración v50 (deal assignment) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

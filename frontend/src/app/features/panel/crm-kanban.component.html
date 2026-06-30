@@ -128,6 +128,10 @@
               </span>
             }
 
+            @if (deal.assignedToName) {
+              <span class="kanban-assignee" title="Vendedor asignado">{{ deal.assignedToName }}</span>
+            }
+
             @if (isPaymentLocked(deal)) {
               <span class="kanban-payment-lock">Pago pendiente — registra el cobro para mover</span>
             }

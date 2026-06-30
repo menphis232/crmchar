@@ -1,4 +1,4 @@
-import { Component, input, output, signal, effect, inject, NgZone, OnDestroy } from '@angular/core';
+import { Component, input, output, signal, computed, effect, inject, NgZone, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
 import {
@@ -19,7 +19,7 @@ import {
   LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
-import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle } from '../../models';
+import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle, CrmTeamMember } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -939,6 +939,9 @@ export class CrmDealPanelComponent implements OnDestroy {
   shippingUploadDismissed = output<void>();
 
   deal = signal<CrmDeal | null>(null);
+  teamMembers = signal<CrmTeamMember[]>([]);
+  isOwner = computed(() => !this.auth.user()?.parent_id);
+  assignedToModel = '';
   noteText = '';
   replyText = '';
   estimatedValue = 0;
@@ -1053,11 +1056,18 @@ export class CrmDealPanelComponent implements OnDestroy {
   }
 
   loadDeal(id: string) {
+    if (this.isOwner() && !this.teamMembers().length) {
+      this.crmService.getTeam().subscribe({
+        next: (t) => this.teamMembers.set(t),
+        error: () => {},
+      });
+    }
     this.crmService.getDeal(id).subscribe(d => {
       this.deal.set(d);
       this.estimatedValue = d.estimatedValue || 0;
       this.internalNotes = d.internalNotes || '';
       this.lostReason = d.lostReason || '';
+      this.assignedToModel = d.assignedTo || '';
 
       this.loadDocuments(id);
       this.loadMessages(id);
@@ -1579,6 +1589,24 @@ export class CrmDealPanelComponent implements OnDestroy {
       error: (e) => {
         this.isRegisteringPayment.set(false);
         this.toast.error(e.error?.error || 'No se pudo registrar el pago', 'Error');
+      },
+    });
+  }
+
+  assignDeal(userId: string) {
+    const d = this.deal();
+    if (!d) return;
+    const assignedTo = userId || null;
+    if ((d.assignedTo || '') === (assignedTo || '')) return;
+    this.crmService.updateDeal(d.id, { assignedTo }).subscribe({
+      next: () => {
+        this.loadDeal(d.id);
+        this.toast.success(assignedTo ? 'Vendedor asignado' : 'Asignación retirada');
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.assignedToModel = d.assignedTo || '';
+        this.toast.error(e.error?.error || 'Error al asignar vendedor');
       },
     });
   }

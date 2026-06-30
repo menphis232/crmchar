@@ -325,17 +325,21 @@ router.get('/deals', async (req, res) => {
     const dealType = dealTypeForRole(req.user.role);
     const { q, stage } = req.query;
 
+    const { assignedTo } = req.query;
     let sql = `
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
              c.whatsapp as contact_whatsapp,
              COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
+             asg.name as assigned_to_name, clb.name as closed_by_name,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN auto_inquiries i ON d.ref_type = 'auto_inquiry' AND d.ref_id = i.id
       LEFT JOIN autos a ON d.auto_id = a.id
+      LEFT JOIN users asg ON asg.id = d.assigned_to
+      LEFT JOIN users clb ON clb.id = d.closed_by
       WHERE d.user_id = ? AND d.deal_type = ?
     `;
     const params = [uid, dealType];
@@ -343,6 +347,14 @@ router.get('/deals', async (req, res) => {
     if (stage) {
       sql += ' AND d.stage = ?';
       params.push(stage);
+    }
+    if (assignedTo) {
+      if (assignedTo === 'unassigned') {
+        sql += ' AND d.assigned_to IS NULL';
+      } else {
+        sql += ' AND d.assigned_to = ?';
+        params.push(assignedTo);
+      }
     }
     if (q) {
       sql += ' AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR d.title LIKE ?)';
@@ -499,11 +511,14 @@ router.get('/deals/:id', async (req, res) => {
              c.whatsapp as contact_whatsapp, c.source as contact_source, c.notes as contact_notes,
              COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
+             asg.name as assigned_to_name, clb.name as closed_by_name,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN auto_inquiries i ON d.ref_type = 'auto_inquiry' AND d.ref_id = i.id
       LEFT JOIN autos a ON d.auto_id = a.id
+      LEFT JOIN users asg ON asg.id = d.assigned_to
+      LEFT JOIN users clb ON clb.id = d.closed_by
       WHERE d.id = ? AND d.user_id = ?
     `, [req.params.id, uid]);
 
@@ -598,10 +613,22 @@ router.patch('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
     const role = req.user.role;
-    const { stage, internalNotes, estimatedValue, lostReason } = req.body;
+    const { stage, internalNotes, estimatedValue, lostReason, assignedTo } = req.body;
 
     const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    // Validar vendedor asignado (debe ser el dueño o parte de su equipo)
+    const assigneeProvided = assignedTo !== undefined;
+    let assigneeId = null;
+    if (assigneeProvided && assignedTo) {
+      const validAssignee = await get(
+        'SELECT id FROM users WHERE id = ? AND (id = ? OR parent_id = ?)',
+        [assignedTo, uid, uid],
+      );
+      if (!validAssignee) return res.status(400).json({ error: 'Vendedor no válido' });
+      assigneeId = assignedTo;
+    }
 
     const userRow = await get('SELECT crm_stages FROM users WHERE id = ?', [uid]);
     const allowedStages = stagesForRole(role, userRow?.crm_stages);
@@ -648,6 +675,23 @@ router.patch('/deals/:id', async (req, res) => {
       sets.push('lost_reason = ?');
       params.push(lostReason);
     }
+    if (assigneeProvided) {
+      sets.push('assigned_to = ?');
+      params.push(assigneeId);
+      sets.push(assigneeId ? 'assigned_at = NOW()' : 'assigned_at = NULL');
+    }
+
+    // Registrar qué vendedor cerró el trámite (queda como histórico de desempeño)
+    const wonStage = role === 'gestor' ? 'completado' : 'vendido';
+    if (stage !== undefined && stage !== oldStage) {
+      if (stage === wonStage) {
+        const creditId = (assigneeProvided ? assigneeId : deal.assigned_to) || req.user.id;
+        sets.push('closed_by = ?');
+        params.push(creditId);
+      } else if (oldStage === wonStage) {
+        sets.push('closed_by = NULL');
+      }
+    }
 
     params.push(req.params.id, uid);
     await run(`UPDATE crm_deals SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`, params);
@@ -685,7 +729,13 @@ router.patch('/deals/:id', async (req, res) => {
       }
     }
 
-    const updated = await get('SELECT * FROM crm_deals WHERE id = ?', [req.params.id]);
+    const updated = await get(`
+      SELECT d.*, asg.name as assigned_to_name, clb.name as closed_by_name
+      FROM crm_deals d
+      LEFT JOIN users asg ON asg.id = d.assigned_to
+      LEFT JOIN users clb ON clb.id = d.closed_by
+      WHERE d.id = ?
+    `, [req.params.id]);
     res.json(dealRow(updated));
   } catch (err) {
     console.error(err);
@@ -1808,6 +1858,43 @@ router.delete('/team/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar empleado' });
+  }
+});
+
+// Ranking de desempeño por vendedor (incluye al dueño). Solo el administrador.
+router.get('/team/performance', async (req, res) => {
+  try {
+    if (req.user.parent_id) return res.status(403).json({ error: 'Solo el administrador puede ver el desempeño' });
+    const ownerId = req.user.id;
+    const dealType = dealTypeForRole(req.user.role);
+    const wonStage = req.user.role === 'gestor' ? 'completado' : 'vendido';
+
+    const rows = await query(`
+      SELECT u.id, u.name, u.email,
+        SUM(CASE WHEN d.closed_by = u.id AND d.stage = ? THEN 1 ELSE 0 END) AS dealsClosed,
+        COALESCE(SUM(CASE WHEN d.closed_by = u.id AND d.stage = ? THEN d.estimated_value ELSE 0 END), 0) AS revenueClosed,
+        SUM(CASE WHEN d.assigned_to = u.id AND d.stage NOT IN (?, 'perdido') THEN 1 ELSE 0 END) AS assignedActive
+      FROM users u
+      LEFT JOIN crm_deals d
+        ON (d.assigned_to = u.id OR d.closed_by = u.id)
+       AND d.user_id = ? AND d.deal_type = ?
+      WHERE u.id = ? OR u.parent_id = ?
+      GROUP BY u.id, u.name, u.email
+      ORDER BY dealsClosed DESC, revenueClosed DESC, u.name ASC
+    `, [wonStage, wonStage, wonStage, ownerId, dealType, ownerId, ownerId]);
+
+    res.json(rows.map(r => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      isOwner: r.id === ownerId,
+      dealsClosed: Number(r.dealsClosed || 0),
+      revenueClosed: Number(r.revenueClosed || 0),
+      assignedActive: Number(r.assignedActive || 0),
+    })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar desempeño del equipo' });
   }
 });
 
