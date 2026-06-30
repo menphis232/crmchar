@@ -12,6 +12,10 @@ export const routes: Routes = [
   { path: 'pay/success', loadComponent: () => import('./features/site/pay-success.component').then(m => m.PaySuccessComponent) },
   { path: 'pay/mp/:token', loadComponent: () => import('./features/payment/mp-checkout.component').then(m => m.MpCheckoutComponent) },
   { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
+  { path: 'login/gestor', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'gestor' } },
+  { path: 'login/concesionaria', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'concesionaria' } },
+  { path: 'login/cliente', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente' } },
+  { path: 'login/admin', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'admin' } },
   { path: 'registro-pendiente', loadComponent: () => import('./features/auth/registro-pendiente.component').then(m => m.RegistroPendienteComponent) },
   { path: 'subscription/success', loadComponent: () => import('./features/auth/subscription-success.component').then(m => m.SubscriptionSuccessComponent) },
   {

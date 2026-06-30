@@ -41,7 +41,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
             <a [routerLink]="panelLink" class="btn-primary" (click)="closeMobileMenu()">Mi Panel</a>
             <button class="btn-text" (click)="logout()">Salir</button>
           } @else {
-            <a [routerLink]="['/login']" [queryParams]="loginQueryParams" class="btn-text" (click)="closeMobileMenu()">👤 Iniciar Sesión</a>
+            <a [routerLink]="loginLink" class="btn-text" (click)="closeMobileMenu()">👤 Iniciar Sesión</a>
           }
         </div>
       </div>
@@ -169,10 +169,10 @@ export class NavComponent implements OnInit {
     }
   }
 
-  get loginQueryParams(): { role?: string } {
-    if (this.isAutosContext()) return { role: 'concesionaria' };
-    if (this.isGestoresContext()) return { role: 'gestor' };
-    return {};
+  get loginLink(): string {
+    if (this.isAutosContext()) return '/login/concesionaria';
+    if (this.isGestoresContext()) return '/login/gestor';
+    return '/login';
   }
 
   private isAutosContext(): boolean {

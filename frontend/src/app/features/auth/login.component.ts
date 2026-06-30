@@ -27,21 +27,29 @@ export class LoginComponent implements OnInit, OnDestroy {
   loading = signal(false);
 
   private querySub?: Subscription;
+  private dataSub?: Subscription;
 
   constructor(private auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
+    // Rutas dedicadas (/login/gestor, /login/concesionaria, ...) traen el rol en data.
+    this.dataSub = this.route.data.subscribe(data => {
+      this.applyRole((data['role'] as string) || null);
+    });
+    // Compatibilidad con el formato anterior (/login?role=gestor).
     this.querySub = this.route.queryParamMap.subscribe(params => {
-      this.applyRoleFromQuery(params.get('role'));
+      const queryRole = params.get('role');
+      if (queryRole) this.applyRole(queryRole);
     });
   }
 
   ngOnDestroy() {
     this.querySub?.unsubscribe();
+    this.dataSub?.unsubscribe();
   }
 
-  private applyRoleFromQuery(role: string | null) {
-    if (role === 'concesionaria' || role === 'gestor' || role === 'cliente') {
+  private applyRole(role: string | null) {
+    if (role === 'concesionaria' || role === 'gestor' || role === 'cliente' || role === 'admin') {
       this.role.set(role);
       this.mode.set('login');
       this.directRoleLogin.set(true);
