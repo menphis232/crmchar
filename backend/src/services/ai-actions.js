@@ -56,9 +56,9 @@ async function clientContacts(email) {
 
 async function createClientVehicle(email, data) {
   const { plate, make, model, year, state, engomadoColor, vehicleNotes, insuranceExpiry, tenenciaStatus } = data;
-  if (!plate?.trim()) throw new Error('Indica la placa');
+  if (!plate?.trim()) throw new Error('Falta la placa');
   if (!make?.trim() || !model?.trim() || year == null || year === '') {
-    throw new Error('Marca, submarca y año son obligatorios');
+    throw new Error('Faltan marca, submarca o año');
   }
   const contacts = await clientContacts(email);
   if (!contacts.length) {
@@ -68,6 +68,8 @@ async function createClientVehicle(email, data) {
     ? String(insuranceExpiry).slice(0, 10) : null;
   const tenencia = ['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null;
   const tenenciaYear = tenencia ? new Date().getFullYear() : null;
+  const validEngomado = ['amarillo', 'rosa', 'rojo', 'verde', 'azul'];
+  const engomado = validEngomado.includes(engomadoColor) ? engomadoColor : null;
 
   let firstId = null;
   for (const contact of contacts) {
@@ -79,7 +81,7 @@ async function createClientVehicle(email, data) {
         id, contact.id, contact.user_id,
         String(plate).trim().toUpperCase(),
         make.trim(), model.trim(), Number(year),
-        state || null, engomadoColor || null, vehicleNotes || null,
+        state || null, engomado, vehicleNotes || null,
         insExpiry, tenencia, tenenciaYear,
       ],
     );
@@ -92,31 +94,40 @@ export function clienteSuperpowersPrompt(deals, walletDocs, vehicles) {
   const today = new Date().toISOString().split('T')[0];
   return `
 ══════════════════════════════════════════
-ACCIONES QUE PUEDES EJECUTAR (si el usuario lo pide)
+ACCIONES DEL PANEL (si el usuario lo pide)
 ══════════════════════════════════════════
+
+IMPORTANTE — REGISTRAR VEHÍCULO EN "MIS VEHÍCULOS":
+Esto es guardar el auto en el panel del cliente, NO es un trámite de REPUVE ni alta vehicular.
+Campos del formulario real del panel:
+  OBLIGATORIOS: plate (placa), make (marca), model (submarca/modelo), year (año)
+  OPCIONALES (no preguntes si el usuario no los menciona): state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente)
+NUNCA pidas para registrar en el panel: NIV, VIN, número de serie, factura, tarjeta de circulación, CURP, RFC ni documentos físicos.
+Si el usuario ya dio marca/modelo/año y placa (ej: "Nissan Sentra 2020 placa ABC1234"), ejecuta [CREATE_VEHICLE] de inmediato sin más preguntas.
+Solo pregunta por el dato obligatorio que falte (máximo una pregunta corta).
+
 Cuando el usuario pida crear, actualizar o eliminar algo del panel, usa el bloque correspondiente.
 NO subas archivos (documentos con archivo requieren subirlos manualmente en el panel).
-Confirma qué hiciste. Si faltan datos obligatorios, pregunta antes.
 
-**Enviar mensaje al chat de un trámite**
-[SEND_CHAT]
-{ "deal_id": "ID del trámite", "message": "Texto" }
-[/SEND_CHAT]
-
-**Registrar vehículo**
+**Registrar vehículo en Mis Vehículos**
 [CREATE_VEHICLE]
-{ "plate": "ABC1234", "make": "Nissan", "model": "Sentra", "year": 2020, "state": "CDMX" }
+{ "plate": "ABC1234", "make": "Nissan", "model": "Sentra", "year": 2020, "state": "Ciudad de México", "engomadoColor": "amarillo", "insuranceExpiry": "2026-12-31", "tenenciaStatus": "si" }
 [/CREATE_VEHICLE]
 
-**Actualizar vehículo** (usa vehicle_id del listado)
+**Actualizar vehículo** (solo campos del formulario; vehicle_id del listado)
 [UPDATE_VEHICLE]
-{ "vehicle_id": "uuid", "plate": "NUEVA", "make": "...", "model": "...", "year": 2021, "state": "..." }
+{ "vehicle_id": "uuid", "plate": "NUEVA", "make": "...", "model": "...", "year": 2021, "state": "...", "engomadoColor": "verde", "insuranceExpiry": "2026-06-01", "tenenciaStatus": "pendiente" }
 [/UPDATE_VEHICLE]
 
 **Eliminar vehículo**
 [DELETE_VEHICLE]
 { "vehicle_id": "uuid" }
 [/DELETE_VEHICLE]
+
+**Enviar mensaje al chat de un trámite**
+[SEND_CHAT]
+{ "deal_id": "ID del trámite", "message": "Texto" }
+[/SEND_CHAT]
 
 **Eliminar documento de billetera** (source: "wallet" o "vehicle")
 [DELETE_DOCUMENT]
@@ -478,17 +489,34 @@ export async function processAiActions(reply, ctx) {
     if (!await clientOwnsVehicle(user.email, data.vehicle_id)) throw new Error('Vehículo no encontrado');
     const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [data.vehicle_id]);
     const plateKey = data.plate ? String(data.plate).trim().toUpperCase() : row?.plate;
+    const insExpiry = data.insuranceExpiry !== undefined
+      ? (data.insuranceExpiry && String(data.insuranceExpiry).trim() ? String(data.insuranceExpiry).slice(0, 10) : null)
+      : undefined;
+    const tenencia = data.tenenciaStatus !== undefined
+      ? (['si', 'no', 'pendiente'].includes(data.tenenciaStatus) ? data.tenenciaStatus : null)
+      : undefined;
+    const tenenciaYear = tenencia !== undefined ? (tenencia ? new Date().getFullYear() : null) : undefined;
     await run(
       `UPDATE contact_vehicles cv
        JOIN contacts c ON c.id = cv.contact_id
        SET cv.plate = COALESCE(?, cv.plate), cv.make = COALESCE(?, cv.make), cv.model = COALESCE(?, cv.model),
-           cv.year = COALESCE(?, cv.year), cv.state = COALESCE(?, cv.state), cv.updated_at = NOW()
+           cv.year = COALESCE(?, cv.year), cv.state = COALESCE(?, cv.state),
+           cv.engomado_color = COALESCE(?, cv.engomado_color),
+           cv.insurance_expiry = ${insExpiry !== undefined ? '?' : 'cv.insurance_expiry'},
+           cv.tenencia_2026 = ${tenencia !== undefined ? '?' : 'cv.tenencia_2026'},
+           cv.tenencia_year = ${tenenciaYear !== undefined ? '?' : 'cv.tenencia_year'},
+           cv.updated_at = NOW()
        WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
       [
         data.plate ? String(data.plate).trim().toUpperCase() : null,
         data.make ?? null, data.model ?? null,
         data.year != null && data.year !== '' ? Number(data.year) : null,
-        data.state ?? null, user.email, plateKey,
+        data.state ?? null,
+        data.engomadoColor ?? null,
+        ...(insExpiry !== undefined ? [insExpiry] : []),
+        ...(tenencia !== undefined ? [tenencia] : []),
+        ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
+        user.email, plateKey,
       ],
     );
     return `\n\n✅ *Vehículo actualizado* (ID: \`${data.vehicle_id}\`)`;

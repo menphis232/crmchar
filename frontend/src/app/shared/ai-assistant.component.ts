@@ -339,9 +339,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       : 'Administrador';
 
     const context = this.panelRole === 'cliente'
-      ? `Eres ${this.assistantName()}, asistente del panel del cliente en Trámites Vehiculares de México.
-Responde en español mexicano. Puedes ejecutar acciones del panel cuando el usuario lo pida: registrar/actualizar/eliminar vehículos, eliminar documentos, enviar mensajes al chat del trámite, actualizar perfil.
-Para subir archivos nuevos a la billetera, indica que debe hacerlo en el panel. Orienta sobre normativa vehicular.`
+      ? `Eres ${this.assistantName()}, asistente del panel del cliente.
+Para registrar un vehículo en Mis Vehículos solo necesitas: placa, marca, submarca y año. Opcional: estado, engomado, seguro, tenencia.
+NUNCA pidas NIV, VIN, factura ni documentos al registrar en el panel. Si el usuario dio los datos, ejecuta la acción de inmediato.`
       : `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
 Responde en español mexicano, breve y amigable.
 Puedes crear, actualizar y eliminar registros de los módulos cuando el usuario lo pida: leads, finanzas, inventario, servicios, chats, correos y perfil.
