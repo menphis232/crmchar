@@ -137,9 +137,9 @@ function gestorRow(row) {
     tramitesCount: row.tramites_count,
     experienceYears: row.experience_years,
     bio: row.bio,
-    whatsapp: row.whatsapp,
+    whatsapp: row.phone || row.whatsapp || null,
     schedule: row.schedule,
-    phone: row.phone || null,
+    phone: row.phone || row.whatsapp || null,
     address: row.address || null,
     mapEmbedUrl: row.map_embed_url || null,
     galleryImages: parseGalleryImages(row.gallery_images),
@@ -199,6 +199,10 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
 
     const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages } = req.body;
 
+    // Teléfono y WhatsApp son el mismo dato en el panel; mantener ambas columnas sincronizadas.
+    const contactPhone = phone !== undefined ? phone : whatsapp;
+    const contactWhatsapp = whatsapp !== undefined ? whatsapp : phone;
+
     let slugUpdate = null;
     if (name !== undefined && name !== null) {
       const trimmedName = String(name).trim();
@@ -210,7 +214,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     }
     
     const params = [
-      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl
+      name, location, state, bannerUrl, photoUrl, bio, contactWhatsapp, schedule, experienceYears, tramitesCount, contactPhone, address, mapEmbedUrl
     ].map(v => v === undefined ? null : v);
     params.push(req.user.id);
 

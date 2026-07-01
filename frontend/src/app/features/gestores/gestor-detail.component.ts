@@ -80,8 +80,9 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
   }
 
   whatsappLink(g: Gestor) {
+    const digits = (g.whatsapp || g.phone || '').replace(/\D/g, '');
     const text = encodeURIComponent('Hola, vengo del Directorio y necesito ayuda con un trámite.');
-    return `https://wa.me/${g.whatsapp}?text=${text}`;
+    return `https://wa.me/${digits}?text=${text}`;
   }
 
   /** Logo del panel (users.logo_url) tiene prioridad sobre la foto legacy del gestor. */

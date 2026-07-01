@@ -1091,6 +1091,25 @@ async function migrate() {
       console.log('Migración v51 (pipeline separation) aplicada.');
     }
 
+    const v52Path = path.join(__dirname, '..', 'sql', 'migration-v52-gestor-phone-whatsapp.sql');
+    if (fs.existsSync(v52Path)) {
+      const v52 = fs.readFileSync(v52Path, 'utf8');
+      const conn52 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn52.query('USE tramites_vehiculares');
+      for (const stmt of v52.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn52.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn52.end();
+      console.log('Migración v52 (gestor phone/whatsapp sync) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

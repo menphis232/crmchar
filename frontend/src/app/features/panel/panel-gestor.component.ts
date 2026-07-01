@@ -462,7 +462,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.gestorExperienceYears = p.experienceYears ?? '';
       this.gestorTramitesCount = p.tramitesCount ?? '';
       this.publicSlug = p.slug || '';
-      this.gestorPhone = p.phone || '';
+      this.gestorPhone = p.phone || p.whatsapp || '';
       this.gestorAddress = p.address || '';
       this.gestorMapEmbedUrl = p.mapEmbedUrl || '';
       this.mapSearchQuery = p.address || '';
@@ -877,6 +877,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       experienceYears: this.toOptionalCount(this.gestorExperienceYears),
       tramitesCount: this.toOptionalCount(this.gestorTramitesCount),
       phone: this.gestorPhone || undefined,
+      whatsapp: this.gestorPhone || undefined,
       address: this.gestorAddress || undefined,
       mapEmbedUrl: toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress) || undefined,
       photoUrl: this.profileLogoUrl || undefined,
