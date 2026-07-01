@@ -517,6 +517,96 @@
                   </select>
                 </div>
               </div>
+
+              <div class="client-vehicle-docs">
+                <h4 class="client-vehicle-docs-title">Documentos del vehículo</h4>
+                <p class="client-vehicle-docs-desc">Tarjeta de circulación, factura, póliza de seguro u otros archivos de este auto.</p>
+
+                <div class="client-vehicle-docs-upload">
+                  <input
+                    type="text"
+                    class="client-wallet-input"
+                    [(ngModel)]="vehicleDocLabels[v.id]"
+                    placeholder="Nombre del documento (opcional)"
+                  >
+                  <label class="btn-copy small" [class.loading]="uploadingVehicleDocId() === v.id">
+                    <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="onVehicleDocSelected(v, $event)" [disabled]="uploadingVehicleDocId() === v.id">
+                    <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+                    {{ uploadingVehicleDocId() === v.id ? 'Subiendo...' : 'Subir documento' }}
+                  </label>
+                </div>
+
+                @if (v.documents?.length) {
+                  <div class="wdoc-grid">
+                    @for (doc of v.documents; track doc.id) {
+                      <article class="wdoc-card">
+                        <div class="wdoc-preview">
+                          @if (isImageUrl(doc.fileUrl)) {
+                            <img class="wdoc-img" [src]="previewFileUrl(doc.fileUrl)" [alt]="vehicleDocTitle(doc)" loading="lazy">
+                          } @else if (isPdfUrl(doc.fileUrl)) {
+                            <div class="wdoc-pdf-preview">
+                              <iframe
+                                class="wdoc-pdf-frame"
+                                [src]="walletPdfPreviewUrl(doc.fileUrl)"
+                                [title]="'Vista previa de ' + vehicleDocTitle(doc)"
+                                tabindex="-1"
+                              ></iframe>
+                              <span class="wdoc-pdf-badge">PDF</span>
+                            </div>
+                          } @else {
+                            <div class="wdoc-placeholder wdoc-placeholder--file">
+                              <svg lucideFolderOpen [size]="48" [strokeWidth]="1.2" aria-hidden="true"></svg>
+                            </div>
+                          }
+
+                          <div class="wdoc-overlay">
+                            <a
+                              [href]="previewFileUrl(doc.fileUrl)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="wdoc-action"
+                              title="Ver documento"
+                            >
+                              <svg lucideEye [size]="20" aria-hidden="true"></svg>
+                            </a>
+                            <button
+                              type="button"
+                              class="wdoc-action wdoc-action--primary"
+                              (click)="downloadVehicleDoc(doc)"
+                              [disabled]="downloadingVehicleDocId() === doc.id"
+                              title="Descargar"
+                            >
+                              @if (downloadingVehicleDocId() === doc.id) {
+                                <svg lucideLoader [size]="20" class="wdoc-spin" aria-hidden="true"></svg>
+                              } @else {
+                                <svg lucideDownload [size]="20" aria-hidden="true"></svg>
+                              }
+                            </button>
+                            <button
+                              type="button"
+                              class="wdoc-action wdoc-action--danger"
+                              (click)="deleteVehicleDoc(doc)"
+                              title="Eliminar"
+                              aria-label="Eliminar documento"
+                            >
+                              <svg lucideTrash2 [size]="20" aria-hidden="true"></svg>
+                            </button>
+                          </div>
+
+                          <div class="wdoc-label">
+                            <span class="wdoc-label-text">{{ vehicleDocTitle(doc) }}</span>
+                          </div>
+                        </div>
+                      </article>
+                    }
+                  </div>
+                } @else {
+                  <div class="client-vehicle-docs-empty">
+                    <svg lucideFolderOpen [size]="28" [strokeWidth]="1.5" aria-hidden="true"></svg>
+                    <span>Sin documentos aún</span>
+                  </div>
+                }
+              </div>
             </div>
           }
 

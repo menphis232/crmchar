@@ -442,16 +442,47 @@ function dedupeVehiclesByPlate(rows) {
   return out;
 }
 
+function vehicleDocumentRow(row) {
+  return {
+    id: row.id,
+    vehicleId: row.vehicle_id,
+    label: row.label,
+    fileName: row.file_name,
+    fileUrl: row.file_url,
+    createdAt: row.created_at,
+  };
+}
+
+async function vehiclesWithDocuments(email) {
+  const rows = await query(
+    `SELECT cv.* FROM contact_vehicles cv
+     JOIN contacts c ON c.id = cv.contact_id
+     WHERE LOWER(c.email) = LOWER(?)
+     ORDER BY cv.updated_at DESC, cv.created_at DESC`,
+    [email],
+  );
+  const vehicles = dedupeVehiclesByPlate(rows);
+  const ids = vehicles.map((v) => v.id);
+  if (!ids.length) return vehicles;
+
+  const placeholders = ids.map(() => '?').join(',');
+  const docs = await query(
+    `SELECT * FROM contact_vehicle_documents
+     WHERE vehicle_id IN (${placeholders})
+     ORDER BY created_at DESC`,
+    ids,
+  );
+  const byVehicle = {};
+  for (const doc of docs) {
+    if (!byVehicle[doc.vehicle_id]) byVehicle[doc.vehicle_id] = [];
+    byVehicle[doc.vehicle_id].push(vehicleDocumentRow(doc));
+  }
+  return vehicles.map((v) => ({ ...v, documents: byVehicle[v.id] || [] }));
+}
+
 router.get('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const rows = await query(
-      `SELECT cv.* FROM contact_vehicles cv
-       JOIN contacts c ON c.id = cv.contact_id
-       WHERE LOWER(c.email) = LOWER(?)
-       ORDER BY cv.updated_at DESC, cv.created_at DESC`,
-      [req.user.email],
-    );
-    res.json(dedupeVehiclesByPlate(rows));
+    res.json(await vehiclesWithDocuments(req.user.email));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar vehículos' });
@@ -581,6 +612,59 @@ router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req,
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar vehículo' });
+  }
+});
+
+router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    const { fileName, fileUrl, label } = req.body;
+    if (!fileName || !fileUrl) {
+      return res.status(400).json({ error: 'Faltan datos del documento' });
+    }
+
+    const vehicle = await get('SELECT user_id FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    const docId = uuid();
+    await run(
+      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, label, file_name, file_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        docId,
+        req.params.id,
+        vehicle.user_id,
+        label?.trim() || null,
+        fileName,
+        fileUrl,
+      ],
+    );
+
+    const row = await get('SELECT * FROM contact_vehicle_documents WHERE id = ?', [docId]);
+    res.status(201).json(vehicleDocumentRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar documento' });
+  }
+});
+
+router.delete('/vehicle-documents/:id', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const doc = await get(
+      `SELECT cvd.id FROM contact_vehicle_documents cvd
+       JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
+       JOIN contacts c ON c.id = cv.contact_id
+       WHERE cvd.id = ? AND LOWER(c.email) = LOWER(?)`,
+      [req.params.id, req.user.email],
+    );
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado' });
+
+    await run('DELETE FROM contact_vehicle_documents WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar documento' });
   }
 });
 

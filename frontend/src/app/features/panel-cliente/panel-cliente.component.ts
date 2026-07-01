@@ -15,7 +15,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.component';
 import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 import { MEXICO_STATES } from '../../shared/mexico-states';
-import { CrmContactVehicle } from '../../models';
+import { CrmContactVehicle, CrmContactVehicleDocument } from '../../models';
 import {
   LucideArrowLeft,
   LucideBot,
@@ -305,6 +305,99 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.toast.success('Vehículo eliminado', 'Listo');
       },
       error: () => this.toast.error('No se pudo eliminar el vehículo', 'Error'),
+    });
+  }
+
+  vehicleDocLabels: Record<string, string> = {};
+  uploadingVehicleDocId = signal<string | null>(null);
+  downloadingVehicleDocId = signal<string | null>(null);
+
+  vehicleDocTitle(doc: CrmContactVehicleDocument): string {
+    return doc.label?.trim() || doc.fileName || 'Documento';
+  }
+
+  onVehicleDocSelected(v: CrmContactVehicle, event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Usa una foto (JPG, PNG, WebP) o un PDF.', 'Formato no válido');
+      input.value = '';
+      return;
+    }
+
+    this.uploadingVehicleDocId.set(v.id);
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
+      next: res => {
+        const label = (this.vehicleDocLabels[v.id] || '').trim() || file.name.replace(/\.[^.]+$/, '');
+        this.http.post<CrmContactVehicleDocument>(`${environment.apiUrl}/client/vehicles/${v.id}/documents`, {
+          fileName: file.name,
+          fileUrl: res.url,
+          label,
+        }).subscribe({
+          next: () => {
+            this.uploadingVehicleDocId.set(null);
+            this.vehicleDocLabels[v.id] = '';
+            input.value = '';
+            this.loadVehicles();
+            this.toast.success('Documento guardado en el vehículo.', 'Listo');
+          },
+          error: (e) => {
+            this.uploadingVehicleDocId.set(null);
+            input.value = '';
+            this.toast.error(e.error?.error || 'No se pudo guardar el documento.', 'Error');
+          },
+        });
+      },
+      error: (e) => {
+        this.uploadingVehicleDocId.set(null);
+        input.value = '';
+        this.toast.error(e.error?.error || 'Error al subir archivo', 'Error');
+      },
+    });
+  }
+
+  deleteVehicleDoc(doc: CrmContactVehicleDocument) {
+    if (!confirm('¿Eliminar este documento del vehículo?')) return;
+    this.http.delete(`${environment.apiUrl}/client/vehicle-documents/${doc.id}`).subscribe({
+      next: () => {
+        this.loadVehicles();
+        this.toast.success('Documento eliminado.', 'Listo');
+      },
+      error: () => this.toast.error('No se pudo eliminar.', 'Error'),
+    });
+  }
+
+  downloadVehicleDoc(doc: CrmContactVehicleDocument) {
+    const url = this.previewFileUrl(doc.fileUrl);
+    const baseName = this.vehicleDocTitle(doc).replace(/[<>:"/\\|?*]+/g, '_').trim() || 'documento';
+    const hasExt = /\.[a-z0-9]{2,5}$/i.test(baseName);
+    const ext = hasExt
+      ? ''
+      : this.isPdfUrl(doc.fileUrl)
+        ? '.pdf'
+        : (doc.fileUrl.match(/\.(jpe?g|png|webp|gif)($|\?)/i)?.[0] || '');
+
+    this.downloadingVehicleDocId.set(doc.id);
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${baseName}${ext}`;
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+        this.downloadingVehicleDocId.set(null);
+      },
+      error: () => {
+        this.downloadingVehicleDocId.set(null);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        this.toast.info('Se abrió el documento en una nueva pestaña.', 'Descarga');
+      },
     });
   }
 

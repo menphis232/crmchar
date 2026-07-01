@@ -1668,6 +1668,61 @@ select.client-wallet-input option {
 .client-vehicle-tag.tenencia-no { background: rgba(239, 68, 68, 0.16); color: #f87171; border-color: rgba(239, 68, 68, 0.4); text-transform: none; }
 .client-vehicle-tag.tenencia-pendiente { background: rgba(245, 197, 24, 0.16); color: #f5c518; border-color: rgba(245, 197, 24, 0.4); text-transform: none; }
 
+.client-vehicle-docs {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.client-vehicle-docs-title {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.client-vehicle-docs-desc {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.client-vehicle-docs-upload {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.client-vehicle-docs-upload label.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  cursor: pointer;
+  margin: 0;
+}
+
+.client-vehicle-docs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 13px;
+}
+
+.client-vehicle-docs .wdoc-grid {
+  margin-top: 0;
+}
+
 .client-vehicle-add-btn {
   margin-top: 12px;
   display: inline-flex;
@@ -1677,6 +1732,10 @@ select.client-wallet-input option {
 
 @media (max-width: 640px) {
   .client-vehicle-form {
+    grid-template-columns: 1fr;
+  }
+
+  .client-vehicle-docs-upload {
     grid-template-columns: 1fr;
   }
 }
