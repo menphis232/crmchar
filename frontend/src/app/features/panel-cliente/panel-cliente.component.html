@@ -168,7 +168,7 @@
 
           <div class="client-search-bar">
             <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-            <input type="text" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, gestoría o código..."
+            <input type="text" class="client-search-input" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, gestoría o código..."
                    (keyup.enter)="searchTramites()">
             <button type="button" class="btn-copy small" (click)="searchTramites()">Buscar</button>
           </div>
@@ -242,7 +242,7 @@
 
         <div class="client-search-bar">
           <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-          <input type="text" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, gestoría o código..."
+          <input type="text" class="client-search-input" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, gestoría o código..."
                  (keyup.enter)="searchHistorial()">
           <button type="button" class="btn-copy small" (click)="searchHistorial()">Buscar</button>
         </div>

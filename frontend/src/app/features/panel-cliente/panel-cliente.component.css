@@ -1088,8 +1088,12 @@
   border-radius: 10px;
 }
 
-.client-search-bar input {
+/* Mayor especificidad que panel-dashboard.css (.dash-card input { background: #fff }) */
+:host .dash-card .client-search-bar input.client-search-input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]) {
   flex: 1;
+  width: auto !important;
+  min-width: 0;
+  padding: 8px 10px !important;
   background: #000 !important;
   background-color: #000 !important;
   border: none !important;
@@ -1099,11 +1103,20 @@
   font-size: 14px;
   outline: none;
   box-shadow: none !important;
+  border-radius: 6px;
 }
 
-.client-search-bar input::placeholder {
+:host .dash-card .client-search-bar input.client-search-input::placeholder {
   color: rgba(255, 255, 255, 0.45) !important;
   opacity: 1;
+}
+
+:host .dash-card .client-search-bar input.client-search-input:-webkit-autofill,
+:host .dash-card .client-search-bar input.client-search-input:-webkit-autofill:hover,
+:host .dash-card .client-search-bar input.client-search-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #000 inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff !important;
 }
 
 .client-search-bar svg {
