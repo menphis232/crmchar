@@ -365,13 +365,63 @@ No incluyas markdown como \`\`\`json.`;
 
 // ── Billetera de documentos personales ──────────────────
 
+function unifiedWalletRow(row) {
+  return {
+    id: row.id,
+    source: 'wallet',
+    label: row.label,
+    category: row.category,
+    file_url: row.file_url,
+    notes: row.notes,
+    created_at: row.created_at,
+    vehicleId: null,
+    vehiclePlate: null,
+    vehicleName: null,
+  };
+}
+
+function unifiedVehicleWalletRow(row) {
+  const vehicleName = [row.make, row.model, row.year].filter(Boolean).join(' ');
+  return {
+    id: row.id,
+    source: 'vehicle',
+    label: row.label || row.file_name,
+    category: 'Vehículo',
+    file_url: row.file_url,
+    notes: null,
+    created_at: row.created_at,
+    vehicleId: row.vehicle_id,
+    vehiclePlate: row.plate,
+    vehicleName: vehicleName || null,
+  };
+}
+
+async function unifiedWalletDocuments(email, userId) {
+  const personal = await query(
+    'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
+    [userId],
+  );
+  const vehicleDocs = await query(
+    `SELECT cvd.*, cv.plate, cv.make, cv.model, cv.year
+     FROM contact_vehicle_documents cvd
+     JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
+     JOIN contacts c ON c.id = cv.contact_id
+     WHERE LOWER(c.email) = LOWER(?)
+     ORDER BY cvd.created_at DESC`,
+    [email],
+  );
+
+  const items = [
+    ...personal.map(unifiedWalletRow),
+    ...vehicleDocs.map(unifiedVehicleWalletRow),
+  ];
+  items.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  return items;
+}
+
 router.get('/wallet', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const docs = await query(
-      'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
-      [req.user.id],
-    );
-    res.json(docs);
+    res.json(await unifiedWalletDocuments(req.user.email, req.user.id));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener documentos' });
@@ -410,6 +460,48 @@ router.delete('/wallet/:id', authRequired, requireRole('cliente'), async (req, r
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar documento' });
+  }
+});
+
+router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const { vehicleId } = req.body;
+    if (!vehicleId) {
+      return res.status(400).json({ error: 'Selecciona un vehículo' });
+    }
+    if (!await clientOwnsVehicle(req.user.email, vehicleId)) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+
+    const walletDoc = await get(
+      'SELECT * FROM client_wallet_documents WHERE id = ? AND user_id = ?',
+      [req.params.id, req.user.id],
+    );
+    if (!walletDoc) return res.status(404).json({ error: 'Documento no encontrado' });
+
+    const vehicle = await get('SELECT user_id FROM contact_vehicles WHERE id = ?', [vehicleId]);
+    const ext = (walletDoc.file_url || '').match(/\.[a-z0-9]{2,5}($|\?)/i)?.[0]?.replace('?', '') || '';
+    const fileName = `${walletDoc.label}${ext}`;
+
+    const docId = uuid();
+    await run(
+      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, label, file_name, file_url)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [docId, vehicleId, vehicle.user_id, walletDoc.label, fileName, walletDoc.file_url],
+    );
+    await run('DELETE FROM client_wallet_documents WHERE id = ?', [req.params.id]);
+
+    const row = await get(
+      `SELECT cvd.*, cv.plate, cv.make, cv.model, cv.year
+       FROM contact_vehicle_documents cvd
+       JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
+       WHERE cvd.id = ?`,
+      [docId],
+    );
+    res.status(201).json(unifiedVehicleWalletRow(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al asociar documento' });
   }
 });
 

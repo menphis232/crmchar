@@ -297,7 +297,7 @@
           <svg lucideWallet [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Billetera de Documentos
         </h2>
-        <p class="card-desc">Guarda tus documentos personales para tenerlos listos cuando los necesites en cualquier trámite.</p>
+        <p class="card-desc">Todos tus documentos en un solo lugar. Los de vehículo se marcan con placa y modelo; también puedes asociar documentos personales a un auto.</p>
 
         <div class="client-wallet-upload">
           <h3>Subir documento</h3>
@@ -306,6 +306,12 @@
             <select class="client-wallet-input" [(ngModel)]="walletForm.category">
               @for (cat of walletCategories; track cat) {
                 <option [value]="cat">{{ cat }}</option>
+              }
+            </select>
+            <select class="client-wallet-input" [(ngModel)]="walletForm.vehicleId">
+              <option value="">Sin vehículo (documento personal)</option>
+              @for (v of vehicles(); track v.id) {
+                <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate }}</option>
               }
             </select>
             <input type="text" class="client-wallet-input" [(ngModel)]="walletForm.notes" placeholder="Notas (opcional)">
@@ -327,11 +333,25 @@
           </div>
         } @else {
           <div class="wdoc-grid">
-            @for (doc of walletDocs(); track doc.id) {
-              <article class="wdoc-card">
+            @for (doc of walletDocs(); track doc.id + doc.source) {
+              <article class="wdoc-card" [class.wdoc-card--vehicle]="doc.vehiclePlate">
 
                 <!-- Preview area -->
                 <div class="wdoc-preview">
+
+                  @if (doc.vehiclePlate) {
+                    <div class="wdoc-vehicle-chip">
+                      <svg lucideCar [size]="12" aria-hidden="true"></svg>
+                      <span class="wdoc-vehicle-chip-text">
+                        <strong>{{ walletVehicleLabel(doc) }}</strong>
+                        <em>{{ doc.vehiclePlate }}</em>
+                      </span>
+                    </div>
+                  } @else if (doc.source === 'wallet') {
+                    <div class="wdoc-vehicle-chip wdoc-vehicle-chip--personal">
+                      <span>Personal</span>
+                    </div>
+                  }
 
                   @if (isImageUrl(doc.file_url)) {
                     <img class="wdoc-img" [src]="previewFileUrl(doc.file_url)" [alt]="doc.label" loading="lazy">
@@ -375,10 +395,20 @@
                         <svg lucideDownload [size]="20" aria-hidden="true"></svg>
                       }
                     </button>
+                    @if (doc.source === 'wallet' && vehicles().length) {
+                      <button
+                        type="button"
+                        class="wdoc-action"
+                        (click)="startAssociateWalletDoc(doc)"
+                        title="Asociar a vehículo"
+                      >
+                        <svg lucideCar [size]="20" aria-hidden="true"></svg>
+                      </button>
+                    }
                     <button
                       type="button"
                       class="wdoc-action wdoc-action--danger"
-                      (click)="deleteWalletDoc(doc.id)"
+                      (click)="deleteWalletDoc(doc)"
                       title="Eliminar"
                       aria-label="Eliminar documento"
                     >
@@ -390,6 +420,20 @@
                   <div class="wdoc-label">
                     <span class="wdoc-label-text">{{ doc.label }}</span>
                   </div>
+
+                  @if (associatingWalletDocId() === doc.id) {
+                    <div class="wdoc-associate-panel" (click)="$event.stopPropagation()">
+                      <select class="client-wallet-input" [(ngModel)]="associateVehicleId">
+                        @for (v of vehicles(); track v.id) {
+                          <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate }}</option>
+                        }
+                      </select>
+                      <div class="wdoc-associate-actions">
+                        <button type="button" class="btn-copy small" (click)="associateWalletDoc(doc)">Asociar</button>
+                        <button type="button" class="btn-ghost small" (click)="cancelAssociateWalletDoc()">Cancelar</button>
+                      </div>
+                    </div>
+                  }
 
                 </div>
               </article>
@@ -454,10 +498,12 @@
             <div class="client-vehicle-card">
               <div class="client-vehicle-head">
                 <div>
-                  <strong class="client-vehicle-plate">{{ v.plate }}</strong>
                   @if (v.make || v.model || v.year) {
-                    <p class="client-vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
+                    <strong class="client-vehicle-name">{{ formatVehicleLabel(v) }}</strong>
+                  } @else {
+                    <strong class="client-vehicle-name">Mi vehículo</strong>
                   }
+                  <p class="client-vehicle-plate">{{ v.plate }}</p>
                   <div class="client-vehicle-tags">
                     @if (v.engomadoColor) {
                       <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ v.engomadoColor }}</span>

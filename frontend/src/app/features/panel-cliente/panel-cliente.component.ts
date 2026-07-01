@@ -135,7 +135,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   walletDocs = signal<any[]>([]);
   walletLoading = signal(false);
   uploadingWallet = signal(false);
-  walletForm = { label: '', category: 'Otro', notes: '' };
+  walletForm = { label: '', category: 'Otro', notes: '', vehicleId: '' };
+  associatingWalletDocId = signal<string | null>(null);
+  associateVehicleId = '';
 
   avatarUploading = signal(false);
 
@@ -231,7 +233,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.isMobileMenuOpen.set(false);
     if (tab === 'tramites' && !this.selectedDeal()) this.loadTramites(1);
     if (tab === 'historial') this.loadHistorial(1);
-    if (tab === 'billetera') this.loadWallet();
+    if (tab === 'billetera') {
+      this.loadWallet();
+      if (!this.vehicles().length) this.loadVehicles();
+    }
     if (tab === 'vehiculos') this.loadVehicles();
   }
 
@@ -539,18 +544,31 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
     upload$.subscribe({
       next: res => {
-        this.http.post<any>(`${environment.apiUrl}/client/wallet`, {
-          label: this.walletForm.label.trim(),
-          category: this.walletForm.category,
-          fileUrl: res.url,
-          notes: this.walletForm.notes.trim() || null,
-        }).subscribe({
-          next: doc => {
-            this.walletDocs.update(d => [doc, ...d]);
-            this.walletForm = { label: '', category: 'Otro', notes: '' };
+        const label = this.walletForm.label.trim();
+        const vehicleId = this.walletForm.vehicleId?.trim();
+        const save$ = vehicleId
+          ? this.http.post<CrmContactVehicleDocument>(`${environment.apiUrl}/client/vehicles/${vehicleId}/documents`, {
+              fileName: file.name,
+              fileUrl: res.url,
+              label,
+            })
+          : this.http.post<any>(`${environment.apiUrl}/client/wallet`, {
+              label,
+              category: this.walletForm.category,
+              fileUrl: res.url,
+              notes: this.walletForm.notes.trim() || null,
+            });
+
+        save$.subscribe({
+          next: () => {
+            this.walletForm = { label: '', category: 'Otro', notes: '', vehicleId: '' };
             this.uploadingWallet.set(false);
             input.value = '';
-            this.toast.success('Documento guardado en tu billetera.', 'Listo');
+            this.loadWallet();
+            this.toast.success(
+              vehicleId ? 'Documento guardado y asociado al vehículo.' : 'Documento guardado en tu billetera.',
+              'Listo',
+            );
           },
           error: () => {
             this.uploadingWallet.set(false);
@@ -567,15 +585,55 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteWalletDoc(id: string) {
-    if (!confirm('¿Eliminar este documento de tu billetera?')) return;
-    this.http.delete(`${environment.apiUrl}/client/wallet/${id}`).subscribe({
+  deleteWalletDoc(doc: { id: string; source?: string }) {
+    if (!confirm('¿Eliminar este documento?')) return;
+    const url = doc.source === 'vehicle'
+      ? `${environment.apiUrl}/client/vehicle-documents/${doc.id}`
+      : `${environment.apiUrl}/client/wallet/${doc.id}`;
+    this.http.delete(url).subscribe({
       next: () => {
-        this.walletDocs.update(d => d.filter(x => x.id !== id));
+        this.loadWallet();
         this.toast.success('Documento eliminado.', 'Listo');
       },
       error: () => this.toast.error('No se pudo eliminar.', 'Error'),
     });
+  }
+
+  startAssociateWalletDoc(doc: { id: string; source?: string }) {
+    if (doc.source === 'vehicle') return;
+    if (!this.vehicles().length) {
+      this.toast.warning('Registra un vehículo en Mis Vehículos para asociar documentos.', 'Sin vehículos');
+      return;
+    }
+    this.associatingWalletDocId.set(doc.id);
+    this.associateVehicleId = this.vehicles()[0]?.id || '';
+  }
+
+  cancelAssociateWalletDoc() {
+    this.associatingWalletDocId.set(null);
+    this.associateVehicleId = '';
+  }
+
+  associateWalletDoc(doc: { id: string }) {
+    if (!this.associateVehicleId) {
+      this.toast.warning('Selecciona un vehículo.', 'Datos incompletos');
+      return;
+    }
+    this.http.post(`${environment.apiUrl}/client/wallet/${doc.id}/associate`, {
+      vehicleId: this.associateVehicleId,
+    }).subscribe({
+      next: () => {
+        this.cancelAssociateWalletDoc();
+        this.loadWallet();
+        this.toast.success('Documento asociado al vehículo.', 'Listo');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo asociar.', 'Error'),
+    });
+  }
+
+  walletVehicleLabel(doc: { vehicleName?: string | null; vehiclePlate?: string | null }): string {
+    if (!doc.vehiclePlate) return '';
+    return doc.vehicleName ? `${doc.vehicleName}` : doc.vehiclePlate;
   }
 
   downloadingWalletId = signal<string | null>(null);

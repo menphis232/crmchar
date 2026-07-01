@@ -1473,6 +1473,94 @@ select.client-wallet-input option {
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
+.wdoc-vehicle-chip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(200, 169, 74, 0.45);
+  backdrop-filter: blur(6px);
+  color: rgba(200, 169, 74, 0.95);
+  pointer-events: none;
+}
+
+.wdoc-vehicle-chip--personal {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wdoc-vehicle-chip-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.wdoc-vehicle-chip-text strong {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wdoc-vehicle-chip-text em {
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.wdoc-card--vehicle .wdoc-preview {
+  border-color: rgba(200, 169, 74, 0.22);
+}
+
+.wdoc-associate-panel {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 44px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(10, 10, 10, 0.94);
+  border: 1px solid rgba(200, 169, 74, 0.35);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.wdoc-associate-panel .client-wallet-input {
+  width: 100%;
+  font-size: 12px;
+  padding: 8px 10px;
+}
+
+.wdoc-associate-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.wdoc-associate-actions .btn-copy,
+.wdoc-associate-actions .btn-ghost {
+  flex: 1;
+  justify-content: center;
+}
+
 /* Animación spin para loader */
 .wdoc-spin {
   animation: wdoc-rotate 0.9s linear infinite;
@@ -1572,10 +1660,21 @@ select.client-wallet-input option {
   margin-bottom: 12px;
 }
 
+.client-vehicle-name {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+}
+
 .client-vehicle-plate {
-  font-size: 16px;
-  letter-spacing: 0.06em;
-  color: var(--gold);
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fff;
 }
 
 .client-vehicle-mmy {
