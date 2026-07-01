@@ -17,7 +17,7 @@ export interface PageBuilderConfig {
 export interface User {
   id: string;
   email: string;
-  role: 'gestor' | 'concesionaria' | 'cliente' | 'admin';
+  role: 'gestor' | 'concesionaria' | 'cliente' | 'admin' | 'perito';
   name: string;
   status?: 'active' | 'pending_payment' | 'deactivated' | string;
   payment_failed_count?: number;
@@ -378,6 +378,73 @@ export interface CrmDeal {
   assignedAt?: string | null;
   closedBy?: string | null;
   closedByName?: string | null;
+
+  // Flujo perito
+  peritoId?: string | null;
+  peritoName?: string | null;
+  peritoStage?: string | null;
+  peritoPolizaStatus?: 'pendiente' | 'pagado';
+  peritoAssignedAt?: string | null;
+  peritoCompletedAt?: string | null;
+}
+
+export interface PeritoAccount {
+  id: string;
+  email: string;
+  name: string;
+  createdAt?: string;
+}
+
+export interface PeritoPerformance {
+  id: string;
+  name: string;
+  email: string;
+  totalAssigned: number;
+  completedSuccess: number;
+  inProgress: number;
+}
+
+export interface PeritoOverviewItem {
+  id: string;
+  title: string;
+  estimatedValue: number;
+  peritoId: string;
+  peritoName: string;
+  peritoStage: string;
+  peritoStageLabel: string;
+  peritoPolizaStatus: 'pendiente' | 'pagado';
+  peritoAssignedAt?: string | null;
+  peritoCompletedAt?: string | null;
+}
+
+export interface PeritoDeal {
+  id: string;
+  title: string;
+  peritoStage: string;
+  estimatedValue: number;
+  internalNotes?: string | null;
+  peritoPolizaStatus: 'pendiente' | 'pagado';
+  peritoAssignedAt?: string | null;
+  peritoCompletedAt?: string | null;
+  contactName?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PeritoDealDetail {
+  deal: PeritoDeal;
+  documents: {
+    gestor: { id: string; fileName: string; fileUrl: string; notes?: string; docKind?: string; createdAt?: string }[];
+    client: { id: string; documentType: string; fileUrl: string; status?: string; createdAt?: string }[];
+  };
+  uploads: { id: string; docType: string; fileUrl: string; fileName?: string; createdAt?: string }[];
+  notes: { id: string; note: string; createdAt?: string }[];
+  stageLabels: Record<string, string>;
+}
+
+export interface PeritoAssignOption {
+  id: string;
+  name: string;
 }
 
 export interface CrmTeamMember {

@@ -1,0 +1,83 @@
+<div class="kanban-hint kanban-hint-with-icon" [class.kanban-hint-touch]="isTouchDevice()">
+  <svg lucideLightbulb [size]="14" aria-hidden="true"></svg>
+  @if (isTouchDevice()) {
+    <span>Desliza horizontalmente para ver todas las etapas. Usa el selector <strong>Mover a etapa</strong> en cada tarjeta.</span>
+  } @else {
+    <span>Arrastra tarjetas entre columnas, usa el selector interno o haz clic para ver el detalle del trámite.</span>
+  }
+</div>
+
+<p class="kanban-scroll-hint kanban-scroll-hint-with-icon">
+  <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg>
+  Desliza para ver más etapas
+  <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+</p>
+
+<div class="kanban-board">
+  @for (stage of stageList(); track stage.id) {
+    <div
+      class="kanban-col"
+      [class.drag-over]="dragOverStage() === stage.id"
+      (dragover)="onDragOver($event, stage.id)"
+      (drop)="onDrop($event, stage.id)"
+    >
+      <div class="kanban-col-header">
+        <span class="col-title-text">{{ stage.label }}</span>
+        <span class="kanban-count">{{ dealsInStage(stage.id).length }}</span>
+      </div>
+
+      <div class="kanban-cards">
+        @for (deal of dealsInStage(stage.id); track deal.id) {
+          <div
+            class="kanban-card"
+            [attr.draggable]="!isTouchDevice()"
+            (dragstart)="onDragStart($event, deal)"
+            (dragend)="onDragEnd()"
+            (click)="onCardClick(deal)"
+            role="button"
+            tabindex="0"
+            (keydown.enter)="onCardClick(deal)"
+          >
+            <div class="kanban-card-top">
+              <strong>{{ deal.title }}</strong>
+              @if (canAdvance(deal)) {
+                <button type="button" class="kanban-next" title="Avanzar etapa" (click)="nextStage(deal, $event)">→</button>
+              }
+            </div>
+
+            @if (deal.contactName) {
+              <span class="kanban-contact">{{ deal.contactName }}</span>
+            }
+
+            @if (deal.estimatedValue) {
+              <span class="kanban-value kanban-meta-with-icon">
+                <svg lucideBanknote [size]="12" aria-hidden="true"></svg>
+                {{ deal.estimatedValue | number:'1.0-0' }} MXN
+              </span>
+            }
+
+            <span class="kanban-meta" [class.paid]="deal.peritoPolizaStatus === 'pagado'">
+              Póliza: {{ deal.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
+            </span>
+
+            @if (isTouchDevice()) {
+              <label class="kanban-stage-select-wrap">
+                <span class="kanban-select-label">Mover a etapa</span>
+                <select
+                  class="kanban-stage-select"
+                  [ngModel]="deal.peritoStage || 'tramite'"
+                  (ngModelChange)="onStageSelect(deal, $event)"
+                  (click)="$event.stopPropagation()"
+                >
+                  @for (s of stageList(); track s.id) {
+                    <option [value]="s.id">{{ s.label }}</option>
+                  }
+                </select>
+              </label>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

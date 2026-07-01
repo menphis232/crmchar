@@ -49,6 +49,7 @@ export class AuthService {
     const path = this.router.url.split('?')[0];
     if (path.startsWith('/panel/concesionaria')) return '/login/concesionaria';
     if (path.startsWith('/panel/gestor')) return '/login/gestor';
+    if (path.startsWith('/panel/perito')) return '/login/perito';
     if (path.startsWith('/panel/cliente')) return '/login/cliente';
     return '/login';
   }
@@ -75,6 +76,7 @@ export class AuthService {
     else if (role === 'concesionaria') this.router.navigate(['/panel/concesionaria']);
     else if (role === 'admin') this.router.navigate(['/panel/admin']);
     else if (role === 'cliente') this.router.navigate(['/panel/cliente']);
+    else if (role === 'perito') this.router.navigate(['/panel/perito']);
     else this.router.navigate(['/']);
   }
 

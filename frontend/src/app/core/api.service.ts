@@ -4,6 +4,7 @@ import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
   CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
+  PeritoAccount, PeritoAssignOption, PeritoDeal, PeritoDealDetail, PeritoOverviewItem, PeritoPerformance,
   MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -92,9 +93,20 @@ export class CrmService {
     return this.http.post<CrmDeal>(`${this.base}/deals`, data);
   }
   getDeal(id: string) { return this.http.get<CrmDeal>(`${this.base}/deals/${id}`); }
-  updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null }) {
+  updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null; peritoId?: string | null }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
+  getPeritos() { return this.http.get<PeritoAccount[]>(`${this.base}/peritos`); }
+  createPerito(data: { name: string; email: string; password: string }) {
+    return this.http.post<{ id: string }>(`${this.base}/peritos`, data);
+  }
+  updatePerito(id: string, data: { name?: string; password?: string }) {
+    return this.http.put<{ ok: boolean }>(`${this.base}/peritos/${id}`, data);
+  }
+  deletePerito(id: string) { return this.http.delete<{ ok: boolean }>(`${this.base}/peritos/${id}`); }
+  getPeritosForAssign() { return this.http.get<PeritoAssignOption[]>(`${this.base}/peritos/list-assign`); }
+  getPeritoPerformance() { return this.http.get<PeritoPerformance[]>(`${this.base}/peritos/performance`); }
+  getPeritoOverview() { return this.http.get<PeritoOverviewItem[]>(`${this.base}/peritos/overview`); }
   registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string }) {
     return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-payment`, data);
   }
@@ -547,6 +559,44 @@ export class BillingService {
   cancelSubscription() { return this.http.post<BillingSummary>(`${this.base}/cancel-subscription`, {}); }
   reactivateSubscription() { return this.http.post<BillingSummary>(`${this.base}/reactivate-subscription`, {}); }
   resubscribe() { return this.http.post<{ success: boolean; checkoutUrl?: string }>(`${this.base}/resubscribe`, {}); }
+}
+
+@Injectable({ providedIn: 'root' })
+export class PeritoService {
+  private base = `${environment.apiUrl}/perito`;
+  constructor(private http: HttpClient) {}
+
+  getStages() {
+    return this.http.get<{ id: string; label: string }[]>(`${this.base}/stages`);
+  }
+
+  getDeals() {
+    return this.http.get<{ stages: { id: string; label: string }[]; deals: PeritoDeal[] }>(`${this.base}/deals`);
+  }
+
+  getDeal(id: string) {
+    return this.http.get<PeritoDealDetail>(`${this.base}/deals/${id}`);
+  }
+
+  updateStage(dealId: string, stage: string) {
+    return this.http.patch<{ ok: boolean; peritoStage: string; label: string }>(`${this.base}/deals/${dealId}/stage`, { stage });
+  }
+
+  updatePolizaStatus(dealId: string, status: 'pendiente' | 'pagado') {
+    return this.http.patch<{ ok: boolean; peritoPolizaStatus: string }>(`${this.base}/deals/${dealId}/poliza-status`, { status });
+  }
+
+  addNote(dealId: string, note: string) {
+    return this.http.post<{ id: string; note: string; createdAt: string }>(`${this.base}/deals/${dealId}/notes`, { note });
+  }
+
+  addUpload(dealId: string, data: { docType: string; fileUrl: string; fileName?: string }) {
+    return this.http.post(`${this.base}/deals/${dealId}/uploads`, data);
+  }
+
+  deleteUpload(uploadId: string) {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/uploads/${uploadId}`);
+  }
 }
 
 @Injectable({ providedIn: 'root' })

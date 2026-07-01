@@ -1,0 +1,55 @@
+<div class="dash-layout theme-dark">
+  <aside class="dash-sidebar">
+    <a [href]="tvmMainSite" class="dash-logo-link">
+      <img [src]="tvmLogo" alt="TVM" class="dash-logo">
+    </a>
+    <nav class="dash-nav">
+      <button class="dash-link dash-link-with-icon active" type="button">
+        <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Mis trámites
+      </button>
+    </nav>
+    <div class="dash-sidebar-footer">
+      <app-panel-user-menu
+        [name]="auth.user()?.name || ''"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials(auth.user()?.name)"
+        [avatarUrl]="auth.user()?.avatar_url || ''"
+        [showBilling]="false"
+        (logout)="logout()"
+      />
+    </div>
+  </aside>
+
+  <main class="dash-main">
+    <header class="perito-main-header">
+      <div>
+        <h1>Panel del perito</h1>
+        <p class="card-desc">Gestiona los trámites asignados por tu gestoría.</p>
+      </div>
+    </header>
+
+    @if (loading()) {
+      <p class="card-desc">Cargando trámites…</p>
+    } @else if (!deals().length) {
+      <div class="dash-card">
+        <p class="card-desc">Aún no tienes trámites asignados. Tu gestor te asignará casos desde su panel.</p>
+      </div>
+    } @else {
+      <app-perito-kanban
+        [deals]="deals()"
+        [stages]="stages()"
+        (dealClick)="openDeal($event)"
+        (stageChange)="onStageChange($event)"
+      />
+    }
+  </main>
+</div>
+
+@if (selectedDealId(); as id) {
+  <app-perito-deal-panel
+    [dealId]="id"
+    (closed)="closeDeal()"
+    (updated)="reload()"
+  />
+}

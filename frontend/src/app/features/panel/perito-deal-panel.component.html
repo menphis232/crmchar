@@ -1,0 +1,135 @@
+<div class="perito-panel-overlay" (click)="close()">
+  <div class="perito-panel" (click)="$event.stopPropagation()">
+    <header class="perito-panel-header">
+      <h2>{{ detail()?.deal?.title || 'Trámite' }}</h2>
+      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">
+        <svg lucideX [size]="20" aria-hidden="true"></svg>
+      </button>
+    </header>
+
+    @if (loading()) {
+      <p class="perito-loading">Cargando…</p>
+    } @else {
+      @if (detail(); as data) {
+      <div class="perito-panel-body">
+        <section class="perito-section">
+          <h4>Etapa</h4>
+          <select [ngModel]="data.deal.peritoStage || 'tramite'" (ngModelChange)="changeStage($event)">
+            @for (s of stages; track s.id) {
+              <option [value]="s.id">{{ s.label }}</option>
+            }
+          </select>
+        </section>
+
+        <section class="perito-section">
+          <h4>Costo de servicio</h4>
+          <p class="perito-value">{{ data.deal.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
+        </section>
+
+        <section class="perito-section">
+          <h4>Estatus póliza de pago</h4>
+          <select [ngModel]="data.deal.peritoPolizaStatus" (ngModelChange)="changePoliza($event)">
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+          </select>
+        </section>
+
+        @if (data.deal.internalNotes) {
+          <section class="perito-section">
+            <h4>Notas del gestor</h4>
+            <p class="perito-notes-gestor">{{ data.deal.internalNotes }}</p>
+          </section>
+        }
+
+        <section class="perito-section">
+          <h4>Documentos del gestor</h4>
+          @if (data.documents.gestor.length) {
+            <ul class="perito-doc-list">
+              @for (doc of data.documents.gestor; track doc.id) {
+                <li>
+                  <a [href]="doc.fileUrl" target="_blank" rel="noopener">
+                    <svg lucideExternalLink [size]="14" aria-hidden="true"></svg>
+                    {{ doc.fileName }}
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="perito-empty">Sin documentos del gestor</p>
+          }
+        </section>
+
+        <section class="perito-section">
+          <h4>Documentos del cliente</h4>
+          @if (data.documents.client.length) {
+            <ul class="perito-doc-list">
+              @for (doc of data.documents.client; track doc.id) {
+                <li>
+                  <a [href]="doc.fileUrl" target="_blank" rel="noopener">
+                    <svg lucideExternalLink [size]="14" aria-hidden="true"></svg>
+                    {{ doc.documentType }}
+                  </a>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="perito-empty">Sin documentos del cliente</p>
+          }
+        </section>
+
+        <section class="perito-section">
+          <h4>Mis archivos</h4>
+          @for (type of ['poliza_pago', 'tramite_listo', 'guia_paqueteria']; track type) {
+            <div class="perito-upload-block">
+              <div class="perito-upload-head">
+                <span>{{ uploadLabel(type) }}</span>
+                <label class="btn-copy small btn-with-icon">
+                  <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+                  {{ uploading() === type ? 'Subiendo…' : 'Subir' }}
+                  <input type="file" accept="image/*,.pdf" hidden (change)="onUpload(type, $any($event.target))" [disabled]="uploading() === type">
+                </label>
+              </div>
+              @for (u of uploadsByType(type); track u.id) {
+                <div class="perito-upload-item">
+                  @if (isImage(u.fileUrl)) {
+                    <img [src]="u.fileUrl" [alt]="u.fileName || uploadLabel(type)" class="perito-thumb">
+                  } @else {
+                    <a [href]="u.fileUrl" target="_blank" rel="noopener" class="perito-file-link">
+                      <svg lucideFileText [size]="16" aria-hidden="true"></svg>
+                      {{ u.fileName || 'Ver PDF' }}
+                    </a>
+                  }
+                  <button type="button" class="btn-ghost small" (click)="deleteUpload(u.id)">
+                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </section>
+
+        <section class="perito-section">
+          <h4>Notas</h4>
+          <div class="perito-note-form">
+            <textarea [(ngModel)]="newNote" rows="2" placeholder="Agregar nota…"></textarea>
+            <button type="button" class="btn-copy small" (click)="saveNote()" [disabled]="!newNote.trim()">Guardar nota</button>
+          </div>
+          @if (data.notes.length) {
+            <ul class="perito-notes-list">
+              @for (n of data.notes; track n.id) {
+                <li>
+                  <svg lucideStickyNote [size]="14" aria-hidden="true"></svg>
+                  <div>
+                    <p>{{ n.note }}</p>
+                    <time>{{ n.createdAt | date:'short' }}</time>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+      }
+    }
+  </div>
+</div>

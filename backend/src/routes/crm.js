@@ -32,6 +32,7 @@ import Stripe from 'stripe';
 import {
   dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
 } from '../crm/deal-access.js';
+import { PERITO_STAGE_LABELS, PERITO_SUCCESS_STAGE } from '../crm/perito-stages.js';
 
 const router = Router();
 
@@ -360,6 +361,7 @@ router.get('/deals', async (req, res) => {
              COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
              asg.name as assigned_to_name, clb.name as closed_by_name,
+             per.name as perito_name,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
@@ -367,6 +369,7 @@ router.get('/deals', async (req, res) => {
       LEFT JOIN autos a ON d.auto_id = a.id
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
+      LEFT JOIN users per ON per.id = d.perito_id
       WHERE d.user_id = ? AND d.deal_type = ?
     `;
     const params = [uid, dealType];
@@ -551,6 +554,7 @@ router.get('/deals/:id', async (req, res) => {
              COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
              asg.name as assigned_to_name, clb.name as closed_by_name,
+             per.name as perito_name,
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
@@ -558,6 +562,7 @@ router.get('/deals/:id', async (req, res) => {
       LEFT JOIN autos a ON d.auto_id = a.id
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
+      LEFT JOIN users per ON per.id = d.perito_id
       WHERE d.id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
     `, [req.params.id, uid, dealType, ...access.params]);
 
@@ -653,7 +658,7 @@ router.patch('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
     const role = req.user.role;
-    const { stage, internalNotes, estimatedValue, lostReason, assignedTo } = req.body;
+    const { stage, internalNotes, estimatedValue, lostReason, assignedTo, peritoId } = req.body;
 
     const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
@@ -728,6 +733,22 @@ router.patch('/deals/:id', async (req, res) => {
       sets.push(assigneeId ? 'assigned_at = NOW()' : 'assigned_at = NULL');
     }
 
+    if (peritoId !== undefined && role === 'gestor') {
+      if (peritoId) {
+        const perito = await get(
+          "SELECT id FROM users WHERE id = ? AND role = 'perito' AND parent_id = ?",
+          [peritoId, uid],
+        );
+        if (!perito) return res.status(400).json({ error: 'Perito no válido' });
+        sets.push('perito_id = ?', 'perito_assigned_at = NOW()', 'perito_stage = ?', 'perito_poliza_status = ?');
+        params.push(peritoId, 'tramite', 'pendiente');
+      } else {
+        sets.push('perito_id = NULL', 'perito_assigned_at = NULL', 'perito_stage = NULL',
+          'perito_poliza_status = ?', 'perito_completed_at = NULL');
+        params.push('pendiente');
+      }
+    }
+
     // Registrar qué vendedor cerró el trámite (queda como histórico de desempeño)
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     if (stage !== undefined && stage !== oldStage) {
@@ -777,10 +798,11 @@ router.patch('/deals/:id', async (req, res) => {
     }
 
     const updated = await get(`
-      SELECT d.*, asg.name as assigned_to_name, clb.name as closed_by_name
+      SELECT d.*, asg.name as assigned_to_name, clb.name as closed_by_name, per.name as perito_name
       FROM crm_deals d
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
+      LEFT JOIN users per ON per.id = d.perito_id
       WHERE d.id = ?
     `, [req.params.id]);
     res.json(dealRow(updated));
@@ -1982,6 +2004,151 @@ router.get('/team/performance', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar desempeño del equipo' });
+  }
+});
+
+// --- PERITOS (gestor titular) ---
+function gestorOwnerOnly(req, res, next) {
+  if (req.user.role !== 'gestor' || req.user.parent_id) {
+    return res.status(403).json({ error: 'Solo el titular de la gestoría puede administrar peritos' });
+  }
+  next();
+}
+
+router.get('/peritos/list-assign', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const rows = await query(
+      "SELECT id, name FROM users WHERE role = 'perito' AND parent_id = ? ORDER BY name",
+      [req.orgId],
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al listar peritos' });
+  }
+});
+
+router.get('/peritos/performance', gestorOwnerOnly, async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT u.id, u.name, u.email,
+        COUNT(d.id) AS totalAssigned,
+        SUM(CASE WHEN d.perito_stage = ? THEN 1 ELSE 0 END) AS completedSuccess,
+        SUM(CASE WHEN d.perito_id IS NOT NULL AND COALESCE(d.perito_stage, 'tramite') != ? THEN 1 ELSE 0 END) AS inProgress
+       FROM users u
+       LEFT JOIN crm_deals d ON d.perito_id = u.id AND d.user_id = ?
+       WHERE u.role = 'perito' AND u.parent_id = ?
+       GROUP BY u.id, u.name, u.email
+       ORDER BY completedSuccess DESC, u.name ASC`,
+      [PERITO_SUCCESS_STAGE, PERITO_SUCCESS_STAGE, req.user.id, req.user.id],
+    );
+    res.json(rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      email: r.email,
+      totalAssigned: Number(r.totalAssigned || 0),
+      completedSuccess: Number(r.completedSuccess || 0),
+      inProgress: Number(r.inProgress || 0),
+    })));
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar desempeño' });
+  }
+});
+
+router.get('/peritos/overview', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const rows = await query(
+      `SELECT d.id, d.title, d.estimated_value, d.perito_stage, d.perito_poliza_status,
+              d.perito_assigned_at, d.perito_completed_at, p.name AS perito_name, p.id AS perito_id
+       FROM crm_deals d
+       LEFT JOIN users p ON p.id = d.perito_id
+       WHERE d.user_id = ? AND d.deal_type = 'tramite' AND d.perito_id IS NOT NULL
+       ORDER BY d.updated_at DESC LIMIT 200`,
+      [req.orgId],
+    );
+    res.json(rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      estimatedValue: Number(r.estimated_value || 0),
+      peritoId: r.perito_id,
+      peritoName: r.perito_name,
+      peritoStage: r.perito_stage || 'tramite',
+      peritoStageLabel: PERITO_STAGE_LABELS[r.perito_stage] || PERITO_STAGE_LABELS.tramite,
+      peritoPolizaStatus: r.perito_poliza_status || 'pendiente',
+      peritoAssignedAt: r.perito_assigned_at,
+      peritoCompletedAt: r.perito_completed_at,
+    })));
+  } catch (err) {
+    res.status(500).json({ error: 'Error al cargar seguimiento de peritos' });
+  }
+});
+
+router.get('/peritos', gestorOwnerOnly, async (req, res) => {
+  try {
+    const rows = await query(
+      `SELECT id, email, name, created_at AS createdAt FROM users
+       WHERE role = 'perito' AND parent_id = ? ORDER BY name ASC`,
+      [req.user.id],
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al listar peritos' });
+  }
+});
+
+router.post('/peritos', gestorOwnerOnly, async (req, res) => {
+  try {
+    const { email, password, name } = req.body;
+    if (!email?.trim() || !password || !name?.trim()) {
+      return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
+    }
+    const exists = await get('SELECT id FROM users WHERE email = ?', [email.toLowerCase().trim()]);
+    if (exists) return res.status(409).json({ error: 'El email ya está registrado' });
+    const id = uuid();
+    const bcrypt = (await import('bcryptjs')).default;
+    await run(
+      `INSERT INTO users (id, email, password_hash, role, name, parent_id, status) VALUES (?, ?, ?, 'perito', ?, ?, 'active')`,
+      [id, email.toLowerCase().trim(), bcrypt.hashSync(password, 10), name.trim(), req.user.id],
+    );
+    res.status(201).json({ id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al crear perito' });
+  }
+});
+
+router.put('/peritos/:id', gestorOwnerOnly, async (req, res) => {
+  try {
+    const { name, password } = req.body;
+    const sets = [];
+    const params = [];
+    if (name?.trim()) { sets.push('name = ?'); params.push(name.trim()); }
+    if (password) {
+      const bcrypt = (await import('bcryptjs')).default;
+      sets.push('password_hash = ?');
+      params.push(bcrypt.hashSync(password, 10));
+    }
+    if (!sets.length) return res.json({ ok: true });
+    params.push(req.params.id, req.user.id);
+    await run(`UPDATE users SET ${sets.join(', ')} WHERE id = ? AND parent_id = ? AND role = 'perito'`, params);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar perito' });
+  }
+});
+
+router.delete('/peritos/:id', gestorOwnerOnly, async (req, res) => {
+  try {
+    await run(
+      `UPDATE crm_deals SET perito_id = NULL, perito_stage = NULL, perito_assigned_at = NULL, perito_completed_at = NULL
+       WHERE perito_id = ? AND user_id = ?`,
+      [req.params.id, req.user.id],
+    );
+    await run('DELETE FROM users WHERE id = ? AND parent_id = ? AND role = ?', [req.params.id, req.user.id, 'perito']);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al eliminar perito' });
   }
 });
 

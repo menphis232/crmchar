@@ -17,6 +17,7 @@ import { CrmClientsDirectoryComponent } from './crm-clients-directory.component'
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { CrmTeamComponent } from './crm-team.component';
+import { CrmPeritosComponent } from './crm-peritos.component';
 import { FinancesComponent } from './finances.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
@@ -49,6 +50,7 @@ import {
   LucideSquarePen,
   LucideTriangleAlert,
   LucideUsers,
+  LucideUserCheck,
   LucideWrench,
   LucideX,
   LucideGripVertical,
@@ -74,7 +76,7 @@ import {
   GESTOR_LOGO_SIZE_LABEL,
 } from '../../shared/gestor-media.constants';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'finanzas' | 'page_builder' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
 /** Constructor Web oculto hasta v2 */
 const SHOW_PAGE_BUILDER = false;
@@ -105,8 +107,8 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
+    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-gestor.component.css'],

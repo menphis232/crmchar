@@ -1,0 +1,118 @@
+<div class="dash-card team-panel perf-panel">
+  <h2 class="card-title card-title-with-icon">
+    <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
+    Trámites exitosos por perito
+  </h2>
+  <p class="card-desc">Un trámite cuenta como exitoso cuando llega a la etapa «Pago de servicio».</p>
+
+  @if (performance().length) {
+    <div class="perf-table">
+      <div class="perf-row perf-head">
+        <span class="perf-col-rank">#</span>
+        <span class="perf-col-name">Perito</span>
+        <span class="perf-col-num">Exitosos</span>
+        <span class="perf-col-num">En curso</span>
+        <span class="perf-col-num">Total</span>
+      </div>
+      @for (p of performance(); track p.id; let i = $index) {
+        <div class="perf-row" [class.perf-top]="i === 0 && p.completedSuccess > 0">
+          <span class="perf-col-rank">{{ medal(i) }}</span>
+          <span class="perf-col-name">{{ p.name }}</span>
+          <span class="perf-col-num perf-strong">{{ p.completedSuccess }}</span>
+          <span class="perf-col-num">{{ p.inProgress }}</span>
+          <span class="perf-col-num">{{ p.totalAssigned }}</span>
+        </div>
+      }
+    </div>
+  } @else {
+    <p class="perf-empty">Crea peritos y asígnales trámites para ver el ranking.</p>
+  }
+</div>
+
+<div class="dash-card team-panel">
+  <h2 class="card-title card-title-with-icon">
+    <svg lucideUserCheck [size]="20" class="card-title-icon" aria-hidden="true"></svg>
+    Peritos
+    @if (!showForm()) {
+      <button type="button" class="btn-copy small btn-with-icon" (click)="openForm()">
+        <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+        Nuevo perito
+      </button>
+    }
+  </h2>
+  <p class="card-desc">Cuentas externas con acceso solo a su tablero de trámites. No reciben correos del flujo.</p>
+
+  @if (message()) {
+    <div class="team-alert" [class.error]="message().startsWith('Error') || message().startsWith('Faltan')">{{ message() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="team-form-card">
+      <h3 class="team-form-title">{{ editingId() ? 'Editar perito' : 'Crear perito' }}</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="perito-name">Nombre</label>
+          <input id="perito-name" [(ngModel)]="form.name" placeholder="Ej. Perito García" />
+        </div>
+        <div class="form-group">
+          <label for="perito-email">Email</label>
+          <input id="perito-email" type="email" [(ngModel)]="form.email" [disabled]="!!editingId()" placeholder="perito@ejemplo.com" />
+        </div>
+        <div class="form-group">
+          <label for="perito-password">Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
+          <input id="perito-password" type="password" [(ngModel)]="form.password" placeholder="••••••••" />
+        </div>
+      </div>
+      <div class="team-form-actions">
+        <button type="button" class="btn-ghost" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="btn-copy" (click)="save()">Guardar</button>
+      </div>
+    </div>
+  }
+
+  <div class="team-list">
+    @for (p of peritos(); track p.id) {
+      <div class="team-member-card">
+        <div class="member-main">
+          <div class="member-avatar">{{ initials(p.name) }}</div>
+          <div class="member-info">
+            <h4>{{ p.name }}</h4>
+            <span>{{ p.email }}</span>
+          </div>
+        </div>
+        <div class="member-actions">
+          <button type="button" class="btn-ghost small" (click)="openForm(p)">Editar</button>
+          <button type="button" class="btn-ghost small danger" (click)="remove(p)">Eliminar</button>
+        </div>
+      </div>
+    } @empty {
+      <p class="perf-empty">No hay peritos registrados.</p>
+    }
+  </div>
+</div>
+
+@if (overview().length) {
+  <div class="dash-card team-panel">
+    <h2 class="card-title">Seguimiento de trámites con perito</h2>
+    <div class="perito-overview-table">
+      <div class="perf-row perf-head">
+        <span class="ov-col-title">Trámite</span>
+        <span class="ov-col-perito">Perito</span>
+        <span class="ov-col-stage">Etapa</span>
+        <span class="ov-col-poliza">Póliza</span>
+        <span class="ov-col-money">Costo</span>
+      </div>
+      @for (item of overview(); track item.id) {
+        <div class="perf-row">
+          <span class="ov-col-title">{{ item.title }}</span>
+          <span class="ov-col-perito">{{ item.peritoName }}</span>
+          <span class="ov-col-stage">{{ stageLabel(item.peritoStage) }}</span>
+          <span class="ov-col-poliza" [class.paid]="item.peritoPolizaStatus === 'pagado'">
+            {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
+          </span>
+          <span class="ov-col-money">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+      }
+    </div>
+  </div>
+}

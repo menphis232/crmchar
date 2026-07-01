@@ -1129,6 +1129,25 @@ async function migrate() {
       console.log('Migración v53 (chat AI auto-reply) aplicada.');
     }
 
+    const v54Path = path.join(__dirname, '..', 'sql', 'migration-v54-perito.sql');
+    if (fs.existsSync(v54Path)) {
+      const v54 = fs.readFileSync(v54Path, 'utf8');
+      const conn54 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v54.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn54.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn54.end();
+      console.log('Migración v54 (perito) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

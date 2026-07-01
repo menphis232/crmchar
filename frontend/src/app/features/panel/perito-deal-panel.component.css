@@ -1,0 +1,168 @@
+.perito-panel-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.perito-panel {
+  width: min(480px, 100%);
+  height: 100%;
+  background: #111;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.perito-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.perito-panel-header h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.perito-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 18px 32px;
+}
+
+.perito-section {
+  margin-bottom: 20px;
+}
+
+.perito-section h4 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.perito-section select,
+.perito-note-form textarea {
+  width: 100%;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.perito-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.perito-notes-gestor {
+  margin: 0;
+  white-space: pre-wrap;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.perito-doc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.perito-doc-list li {
+  margin-bottom: 6px;
+}
+
+.perito-doc-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brand-black, #c8ff00);
+}
+
+.perito-empty {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 13px;
+}
+
+.perito-upload-block {
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
+
+.perito-upload-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.perito-upload-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.perito-thumb {
+  max-width: 120px;
+  max-height: 80px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.perito-file-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+}
+
+.perito-note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.perito-notes-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.perito-notes-list li {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.perito-notes-list p {
+  margin: 0 0 4px;
+}
+
+.perito-notes-list time {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.perito-loading {
+  padding: 24px;
+  color: rgba(255, 255, 255, 0.5);
+}

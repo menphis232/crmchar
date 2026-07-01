@@ -19,7 +19,7 @@ import {
   LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
-import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle, CrmTeamMember } from '../../models';
+import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle, CrmTeamMember, PeritoAssignOption } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -940,8 +940,10 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   deal = signal<CrmDeal | null>(null);
   teamMembers = signal<CrmTeamMember[]>([]);
+  peritoMembers = signal<PeritoAssignOption[]>([]);
   isOwner = computed(() => !this.auth.user()?.parent_id);
   assignedToModel = '';
+  peritoIdModel = '';
   noteText = '';
   replyText = '';
   estimatedValue = 0;
@@ -1062,12 +1064,19 @@ export class CrmDealPanelComponent implements OnDestroy {
         error: () => {},
       });
     }
+    if (this.isOwner() && !this.isConcesionaria() && !this.peritoMembers().length) {
+      this.crmService.getPeritosForAssign().subscribe({
+        next: (p) => this.peritoMembers.set(p),
+        error: () => {},
+      });
+    }
     this.crmService.getDeal(id).subscribe(d => {
       this.deal.set(d);
       this.estimatedValue = d.estimatedValue || 0;
       this.internalNotes = d.internalNotes || '';
       this.lostReason = d.lostReason || '';
       this.assignedToModel = d.assignedTo || '';
+      this.peritoIdModel = d.peritoId || '';
 
       this.loadDocuments(id);
       this.loadMessages(id);
@@ -1607,6 +1616,24 @@ export class CrmDealPanelComponent implements OnDestroy {
       error: (e) => {
         this.assignedToModel = d.assignedTo || '';
         this.toast.error(e.error?.error || 'Error al asignar vendedor');
+      },
+    });
+  }
+
+  assignPerito(peritoId: string) {
+    const d = this.deal();
+    if (!d) return;
+    const pid = peritoId || null;
+    if ((d.peritoId || '') === (pid || '')) return;
+    this.crmService.updateDeal(d.id, { peritoId: pid }).subscribe({
+      next: () => {
+        this.loadDeal(d.id);
+        this.toast.success(pid ? 'Perito asignado' : 'Perito retirado');
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.peritoIdModel = d.peritoId || '';
+        this.toast.error(e.error?.error || 'Error al asignar perito');
       },
     });
   }

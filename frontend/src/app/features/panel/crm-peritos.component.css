@@ -1,0 +1,23 @@
+.perito-overview-table .perf-row {
+  grid-template-columns: 2fr 1.2fr 1.4fr 0.8fr 0.9fr;
+}
+
+.ov-col-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ov-col-poliza.paid {
+  color: var(--brand-black, #c8ff00);
+}
+
+.member-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.member-actions .danger {
+  color: #ff6b6b;
+}

@@ -2,11 +2,11 @@ import { get } from '../db.js';
 
 /** Bloquea acciones del panel si la suscripción del titular no está activa. */
 export async function requireActiveSubscription(req, res, next) {
-  if (!['gestor', 'concesionaria'].includes(req.user?.role)) {
+  if (!['gestor', 'concesionaria', 'perito'].includes(req.user?.role)) {
     return next();
   }
 
-  const orgId = req.user.parent_id || req.user.id;
+  const orgId = req.user.role === 'perito' ? req.user.parent_id : (req.user.parent_id || req.user.id);
   const org = await get('SELECT status FROM users WHERE id = ?', [orgId]);
 
   if (!org || org.status === 'active') {

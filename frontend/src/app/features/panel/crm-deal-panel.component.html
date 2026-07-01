@@ -209,6 +209,31 @@
           </div>
         }
 
+        @if (!isConcesionaria() && d.dealType === 'tramite') {
+          @if (isOwner()) {
+            <div class="deal-section">
+              <h4>Perito asignado</h4>
+              <select [ngModel]="peritoIdModel" (ngModelChange)="assignPerito($event)">
+                <option value="">— Sin perito —</option>
+                @for (p of peritoMembers(); track p.id) {
+                  <option [value]="p.id">{{ p.name }}</option>
+                }
+              </select>
+              @if (d.peritoStage) {
+                <p class="card-desc" style="margin-top:8px;">
+                  Etapa perito: <strong>{{ d.peritoStage }}</strong>
+                  · Póliza: <strong>{{ d.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}</strong>
+                </p>
+              }
+            </div>
+          } @else if (d.peritoName) {
+            <div class="deal-section">
+              <h4>Perito asignado</h4>
+              <p class="section-sub">{{ d.peritoName }}</p>
+            </div>
+          }
+        }
+
         <!-- VALOR ESTIMADO -->
         <div class="deal-section">
           <h4>Valor estimado (MXN)</h4>

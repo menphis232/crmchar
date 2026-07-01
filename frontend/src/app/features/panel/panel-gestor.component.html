@@ -125,6 +125,10 @@
         <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
         Mi Equipo
       </button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'peritos'" (click)="setTab('peritos'); isMobileMenuOpen.set(false)">
+        <svg lucideUserCheck [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Peritos
+      </button>
     }
     <a routerLink="/gestores" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
       <svg lucideGlobe [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
@@ -920,6 +924,10 @@
     <!-- ── EQUIPO ── -->
     @if (tab() === 'team') {
       <app-crm-team></app-crm-team>
+    }
+
+    @if (tab() === 'peritos') {
+      <app-crm-peritos></app-crm-peritos>
     }
 
     <!-- ── PAGE BUILDER ── -->

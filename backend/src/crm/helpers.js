@@ -382,6 +382,12 @@ export function dealRow(row) {
     assignedAt: row.assigned_at || null,
     closedBy: row.closed_by || null,
     closedByName: row.closed_by_name || null,
+    peritoId: row.perito_id || null,
+    peritoName: row.perito_name || null,
+    peritoStage: row.perito_stage || null,
+    peritoPolizaStatus: row.perito_poliza_status || 'pendiente',
+    peritoAssignedAt: row.perito_assigned_at || null,
+    peritoCompletedAt: row.perito_completed_at || null,
   };
 }
 

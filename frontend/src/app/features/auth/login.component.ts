@@ -17,7 +17,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   readonly tvmLogo = TVM_LOGO_URL;
 
   mode = signal<'select' | 'login' | 'register' | 'forgot'>('select');
-  role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente'>('cliente');
+  role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'perito'>('cliente');
   directRoleLogin = signal(false);
   email = '';
   password = '';
@@ -49,7 +49,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   private applyRole(role: string | null) {
-    if (role === 'concesionaria' || role === 'gestor' || role === 'cliente' || role === 'admin') {
+    if (role === 'concesionaria' || role === 'gestor' || role === 'cliente' || role === 'admin' || role === 'perito') {
       this.role.set(role);
       this.mode.set('login');
       this.directRoleLogin.set(true);

@@ -15,6 +15,7 @@ export const routes: Routes = [
   { path: 'login/gestor', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'gestor' } },
   { path: 'login/concesionaria', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'concesionaria' } },
   { path: 'login/cliente', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente' } },
+  { path: 'login/perito', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'perito' } },
   { path: 'login/admin', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'admin' } },
   { path: 'registro-pendiente', loadComponent: () => import('./features/auth/registro-pendiente.component').then(m => m.RegistroPendienteComponent) },
   { path: 'subscription/success', loadComponent: () => import('./features/auth/subscription-success.component').then(m => m.SubscriptionSuccessComponent) },
@@ -37,6 +38,11 @@ export const routes: Routes = [
     path: 'panel/cliente',
     canActivate: [authGuard, roleGuard(['cliente'])],
     loadComponent: () => import('./features/panel-cliente/panel-cliente.component').then(m => m.PanelClienteComponent),
+  },
+  {
+    path: 'panel/perito',
+    canActivate: [authGuard, roleGuard(['perito'])],
+    loadComponent: () => import('./features/panel/panel-perito.component').then(m => m.PanelPeritoComponent),
   },
   { path: '**', redirectTo: 'autos' },
 ];
