@@ -351,34 +351,35 @@
                 </a>
                 <div class="client-wallet-card-body">
                   <strong class="client-wallet-card-title">{{ doc.label }}</strong>
-                  <span class="client-wallet-cat">{{ doc.category }}</span>
-                  @if (doc.notes) {
-                    <span class="client-wallet-notes">{{ doc.notes }}</span>
-                  }
-                  <span class="client-wallet-date">{{ doc.created_at | date:'dd MMM yyyy' }}</span>
                   <div class="client-wallet-card-actions">
                     <a
                       [href]="previewFileUrl(doc.file_url)"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="btn-ghost small"
-                    >Ver</a>
+                      class="btn-ghost small wallet-action-btn"
+                      title="Ver documento"
+                    >
+                      <svg lucideEye [size]="15" aria-hidden="true"></svg>
+                      Ver
+                    </a>
                     <button
                       type="button"
-                      class="btn-copy small"
+                      class="btn-copy small wallet-action-btn"
                       (click)="downloadWalletDoc(doc)"
                       [disabled]="downloadingWalletId() === doc.id"
+                      title="Descargar"
                     >
-                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      <svg lucideDownload [size]="15" aria-hidden="true"></svg>
                       {{ downloadingWalletId() === doc.id ? '...' : 'Descargar' }}
                     </button>
                     <button
                       type="button"
-                      class="btn-ghost small client-wallet-delete"
+                      class="btn-ghost small client-wallet-delete wallet-action-btn wallet-action-btn-icon"
                       (click)="deleteWalletDoc(doc.id)"
+                      title="Eliminar"
                       aria-label="Eliminar documento"
                     >
-                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                      <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
                     </button>
                   </div>
                 </div>

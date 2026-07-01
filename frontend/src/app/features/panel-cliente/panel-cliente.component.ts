@@ -39,6 +39,7 @@ import {
   LucideUser,
   LucideReceipt,
   LucideDownload,
+  LucideEye,
   LucideWallet,
   LucidePlus,
 } from '@lucide/angular';
@@ -61,7 +62,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
-    LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload,
+    LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen,
   ],
