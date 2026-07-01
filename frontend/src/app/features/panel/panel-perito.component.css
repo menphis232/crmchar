@@ -1,8 +1,234 @@
-.perito-main-header {
-  margin-bottom: 16px;
+:host {
+  display: block;
+  min-height: 100vh;
+  width: 100%;
+  background: #000 !important;
+  --text: #ffffff;
+  --mx-white: #ffffff;
+  --muted: rgba(255, 255, 255, 0.45);
+  --bg: #000000;
+  --surface: #141414;
+  --border: rgba(255, 255, 255, 0.12);
 }
 
-.perito-main-header h1 {
-  margin: 0 0 4px;
-  font-size: 1.35rem;
+:host .dash-nav {
+  background: #000 !important;
+}
+
+.dash-container {
+  background: #000 !important;
+  flex: 1;
+  min-height: calc(100vh - var(--nav-h, 64px));
+}
+
+.dash-main {
+  background: #000 !important;
+  min-width: 0;
+}
+
+.dash-link {
+  font-family: var(--f-display) !important;
+  font-size: 13px !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+}
+
+.dash-link-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dash-link-with-icon .kanban-count {
+  margin-left: auto;
+}
+
+.dash-link-icon {
+  flex-shrink: 0;
+  opacity: 0.88;
+}
+
+.dash-link.active .dash-link-icon,
+.dash-link:hover .dash-link-icon {
+  opacity: 1;
+}
+
+.sidebar-user-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-role-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 2px;
+}
+
+.perito-page-header {
+  margin-bottom: 4px;
+}
+
+.card-title {
+  font-family: var(--f-display) !important;
+  font-size: 20px !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 400 !important;
+  color: #ffffff !important;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.card-desc {
+  font-family: var(--f-display) !important;
+  font-size: 14px !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.dash-card {
+  background: #141414 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 14px !important;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7) !important;
+  padding: 24px 26px 22px;
+  margin-bottom: 0;
+}
+
+.kanban-wrap {
+  overflow: hidden;
+  padding: 20px 18px 18px;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-board {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-hint,
+:host ::ng-deep app-perito-kanban .kanban-scroll-hint {
+  background: #161616 !important;
+  color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-col {
+  background: #181818 !important;
+  border: 1px solid rgba(255, 255, 255, 0.13) !important;
+  border-top: 3px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 12px !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-col.drag-over {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: #202020 !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-col-header {
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+:host ::ng-deep app-perito-kanban .col-title-text {
+  color: #fff !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-count {
+  background: rgba(255, 255, 255, 0.16) !important;
+  color: #fff !important;
+  border-radius: 999px !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-card {
+  background: #242424 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-left: 3px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 10px !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-card:hover {
+  border-left-color: #fff !important;
+  background: #2c2c2c !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-card-top strong,
+:host ::ng-deep app-perito-kanban .kanban-contact,
+:host ::ng-deep app-perito-kanban .kanban-value {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-meta {
+  color: rgba(255, 255, 255, 0.42) !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-meta.paid {
+  color: #c8ff00 !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-next {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #fff !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-next:hover {
+  background: #fff !important;
+  color: #000 !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-select-label {
+  color: rgba(255, 255, 255, 0.38) !important;
+}
+
+:host ::ng-deep app-perito-kanban .kanban-stage-select {
+  background-color: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  color-scheme: dark !important;
+}
+
+.perito-empty-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 32px 24px;
+  margin-bottom: 18px;
+}
+
+.perito-empty-icon {
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 4px;
+}
+
+.perito-empty-title {
+  margin: 0;
+  font-family: var(--f-display, 'Spartan', sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.perito-empty-hint {
+  margin: 0;
+  max-width: 480px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.perito-loading-card {
+  padding: 28px;
+}
+
+.perito-loading-text {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 14px;
 }

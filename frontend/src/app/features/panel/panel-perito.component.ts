@@ -28,6 +28,7 @@ export class PanelPeritoComponent implements OnInit {
   stages = signal<{ id: string; label: string }[]>([]);
   loading = signal(true);
   selectedDealId = signal<string | null>(null);
+  isMobileMenuOpen = signal(false);
 
   ngOnInit() {
     this.reload();

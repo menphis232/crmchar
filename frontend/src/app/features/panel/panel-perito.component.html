@@ -1,15 +1,32 @@
-<div class="dash-layout theme-dark">
-  <aside class="dash-sidebar">
-    <a [href]="tvmMainSite" class="dash-logo-link">
-      <img [src]="tvmLogo" alt="TVM" class="dash-logo">
-    </a>
-    <nav class="dash-nav">
-      <button class="dash-link dash-link-with-icon active" type="button">
-        <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-        Mis trámites
-      </button>
-    </nav>
-    <div class="dash-sidebar-footer">
+<nav class="dash-nav">
+  <a [href]="tvmMainSite" class="dash-logo">
+    <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+  </a>
+  <div class="dash-user">
+    <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
+      @if (!isMobileMenuOpen()) {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
+      } @else {
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      }
+    </button>
+    <div class="desktop-only">
+      <app-panel-user-menu
+        [name]="auth.user()?.name || ''"
+        [email]="auth.user()?.email || ''"
+        [initials]="initials(auth.user()?.name)"
+        [avatarUrl]="auth.user()?.avatar_url || ''"
+        [showName]="true"
+        [showBilling]="false"
+        (logout)="logout()"
+      />
+    </div>
+  </div>
+</nav>
+
+<div class="dash-container">
+  <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+    <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="auth.user()?.name || ''"
         [email]="auth.user()?.email || ''"
@@ -18,30 +35,54 @@
         [showBilling]="false"
         (logout)="logout()"
       />
+      <div class="sidebar-user-meta">
+        <strong>{{ auth.user()?.name }}</strong>
+        <div class="sidebar-role-label">Perito</div>
+      </div>
     </div>
+
+    <button class="dash-link dash-link-with-icon active" type="button" (click)="isMobileMenuOpen.set(false)">
+      <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Mis trámites
+      @if (deals().length) {
+        <span class="kanban-count">{{ deals().length }}</span>
+      }
+    </button>
   </aside>
 
   <main class="dash-main">
-    <header class="perito-main-header">
-      <div>
-        <h1>Panel del perito</h1>
-        <p class="card-desc">Gestiona los trámites asignados por tu gestoría.</p>
-      </div>
-    </header>
+    <div class="perito-page-header">
+      <h1 class="card-title">Panel del perito</h1>
+      <p class="card-desc">Gestiona los trámites que tu gestoría te asigna. Arrastra tarjetas entre etapas o haz clic para ver el detalle.</p>
+    </div>
 
     @if (loading()) {
-      <p class="card-desc">Cargando trámites…</p>
+      <div class="dash-card perito-loading-card">
+        <p class="perito-loading-text">Cargando trámites…</p>
+      </div>
     } @else if (!deals().length) {
-      <div class="dash-card">
-        <p class="card-desc">Aún no tienes trámites asignados. Tu gestor te asignará casos desde su panel.</p>
+      <div class="dash-card perito-empty-card">
+        <svg lucideClipboardList [size]="36" class="perito-empty-icon" aria-hidden="true"></svg>
+        <p class="perito-empty-title">Sin trámites asignados</p>
+        <p class="perito-empty-hint">Cuando tu gestor te asigne un trámite, aparecerá aquí en el tablero. Mientras tanto, puedes ver las etapas del flujo abajo.</p>
+      </div>
+      <div class="kanban-wrap dash-card">
+        <app-perito-kanban
+          [deals]="deals()"
+          [stages]="stages()"
+          (dealClick)="openDeal($event)"
+          (stageChange)="onStageChange($event)"
+        />
       </div>
     } @else {
-      <app-perito-kanban
-        [deals]="deals()"
-        [stages]="stages()"
-        (dealClick)="openDeal($event)"
-        (stageChange)="onStageChange($event)"
-      />
+      <div class="kanban-wrap dash-card">
+        <app-perito-kanban
+          [deals]="deals()"
+          [stages]="stages()"
+          (dealClick)="openDeal($event)"
+          (stageChange)="onStageChange($event)"
+        />
+      </div>
     }
   </main>
 </div>
