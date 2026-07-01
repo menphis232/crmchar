@@ -22,9 +22,6 @@
                     <h1 class="profile-name">{{ g.name }}</h1>
                     <div class="profile-hero-actions">
                       <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location || g.state }}</div>
-                      @if (b.data.buttonText) {
-                        <button type="button" class="preview-btn" (click)="scrollToForm()">{{ b.data.buttonText }}</button>
-                      }
                     </div>
                   </div>
                 </header>

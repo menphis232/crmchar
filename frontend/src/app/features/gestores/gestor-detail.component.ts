@@ -197,13 +197,6 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  scrollToForm() {
-    const el = document.getElementById('dynamic-form-section');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
-  }
-
   trackDeal() {
     if (!this.trackCode.trim()) return;
     const slug = this.route.snapshot.paramMap.get('slug')!;
