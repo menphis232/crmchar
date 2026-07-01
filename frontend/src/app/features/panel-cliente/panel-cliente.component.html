@@ -656,15 +656,24 @@
             </div>
           }
 
-          @if (!vehicles().length) {
+          @if (!vehicles().length && !showAddVehicleForm()) {
             <div class="client-empty" style="margin-bottom:16px;">
               <p>Aún no tienes vehículos registrados.</p>
             </div>
           }
 
-          <div class="client-vehicle-card client-vehicle-add">
-            <h3>Agregar vehículo</h3>
-            <div class="client-vehicle-form">
+          @if (!showAddVehicleForm()) {
+            <button type="button" class="btn-copy client-vehicle-add-btn" (click)="openAddVehicleForm()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agregar vehículo
+            </button>
+          } @else {
+            <div class="client-vehicle-card client-vehicle-add">
+              <div class="client-vehicle-add-head">
+                <h3>Agregar vehículo</h3>
+                <button type="button" class="btn-ghost small" (click)="cancelAddVehicleForm()">Cancelar</button>
+              </div>
+              <div class="client-vehicle-form">
               <app-vehicle-mmy-select
                 class="client-vehicle-form-mmy"
                 [(make)]="newMake"
@@ -709,9 +718,10 @@
             </div>
             <button type="button" class="btn-copy client-vehicle-add-btn" (click)="addVehicle()" [disabled]="isAddingVehicle()">
               <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-              {{ isAddingVehicle() ? 'Agregando...' : 'Agregar vehículo' }}
+              {{ isAddingVehicle() ? 'Agregando...' : 'Guardar vehículo' }}
             </button>
           </div>
+          }
         }
       </div>
     }

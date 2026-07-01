@@ -1648,8 +1648,16 @@ select.client-wallet-input option {
 }
 
 .client-vehicle-add h3 {
-  margin: 0 0 12px;
+  margin: 0;
   font-size: 14px;
+}
+
+.client-vehicle-add-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .client-vehicle-head {

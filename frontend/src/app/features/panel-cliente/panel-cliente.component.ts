@@ -143,6 +143,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   vehicles = signal<CrmContactVehicle[]>([]);
   vehiclesLoading = signal(false);
+  showAddVehicleForm = signal(false);
   isAddingVehicle = signal(false);
   newPlate = '';
   newMake = '';
@@ -276,14 +277,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
-        this.newPlate = '';
-        this.newMake = '';
-        this.newModel = '';
-        this.newYear = null;
-        this.newVehicleState = '';
-        this.newEngomado = '';
-        this.newInsuranceExpiry = '';
-        this.newTenencia = '';
+        this.resetNewVehicleForm();
+        this.showAddVehicleForm.set(false);
         this.loadVehicles();
         this.toast.success('Vehículo registrado', 'Listo');
       },
@@ -292,6 +287,26 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.toast.error(e.error?.error || 'No se pudo agregar el vehículo', 'Error');
       },
     });
+  }
+
+  openAddVehicleForm() {
+    this.showAddVehicleForm.set(true);
+  }
+
+  cancelAddVehicleForm() {
+    this.showAddVehicleForm.set(false);
+    this.resetNewVehicleForm();
+  }
+
+  private resetNewVehicleForm() {
+    this.newPlate = '';
+    this.newMake = '';
+    this.newModel = '';
+    this.newYear = null;
+    this.newVehicleState = '';
+    this.newEngomado = '';
+    this.newInsuranceExpiry = '';
+    this.newTenencia = '';
   }
 
   updateClientVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
