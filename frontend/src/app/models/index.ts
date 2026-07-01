@@ -51,6 +51,8 @@ export interface User {
   panel_assistant_text_color?: string;
   panel_assistant_font?: string;
   panel_assistant_prompt?: string;
+  chat_ai_auto_reply_enabled?: boolean | number;
+  chat_ai_inactivity_minutes?: number;
   slug?: string;
   description?: string;
   phone?: string;

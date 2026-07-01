@@ -107,7 +107,40 @@ router.post('/chat', authRequired, async (req, res) => {
         ? clientDeals.map(d => `- ${d.title} | Gestoría: ${d.gestor_name || 'N/A'} | Etapa: ${d.stage} | Código: ${d.tracking_code || 'N/A'}`).join('\n')
         : '(Sin trámites registrados)';
 
-      const systemPrompt = `Eres el Asistente Virtual, asistente legal vehicular especializado en trámites y regulaciones de tránsito de México.
+      const clientUser = await get('SELECT id FROM users WHERE email = ? LIMIT 1', [req.user.email]);
+      const walletDocs = clientUser
+        ? await query('SELECT label, category FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC LIMIT 15', [clientUser.id])
+        : [];
+      const walletContext = walletDocs.length
+        ? walletDocs.map(w => `- ${w.label} (${w.category || 'Otro'})`).join('\n')
+        : '(Sin documentos en billetera)';
+
+      const vehicles = await query(
+        `SELECT cv.plate, cv.make, cv.model, cv.year, cv.state
+         FROM contact_vehicles cv
+         JOIN contacts c ON c.id = cv.contact_id
+         WHERE LOWER(c.email) = LOWER(?)
+         ORDER BY cv.updated_at DESC LIMIT 10`,
+        [req.user.email],
+      );
+      const vehiclesContext = vehicles.length
+        ? vehicles.map(v => `- ${[v.make, v.model, v.year].filter(Boolean).join(' ')} | Placa: ${v.plate}${v.state ? ` | ${v.state}` : ''}`).join('\n')
+        : '(Sin vehículos registrados)';
+
+      const invoices = await query(
+        `SELECT i.invoice_number, i.amount, d.title AS deal_title
+         FROM deal_invoices i
+         JOIN crm_deals d ON d.id = i.deal_id
+         JOIN contacts c ON c.id = d.contact_id
+         WHERE LOWER(c.email) = LOWER(?)
+         ORDER BY i.created_at DESC LIMIT 10`,
+        [req.user.email],
+      );
+      const invoicesContext = invoices.length
+        ? invoices.map(i => `- ${i.invoice_number} | ${i.deal_title} | $${Number(i.amount || 0).toLocaleString('es-MX')}`).join('\n')
+        : '(Sin comprobantes)';
+
+      const systemPrompt = `Eres el Asistente Virtual del panel del cliente en Trámites Vehiculares de México.
 Tu conocimiento cubre la Ley General de Movilidad y Seguridad Vial, el Reglamento General de Tránsito, normativa de la Secretaría de Movilidad, REPUVE, verificación vehicular, tenencia, refrendo, cambio de propietario, altas y bajas de placas, placas foráneas, legalización de vehículos, adeudos vehiculares, engomado y holograma, seguros obligatorios, y regulaciones estatales de los 32 estados (Aguascalientes, Baja California, Baja California Sur, Campeche, Chiapas, Chihuahua, Ciudad de México, Coahuila, Colima, Durango, Estado de México, Guanajuato, Guerrero, Hidalgo, Jalisco, Michoacán, Morelos, Nayarit, Nuevo León, Oaxaca, Puebla, Querétaro, Quintana Roo, San Luis Potosí, Sinaloa, Sonora, Tabasco, Tamaulipas, Tlaxcala, Veracruz, Yucatán, Zacatecas).
 
 REGLAS:
@@ -118,10 +151,21 @@ REGLAS:
 - NO des asesoría legal vinculante; aclara que es orientación informativa.
 - Puedes explicar documentos requeridos, costos aproximados, tiempos de trámite y pasos generales.
 - Si preguntan por sus trámites en la plataforma, usa los datos abajo.
+- Conoces los módulos del panel: Dashboard, Mis Trámites (chat con gestoría), Historial, Billetera de documentos, Mis Comprobantes, Mis Vehículos y Ajustes.
+- Puedes orientar sobre cómo usar cada módulo del panel además de la normativa vehicular.
 - NO ejecutes acciones del sistema ni inventes datos de trámites.
 
 TRÁMITES DEL USUARIO (${clientDeals.length} total, ${activeDeals.length} activos):
 ${dealsContext}
+
+BILLETERA DE DOCUMENTOS:
+${walletContext}
+
+VEHÍCULOS REGISTRADOS:
+${vehiclesContext}
+
+COMPROBANTES DE PAGO:
+${invoicesContext}
 
 Fecha: ${new Date().toLocaleDateString('es-MX')}`;
 
@@ -269,6 +313,9 @@ Fecha: ${new Date().toLocaleDateString('es-MX')}`;
     let systemPrompt = `Eres un asistente virtual inteligente del panel de TrámitesVehicularesdeMéxico.mx.
 Eres amigable, profesional y muy útil. Ayudas a ${roleName}s a gestionar su negocio.
 Respondes SIEMPRE en español mexicano, de forma concisa y clara.
+Conoces los módulos del panel según el rol y puedes guiar paso a paso.
+${userRole === 'gestor' ? 'Módulos del gestor: Dashboard, Embudo de Trámites, Servicios, Finanzas, Contactos, Automatizaciones, Plantillas, Mi página pública, Asistente IA y configuración del perfil.' : ''}
+${userRole === 'concesionaria' ? 'Módulos de concesionaria: Dashboard, Embudo de ventas, Inventario, Finanzas, Contactos y Asistente IA.' : ''}
 Si no sabes algo específico del sistema, sugiere al usuario que contacte soporte.${customPrompt ? `\n\nINSTRUCCIONES PERSONALIZADAS DEL NEGOCIO:\n${customPrompt}` : ''}`;
 
     systemPrompt += `

@@ -54,11 +54,13 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
     { emoji: '🎉', title: '¡Listo!', speech: 'Tienes el control total. ¡Aquí estoy si necesitas ayuda!', selector: '', mood: 'happy', gesture: 'bounce' },
   ],
   cliente: [
-    { emoji: '⚖️', title: 'Asistente Virtual', speech: 'Soy tu Asistente Virtual especializado en leyes de tránsito de México. Pregúntame sobre trámites, documentos o regulaciones de cualquier estado.', selector: '', mood: 'wave', gesture: 'bounce' },
-    { emoji: '📋', title: 'Mis Trámites', speech: 'Aquí ves tus trámites activos y puedes chatear con tu gestoría.', selector: '', mood: 'happy', gesture: 'point' },
-    { emoji: '📁', title: 'Billetera', speech: 'Guarda tus documentos personales para tenerlos listos cuando los necesites.', selector: '', mood: 'excited', gesture: 'bounce' },
-    { emoji: '📜', title: 'Historial', speech: 'Consulta todos tus trámites cerrados con buscador y paginación.', selector: '', mood: 'happy', gesture: 'wiggle' },
-    { emoji: '🎉', title: '¡Listo!', speech: '¡Eso es todo! Escríbeme si tienes dudas sobre trámites vehiculares.', selector: '', mood: 'happy', gesture: 'jump' },
+    { emoji: '👋', title: '¡Bienvenido!', speech: 'Soy tu asistente del panel. Te ayudo con trámites, documentos, vehículos y normativa vehicular de México.', selector: '', mood: 'wave', gesture: 'bounce' },
+    { emoji: '📋', title: 'Mis Trámites', speech: 'Aquí ves tus trámites activos y puedes chatear con tu gestoría en tiempo real.', selector: '.dash-sidebar .dash-link:nth-of-type(3)', mood: 'happy', gesture: 'point' },
+    { emoji: '📁', title: 'Billetera', speech: 'Guarda INE, tarjeta de circulación y otros documentos. También puedes asociarlos a un vehículo.', selector: '.dash-sidebar .dash-link:nth-of-type(5)', mood: 'excited', gesture: 'bounce' },
+    { emoji: '🚗', title: 'Mis Vehículos', speech: 'Registra tus autos y sube documentos por vehículo para tener todo organizado.', selector: '.dash-sidebar .dash-link:nth-of-type(6)', mood: 'happy', gesture: 'wiggle' },
+    { emoji: '🧾', title: 'Comprobantes', speech: 'Consulta y descarga los comprobantes de pago de tus trámites.', selector: '.dash-sidebar .dash-link:nth-of-type(7)', mood: 'excited', gesture: 'point' },
+    { emoji: '📜', title: 'Historial', speech: 'Revisa trámites cerrados con buscador y paginación.', selector: '.dash-sidebar .dash-link:nth-of-type(4)', mood: 'happy', gesture: 'wiggle' },
+    { emoji: '🎉', title: '¡Listo!', speech: '¡Eso es todo! Escríbeme si tienes dudas sobre el panel o trámites vehiculares.', selector: '', mood: 'happy', gesture: 'jump' },
   ],
 };
 
@@ -81,10 +83,10 @@ const QUICK_QUESTIONS: Record<string, string[]> = {
     '¿Cómo personalizo el sitio?',
   ],
   cliente: [
-    '¿Qué documentos necesito para cambio de propietario?',
-    '¿Cuál es el costo del refrendo vehicular?',
-    '¿Qué es la verificación vehicular y cuándo la necesito?',
     '¿Cuáles son mis trámites activos?',
+    '¿Cómo uso la billetera de documentos?',
+    '¿Qué documentos necesito para cambio de propietario?',
+    '¿Cómo registro un vehículo en el panel?',
   ],
 };
 
@@ -125,6 +127,12 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     const name = this.assistantName();
     return steps.map((step, index) => {
       if (index !== 0) return step;
+      if (this.panelRole === 'cliente') {
+        return {
+          ...step,
+          speech: `¡Hola! Soy ${name}, tu asistente del panel. Te ayudo con tus trámites, documentos, vehículos y normativa vehicular.`,
+        };
+      }
       return {
         ...step,
         speech: `¡Hola! Soy ${name}, tu asistente de panel. ¡Déjame mostrarte todo lo que puedes hacer aquí!`,
@@ -191,7 +199,7 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private welcomeMessage() {
     if (this.panelRole === 'cliente') {
-      return `¡Hola! Soy ${this.assistantName()}, tu asistente legal vehicular. Pregúntame sobre leyes de tránsito, trámites vehiculares y regulaciones de cualquier estado de México.`;
+      return `¡Hola! Soy ${this.assistantName()}, tu asistente del panel. Puedo ayudarte con tus trámites, billetera, vehículos, comprobantes y dudas sobre normativa vehicular en México.`;
     }
     return `¡Hola! Soy ${this.assistantName()}. Pregúntame lo que quieras sobre el panel.`;
   }
@@ -214,7 +222,6 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private checkAndStartTour() {
     if (!this.isEnabled()) return;
-    if (this.panelRole === 'cliente') return;
     const done = localStorage.getItem(this.TOUR_KEY());
     if (!done) this.startTour();
   }
@@ -332,9 +339,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
       : 'Administrador';
 
     const context = this.panelRole === 'cliente'
-      ? `Eres ${this.assistantName()}, asistente legal vehicular especializado en leyes de tránsito de México (todos los estados).
-Responde en español mexicano, claro y accesible. Orienta sobre trámites, documentos, costos y plazos.
-Aclara que es orientación informativa, no asesoría legal vinculante.`
+      ? `Eres ${this.assistantName()}, asistente del panel del cliente en Trámites Vehiculares de México.
+Responde en español mexicano, claro y accesible. Conoces los módulos: Dashboard, Mis Trámites, Historial, Billetera, Mis Vehículos, Comprobantes y Ajustes.
+Orienta sobre trámites, documentos, uso del panel y normativa vehicular. Aclara que es orientación informativa.`
       : `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
 Responde en español mexicano, breve y amigable. Usa emojis ocasionalmente.
 Tienes acceso en tiempo real a datos del negocio: inventario, leads activos, finanzas (ingresos, gastos, balance) y perfil del usuario.

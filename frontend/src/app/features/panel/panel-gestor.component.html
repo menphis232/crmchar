@@ -841,6 +841,27 @@
 
         <hr class="divider">
 
+        <h3 class="section-sub">IA en chats con clientes</h3>
+        <p class="card-desc" style="margin-bottom:12px; font-size:12px;">
+          Si activas esta opción, la IA responderá automáticamente en el chat de cada trámite cuando un cliente escriba.
+          Si tú o tu equipo responden manualmente, la IA se detiene hasta detectar inactividad.
+        </p>
+        <label class="inline-check" style="margin-bottom:14px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" [(ngModel)]="chatAiAutoReplyEnabled">
+          La IA responde chats con clientes
+        </label>
+        @if (chatAiAutoReplyEnabled) {
+          <div class="form-group" style="max-width:220px;">
+            <label>Minutos de inactividad del gestor</label>
+            <input type="number" min="5" max="1440" [(ngModel)]="chatAiInactivityMinutes" placeholder="30">
+            <small class="card-desc" style="display:block; margin-top:4px;">
+              Tras este tiempo sin respuesta humana, la IA vuelve a contestar al cliente.
+            </small>
+          </div>
+        }
+
+        <hr class="divider">
+
         <h3 class="section-sub">Chatbot en tu página pública</h3>
         <p class="card-desc" style="margin-bottom:12px; font-size:12px;">Personaliza los colores del asistente virtual que ven tus clientes en tu ficha pública.</p>
         <app-panel-color-palette

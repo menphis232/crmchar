@@ -14,6 +14,7 @@ const router = Router();
 import { pipelineStagesForUser } from '../crm/stages.js';
 import { isDealClosed } from '../crm/deal-status.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
+import { maybeAutoReplyClientChat } from '../services/chat-auto-reply.js';
 import { vehicleRowWithVerification } from '../crm/verification-utils.js';
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
@@ -174,6 +175,12 @@ router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (
       });
     }
     emitChatMessage(req.params.id, saved);
+
+    if (deal?.user_id) {
+      setImmediate(() => {
+        maybeAutoReplyClientChat(req.params.id, deal.user_id, req.user.id).catch(() => {});
+      });
+    }
 
     res.status(201).json(saved);
   } catch (err) {

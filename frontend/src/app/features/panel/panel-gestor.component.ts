@@ -197,6 +197,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   panelAssistantTextColor = '#FFFFFF';
   panelAssistantFont = 'Spartan';
   panelAssistantPrompt = '';
+  chatAiAutoReplyEnabled = false;
+  chatAiInactivityMinutes = 30;
   gestorPhone = '';
   gestorAddress = '';
   gestorMapEmbedUrl = '';
@@ -508,6 +510,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.panelAssistantTextColor = res.user.panel_assistant_text_color || '#FFFFFF';
       this.panelAssistantFont = res.user.panel_assistant_font || 'Spartan';
       this.panelAssistantPrompt = res.user.panel_assistant_prompt || '';
+      this.chatAiAutoReplyEnabled = res.user.chat_ai_auto_reply_enabled === 1 || res.user.chat_ai_auto_reply_enabled === true;
+      this.chatAiInactivityMinutes = Number(res.user.chat_ai_inactivity_minutes) || 30;
       this.crmStages = Array.isArray(res.user.crm_stages) && res.user.crm_stages.length > 0
         ? [...res.user.crm_stages]
         : [...DEFAULT_GESTOR_STAGES];
@@ -1030,6 +1034,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       panel_assistant_text_color: this.panelAssistantTextColor,
       panel_assistant_font: this.panelAssistantFont,
       panel_assistant_prompt: this.panelAssistantPrompt || null,
+      chat_ai_auto_reply_enabled: this.chatAiAutoReplyEnabled,
+      chat_ai_inactivity_minutes: this.chatAiInactivityMinutes,
     }).subscribe({
       next: () => this.toast.success('Configuración del asistente guardada', 'Asistente IA'),
       error: () => this.toast.error('No se pudo guardar el asistente'),

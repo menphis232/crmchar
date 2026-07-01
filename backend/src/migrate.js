@@ -1110,6 +1110,25 @@ async function migrate() {
       console.log('Migración v52 (gestor phone/whatsapp sync) aplicada.');
     }
 
+    const v53Path = path.join(__dirname, '..', 'sql', 'migration-v53-chat-ai-auto-reply.sql');
+    if (fs.existsSync(v53Path)) {
+      const v53 = fs.readFileSync(v53Path, 'utf8');
+      const conn53 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v53.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn53.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn53.end();
+      console.log('Migración v53 (chat AI auto-reply) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }
