@@ -1088,22 +1088,27 @@
   border-radius: 10px;
 }
 
-.client-search-bar svg {
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-
 .client-search-bar input {
   flex: 1;
-  background: transparent;
-  border: none;
-  color: #fff;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
   font-size: 14px;
   outline: none;
+  box-shadow: none !important;
 }
 
 .client-search-bar input::placeholder {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.35) !important;
+  opacity: 1;
+}
+
+.client-search-bar svg {
+  flex-shrink: 0;
+  opacity: 0.5;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .client-pagination {
@@ -1115,8 +1120,12 @@
   padding-top: 16px;
   border-top: 1px solid var(--border);
   font-size: 13px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55) !important;
   flex-wrap: wrap;
+}
+
+.client-pagination span {
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .client-deal-code {
@@ -1145,9 +1154,10 @@
   border-left: none;
   border-right: none;
   border-top: none;
-  color: inherit;
+  color: #fff !important;
   cursor: pointer;
   transition: opacity 0.15s;
+  font-family: var(--f-ui);
 }
 
 .client-history-row:hover {
@@ -1165,9 +1175,22 @@
   min-width: 0;
 }
 
+.client-history-main strong {
+  color: #fff !important;
+  font-family: var(--f-display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
 .client-history-main span {
   font-size: 13px;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.client-history-main .client-code {
+  align-self: flex-start;
+  margin-top: 2px;
 }
 
 .client-history-side {
