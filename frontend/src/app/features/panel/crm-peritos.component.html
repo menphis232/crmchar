@@ -1,4 +1,4 @@
-<div class="dash-card team-panel perf-panel">
+<div class="dash-card">
   <h2 class="card-title card-title-with-icon">
     <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
     Trámites exitosos por perito
@@ -25,11 +25,15 @@
       }
     </div>
   } @else {
-    <p class="perf-empty">Crea peritos y asígnales trámites para ver el ranking.</p>
+    <div class="perito-empty">
+      <svg lucideTrophy [size]="28" class="perito-empty-icon" aria-hidden="true"></svg>
+      <p class="perito-empty-title">Sin datos de ranking</p>
+      <p class="perito-empty-hint">Crea peritos y asígnales trámites para ver el ranking de éxitos.</p>
+    </div>
   }
 </div>
 
-<div class="dash-card team-panel">
+<div class="dash-card">
   <h2 class="card-title card-title-with-icon">
     <svg lucideUserCheck [size]="20" class="card-title-icon" aria-hidden="true"></svg>
     Peritos
@@ -86,14 +90,21 @@
         </div>
       </div>
     } @empty {
-      <p class="perf-empty">No hay peritos registrados.</p>
+      @if (!showForm()) {
+        <div class="perito-empty">
+          <svg lucideUserCheck [size]="28" class="perito-empty-icon" aria-hidden="true"></svg>
+          <p class="perito-empty-title">No hay peritos registrados</p>
+          <p class="perito-empty-hint">Crea el primero con el botón «Nuevo perito» para asignarle trámites.</p>
+        </div>
+      }
     }
   </div>
 </div>
 
 @if (overview().length) {
-  <div class="dash-card team-panel">
+  <div class="dash-card">
     <h2 class="card-title">Seguimiento de trámites con perito</h2>
+    <p class="card-desc">Estado actual de los trámites asignados a peritos.</p>
     <div class="perito-overview-table">
       <div class="perf-row perf-head">
         <span class="ov-col-title">Trámite</span>
