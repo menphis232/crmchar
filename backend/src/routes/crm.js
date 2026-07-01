@@ -29,8 +29,24 @@ import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payme
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
+import {
+  dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
+} from '../crm/deal-access.js';
 
 const router = Router();
+
+async function loadDealForRequest(req, dealId, { dealType = null, select = '*' } = {}) {
+  const access = dealAccessFilter(req.user);
+  let sql = `SELECT ${select} FROM crm_deals WHERE id = ? AND user_id = ?`;
+  const params = [dealId, req.orgId];
+  if (dealType) {
+    sql += ' AND deal_type = ?';
+    params.push(dealType);
+  }
+  sql += access.sql;
+  params.push(...access.params);
+  return get(sql, params);
+}
 
 function crmRoles(req, res, next) {
   if (!['gestor', 'concesionaria'].includes(req.user?.role)) {
@@ -89,37 +105,43 @@ router.get('/dashboard', async (req, res) => {
 
     await ensureDefaultTemplates(uid, role);
 
+    const access = dealAccessFilter(req.user);
+    const dealParams = (extra = []) => [uid, dealType, ...extra, ...access.params];
+
     const [total, active, won, lost, stalled, pipelineValue, newThisWeek, uncontacted, tasksOverdue, tasksToday, avgResponse] = await Promise.all([
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?', [uid, dealType]),
-      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage NOT IN (?, ?)`,
-        [uid, dealType, wonStage, lostStage]),
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?', [uid, dealType, wonStage]),
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?', [uid, dealType, lostStage]),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?${access.sql}`, dealParams()),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage NOT IN (?, ?)${access.sql}`,
+        dealParams([wonStage, lostStage])),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?${access.sql}`, dealParams([wonStage])),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?${access.sql}`, dealParams([lostStage])),
       get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?
-           AND stage NOT IN (?, ?) AND stage_changed_at < DATE_SUB(NOW(), INTERVAL 2 DAY)`,
-        [uid, dealType, wonStage, lostStage]),
+           AND stage NOT IN (?, ?) AND stage_changed_at < DATE_SUB(NOW(), INTERVAL 2 DAY)${access.sql}`,
+        dealParams([wonStage, lostStage])),
       get(`SELECT COALESCE(SUM(estimated_value), 0) as v FROM crm_deals
-           WHERE user_id = ? AND deal_type = ? AND stage NOT IN (?, ?)`,
-        [uid, dealType, wonStage, lostStage]),
+           WHERE user_id = ? AND deal_type = ? AND stage NOT IN (?, ?)${access.sql}`,
+        dealParams([wonStage, lostStage])),
       get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?
-           AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)`,
-        [uid, dealType]),
+           AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)${access.sql}`,
+        dealParams()),
       get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?
-           AND stage NOT IN (?, ?) AND first_response_at IS NULL`,
-        [uid, dealType, wonStage, lostStage]),
-      get(`SELECT COUNT(*) as c FROM crm_tasks WHERE user_id = ? AND completed = 0 AND due_at < NOW()`, [uid]),
-      get(`SELECT COUNT(*) as c FROM crm_tasks WHERE user_id = ? AND completed = 0
-           AND DATE(due_at) = CURDATE()`, [uid]),
+           AND stage NOT IN (?, ?) AND first_response_at IS NULL${access.sql}`,
+        dealParams([wonStage, lostStage])),
+      get(`SELECT COUNT(*) as c FROM crm_tasks t
+           JOIN crm_deals d ON d.id = t.deal_id
+           WHERE t.user_id = ? AND t.completed = 0 AND t.due_at < NOW()${access.sql}`, [uid, ...access.params]),
+      get(`SELECT COUNT(*) as c FROM crm_tasks t
+           JOIN crm_deals d ON d.id = t.deal_id
+           WHERE t.user_id = ? AND t.completed = 0 AND DATE(t.due_at) = CURDATE()${access.sql}`, [uid, ...access.params]),
       get(`SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as h
-           FROM crm_deals WHERE user_id = ? AND deal_type = ? AND first_response_at IS NOT NULL`,
-        [uid, dealType]),
+           FROM crm_deals WHERE user_id = ? AND deal_type = ? AND first_response_at IS NOT NULL${access.sql}`,
+        dealParams()),
     ]);
 
     const byStage = {};
     for (const s of stages) byStage[s] = 0;
     const stageRows = await query(
-      'SELECT stage, COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? GROUP BY stage',
-      [uid, dealType],
+      `SELECT stage, COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?${access.sql} GROUP BY stage`,
+      dealParams(),
     );
     for (const row of stageRows) {
       byStage[row.stage] = row.c;
@@ -197,11 +219,14 @@ router.get('/ai/insights', async (req, res) => {
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     const lostStage = 'perdido';
 
+    const access = dealAccessFilter(req.user);
+    const dealParams = (extra = []) => [uid, dealType, ...extra, ...access.params];
+
     const [total, won, lost, avgResponse] = await Promise.all([
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?', [uid, dealType]),
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?', [uid, dealType, wonStage]),
-      get('SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?', [uid, dealType, lostStage]),
-      get('SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as h FROM crm_deals WHERE user_id = ? AND deal_type = ? AND first_response_at IS NOT NULL', [uid, dealType]),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ?${access.sql}`, dealParams()),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?${access.sql}`, dealParams([wonStage])),
+      get(`SELECT COUNT(*) as c FROM crm_deals WHERE user_id = ? AND deal_type = ? AND stage = ?${access.sql}`, dealParams([lostStage])),
+      get(`SELECT AVG(TIMESTAMPDIFF(HOUR, created_at, first_response_at)) as h FROM crm_deals WHERE user_id = ? AND deal_type = ? AND first_response_at IS NOT NULL${access.sql}`, dealParams()),
     ]);
 
     const totalCount = total.c || 0;
@@ -327,6 +352,7 @@ router.get('/deals', async (req, res) => {
     const { q, stage } = req.query;
 
     const { assignedTo } = req.query;
+    const access = dealAccessFilter(req.user);
     let sql = `
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
@@ -344,6 +370,9 @@ router.get('/deals', async (req, res) => {
       WHERE d.user_id = ? AND d.deal_type = ?
     `;
     const params = [uid, dealType];
+
+    sql += access.sql;
+    params.push(...access.params);
 
     if (stage) {
       sql += ' AND d.stage = ?';
@@ -409,6 +438,12 @@ router.post('/deals', async (req, res) => {
         estimatedValue,
         stage: dealStage,
       });
+      if (isConcesionariaStaff(req.user)) {
+        await run(
+          'UPDATE crm_deals SET assigned_to = ?, assigned_at = NOW() WHERE id = ? AND user_id = ?',
+          [req.user.id, dealId, uid],
+        );
+      }
     } else {
       dealId = await createManualTramiteDeal(uid, {
         clientName,
@@ -451,6 +486,7 @@ router.get('/today', async (req, res) => {
     const dealType = dealTypeForRole(role);
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     const initial = initialStageForRole(role);
+    const access = dealAccessFilter(req.user);
 
     const [overdueTasks, todayTasks, stalledDeals, uncontactedDeals] = await Promise.all([
       query(`
@@ -458,17 +494,17 @@ router.get('/today', async (req, res) => {
         FROM crm_tasks t
         JOIN crm_deals d ON d.id = t.deal_id
         JOIN contacts c ON c.id = d.contact_id
-        WHERE t.user_id = ? AND t.completed = 0 AND t.due_at < NOW()
+        WHERE t.user_id = ? AND t.completed = 0 AND t.due_at < NOW()${access.sql}
         ORDER BY t.due_at ASC LIMIT 20
-      `, [uid]),
+      `, [uid, ...access.params]),
       query(`
         SELECT t.*, d.title as deal_title, c.name as contact_name
         FROM crm_tasks t
         JOIN crm_deals d ON d.id = t.deal_id
         JOIN contacts c ON c.id = d.contact_id
-        WHERE t.user_id = ? AND t.completed = 0 AND DATE(t.due_at) = CURDATE()
+        WHERE t.user_id = ? AND t.completed = 0 AND DATE(t.due_at) = CURDATE()${access.sql}
         ORDER BY t.due_at ASC LIMIT 20
-      `, [uid]),
+      `, [uid, ...access.params]),
       query(`
         SELECT d.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
                c.whatsapp as contact_whatsapp,
@@ -476,9 +512,9 @@ router.get('/today', async (req, res) => {
         FROM crm_deals d
         JOIN contacts c ON c.id = d.contact_id
         WHERE d.user_id = ? AND d.deal_type = ? AND d.stage NOT IN (?, 'perdido')
-          AND d.stage_changed_at < DATE_SUB(NOW(), INTERVAL 2 DAY)
+          AND d.stage_changed_at < DATE_SUB(NOW(), INTERVAL 2 DAY)${access.sql}
         ORDER BY d.stage_changed_at ASC LIMIT 15
-      `, [uid, dealType, wonStage]),
+      `, [uid, dealType, wonStage, ...access.params]),
       query(`
         SELECT d.*, c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
                c.whatsapp as contact_whatsapp,
@@ -486,9 +522,9 @@ router.get('/today', async (req, res) => {
         FROM crm_deals d
         JOIN contacts c ON c.id = d.contact_id
         WHERE d.user_id = ? AND d.deal_type = ? AND d.stage NOT IN (?, 'perdido')
-          AND d.first_response_at IS NULL
+          AND d.first_response_at IS NULL${access.sql}
         ORDER BY d.created_at ASC LIMIT 15
-      `, [uid, dealType, wonStage]),
+      `, [uid, dealType, wonStage, ...access.params]),
     ]);
 
     res.json({
@@ -507,6 +543,7 @@ router.get('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
     const dealType = dealTypeForRole(req.user.role);
+    const access = dealAccessFilter(req.user);
     const row = await get(`
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
@@ -521,8 +558,8 @@ router.get('/deals/:id', async (req, res) => {
       LEFT JOIN autos a ON d.auto_id = a.id
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
-      WHERE d.id = ? AND d.user_id = ? AND d.deal_type = ?
-    `, [req.params.id, uid, dealType]);
+      WHERE d.id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
+    `, [req.params.id, uid, dealType, ...access.params]);
 
     if (!row) return res.status(404).json({ error: 'Deal no encontrado' });
 
@@ -568,12 +605,13 @@ router.post('/deals/:id/ai-reply', async (req, res) => {
       return res.status(400).json({ error: 'El administrador debe configurar el proveedor de IA y API Key globalmente.' });
     }
 
+    const access = dealAccessFilter(req.user);
     const row = await get(`
       SELECT d.title, i.message as client_message
       FROM crm_deals d
       LEFT JOIN auto_inquiries i ON d.ref_type = 'auto_inquiry' AND d.ref_id = i.id
-      WHERE d.id = ? AND d.user_id = ?
-    `, [req.params.id, uid]);
+      WHERE d.id = ? AND d.user_id = ?${access.sql}
+    `, [req.params.id, uid, ...access.params]);
 
     if (!row) return res.status(404).json({ error: 'Deal no encontrado' });
 
@@ -617,7 +655,7 @@ router.patch('/deals/:id', async (req, res) => {
     const role = req.user.role;
     const { stage, internalNotes, estimatedValue, lostReason, assignedTo } = req.body;
 
-    const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const expectedDealType = dealTypeForRole(role);
@@ -625,8 +663,10 @@ router.patch('/deals/:id', async (req, res) => {
       return res.status(404).json({ error: 'Deal no encontrado' });
     }
 
-    // Validar vendedor asignado (debe ser el dueño o parte de su equipo)
     const assigneeProvided = assignedTo !== undefined;
+    if (assigneeProvided && isConcesionariaStaff(req.user)) {
+      return res.status(403).json({ error: 'Solo el administrador puede asignar leads' });
+    }
     let assigneeId = null;
     if (assigneeProvided && assignedTo) {
       const validAssignee = await get(
@@ -756,7 +796,7 @@ router.post('/deals/:id/activities', async (req, res) => {
     const { content, activityType = 'note' } = req.body;
     if (!content?.trim()) return res.status(400).json({ error: 'Contenido requerido' });
 
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const id = uuid();
@@ -780,7 +820,7 @@ router.post('/deals/:id/reply', async (req, res) => {
     const { reply } = req.body;
     if (!reply?.trim()) return res.status(400).json({ error: 'Respuesta requerida' });
 
-    const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
     if (deal.ref_type !== 'auto_inquiry' || !deal.ref_id) {
       return res.status(400).json({ error: 'Este deal no tiene mensaje asociado' });
@@ -817,27 +857,32 @@ router.get('/contacts/:id', async (req, res) => {
     const contact = await get('SELECT * FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?', [req.params.id, uid, pipeline]);
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
+    const access = dealAccessFilter(req.user);
     const deals = await query(`
       SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
-      FROM crm_deals d WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ? ORDER BY d.updated_at DESC
-    `, [req.params.id, uid, dealType]);
+      FROM crm_deals d WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql} ORDER BY d.updated_at DESC
+    `, [req.params.id, uid, dealType, ...access.params]);
+
+    if (isConcesionariaStaff(req.user) && deals.length === 0) {
+      return res.status(404).json({ error: 'Contacto no encontrado' });
+    }
 
     const activities = await query(`
       SELECT a.id, a.activity_type as activityType, a.content, a.created_at as createdAt,
              d.title as dealTitle, d.id as dealId
       FROM crm_activities a
       JOIN crm_deals d ON d.id = a.deal_id
-      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?
+      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
       ORDER BY a.created_at DESC LIMIT 50
-    `, [req.params.id, uid, dealType]);
+    `, [req.params.id, uid, dealType, ...access.params]);
 
     const tasks = await query(`
       SELECT t.*, d.title as deal_title
       FROM crm_tasks t
       JOIN crm_deals d ON d.id = t.deal_id
-      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?
+      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
       ORDER BY t.completed ASC, t.due_at ASC
-    `, [req.params.id, uid, dealType]);
+    `, [req.params.id, uid, dealType, ...access.params]);
 
     const vehicles = await query(
       'SELECT * FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY created_at ASC',
@@ -891,6 +936,14 @@ router.get('/contacts', async (req, res) => {
 
     const where = ['c.user_id = ?', 'c.pipeline = ?'];
     const params = [uid, pipeline];
+
+    const contactAccess = contactAccessFilter(req.user, uid, dealType);
+    if (contactAccess.sql) {
+      where.push(contactAccess.sql);
+      params.push(...contactAccess.params);
+    }
+
+    const dealJoinAccess = dealAccessFilter(req.user, 'd');
 
     if (q) {
       where.push(`(
@@ -947,13 +1000,13 @@ router.get('/contacts', async (req, res) => {
         GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
         GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
-      LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?
+      LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?${dealJoinAccess.sql}
       LEFT JOIN contact_vehicles cv ON cv.contact_id = c.id
       WHERE ${whereSql}
       GROUP BY c.id
       ORDER BY c.updated_at DESC
       LIMIT ${safeLimit} OFFSET ${safeOffset}
-    `, [uid, dealType, ...params]);
+    `, [uid, dealType, ...dealJoinAccess.params, ...params]);
 
     const tramiteOptions = await query(`
       SELECT DISTINCT title
@@ -1312,14 +1365,15 @@ router.delete('/templates/:id', async (req, res) => {
 
 router.get('/tasks', async (req, res) => {
   try {
+    const access = dealAccessFilter(req.user);
     const rows = await query(`
       SELECT t.*, d.title as deal_title, c.name as contact_name
       FROM crm_tasks t
       JOIN crm_deals d ON d.id = t.deal_id
       JOIN contacts c ON c.id = d.contact_id
-      WHERE t.user_id = ? AND t.completed = 0
+      WHERE t.user_id = ? AND t.completed = 0${access.sql}
       ORDER BY t.due_at ASC
-    `, [req.orgId]);
+    `, [req.orgId, ...access.params]);
     res.json(rows.map(taskRow));
   } catch (err) {
     res.status(500).json({ error: 'Error al cargar tareas' });
@@ -1333,7 +1387,7 @@ router.post('/deals/:id/tasks', async (req, res) => {
     if (!title?.trim() || !dueAt) {
       return res.status(400).json({ error: 'Título y fecha requeridos' });
     }
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const id = uuid();
@@ -1357,6 +1411,14 @@ router.patch('/tasks/:id', async (req, res) => {
     if (dueAt !== undefined) { sets.push('due_at = ?'); params.push(dueAt); }
     if (!sets.length) return res.status(400).json({ error: 'Nada que actualizar' });
 
+    const access = dealAccessFilter(req.user);
+    const task = await get(`
+      SELECT t.id FROM crm_tasks t
+      JOIN crm_deals d ON d.id = t.deal_id
+      WHERE t.id = ? AND t.user_id = ?${access.sql}
+    `, [req.params.id, req.orgId, ...access.params]);
+    if (!task) return res.status(404).json({ error: 'Tarea no encontrada' });
+
     params.push(req.params.id, req.orgId);
     const result = await run(
       `UPDATE crm_tasks SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`,
@@ -1371,6 +1433,14 @@ router.patch('/tasks/:id', async (req, res) => {
 
 router.delete('/tasks/:id', async (req, res) => {
   try {
+    const access = dealAccessFilter(req.user);
+    const task = await get(`
+      SELECT t.id FROM crm_tasks t
+      JOIN crm_deals d ON d.id = t.deal_id
+      WHERE t.id = ? AND t.user_id = ?${access.sql}
+    `, [req.params.id, req.orgId, ...access.params]);
+    if (!task) return res.status(404).json({ error: 'Tarea no encontrada' });
+
     const result = await run('DELETE FROM crm_tasks WHERE id = ? AND user_id = ?', [req.params.id, req.orgId]);
     if (!result.affectedRows) return res.status(404).json({ error: 'Tarea no encontrada' });
     res.json({ ok: true });
@@ -1420,10 +1490,7 @@ router.put('/quote-templates', async (req, res) => {
 router.get('/deals/:id/quote-bootstrap', async (req, res) => {
   try {
     const uid = req.orgId;
-    const deal = await get(
-      'SELECT id, title, estimated_value FROM crm_deals WHERE id = ? AND user_id = ?',
-      [req.params.id, uid],
-    );
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id, title, estimated_value' });
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const templates = await getUserQuoteTemplates(uid);
@@ -1465,6 +1532,9 @@ router.get('/deals/:id/quote-bootstrap', async (req, res) => {
 router.get('/deals/:id/quotes', async (req, res) => {
   try {
     const uid = req.orgId;
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
     const rows = await query(`
       SELECT * FROM crm_quotes 
       WHERE deal_id = ? AND user_id = ? 
@@ -1544,7 +1614,7 @@ router.post('/deals/:id/quotes', async (req, res) => {
       bonusList,
     } = req.body;
     
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     await syncQuoteDealAndContact(req.params.id, uid, {
@@ -1706,6 +1776,9 @@ router.get('/quotes/:id/pdf', async (req, res) => {
 router.get('/deals/:id/documents', async (req, res) => {
   try {
     const uid = req.orgId;
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
     const rows = await query(`
       SELECT * FROM crm_documents 
       WHERE deal_id = ? AND user_id = ? 
@@ -1727,7 +1800,7 @@ router.post('/deals/:id/documents', async (req, res) => {
       return res.status(400).json({ error: 'Faltan datos del documento' });
     }
 
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const kind = docKind === 'cotizacion' ? 'cotizacion' : docKind === 'entrega' ? 'entrega' : docKind === 'envio' ? 'envio' : 'attachment';
@@ -1757,8 +1830,7 @@ router.delete('/documents/:id', async (req, res) => {
 
 router.get('/deals/:id/client-documents', async (req, res) => {
   try {
-    const uid = req.orgId;
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const rows = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
@@ -1774,7 +1846,7 @@ router.post('/deals/:id/apply-ocr', async (req, res) => {
     const uid = req.orgId;
     const { documentId } = req.body;
     
-    const deal = await get('SELECT id, internal_notes FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id, internal_notes' });
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
 
     const doc = await get('SELECT * FROM deal_documents WHERE id = ? AND deal_id = ?', [documentId, req.params.id]);
@@ -1936,7 +2008,7 @@ router.get('/payment-providers', async (req, res) => {
 router.post('/deals/:id/checkout', async (req, res) => {
   try {
     const dealId = req.params.id;
-    const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [dealId, req.orgId]);
+    const deal = await loadDealForRequest(req, dealId);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
 
     if (!deal.estimated_value || deal.estimated_value <= 0) {
@@ -1990,7 +2062,7 @@ router.post('/deals/:id/register-payment', async (req, res) => {
       return res.status(400).json({ error: 'Método de pago inválido o no configurado en Finanzas' });
     }
 
-    const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [dealId, req.orgId]);
+    const deal = await loadDealForRequest(req, dealId);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     if (deal.payment_status === 'paid') {
       return res.status(400).json({ error: 'Este trámite ya está marcado como pagado' });
@@ -2054,8 +2126,7 @@ router.get('/ai/insights/stats', async (req, res) => {
 // ─── CHAT MESSAGES (Gestor ↔ Cliente) ─────────────────────
 router.get('/deals/:id/messages', async (req, res) => {
   try {
-    const uid = req.orgId;
-    const deal = await get('SELECT id FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     const messages = await query(`
       SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
@@ -2076,12 +2147,7 @@ router.post('/deals/:id/messages', async (req, res) => {
     const uid = req.orgId;
     const { message, fileUrl } = req.body;
     if (!message && !fileUrl) return res.status(400).json({ error: 'Mensaje vacío' });
-    const deal = await get(`
-      SELECT d.id, d.title, c.user_id as client_user_id 
-      FROM crm_deals d 
-      LEFT JOIN contacts c ON c.id = d.contact_id 
-      WHERE d.id = ? AND d.user_id = ?
-    `, [req.params.id, uid]);
+    const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     const id = uuid();
     await run(`INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url) VALUES (?, ?, ?, ?, ?)`,

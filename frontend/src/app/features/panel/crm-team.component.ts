@@ -72,7 +72,7 @@ const CONCESIONARIA_MODULES = [
           }
         </div>
       } @else {
-        <p class="perf-empty">Aún no hay trámites cerrados asignados. Asigna leads a tu equipo desde cada trámite para ver el ranking.</p>
+        <p class="perf-empty">{{ isConcesionaria ? 'Aún no hay ventas cerradas asignadas. Asigna leads a tu equipo desde cada negociación para ver el ranking.' : 'Aún no hay trámites cerrados asignados. Asigna leads a tu equipo desde cada trámite para ver el ranking.' }}</p>
       }
     </div>
 
