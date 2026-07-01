@@ -326,24 +326,63 @@
             <p>Sube INE, licencia, tarjeta de circulación u otros documentos que uses frecuentemente.</p>
           </div>
         } @else {
-          <div class="client-wallet-list">
+          <div class="client-wallet-grid">
             @for (doc of walletDocs(); track doc.id) {
-              <div class="client-wallet-row">
-                <div class="client-wallet-row-main">
-                  <strong>{{ doc.label }}</strong>
+              <article class="client-wallet-card">
+                <a
+                  class="client-wallet-thumb"
+                  [href]="previewFileUrl(doc.file_url)"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  [attr.aria-label]="'Ver ' + doc.label"
+                >
+                  @if (isImageUrl(doc.file_url)) {
+                    <img [src]="previewFileUrl(doc.file_url)" [alt]="doc.label" loading="lazy">
+                  } @else if (isPdfUrl(doc.file_url)) {
+                    <div class="client-wallet-thumb-pdf">
+                      <svg lucideFileText [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg>
+                      <span>PDF</span>
+                    </div>
+                  } @else {
+                    <div class="client-wallet-thumb-file">
+                      <svg lucideFolderOpen [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg>
+                    </div>
+                  }
+                </a>
+                <div class="client-wallet-card-body">
+                  <strong class="client-wallet-card-title">{{ doc.label }}</strong>
                   <span class="client-wallet-cat">{{ doc.category }}</span>
                   @if (doc.notes) {
                     <span class="client-wallet-notes">{{ doc.notes }}</span>
                   }
                   <span class="client-wallet-date">{{ doc.created_at | date:'dd MMM yyyy' }}</span>
+                  <div class="client-wallet-card-actions">
+                    <a
+                      [href]="previewFileUrl(doc.file_url)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn-ghost small"
+                    >Ver</a>
+                    <button
+                      type="button"
+                      class="btn-copy small"
+                      (click)="downloadWalletDoc(doc)"
+                      [disabled]="downloadingWalletId() === doc.id"
+                    >
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      {{ downloadingWalletId() === doc.id ? '...' : 'Descargar' }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-ghost small client-wallet-delete"
+                      (click)="deleteWalletDoc(doc.id)"
+                      aria-label="Eliminar documento"
+                    >
+                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                    </button>
+                  </div>
                 </div>
-                <div class="client-wallet-row-actions">
-                  <a [href]="doc.file_url" target="_blank" class="btn-ghost small">Ver</a>
-                  <button type="button" class="btn-ghost small client-wallet-delete" (click)="deleteWalletDoc(doc.id)">
-                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
-                  </button>
-                </div>
-              </div>
+              </article>
             }
           </div>
         }

@@ -483,6 +483,37 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
+  downloadingWalletId = signal<string | null>(null);
+
+  downloadWalletDoc(doc: { id: string; label?: string; file_url: string }) {
+    const url = this.previewFileUrl(doc.file_url);
+    const baseName = (doc.label || 'documento').replace(/[<>:"/\\|?*]+/g, '_').trim() || 'documento';
+    const hasExt = /\.[a-z0-9]{2,5}$/i.test(baseName);
+    const ext = hasExt
+      ? ''
+      : this.isPdfUrl(doc.file_url)
+        ? '.pdf'
+        : (doc.file_url.match(/\.(jpe?g|png|webp|gif)($|\?)/i)?.[0] || '');
+
+    this.downloadingWalletId.set(doc.id);
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: blob => {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = `${baseName}${ext}`;
+        a.click();
+        URL.revokeObjectURL(blobUrl);
+        this.downloadingWalletId.set(null);
+      },
+      error: () => {
+        this.downloadingWalletId.set(null);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        this.toast.info('Se abrió el documento en una nueva pestaña.', 'Descarga');
+      },
+    });
+  }
+
   loadInvoices() {
     this.invoicesLoading.set(true);
     this.http.get<any[]>(`${environment.apiUrl}/client/invoices`).subscribe({
