@@ -67,26 +67,26 @@ const TOUR_STEPS: Record<string, TourStep[]> = {
 const QUICK_QUESTIONS: Record<string, string[]> = {
   gestor: [
     '¿Cuánto he vendido hoy?',
-    'Muéstrame mis trámites activos',
     'Crea un lead nuevo',
-    '¿Cuál es mi balance en finanzas?',
+    'Registra un ingreso de $5,000',
+    'Mueve el trámite de Juan a la etapa de pago',
   ],
   concesionaria: [
     '¿Cuántos vehículos tengo en inventario?',
-    '¿Cuánto he vendido hoy?',
-    'Registra un ingreso',
+    'Agrega un Toyota Corolla 2022',
+    'Elimina el último gasto registrado',
     'Crea un lead nuevo',
   ],
   admin: [
     '¿Cómo gestiono usuarios?',
     '¿Cómo configuro la API de IA global?',
-    '¿Cómo personalizo el sitio?',
+    'Registra un ingreso de prueba',
   ],
   cliente: [
+    'Registra mi vehículo Nissan Sentra 2020 placa ABC1234',
+    'Elimina el documento de mi INE de la billetera',
+    'Envía un mensaje a mi gestoría sobre mi trámite',
     '¿Cuáles son mis trámites activos?',
-    '¿Cómo uso la billetera de documentos?',
-    '¿Qué documentos necesito para cambio de propietario?',
-    '¿Cómo registro un vehículo en el panel?',
   ],
 };
 
@@ -199,9 +199,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private welcomeMessage() {
     if (this.panelRole === 'cliente') {
-      return `¡Hola! Soy ${this.assistantName()}, tu asistente del panel. Puedo ayudarte con tus trámites, billetera, vehículos, comprobantes y dudas sobre normativa vehicular en México.`;
+      return `¡Hola! Soy ${this.assistantName()}, tu asistente del panel. Puedo ayudarte con trámites, normativa vehicular y también registrar, actualizar o eliminar vehículos, documentos y mensajes si me lo pides.`;
     }
-    return `¡Hola! Soy ${this.assistantName()}. Pregúntame lo que quieras sobre el panel.`;
+    return `¡Hola! Soy ${this.assistantName()}. Puedo guiarte en el panel y también crear, actualizar o eliminar registros (leads, finanzas, inventario, servicios, etc.) cuando me lo indiques.`;
   }
 
   ngOnInit() {
@@ -340,12 +340,11 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
     const context = this.panelRole === 'cliente'
       ? `Eres ${this.assistantName()}, asistente del panel del cliente en Trámites Vehiculares de México.
-Responde en español mexicano, claro y accesible. Conoces los módulos: Dashboard, Mis Trámites, Historial, Billetera, Mis Vehículos, Comprobantes y Ajustes.
-Orienta sobre trámites, documentos, uso del panel y normativa vehicular. Aclara que es orientación informativa.`
+Responde en español mexicano. Puedes ejecutar acciones del panel cuando el usuario lo pida: registrar/actualizar/eliminar vehículos, eliminar documentos, enviar mensajes al chat del trámite, actualizar perfil.
+Para subir archivos nuevos a la billetera, indica que debe hacerlo en el panel. Orienta sobre normativa vehicular.`
       : `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
-Responde en español mexicano, breve y amigable. Usa emojis ocasionalmente.
-Tienes acceso en tiempo real a datos del negocio: inventario, leads activos, finanzas (ingresos, gastos, balance) y perfil del usuario.
-Puedes ejecutar acciones directamente: crear leads, registrar ingresos/gastos, agregar vehículos al inventario, actualizar el perfil, enviar correos y mensajes de chat.
+Responde en español mexicano, breve y amigable.
+Puedes crear, actualizar y eliminar registros de los módulos cuando el usuario lo pida: leads, finanzas, inventario, servicios, chats, correos y perfil.
 Si preguntan cómo hacer algo en el panel, da pasos numerados claros.`;
 
     this.http.post<{ reply: string }>(`${environment.apiUrl}/ai/chat`, {
