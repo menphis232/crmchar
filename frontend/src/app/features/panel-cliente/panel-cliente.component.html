@@ -326,62 +326,66 @@
             <p>Sube INE, licencia, tarjeta de circulación u otros documentos que uses frecuentemente.</p>
           </div>
         } @else {
-          <div class="client-wallet-grid">
+          <div class="wdoc-grid">
             @for (doc of walletDocs(); track doc.id) {
-              <article class="client-wallet-card">
-                <a
-                  class="client-wallet-thumb"
-                  [href]="previewFileUrl(doc.file_url)"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  [attr.aria-label]="'Ver ' + doc.label"
-                >
+              <article class="wdoc-card">
+
+                <!-- Preview area -->
+                <div class="wdoc-preview">
+
                   @if (isImageUrl(doc.file_url)) {
-                    <img [src]="previewFileUrl(doc.file_url)" [alt]="doc.label" loading="lazy">
+                    <img class="wdoc-img" [src]="previewFileUrl(doc.file_url)" [alt]="doc.label" loading="lazy">
                   } @else if (isPdfUrl(doc.file_url)) {
-                    <div class="client-wallet-thumb-pdf">
-                      <svg lucideFileText [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg>
-                      <span>PDF</span>
+                    <div class="wdoc-placeholder wdoc-placeholder--pdf">
+                      <svg lucideFileText [size]="48" [strokeWidth]="1.2" aria-hidden="true"></svg>
+                      <span class="wdoc-placeholder-label">PDF</span>
                     </div>
                   } @else {
-                    <div class="client-wallet-thumb-file">
-                      <svg lucideFolderOpen [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg>
+                    <div class="wdoc-placeholder wdoc-placeholder--file">
+                      <svg lucideFolderOpen [size]="48" [strokeWidth]="1.2" aria-hidden="true"></svg>
                     </div>
                   }
-                </a>
-                <div class="client-wallet-card-body">
-                  <strong class="client-wallet-card-title">{{ doc.label }}</strong>
-                  <div class="client-wallet-card-actions">
+
+                  <!-- Hover overlay with actions -->
+                  <div class="wdoc-overlay">
                     <a
                       [href]="previewFileUrl(doc.file_url)"
                       target="_blank"
                       rel="noopener noreferrer"
-                      class="btn-ghost small wallet-action-btn"
+                      class="wdoc-action"
                       title="Ver documento"
                     >
-                      <svg lucideEye [size]="15" aria-hidden="true"></svg>
-                      Ver
+                      <svg lucideEye [size]="20" aria-hidden="true"></svg>
                     </a>
                     <button
                       type="button"
-                      class="btn-copy small wallet-action-btn"
+                      class="wdoc-action wdoc-action--primary"
                       (click)="downloadWalletDoc(doc)"
                       [disabled]="downloadingWalletId() === doc.id"
                       title="Descargar"
                     >
-                      <svg lucideDownload [size]="15" aria-hidden="true"></svg>
-                      {{ downloadingWalletId() === doc.id ? '...' : 'Descargar' }}
+                      @if (downloadingWalletId() === doc.id) {
+                        <svg lucideLoader [size]="20" class="wdoc-spin" aria-hidden="true"></svg>
+                      } @else {
+                        <svg lucideDownload [size]="20" aria-hidden="true"></svg>
+                      }
                     </button>
                     <button
                       type="button"
-                      class="btn-ghost small client-wallet-delete wallet-action-btn wallet-action-btn-icon"
+                      class="wdoc-action wdoc-action--danger"
                       (click)="deleteWalletDoc(doc.id)"
                       title="Eliminar"
                       aria-label="Eliminar documento"
                     >
-                      <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
+                      <svg lucideTrash2 [size]="20" aria-hidden="true"></svg>
                     </button>
                   </div>
+
+                  <!-- Title gradient bar -->
+                  <div class="wdoc-label">
+                    <span class="wdoc-label-text">{{ doc.label }}</span>
+                  </div>
+
                 </div>
               </article>
             }

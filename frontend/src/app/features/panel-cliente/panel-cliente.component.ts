@@ -40,6 +40,7 @@ import {
   LucideReceipt,
   LucideDownload,
   LucideEye,
+  LucideLoader,
   LucideWallet,
   LucidePlus,
 } from '@lucide/angular';
@@ -64,7 +65,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
-    LucideFolderOpen,
+    LucideFolderOpen, LucideLoader,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],

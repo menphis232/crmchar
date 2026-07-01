@@ -1287,132 +1287,182 @@ select.client-wallet-input option {
   cursor: pointer;
 }
 
-.client-wallet-grid {
+/* ── Billetera: mosaico de documentos ── */
+
+.wdoc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 16px;
 }
 
-.client-wallet-card {
-  display: flex;
-  flex-direction: column;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
+.wdoc-card {
+  border-radius: 14px;
   overflow: hidden;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: transparent;
+  cursor: pointer;
 }
 
-.client-wallet-card:hover {
-  border-color: rgba(200, 169, 74, 0.45);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-}
-
-.client-wallet-thumb {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Preview container (ocupa toda la tarjeta) */
+.wdoc-preview {
+  position: relative;
   aspect-ratio: 3 / 4;
-  min-height: 220px;
-  background: rgba(0, 0, 0, 0.45);
+  border-radius: 14px;
   overflow: hidden;
-  text-decoration: none;
-  color: rgba(255, 255, 255, 0.55);
-  flex: 1 1 auto;
+  background: #0e0e0e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
-.client-wallet-thumb img {
+.wdoc-card:hover .wdoc-preview {
+  border-color: rgba(200, 169, 74, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+}
+
+/* Imagen real */
+.wdoc-img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  padding: 8px;
-  transition: transform 0.25s ease;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
 }
 
-.client-wallet-card:hover .client-wallet-thumb img {
-  transform: scale(1.02);
+.wdoc-card:hover .wdoc-img {
+  transform: scale(1.04);
 }
 
-.client-wallet-thumb-pdf,
-.client-wallet-thumb-file {
+/* Placeholder PDF / archivo genérico */
+.wdoc-placeholder {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   width: 100%;
   height: 100%;
-  color: rgba(200, 169, 74, 0.85);
 }
 
-.client-wallet-thumb-pdf span {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+.wdoc-placeholder--pdf {
+  background: linear-gradient(145deg, #1a1209, #2a1e06);
+  color: rgba(200, 169, 74, 0.9);
+}
+
+.wdoc-placeholder--file {
+  background: linear-gradient(145deg, #101520, #1a2030);
+  color: rgba(130, 160, 220, 0.8);
+}
+
+.wdoc-placeholder-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.35);
 }
 
-.client-wallet-card-body {
+/* Overlay de acciones (aparece al hover) */
+.wdoc-overlay {
+  position: absolute;
+  inset: 0;
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 10px;
-  padding: 10px 12px 12px;
-  min-width: 0;
-  flex-shrink: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.22s ease;
 }
 
-.client-wallet-card-title {
-  font-size: 14px;
-  line-height: 1.35;
+.wdoc-card:hover .wdoc-overlay {
+  opacity: 1;
+}
+
+/* Botones del overlay */
+.wdoc-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.wdoc-action:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: scale(1.1);
+}
+
+.wdoc-action--primary {
+  background: rgba(200, 169, 74, 0.85);
+  color: #000;
+}
+
+.wdoc-action--primary:hover {
+  background: rgba(220, 190, 90, 1);
+}
+
+.wdoc-action--danger {
+  background: rgba(220, 60, 60, 0.75);
+}
+
+.wdoc-action--danger:hover {
+  background: rgba(240, 80, 80, 0.95);
+}
+
+.wdoc-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Barra de título con degradado */
+.wdoc-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px 12px 12px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.wdoc-label-text {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
   color: #fff;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin: 0;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
 }
 
-.client-wallet-card-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  align-items: stretch;
-  gap: 6px;
+/* Animación spin para loader */
+.wdoc-spin {
+  animation: wdoc-rotate 0.9s linear infinite;
 }
 
-.wallet-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  min-height: 34px;
-  padding: 6px 8px;
-  font-size: 12px;
-  white-space: nowrap;
+@keyframes wdoc-rotate {
+  to { transform: rotate(360deg); }
 }
 
-.wallet-action-btn-icon {
-  width: 34px;
-  min-width: 34px;
-  padding: 6px;
-}
-
-.client-wallet-delete {
-  color: rgba(255, 100, 100, 0.85) !important;
-}
-
+/* Responsive */
 @media (max-width: 640px) {
   .client-wallet-form {
     grid-template-columns: 1fr;
   }
 
-  .client-wallet-grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
-  }
-
-  .client-wallet-thumb {
-    min-height: 180px;
+  .wdoc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
   }
 }
 
