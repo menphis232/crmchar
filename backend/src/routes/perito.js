@@ -157,11 +157,18 @@ peritoRouter.patch('/deals/:id/stage', async (req, res) => {
     const deal = await loadPeritoDeal(req.user.id, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
 
+    // La etapa «Póliza pagada» y las posteriores implican que la póliza ya se pagó;
+    // sincronizamos el estatus de póliza con la etapa para que el gestor no vea
+    // "pendiente" en el kanban cuando el perito ya avanzó más allá de ese punto.
+    const polizaPagadaIdx = PERITO_STAGES.indexOf('poliza_pagada');
+    const newStageIdx = PERITO_STAGES.indexOf(stage);
+    const polizaStatus = newStageIdx >= polizaPagadaIdx ? 'pagado' : 'pendiente';
+
     const completedAt = stage === PERITO_SUCCESS_STAGE ? new Date() : null;
     await run(
-      `UPDATE crm_deals SET perito_stage = ?, perito_completed_at = COALESCE(?, perito_completed_at), updated_at = NOW()
+      `UPDATE crm_deals SET perito_stage = ?, perito_poliza_status = ?, perito_completed_at = COALESCE(?, perito_completed_at), updated_at = NOW()
        WHERE id = ? AND perito_id = ?`,
-      [stage, completedAt, req.params.id, req.user.id],
+      [stage, polizaStatus, completedAt, req.params.id, req.user.id],
     );
 
     notifyGestorPeritoUpdate(req.user.parent_id, {
@@ -170,7 +177,7 @@ peritoRouter.patch('/deals/:id/stage', async (req, res) => {
       body: `${req.user.name || 'El perito'} movió "${deal.title}" (${deal.contact_name || 'cliente'}) a: ${PERITO_STAGE_LABELS[stage]}`,
     });
 
-    res.json({ ok: true, peritoStage: stage, label: PERITO_STAGE_LABELS[stage] });
+    res.json({ ok: true, peritoStage: stage, peritoPolizaStatus: polizaStatus, label: PERITO_STAGE_LABELS[stage] });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar etapa' });

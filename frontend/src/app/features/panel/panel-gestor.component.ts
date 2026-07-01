@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject } from '@angular/core';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -125,43 +125,46 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly gestorGalleryOutput = GESTOR_GALLERY_OUTPUT;
   private sanitizer = inject(DomSanitizer);
   private socketService = inject(SocketService);
+  private zone = inject(NgZone);
   private onCrmNotification = (payload: unknown) => {
     const notif = payload as { type?: string; ref_id?: string; title?: string; body?: string };
-    if (notif.type === 'nuevo_lead') {
-      this.loadCrmSummary();
-      if (this.tab() !== 'pipeline') {
-        this.setTab('pipeline');
-      }
-      this.crmService.getDeals({
-        q: this.searchQuery || undefined,
-        stage: this.filterStage || undefined,
-      }).subscribe(d => {
-        this.deals.set(d);
-        if (notif.ref_id) {
-          this.openDeal(notif.ref_id);
+    this.zone.run(() => {
+      if (notif.type === 'nuevo_lead') {
+        this.loadCrmSummary();
+        if (this.tab() !== 'pipeline') {
+          this.setTab('pipeline');
         }
-      });
-      return;
-    }
-    if (notif.type === 'perito_update') {
-      this.crmService.getDeals({
-        q: this.searchQuery || undefined,
-        stage: this.filterStage || undefined,
-      }).subscribe(d => this.deals.set(d));
-      return;
-    }
-    if (notif.type === 'new_message') {
-      this.loadCrmSummary();
-      if (notif.ref_id) {
+        this.crmService.getDeals({
+          q: this.searchQuery || undefined,
+          stage: this.filterStage || undefined,
+        }).subscribe(d => {
+          this.deals.set(d);
+          if (notif.ref_id) {
+            this.openDeal(notif.ref_id);
+          }
+        });
+        return;
+      }
+      if (notif.type === 'perito_update') {
         this.crmService.getDeals({
           q: this.searchQuery || undefined,
           stage: this.filterStage || undefined,
         }).subscribe(d => this.deals.set(d));
-        if (this.selectedDealId() !== notif.ref_id) {
-          this.openDeal(notif.ref_id);
+        return;
+      }
+      if (notif.type === 'new_message') {
+        this.loadCrmSummary();
+        if (notif.ref_id) {
+          this.crmService.getDeals({
+            q: this.searchQuery || undefined,
+            stage: this.filterStage || undefined,
+          }).subscribe(d => this.deals.set(d));
+          if (this.selectedDealId() !== notif.ref_id) {
+            this.openDeal(notif.ref_id);
+          }
         }
       }
-    }
+    });
   };
 
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
