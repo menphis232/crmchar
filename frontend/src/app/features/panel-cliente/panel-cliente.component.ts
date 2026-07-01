@@ -702,6 +702,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return this.sanitizer.bypassSecurityTrustResourceUrl(this.previewFileUrl(url));
   }
 
+  walletPdfPreviewUrl(url: string) {
+    const fileUrl = this.previewFileUrl(url);
+    const hash = 'toolbar=0&navpanes=0&scrollbar=0&view=FitH';
+    const previewUrl = fileUrl.includes('#') ? fileUrl : `${fileUrl}#${hash}`;
+    return this.sanitizer.bypassSecurityTrustResourceUrl(previewUrl);
+  }
+
   isPdfUrl(url: string): boolean {
     return /\.pdf($|\?)/i.test(url || '');
   }
