@@ -20,42 +20,93 @@ export const VENTA_STAGE_LABELS = {
   perdido: 'Perdido',
 };
 
+const PIPELINE_KEY = { gestor: 'tramite', concesionaria: 'venta' };
+
+export function pipelineForRole(role) {
+  return role === 'gestor' ? 'tramite' : 'venta';
+}
+
+/** Etapas guardadas para un pipeline concreto (soporta JSON anidado o array legacy). */
+export function parseCrmStagesForRole(role, userStagesJson = null) {
+  if (!userStagesJson) return null;
+
+  let parsed = userStagesJson;
+  if (typeof userStagesJson === 'string') {
+    try { parsed = JSON.parse(userStagesJson); } catch { return null; }
+  }
+
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    const key = PIPELINE_KEY[role] || 'venta';
+    const nested = parsed[key];
+    if (Array.isArray(nested) && nested.length > 0) return nested;
+    return null;
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) return null;
+
+  const ids = parsed.map((s) => s.id);
+  const tramiteHits = ids.filter((id) => TRAMITE_STAGES.includes(id)).length;
+  const ventaHits = ids.filter((id) => VENTA_STAGES.includes(id)).length;
+
+  if (role === 'gestor') {
+    if (ventaHits > tramiteHits) return null;
+    return parsed;
+  }
+  if (tramiteHits > ventaHits) return null;
+  return parsed;
+}
+
+/** Array de etapas para enviar al frontend. */
+export function crmStagesArrayForRole(role, userStagesJson = null) {
+  return parseCrmStagesForRole(role, userStagesJson);
+}
+
+/** Fusiona etapas al guardar sin pisar el embudo del otro negocio. */
+export function mergeCrmStagesForSave(existingJson, role, newStages) {
+  const key = PIPELINE_KEY[role] || 'venta';
+  let store = {};
+
+  if (existingJson) {
+    let parsed = existingJson;
+    if (typeof existingJson === 'string') {
+      try { parsed = JSON.parse(existingJson); } catch { parsed = null; }
+    }
+    if (Array.isArray(parsed)) {
+      const legacyKey = role === 'gestor' ? 'tramite' : 'venta';
+      store[legacyKey] = parsed;
+    } else if (parsed && typeof parsed === 'object') {
+      store = { ...parsed };
+    }
+  }
+
+  store[key] = newStages;
+  return store;
+}
+
 export function stagesForRole(role, userStagesJson = null) {
-  if (userStagesJson) {
-    try {
-      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
-      if (Array.isArray(stages) && stages.length > 0) {
-        return stages.map(s => s.id);
-      }
-    } catch(e) {}
+  const custom = parseCrmStagesForRole(role, userStagesJson);
+  if (custom?.length) {
+    return custom.map((s) => s.id);
   }
   return role === 'gestor' ? TRAMITE_STAGES : VENTA_STAGES;
 }
 
 export function pipelineStagesForUser(role, userStagesJson = null) {
-  if (userStagesJson) {
-    try {
-      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
-      if (Array.isArray(stages) && stages.length > 0) {
-        return stages.map(s => ({ id: s.id, label: s.label || s.id }));
-      }
-    } catch (e) { /* fall through to defaults */ }
+  const custom = parseCrmStagesForRole(role, userStagesJson);
+  if (custom?.length) {
+    return custom.map((s) => ({ id: s.id, label: s.label || s.id }));
   }
   const ids = role === 'gestor' ? TRAMITE_STAGES : VENTA_STAGES;
   const labels = role === 'gestor' ? TRAMITE_STAGE_LABELS : VENTA_STAGE_LABELS;
-  return ids.map(id => ({ id, label: labels[id] || id }));
+  return ids.map((id) => ({ id, label: labels[id] || id }));
 }
 
 export function stageLabelsForUser(role, userStagesJson = null) {
-  if (userStagesJson) {
-    try {
-      const stages = typeof userStagesJson === 'string' ? JSON.parse(userStagesJson) : userStagesJson;
-      if (Array.isArray(stages) && stages.length > 0) {
-        const map = {};
-        stages.forEach(s => map[s.id] = s.label);
-        return map;
-      }
-    } catch(e) {}
+  const custom = parseCrmStagesForRole(role, userStagesJson);
+  if (custom?.length) {
+    const map = {};
+    custom.forEach((s) => { map[s.id] = s.label; });
+    return map;
   }
   return role === 'gestor' ? TRAMITE_STAGE_LABELS : VENTA_STAGE_LABELS;
 }

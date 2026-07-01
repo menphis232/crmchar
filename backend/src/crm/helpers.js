@@ -21,27 +21,28 @@ const DEFAULT_TEMPLATES = {
   ],
 };
 
-export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio' }) {
+export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio', pipeline = 'tramite' }) {
+  const pipe = pipeline === 'venta' ? 'venta' : 'tramite';
   if (email) {
     const existing = await get(
-      'SELECT * FROM contacts WHERE user_id = ? AND email = ? LIMIT 1',
-      [userId, email.toLowerCase()],
+      'SELECT * FROM contacts WHERE user_id = ? AND email = ? AND pipeline = ? LIMIT 1',
+      [userId, email.toLowerCase(), pipe],
     );
     if (existing) return existing;
   }
   if (phone) {
     const existing = await get(
-      'SELECT * FROM contacts WHERE user_id = ? AND phone = ? LIMIT 1',
-      [userId, phone],
+      'SELECT * FROM contacts WHERE user_id = ? AND phone = ? AND pipeline = ? LIMIT 1',
+      [userId, phone, pipe],
     );
     if (existing) return existing;
   }
 
   const id = uuid();
   await run(
-    `INSERT INTO contacts (id, user_id, name, email, phone, whatsapp, source)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, userId, name, email?.toLowerCase() || null, phone || null, whatsapp || phone || null, source],
+    `INSERT INTO contacts (id, user_id, pipeline, name, email, phone, whatsapp, source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, userId, pipe, name, email?.toLowerCase() || null, phone || null, whatsapp || phone || null, source],
   );
   return get('SELECT * FROM contacts WHERE id = ?', [id]);
 }
@@ -68,6 +69,7 @@ export async function createDealFromSolicitud(solicitud, gestorUserId, extra = {
     email: solicitud.client_email || extra.clientEmail,
     phone: solicitud.client_phone || extra.clientPhone,
     source: 'directorio',
+    pipeline: 'tramite',
   });
 
   const dealId = uuid();
@@ -108,6 +110,7 @@ export async function createDealFromInquiry(inquiry, dealerUserId) {
     email: inquiry.client_email || inquiry.clientEmail,
     phone: inquiry.client_phone || inquiry.clientPhone,
     source: 'catalogo_autos',
+    pipeline: 'venta',
   });
 
   const dealId = uuid();
@@ -153,6 +156,7 @@ export async function createManualVentaDeal(dealerUserId, data) {
     email: clientEmail?.trim() || null,
     phone: clientPhone?.trim() || null,
     source: 'manual',
+    pipeline: 'venta',
   });
 
   let dealTitle = title?.trim() || '';
@@ -274,6 +278,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     email: clientEmail?.trim() || null,
     phone: clientPhone?.trim() || null,
     source: 'manual',
+    pipeline: 'tramite',
   });
 
   const solicitudId = uuid();

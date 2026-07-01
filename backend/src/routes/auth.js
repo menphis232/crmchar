@@ -17,6 +17,7 @@ import {
   STRIPE_TRIAL_DAYS,
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
+import { crmStagesArrayForRole, mergeCrmStagesForSave } from '../crm/stages.js';
 import { slugify, uniqueUserSlug, uniqueGestorSlug } from '../utils/slug.js';
 
 function getRegisterOrigin() {
@@ -284,6 +285,7 @@ router.get('/me', authRequired, async (req, res) => {
     if (user.crm_stages && typeof user.crm_stages === 'string') {
       try { user.crm_stages = JSON.parse(user.crm_stages); } catch(e){}
     }
+    user.crm_stages = crmStagesArrayForRole(user.role, user.crm_stages) || [];
 
     if (user.role === 'concesionaria' && user.parent_id) {
       const org = await get(`
@@ -312,9 +314,10 @@ router.get('/me', authRequired, async (req, res) => {
         user.page_builder_config = org.page_builder_config;
         user.pdf_settings = org.pdf_settings;
         if (org.crm_stages) {
-          user.crm_stages = typeof org.crm_stages === 'string'
+          const orgStages = typeof org.crm_stages === 'string'
             ? (() => { try { return JSON.parse(org.crm_stages); } catch { return user.crm_stages; } })()
             : org.crm_stages;
+          user.crm_stages = crmStagesArrayForRole('concesionaria', orgStages) || user.crm_stages;
         }
         if (user.pdf_settings && typeof user.pdf_settings === 'string') {
           try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}
@@ -371,7 +374,12 @@ router.patch('/me', authRequired, async (req, res) => {
     if (phone !== undefined) { sets.push('phone = ?'); params.push(phone || null); }
     if (address !== undefined) { sets.push('address = ?'); params.push(address || null); }
     if (map_embed_url !== undefined) { sets.push('map_embed_url = ?'); params.push(map_embed_url || null); }
-    if (crm_stages !== undefined) { sets.push('crm_stages = ?'); params.push(JSON.stringify(crm_stages)); }
+    if (crm_stages !== undefined) {
+      const existingRow = await get('SELECT crm_stages FROM users WHERE id = ?', [updateId]);
+      const merged = mergeCrmStagesForSave(existingRow?.crm_stages, req.user.role, crm_stages);
+      sets.push('crm_stages = ?');
+      params.push(JSON.stringify(merged));
+    }
     
     if (sets.length > 0) {
       params.push(updateId);
@@ -397,7 +405,8 @@ router.patch('/me', authRequired, async (req, res) => {
     if (user.crm_stages && typeof user.crm_stages === 'string') {
       try { user.crm_stages = JSON.parse(user.crm_stages); } catch(e){}
     }
-    
+    user.crm_stages = crmStagesArrayForRole(user.role, user.crm_stages) || [];
+
     console.log('[DEBUG] PATCH /me success, returning user');
     res.json({ user });
   } catch (err) {

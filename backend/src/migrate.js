@@ -1072,6 +1072,25 @@ async function migrate() {
       console.log('Migración v50 (deal assignment) aplicada.');
     }
 
+    const v51Path = path.join(__dirname, '..', 'sql', 'migration-v51-pipeline-separation.sql');
+    if (fs.existsSync(v51Path)) {
+      const v51 = fs.readFileSync(v51Path, 'utf8');
+      const conn51 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || '',
+        multipleStatements: true,
+      });
+      await conn51.query('USE tramites_vehiculares');
+      for (const stmt of v51.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn51.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn51.end();
+      console.log('Migración v51 (pipeline separation) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

@@ -11,6 +11,7 @@ import {
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
+  pipelineForRole, mergeCrmStagesForSave, crmStagesArrayForRole,
   stagesForRole, stageLabelsForUser,
 } from '../crm/stages.js';
 import { generateQuotePdf } from '../crm/pdf-generator.js';
@@ -505,6 +506,7 @@ router.get('/today', async (req, res) => {
 router.get('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
+    const dealType = dealTypeForRole(req.user.role);
     const row = await get(`
       SELECT d.*,
              c.name as contact_name, c.email as contact_email, c.phone as contact_phone,
@@ -519,8 +521,8 @@ router.get('/deals/:id', async (req, res) => {
       LEFT JOIN autos a ON d.auto_id = a.id
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
-      WHERE d.id = ? AND d.user_id = ?
-    `, [req.params.id, uid]);
+      WHERE d.id = ? AND d.user_id = ? AND d.deal_type = ?
+    `, [req.params.id, uid, dealType]);
 
     if (!row) return res.status(404).json({ error: 'Deal no encontrado' });
 
@@ -617,6 +619,11 @@ router.patch('/deals/:id', async (req, res) => {
 
     const deal = await get('SELECT * FROM crm_deals WHERE id = ? AND user_id = ?', [req.params.id, uid]);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    const expectedDealType = dealTypeForRole(role);
+    if (deal.deal_type !== expectedDealType) {
+      return res.status(404).json({ error: 'Deal no encontrado' });
+    }
 
     // Validar vendedor asignado (debe ser el dueño o parte de su equipo)
     const assigneeProvided = assignedTo !== undefined;
@@ -805,30 +812,32 @@ router.post('/deals/:id/reply', async (req, res) => {
 router.get('/contacts/:id', async (req, res) => {
   try {
     const uid = req.orgId;
-    const contact = await get('SELECT * FROM contacts WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const pipeline = pipelineForRole(req.user.role);
+    const dealType = dealTypeForRole(req.user.role);
+    const contact = await get('SELECT * FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?', [req.params.id, uid, pipeline]);
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
     const deals = await query(`
       SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
-      FROM crm_deals d WHERE d.contact_id = ? AND d.user_id = ? ORDER BY d.updated_at DESC
-    `, [req.params.id, uid]);
+      FROM crm_deals d WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ? ORDER BY d.updated_at DESC
+    `, [req.params.id, uid, dealType]);
 
     const activities = await query(`
       SELECT a.id, a.activity_type as activityType, a.content, a.created_at as createdAt,
              d.title as dealTitle, d.id as dealId
       FROM crm_activities a
       JOIN crm_deals d ON d.id = a.deal_id
-      WHERE d.contact_id = ? AND d.user_id = ?
+      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?
       ORDER BY a.created_at DESC LIMIT 50
-    `, [req.params.id, uid]);
+    `, [req.params.id, uid, dealType]);
 
     const tasks = await query(`
       SELECT t.*, d.title as deal_title
       FROM crm_tasks t
       JOIN crm_deals d ON d.id = t.deal_id
-      WHERE d.contact_id = ? AND d.user_id = ?
+      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?
       ORDER BY t.completed ASC, t.due_at ASC
-    `, [req.params.id, uid]);
+    `, [req.params.id, uid, dealType]);
 
     const vehicles = await query(
       'SELECT * FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY created_at ASC',
@@ -870,6 +879,8 @@ router.get('/contacts/:id', async (req, res) => {
 router.get('/contacts', async (req, res) => {
   try {
     const uid = req.orgId;
+    const pipeline = pipelineForRole(req.user.role);
+    const dealType = dealTypeForRole(req.user.role);
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(5, parseInt(req.query.limit, 10) || 20));
     const offset = (page - 1) * limit;
@@ -878,8 +889,8 @@ router.get('/contacts', async (req, res) => {
     const engomado = String(req.query.engomado || '').trim();
     const estado = String(req.query.estado || '').trim();
 
-    const where = ['c.user_id = ?'];
-    const params = [uid];
+    const where = ['c.user_id = ?', 'c.pipeline = ?'];
+    const params = [uid, pipeline];
 
     if (q) {
       where.push(`(
@@ -910,9 +921,9 @@ router.get('/contacts', async (req, res) => {
     if (tramite) {
       where.push(`EXISTS (
         SELECT 1 FROM crm_deals dt
-        WHERE dt.contact_id = c.id AND dt.user_id = ? AND dt.title = ?
+        WHERE dt.contact_id = c.id AND dt.user_id = ? AND dt.deal_type = ? AND dt.title = ?
       )`);
-      params.push(uid, tramite);
+      params.push(uid, dealType, tramite);
     }
 
     const whereSql = where.join(' AND ');
@@ -936,20 +947,20 @@ router.get('/contacts', async (req, res) => {
         GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
         GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
-      LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ?
+      LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?
       LEFT JOIN contact_vehicles cv ON cv.contact_id = c.id
       WHERE ${whereSql}
       GROUP BY c.id
       ORDER BY c.updated_at DESC
       LIMIT ${safeLimit} OFFSET ${safeOffset}
-    `, [uid, ...params]);
+    `, [uid, dealType, ...params]);
 
     const tramiteOptions = await query(`
       SELECT DISTINCT title
       FROM crm_deals
-      WHERE user_id = ? AND title IS NOT NULL AND TRIM(title) != ''
+      WHERE user_id = ? AND deal_type = ? AND title IS NOT NULL AND TRIM(title) != ''
       ORDER BY title ASC
-    `, [uid]);
+    `, [uid, dealType]);
 
     res.json({
       contacts: rows.map((r) => ({
@@ -973,6 +984,7 @@ router.get('/contacts', async (req, res) => {
 router.post('/contacts', async (req, res) => {
   try {
     const uid = req.orgId;
+    const pipeline = pipelineForRole(req.user.role);
     const { name, email, phone, whatsapp, notes, residenceState } = req.body;
 
     if (!name?.trim()) {
@@ -985,6 +997,7 @@ router.post('/contacts', async (req, res) => {
       phone: phone?.trim() || null,
       whatsapp: whatsapp?.trim() || phone?.trim() || null,
       source: 'manual',
+      pipeline,
     });
 
     await run(`
@@ -1053,6 +1066,7 @@ router.get('/engomado-colors', (_req, res) => {
 router.patch('/contacts/:id', async (req, res) => {
   try {
     const { name, email, phone, whatsapp, notes, residenceState } = req.body;
+    const pipeline = pipelineForRole(req.user.role);
     const result = await run(`
       UPDATE contacts SET
         name = COALESCE(?, name), email = COALESCE(?, email),
@@ -1060,8 +1074,8 @@ router.patch('/contacts/:id', async (req, res) => {
         notes = COALESCE(?, notes),
         residence_state = COALESCE(?, residence_state),
         updated_at = NOW()
-      WHERE id = ? AND user_id = ?
-    `, [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState, req.params.id, req.orgId]);
+      WHERE id = ? AND user_id = ? AND pipeline = ?
+    `, [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState, req.params.id, req.orgId, pipeline]);
 
     if (!result.affectedRows) return res.status(404).json({ error: 'Contacto no encontrado' });
     const row = await get('SELECT * FROM contacts WHERE id = ?', [req.params.id]);
@@ -1077,7 +1091,8 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
     const { plate, state, engomadoColor, vehicleNotes, make, model, year, insuranceExpiry, tenenciaStatus } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
 
-    const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?', [req.params.id, uid, pipeline]);
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
     const tenenciaVal = ['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null;
