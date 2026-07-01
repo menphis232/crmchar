@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucidePlus, LucideUserCheck, LucideTrophy } from '@lucide/angular';
@@ -14,6 +14,8 @@ import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
   styleUrl: './crm-peritos.component.css',
 })
 export class CrmPeritosComponent implements OnInit {
+  openDeal = output<string>();
+
   peritos = signal<PeritoAccount[]>([]);
   performance = signal<PeritoPerformance[]>([]);
   overview = signal<PeritoOverviewItem[]>([]);

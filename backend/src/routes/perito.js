@@ -9,6 +9,29 @@ import { requireActiveSubscription } from '../middleware/subscription.js';
 import {
   PERITO_STAGES, PERITO_STAGE_LABELS, isValidPeritoStage, peritoStagesForApi, PERITO_SUCCESS_STAGE,
 } from '../crm/perito-stages.js';
+import { emitUserNotification } from '../utils/socket-events.js';
+
+/** Avisa al gestor (in-app, sin correo) que un perito actualizó un trámite. */
+async function notifyGestorPeritoUpdate(gestorUserId, { dealId, title, body }) {
+  try {
+    const id = uuid();
+    await run(
+      'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, gestorUserId, 'perito_update', title, body, dealId],
+    );
+    emitUserNotification(gestorUserId, {
+      id,
+      type: 'perito_update',
+      title,
+      body,
+      ref_id: dealId,
+      is_read: 0,
+      created_at: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Error notificando actualización de perito:', err);
+  }
+}
 
 const router = Router();
 
@@ -141,6 +164,12 @@ peritoRouter.patch('/deals/:id/stage', async (req, res) => {
       [stage, completedAt, req.params.id, req.user.id],
     );
 
+    notifyGestorPeritoUpdate(req.user.parent_id, {
+      dealId: req.params.id,
+      title: 'Actualización de perito',
+      body: `${req.user.name || 'El perito'} movió "${deal.title}" (${deal.contact_name || 'cliente'}) a: ${PERITO_STAGE_LABELS[stage]}`,
+    });
+
     res.json({ ok: true, peritoStage: stage, label: PERITO_STAGE_LABELS[stage] });
   } catch (err) {
     console.error(err);
@@ -161,6 +190,13 @@ peritoRouter.patch('/deals/:id/poliza-status', async (req, res) => {
       'UPDATE crm_deals SET perito_poliza_status = ?, updated_at = NOW() WHERE id = ? AND perito_id = ?',
       [status, req.params.id, req.user.id],
     );
+
+    notifyGestorPeritoUpdate(req.user.parent_id, {
+      dealId: req.params.id,
+      title: 'Actualización de perito',
+      body: `${req.user.name || 'El perito'} marcó la póliza de "${deal.title}" (${deal.contact_name || 'cliente'}) como ${status === 'pagado' ? 'pagada' : 'pendiente'}`,
+    });
+
     res.json({ ok: true, peritoPolizaStatus: status });
   } catch (err) {
     console.error(err);

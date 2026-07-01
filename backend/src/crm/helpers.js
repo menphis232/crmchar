@@ -23,19 +23,49 @@ const DEFAULT_TEMPLATES = {
 
 export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio', pipeline = 'tramite' }) {
   const pipe = pipeline === 'venta' ? 'venta' : 'tramite';
+  let existing = null;
   if (email) {
-    const existing = await get(
+    existing = await get(
       'SELECT * FROM contacts WHERE user_id = ? AND email = ? AND pipeline = ? LIMIT 1',
       [userId, email.toLowerCase(), pipe],
     );
-    if (existing) return existing;
   }
-  if (phone) {
-    const existing = await get(
+  if (!existing && phone) {
+    existing = await get(
       'SELECT * FROM contacts WHERE user_id = ? AND phone = ? AND pipeline = ? LIMIT 1',
       [userId, phone, pipe],
     );
-    if (existing) return existing;
+  }
+
+  if (existing) {
+    // Sincroniza el contacto con los datos más recientes de esta interacción,
+    // para evitar que el CRM muestre el nombre/datos de un contacto previo
+    // distinto al que realmente escribió ahora (mismo email/teléfono reutilizado).
+    const sets = [];
+    const params = [];
+    const trimmedName = name?.trim();
+    if (trimmedName && trimmedName !== existing.name) {
+      sets.push('name = ?');
+      params.push(trimmedName);
+    }
+    if (email && !existing.email) {
+      sets.push('email = ?');
+      params.push(email.toLowerCase());
+    }
+    if (phone && !existing.phone) {
+      sets.push('phone = ?');
+      params.push(phone);
+    }
+    if ((whatsapp || phone) && !existing.whatsapp) {
+      sets.push('whatsapp = ?');
+      params.push(whatsapp || phone);
+    }
+    if (sets.length) {
+      params.push(existing.id);
+      await run(`UPDATE contacts SET ${sets.join(', ')} WHERE id = ?`, params);
+      return get('SELECT * FROM contacts WHERE id = ?', [existing.id]);
+    }
+    return existing;
   }
 
   const id = uuid();

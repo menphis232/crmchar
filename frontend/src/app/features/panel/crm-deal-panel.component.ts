@@ -35,6 +35,7 @@ import {
 } from '../../shared/quote-checklist.utils';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
+import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
 @Component({
   selector: 'app-crm-deal-panel',
@@ -995,6 +996,20 @@ export class CrmDealPanelComponent implements OnDestroy {
     });
   };
 
+  peritoStageLabel(stage: string | null | undefined): string {
+    return PERITO_STAGE_LABELS[(stage || 'tramite') as PeritoStageId] || 'Trámite';
+  }
+
+  private onPeritoUpdate = (payload: unknown) => {
+    const data = payload as { type?: string; ref_id?: string };
+    if (data.type !== 'perito_update') return;
+    this.zone.run(() => {
+      const d = this.deal();
+      if (!d || data.ref_id !== d.id) return;
+      this.loadDeal(d.id);
+    });
+  };
+
   // Chat
   messages: any[] = [];
   newMessage = '';
@@ -1045,11 +1060,14 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.socketService.on('receive_message', this.onReceiveMessage);
     this.socketService.off('deal_payment_paid', this.onDealPaymentPaid);
     this.socketService.on('deal_payment_paid', this.onDealPaymentPaid);
+    this.socketService.off('notification', this.onPeritoUpdate);
+    this.socketService.on('notification', this.onPeritoUpdate);
   }
 
   ngOnDestroy() {
     this.socketService.off('receive_message', this.onReceiveMessage);
     this.socketService.off('deal_payment_paid', this.onDealPaymentPaid);
+    this.socketService.off('notification', this.onPeritoUpdate);
     this.stopPaymentWatch();
     if (this.joinedDealId) {
       this.socketService.emit('leave_deal', this.joinedDealId);

@@ -28,8 +28,19 @@
   flex-wrap: wrap;
 }
 
-.card-title .btn-copy.small {
+.card-title .btn-copy.small,
+.card-title .btn-ghost.small {
   margin-left: auto;
+}
+
+.perf-row-clickable {
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.perf-row-clickable:hover {
+  background: rgba(200, 169, 74, 0.08);
+  border-color: rgba(200, 169, 74, 0.3);
 }
 
 .card-title-icon {

@@ -12,6 +12,7 @@ import {
 import { CrmDeal } from '../../models';
 import { CrmStageConfig, isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isPaymentStage } from '../../shared/payment-stage.utils';
 import { ToastService } from '../../core/toast.service';
+import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
 export interface KanbanStage extends CrmStageConfig {}
 
@@ -559,6 +560,10 @@ export class CrmKanbanComponent {
 
   isPaymentStageCol(stageId: string): boolean {
     return isPaymentStage(stageId, this.paymentStagesConfig());
+  }
+
+  peritoStageLabel(stage: string | null | undefined): string {
+    return PERITO_STAGE_LABELS[(stage || 'tramite') as PeritoStageId] || 'Trámite';
   }
 
   private paymentStagesConfig(): KanbanStage[] | Record<string, string> {

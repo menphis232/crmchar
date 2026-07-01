@@ -143,6 +143,13 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       });
       return;
     }
+    if (notif.type === 'perito_update') {
+      this.crmService.getDeals({
+        q: this.searchQuery || undefined,
+        stage: this.filterStage || undefined,
+      }).subscribe(d => this.deals.set(d));
+      return;
+    }
     if (notif.type === 'new_message') {
       this.loadCrmSummary();
       if (notif.ref_id) {

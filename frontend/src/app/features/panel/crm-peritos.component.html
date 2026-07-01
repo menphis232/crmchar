@@ -1,3 +1,33 @@
+@if (overview().length) {
+  <div class="dash-card">
+    <h2 class="card-title card-title-with-icon">
+      Seguimiento de trámites con perito
+      <button type="button" class="btn-ghost small" (click)="reload()" title="Actualizar">Actualizar</button>
+    </h2>
+    <p class="card-desc">Estado actual de los trámites asignados a peritos. Haz clic en una fila para abrir el trámite.</p>
+    <div class="perito-overview-table">
+      <div class="perf-row perf-head">
+        <span class="ov-col-title">Trámite</span>
+        <span class="ov-col-perito">Perito</span>
+        <span class="ov-col-stage">Etapa</span>
+        <span class="ov-col-poliza">Póliza</span>
+        <span class="ov-col-money">Costo</span>
+      </div>
+      @for (item of overview(); track item.id) {
+        <div class="perf-row perf-row-clickable" (click)="openDeal.emit(item.id)">
+          <span class="ov-col-title">{{ item.title }}</span>
+          <span class="ov-col-perito">{{ item.peritoName }}</span>
+          <span class="ov-col-stage">{{ stageLabel(item.peritoStage) }}</span>
+          <span class="ov-col-poliza" [class.paid]="item.peritoPolizaStatus === 'pagado'">
+            {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
+          </span>
+          <span class="ov-col-money">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+        </div>
+      }
+    </div>
+  </div>
+}
+
 <div class="dash-card">
   <h2 class="card-title card-title-with-icon">
     <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
@@ -100,30 +130,3 @@
     }
   </div>
 </div>
-
-@if (overview().length) {
-  <div class="dash-card">
-    <h2 class="card-title">Seguimiento de trámites con perito</h2>
-    <p class="card-desc">Estado actual de los trámites asignados a peritos.</p>
-    <div class="perito-overview-table">
-      <div class="perf-row perf-head">
-        <span class="ov-col-title">Trámite</span>
-        <span class="ov-col-perito">Perito</span>
-        <span class="ov-col-stage">Etapa</span>
-        <span class="ov-col-poliza">Póliza</span>
-        <span class="ov-col-money">Costo</span>
-      </div>
-      @for (item of overview(); track item.id) {
-        <div class="perf-row">
-          <span class="ov-col-title">{{ item.title }}</span>
-          <span class="ov-col-perito">{{ item.peritoName }}</span>
-          <span class="ov-col-stage">{{ stageLabel(item.peritoStage) }}</span>
-          <span class="ov-col-poliza" [class.paid]="item.peritoPolizaStatus === 'pagado'">
-            {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
-          </span>
-          <span class="ov-col-money">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-        </div>
-      }
-    </div>
-  </div>
-}

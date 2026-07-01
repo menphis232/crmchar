@@ -132,6 +132,15 @@
               <span class="kanban-assignee" title="Vendedor asignado">{{ deal.assignedToName }}</span>
             }
 
+            @if (deal.peritoId) {
+              <span class="kanban-perito-badge" title="Perito asignado">
+                Perito: {{ deal.peritoName }} · {{ peritoStageLabel(deal.peritoStage) }}
+                <span class="kanban-perito-poliza" [class.paid]="deal.peritoPolizaStatus === 'pagado'">
+                  {{ deal.peritoPolizaStatus === 'pagado' ? 'Póliza pagada' : 'Póliza pendiente' }}
+                </span>
+              </span>
+            }
+
             @if (isPaymentLocked(deal)) {
               <span class="kanban-payment-lock">Pago pendiente — registra el cobro para mover</span>
             }

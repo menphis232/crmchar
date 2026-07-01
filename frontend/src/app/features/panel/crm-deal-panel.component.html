@@ -219,9 +219,9 @@
                   <option [value]="p.id">{{ p.name }}</option>
                 }
               </select>
-              @if (d.peritoStage) {
+              @if (d.peritoId) {
                 <p class="card-desc" style="margin-top:8px;">
-                  Etapa perito: <strong>{{ d.peritoStage }}</strong>
+                  Etapa perito: <strong>{{ peritoStageLabel(d.peritoStage) }}</strong>
                   · Póliza: <strong>{{ d.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}</strong>
                 </p>
               }
@@ -230,6 +230,12 @@
             <div class="deal-section">
               <h4>Perito asignado</h4>
               <p class="section-sub">{{ d.peritoName }}</p>
+              @if (d.peritoId) {
+                <p class="card-desc" style="margin-top:4px;">
+                  Etapa: <strong>{{ peritoStageLabel(d.peritoStage) }}</strong>
+                  · Póliza: <strong>{{ d.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}</strong>
+                </p>
+              }
             </div>
           }
         }
