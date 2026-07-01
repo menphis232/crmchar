@@ -2,8 +2,8 @@
   <div class="perito-panel" (click)="$event.stopPropagation()">
     <header class="perito-panel-header">
       <h2>{{ detail()?.deal?.title || 'Trámite' }}</h2>
-      <button type="button" class="btn-ghost" (click)="close()" aria-label="Cerrar">
-        <svg lucideX [size]="20" aria-hidden="true"></svg>
+      <button type="button" class="perito-close-btn" (click)="close()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
     </header>
 
@@ -99,7 +99,7 @@
                       {{ u.fileName || 'Ver PDF' }}
                     </a>
                   }
-                  <button type="button" class="btn-ghost small" (click)="deleteUpload(u.id)">
+                  <button type="button" class="perito-icon-btn" (click)="deleteUpload(u.id)" aria-label="Eliminar archivo">
                     <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
                   </button>
                 </div>

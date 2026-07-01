@@ -2,7 +2,7 @@
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: flex-end;
 }
@@ -10,11 +10,12 @@
 .perito-panel {
   width: min(480px, 100%);
   height: 100%;
-  background: #111;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0a0a0a;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
 }
 
 .perito-panel-header {
@@ -22,48 +23,82 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: #111;
+  flex-shrink: 0;
 }
 
 .perito-panel-header h2 {
   margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
+  font-family: var(--f-display, 'Spartan', sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
 }
 
 .perito-panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 18px 32px;
+  padding: 18px 20px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .perito-section {
-  margin-bottom: 20px;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 16px;
 }
 
 .perito-section h4 {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+  font-family: var(--f-display, 'Spartan', sans-serif);
   font-size: 11px;
-  letter-spacing: 0.08em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.42);
 }
 
 .perito-section select,
 .perito-note-form textarea {
   width: 100%;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #0d0d0d;
+  border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 9px 11px;
   font: inherit;
+  font-size: 13px;
+  color-scheme: dark;
+}
+
+.perito-section select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 14px;
+  padding-right: 32px;
+}
+
+.perito-section select:focus,
+.perito-note-form textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 .perito-value {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-family: var(--f-display, 'Spartan', sans-serif);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
   margin: 0;
 }
 
@@ -71,6 +106,8 @@
   margin: 0;
   white-space: pre-wrap;
   color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .perito-doc-list {
@@ -87,74 +124,128 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--brand-black, #c8ff00);
+  color: #fff;
+  font-size: 13px;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.perito-doc-list a:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.perito-doc-list a svg {
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
 }
 
 .perito-empty {
   margin: 0;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.38);
   font-size: 13px;
 }
 
 .perito-upload-block {
-  margin-bottom: 12px;
-  padding: 10px;
+  margin-bottom: 10px;
+  padding: 12px;
+  background: #0d0d0d;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
+  border-radius: 10px;
+}
+
+.perito-upload-block:last-child {
+  margin-bottom: 0;
 }
 
 .perito-upload-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 10px;
   font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .perito-upload-item {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .perito-thumb {
-  max-width: 120px;
-  max-height: 80px;
+  max-width: 110px;
+  max-height: 72px;
   border-radius: 6px;
   object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .perito-file-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #fff;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .perito-note-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
+}
+
+.perito-note-form textarea {
+  resize: vertical;
+  min-height: 56px;
+}
+
+.perito-note-form .btn-copy {
+  align-self: flex-end;
 }
 
 .perito-notes-list {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .perito-notes-list li {
   display: flex;
   gap: 8px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.perito-notes-list li:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.perito-notes-list svg {
+  color: rgba(255, 255, 255, 0.35);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .perito-notes-list p {
   margin: 0 0 4px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: pre-wrap;
 }
 
 .perito-notes-list time {
@@ -165,4 +256,124 @@
 .perito-loading {
   padding: 24px;
   color: rgba(255, 255, 255, 0.5);
+}
+
+/* ── Botones alineados con la línea gráfica del panel gestor ── */
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #ffffff;
+  border-radius: 8px;
+  font-family: var(--f-display, 'Spartan', sans-serif);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+.btn-copy:hover {
+  background: transparent;
+  color: #ffffff;
+}
+
+.btn-copy:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-copy.small {
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  font-family: var(--f-ui, 'Spartan', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+.btn-ghost.small {
+  padding: 6px 9px;
+  font-size: 11px;
+}
+
+.btn-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+label.btn-copy {
+  cursor: pointer;
+}
+
+label.btn-copy.disabled,
+label.btn-copy:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.perito-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.perito-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.perito-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.perito-icon-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ff8a8a;
+  border-color: rgba(239, 68, 68, 0.35);
 }
