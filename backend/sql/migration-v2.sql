@@ -2,7 +2,7 @@
 
 USE tramites_vehiculares;
 
-ALTER TABLE users MODIFY role ENUM('gestor', 'concesionaria', 'cliente', 'admin') NOT NULL;
+ALTER TABLE users MODIFY role ENUM('gestor', 'concesionaria', 'cliente', 'admin', 'perito') NOT NULL;
 
 ALTER TABLE autos ADD COLUMN status ENUM('draft', 'published', 'baja') DEFAULT 'published' AFTER dealer_name;
 
