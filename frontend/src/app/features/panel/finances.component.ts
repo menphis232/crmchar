@@ -27,7 +27,7 @@ import {
 import { FinancesService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
-import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions } from '../../models';
+import { FinDashboard, FinTransaction, FIN_ALL_METHODS, FinFilterOptions, FinPendingLink } from '../../models';
 import {
   buildActiveFormMethods,
   buildFinPaymentMethodsPayload,
@@ -455,12 +455,14 @@ import { formatMoney } from '../../shared/format-amount.util';
 
               @if (newTx.type === 'income' || isConcesionaria) {
                 <div class="field-row">
-                  <label>{{ isConcesionaria ? 'Vehículo / Lead (opcional)' : 'Trámite relacionado (opcional)' }}</label>
+                  <label>{{ isConcesionaria ? 'Mis vehículos / Lead (opcional)' : 'Trámite relacionado (opcional)' }}</label>
                   <div class="select-wrap">
-                    <select [(ngModel)]="newTx.deal_id" class="method-select">
-                      <option [ngValue]="null">— Ninguno —</option>
-                      @for (deal of pendingDeals(); track deal.id) {
-                        <option [ngValue]="deal.id">{{ deal.title }}@if (!isConcesionaria) { (pendiente: \${{ deal.estimated_value - deal.paid_amount | number:'1.2-2' }}) }</option>
+                    <select [(ngModel)]="newTx.linkKey" class="method-select">
+                      <option value="">— Ninguno —</option>
+                      @for (item of linkOptions(); track linkTrack(item)) {
+                        <option [value]="linkValue(item)">
+                          {{ item.title }}@if (!isConcesionaria && item.estimated_value) { (pendiente: {{ ((item.estimated_value || 0) - (item.paid_amount || 0)) | number:'1.2-2' }} MXN) }@if (item.item_type === 'lead') { (Lead) }
+                        </option>
                       }
                     </select>
                     <span class="select-arrow">▾</span>
@@ -705,7 +707,8 @@ export class FinancesComponent implements OnInit, OnDestroy {
   totalPages = signal(1);
   totalItems = signal(0);
   pageSize = 15;
-  pendingDeals = signal<any[]>([]);
+  pendingDeals = signal<FinPendingLink[]>([]);
+  linkOptions = this.pendingDeals;
   showForm = signal(false);
   activeTab: 'transactions' | 'config' = 'transactions';
 
@@ -756,10 +759,42 @@ export class FinancesComponent implements OnInit, OnDestroy {
       description: '',
       category: 'general',
       date: new Date().toISOString().split('T')[0],
-      deal_id: null as string | null,
+      linkKey: '',
       payment_method: '',
       referencia: '',
     };
+  }
+
+  linkTrack(item: FinPendingLink): string {
+    return item.id || item.auto_id || item.title;
+  }
+
+  linkValue(item: FinPendingLink): string {
+    if (this.isConcesionaria) {
+      if (item.id) return `d:${item.id}`;
+      if (item.auto_id) return `a:${item.auto_id}`;
+      return '';
+    }
+    return item.id || '';
+  }
+
+  private payloadFromForm(): Partial<FinTransaction> & { auto_id?: string } {
+    const { linkKey, amount, ...rest } = this.newTx;
+    const payload: Partial<FinTransaction> & { auto_id?: string } = {
+      ...rest,
+      amount: amount ?? undefined,
+    };
+    if (!linkKey) {
+      payload.deal_id = undefined;
+      return payload;
+    }
+    if (this.isConcesionaria) {
+      if (linkKey.startsWith('d:')) payload.deal_id = linkKey.slice(2);
+      else if (linkKey.startsWith('a:')) payload.auto_id = linkKey.slice(2);
+    } else {
+      payload.deal_id = linkKey;
+    }
+    return payload;
   }
 
   loadData() {
@@ -970,7 +1005,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.toast.warning('Selecciona un método de cobro/pago configurado en Finanzas.', 'Método requerido');
       return;
     }
-    this.fin.createTransaction(this.newTx as any).subscribe({
+    this.fin.createTransaction(this.payloadFromForm()).subscribe({
       next: () => {
         this.closeForm();
         this.loadData();

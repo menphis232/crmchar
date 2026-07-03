@@ -601,6 +601,15 @@ export interface FinFilterOptions {
   methods: string[];
 }
 
+export interface FinPendingLink {
+  id: string | null;
+  auto_id?: string | null;
+  title: string;
+  estimated_value?: number;
+  paid_amount?: number;
+  item_type?: 'vehicle' | 'lead';
+}
+
 export interface FinDashboard {
   totalIncome: number;
   totalExpense: number;

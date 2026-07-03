@@ -508,7 +508,7 @@ export class FinancesService {
     return this.http.get<import('../models').FinFilterOptions>(`${this.base}/filter-options`, { params });
   }
 
-  createTransaction(data: Partial<FinTransaction>) {
+  createTransaction(data: Partial<FinTransaction> & { auto_id?: string }) {
     return this.http.post<{ id: string }>(this.base, data);
   }
 

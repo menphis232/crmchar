@@ -9,6 +9,7 @@ import {
 import { get, query, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
+import { findOrCreateContact } from '../crm/helpers.js';
 import { v4 as uuid } from 'uuid';
 import PDFDocument from 'pdfkit';
 import https from 'https';
@@ -156,6 +157,39 @@ router.get('/dashboard', async (req, res) => {
 
 const VEHICLE_LABEL_SQL = `CASE WHEN a.id IS NOT NULL THEN TRIM(CONCAT(TRIM(a.make), ' ', TRIM(a.model), ' (', a.year, ')')) ELSE NULL END`;
 
+/** Vincula un ingreso/gasto a un trámite existente del vehículo o crea uno mínimo. */
+async function resolveDealIdForAuto(orgId, autoId) {
+  const existing = await get(
+    `SELECT id FROM crm_deals
+     WHERE user_id = ? AND auto_id = ? AND stage NOT IN ('perdido', 'vendido')
+     ORDER BY updated_at DESC LIMIT 1`,
+    [orgId, autoId],
+  );
+  if (existing) return existing.id;
+
+  const auto = await get(
+    'SELECT id, make, model, year, price, special_price FROM autos WHERE id = ? AND user_id = ?',
+    [autoId, orgId],
+  );
+  if (!auto) throw new Error('Vehículo no encontrado en tu inventario');
+
+  const title = `${auto.make} ${auto.model} ${auto.year}`.trim();
+  const contact = await findOrCreateContact(orgId, {
+    name: title,
+    source: 'inventario',
+    pipeline: 'venta',
+  });
+
+  const dealId = uuid();
+  const estValue = Number(auto.special_price || auto.price || 0);
+  await run(
+    `INSERT INTO crm_deals (id, user_id, contact_id, deal_type, title, stage, auto_id, stage_changed_at, estimated_value)
+     VALUES (?, ?, ?, 'venta_auto', ?, 'lead_nuevo', ?, NOW(), ?)`,
+    [dealId, orgId, contact.id, title, autoId, estValue],
+  );
+  return dealId;
+}
+
 function buildTxFilters(queryParams, alias = 'f') {
   const { from, to, payment_method, deal_id } = queryParams;
   let sql = '';
@@ -290,19 +324,25 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { type, amount, description, category, date, deal_id, payment_method, referencia } = req.body;
+    const { type, amount, description, category, date, deal_id, auto_id, payment_method, referencia } = req.body;
     if (!type || !amount || !description || !date) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
+
+    let resolvedDealId = deal_id || null;
+    if (!resolvedDealId && auto_id && req.user?.role === 'concesionaria') {
+      resolvedDealId = await resolveDealIdForAuto(req.orgId, auto_id);
+    }
+
     const id = uuid();
     await run(
       'INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, req.orgId, deal_id || null, type, amount, description, category || 'general', date, payment_method || 'general', referencia?.trim() || null]
+      [id, req.orgId, resolvedDealId, type, amount, description, category || 'general', date, payment_method || 'general', referencia?.trim() || null]
     );
-    res.status(201).json({ id });
+    res.status(201).json({ id, deal_id: resolvedDealId });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al crear transacción' });
+    res.status(500).json({ error: err.message || 'Error al crear transacción' });
   }
 });
 
@@ -327,20 +367,57 @@ router.delete('/:id', async (req, res) => {
 router.get('/deals/pending', async (req, res) => {
   try {
     const isDealer = req.user?.role === 'concesionaria';
+    if (isDealer) {
+      const vehicles = await query(
+        `SELECT (
+           SELECT d2.id FROM crm_deals d2
+           WHERE d2.auto_id = a.id AND d2.user_id = ? AND d2.stage NOT IN ('perdido', 'vendido')
+           ORDER BY d2.updated_at DESC LIMIT 1
+         ) AS id,
+         a.id AS auto_id,
+         TRIM(CONCAT(TRIM(a.make), ' ', TRIM(a.model), ' (', a.year, ')')) AS title,
+         COALESCE(
+           (SELECT d3.estimated_value FROM crm_deals d3
+            WHERE d3.auto_id = a.id AND d3.user_id = ? AND d3.stage NOT IN ('perdido', 'vendido')
+            ORDER BY d3.updated_at DESC LIMIT 1),
+           a.special_price, a.price, 0
+         ) AS estimated_value,
+         COALESCE(
+           (SELECT SUM(f.amount) FROM fin_transactions f
+            INNER JOIN crm_deals d4 ON f.deal_id = d4.id
+            WHERE d4.auto_id = a.id AND d4.user_id = ? AND f.type = 'income'),
+           0
+         ) AS paid_amount,
+         'vehicle' AS item_type
+         FROM autos a
+         WHERE a.user_id = ? AND a.status != 'baja'
+         ORDER BY a.updated_at DESC`,
+        [req.orgId, req.orgId, req.orgId, req.orgId],
+      );
+
+      const leads = await query(
+        `SELECT d.id,
+                NULL AS auto_id,
+                d.title,
+                d.estimated_value,
+                COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) AS paid_amount,
+                'lead' AS item_type
+         FROM crm_deals d
+         WHERE d.user_id = ? AND d.auto_id IS NULL AND d.stage NOT IN ('perdido', 'vendido')
+         ORDER BY d.updated_at DESC`,
+        [req.orgId],
+      );
+
+      return res.json([...vehicles, ...leads]);
+    }
+
     const deals = await query(
-      isDealer
-        ? `SELECT d.id, COALESCE(${VEHICLE_LABEL_SQL}, d.title) as title, d.estimated_value,
-             COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
-           FROM crm_deals d
-           LEFT JOIN autos a ON d.auto_id = a.id
-           WHERE d.user_id = ? AND d.stage NOT IN ('perdido', 'vendido')
-           ORDER BY d.updated_at DESC`
-        : `SELECT d.id, d.title, d.estimated_value,
-             COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
-           FROM crm_deals d
-           WHERE d.user_id = ?
-           HAVING paid_amount < estimated_value AND estimated_value > 0`,
-      [req.orgId]
+      `SELECT d.id, d.title, d.estimated_value,
+              COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
+       FROM crm_deals d
+       WHERE d.user_id = ?
+       HAVING paid_amount < estimated_value AND estimated_value > 0`,
+      [req.orgId],
     );
     res.json(deals);
   } catch (err) {
