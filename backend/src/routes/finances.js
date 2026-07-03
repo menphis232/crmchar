@@ -391,7 +391,7 @@ router.get('/deals/pending', async (req, res) => {
          'vehicle' AS item_type
          FROM autos a
          WHERE a.user_id = ? AND a.status != 'baja'
-         ORDER BY a.updated_at DESC`,
+         ORDER BY a.created_at DESC`,
         [req.orgId, req.orgId, req.orgId, req.orgId],
       );
 

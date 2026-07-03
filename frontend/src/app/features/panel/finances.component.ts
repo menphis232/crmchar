@@ -991,7 +991,13 @@ export class FinancesComponent implements OnInit, OnDestroy {
   }
 
   openForm() {
-    this.fin.getPendingDeals().subscribe(d => this.pendingDeals.set(d));
+    this.fin.getPendingDeals().subscribe({
+      next: (d) => this.pendingDeals.set(d),
+      error: () => {
+        this.pendingDeals.set([]);
+        this.toast.error('No se pudo cargar tu inventario de vehículos.', 'Error');
+      },
+    });
     this.newTx = this.emptyTx();
     this.refreshFormMethods();
     this.showForm.set(true);
