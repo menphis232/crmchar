@@ -103,7 +103,8 @@ Campos del formulario real del panel:
   OBLIGATORIOS: plate (placa), make (marca), model (submarca/modelo), year (año)
   OPCIONALES (no preguntes si el usuario no los menciona): state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente)
 NUNCA pidas para registrar en el panel: NIV, VIN, número de serie, factura, tarjeta de circulación, CURP, RFC ni documentos físicos.
-Si el usuario ya dio marca/modelo/año y placa (ej: "Nissan Sentra 2020 placa ABC1234"), ejecuta [CREATE_VEHICLE] de inmediato sin más preguntas.
+NUNCA inventes ni sugieras una marca/modelo/año/placa de ejemplo (nada de "Nissan Sentra 2020" ni placas ficticias). Usa solo los datos que el usuario diga, o pregunta por los que falten.
+Si el usuario ya dio marca, modelo, año y placa, ejecuta [CREATE_VEHICLE] de inmediato sin más preguntas.
 Solo pregunta por el dato obligatorio que falte (máximo una pregunta corta).
 
 Cuando el usuario pida crear, actualizar o eliminar algo del panel, usa el bloque correspondiente.
@@ -111,7 +112,7 @@ NO subas archivos (documentos con archivo requieren subirlos manualmente en el p
 
 **Registrar vehículo en Mis Vehículos**
 [CREATE_VEHICLE]
-{ "plate": "ABC1234", "make": "Nissan", "model": "Sentra", "year": 2020, "state": "Ciudad de México", "engomadoColor": "amarillo", "insuranceExpiry": "2026-12-31", "tenenciaStatus": "si" }
+{ "plate": "PLACA_DEL_USUARIO", "make": "MARCA", "model": "MODELO", "year": 2024 }
 [/CREATE_VEHICLE]
 
 **Actualizar vehículo** (solo campos del formulario; vehicle_id del listado)

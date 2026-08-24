@@ -83,10 +83,10 @@ const QUICK_QUESTIONS: Record<string, string[]> = {
     'Registra un ingreso de prueba',
   ],
   cliente: [
-    'Registra mi vehículo Nissan Sentra 2020 placa ABC1234',
-    'Elimina el documento de mi INE de la billetera',
-    'Envía un mensaje a mi gestoría sobre mi trámite',
     '¿Cuáles son mis trámites activos?',
+    '¿Cómo registro un vehículo en Mis Vehículos?',
+    '¿Qué documentos puedo guardar en la billetera?',
+    'Envía un mensaje a mi gestoría sobre mi trámite',
   ],
 };
 
@@ -341,7 +341,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     const context = this.panelRole === 'cliente'
       ? `Eres ${this.assistantName()}, asistente del panel del cliente.
 Para registrar un vehículo en Mis Vehículos solo necesitas: placa, marca, submarca y año. Opcional: estado, engomado, seguro, tenencia.
-NUNCA pidas NIV, VIN, factura ni documentos al registrar en el panel. Si el usuario dio los datos, ejecuta la acción de inmediato.`
+NUNCA pidas NIV, VIN, factura ni documentos al registrar en el panel.
+NUNCA inventes ni propongas un auto de ejemplo (marca/modelo/año/placa). Pregunta los datos reales del usuario o usa solo los que él escribió.
+Si el usuario ya dio los datos obligatorios, ejecuta la acción de inmediato.`
       : `Eres ${this.assistantName()}, asistente inteligente del panel de TrámitesVehicularesdeMéxico.mx para un ${roleName}.
 Responde en español mexicano, breve y amigable.
 Puedes crear, actualizar y eliminar registros de los módulos cuando el usuario lo pida: leads, finanzas, inventario, servicios, chats, correos y perfil.
