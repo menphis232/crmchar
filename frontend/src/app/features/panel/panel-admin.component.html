@@ -63,6 +63,10 @@
       <svg lucideMessageCircle [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Soporte
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'knowledge'" (click)="tab.set('knowledge'); loadKnowledgePosts(); isMobileMenuOpen.set(false)">
+      <svg lucideBookOpen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Contenido / Feed
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">
       <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Página Autos
@@ -377,6 +381,111 @@
       </div>
     }
 
+    @if (tab() === 'knowledge') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBookOpen [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Contenido para clientes
+        </h2>
+        <p class="card-desc">Videos, artículos y links que aparecen como slider en el dashboard del cliente y en el Área de Conocimiento.</p>
+
+        @if (knowledgeMsg()) {
+          <p class="success-msg banner-msg">{{ knowledgeMsg() }}</p>
+        }
+
+        <div class="knowledge-admin-grid">
+          <div class="knowledge-admin-form">
+            <h3 style="margin:0 0 12px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;">
+              {{ editingKnowledgeId() ? 'Editar contenido' : 'Nuevo contenido' }}
+            </h3>
+            <div class="form-group">
+              <label>Tipo</label>
+              <select [(ngModel)]="knowledgeForm.type">
+                <option value="video">Video (YouTube / red)</option>
+                <option value="article">Artículo / texto</option>
+                <option value="link">Link externo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Título</label>
+              <input [(ngModel)]="knowledgeForm.title" placeholder="Ej: Cómo renovar tu tarjeta de circulación" />
+            </div>
+            <div class="form-group">
+              <label>Texto / descripción</label>
+              <textarea [(ngModel)]="knowledgeForm.body" rows="4" placeholder="Contenido del artículo o descripción del video"></textarea>
+            </div>
+            <div class="form-group">
+              <label>URL del video o enlace (YouTube, TikTok, etc.)</label>
+              <input [(ngModel)]="knowledgeForm.externalUrl" placeholder="https://www.youtube.com/watch?v=..." />
+            </div>
+            <div class="form-group">
+              <label>Imagen de portada</label>
+              <input type="file" accept="image/*" (change)="onKnowledgeCoverSelected($event)" />
+              @if (knowledgeUploading()) {
+                <small style="color:var(--muted)">Subiendo imagen…</small>
+              }
+              @if (knowledgeForm.coverUrl) {
+                <div style="margin-top:8px">
+                  <img [src]="knowledgeForm.coverUrl" alt="Portada" style="max-width:180px;border-radius:8px;border:1px solid var(--border)" />
+                </div>
+              }
+            </div>
+            <div class="form-group" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+              <label style="display:flex;align-items:center;gap:8px;margin:0;">
+                <input type="checkbox" [(ngModel)]="knowledgeForm.isPublished" /> Publicado
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;margin:0;">
+                Orden
+                <input type="number" [(ngModel)]="knowledgeForm.sortOrder" style="width:80px" />
+              </label>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button type="button" class="btn-copy" [disabled]="knowledgeSaving()" (click)="saveKnowledgePost()">
+                <svg lucideSave [size]="14" aria-hidden="true"></svg>
+                {{ knowledgeSaving() ? 'Guardando…' : (editingKnowledgeId() ? 'Actualizar' : 'Publicar') }}
+              </button>
+              @if (editingKnowledgeId()) {
+                <button type="button" class="btn-ghost" (click)="resetKnowledgeForm()">Cancelar</button>
+              }
+            </div>
+          </div>
+
+          <div class="knowledge-admin-list">
+            <h3 style="margin:0 0 12px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;">Publicados</h3>
+            @if (knowledgeLoading()) {
+              <p class="card-desc">Cargando…</p>
+            } @else if (!knowledgePosts().length) {
+              <p class="card-desc">Aún no hay contenido. Crea el primero a la izquierda.</p>
+            } @else {
+              @for (post of knowledgePosts(); track post.id) {
+                <div class="knowledge-admin-item">
+                  <div class="knowledge-admin-thumb">
+                    @if (post.coverUrl) {
+                      <img [src]="post.coverUrl" [alt]="post.title" />
+                    } @else {
+                      <span>
+                        @if (post.type === 'video') { <svg lucideVideo [size]="20" aria-hidden="true"></svg> }
+                        @else { <svg lucideImage [size]="20" aria-hidden="true"></svg> }
+                      </span>
+                    }
+                  </div>
+                  <div class="knowledge-admin-meta">
+                    <strong>{{ post.title }}</strong>
+                    <span>{{ typeLabel(post.type) }} · {{ post.isPublished ? 'Publicado' : 'Borrador' }} · ♥ {{ post.likesCount }}</span>
+                  </div>
+                  <div class="knowledge-admin-actions">
+                    <button type="button" class="btn-ghost" (click)="editKnowledge(post)">Editar</button>
+                    <button type="button" class="btn-ghost" (click)="deleteKnowledgePost(post)" title="Eliminar">
+                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </div>
+    }
 
     @if (tab() === 'autos-theme') {
       <app-panel-theme-editor pageKey="autos" title="Página pública de Autos" />

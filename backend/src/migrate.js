@@ -1186,6 +1186,25 @@ async function migrate() {
       console.log('Migración v56 (consultorias title) aplicada.');
     }
 
+    const v57Path = path.join(__dirname, '..', 'sql', 'migration-v57-knowledge.sql');
+    if (fs.existsSync(v57Path)) {
+      const v57 = fs.readFileSync(v57Path, 'utf8');
+      const conn57 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v57.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn57.query(stmt); } catch (e) {
+          if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn57.end();
+      console.log('Migración v57 (knowledge feed) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

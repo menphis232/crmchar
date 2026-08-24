@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
-import { UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
+import { UploadService, CHAT_ATTACHMENT_ACCEPT, KnowledgeService } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { io, Socket } from 'socket.io-client';
@@ -16,7 +16,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.component';
 import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 import { MEXICO_STATES } from '../../shared/mexico-states';
-import { CrmContactVehicle, CrmContactVehicleDocument } from '../../models';
+import { CrmContactVehicle, CrmContactVehicleDocument, KnowledgePost } from '../../models';
 import { SupportWidgetComponent } from '../../shared/support-widget.component';
 import {
   LucideArrowLeft,
@@ -47,6 +47,10 @@ import {
   LucidePlus,
   LucideBriefcase,
   LucideStore,
+  LucideBookOpen,
+  LucideHeart,
+  LucideShare2,
+  LucidePlay,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -57,7 +61,7 @@ interface PaginatedDeals {
   totalPages: number;
 }
 
-type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'ajustes';
+type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'ajustes' | 'conocimiento';
 
 @Component({
   selector: 'app-panel-cliente',
@@ -70,6 +74,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
+    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -91,6 +96,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   http = inject(HttpClient);
   uploadService = inject(UploadService);
+  knowledgeService = inject(KnowledgeService);
   readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
   toast = inject(ToastService);
   zone = inject(NgZone);
@@ -126,6 +132,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   tramitesLoading = signal(false);
   historialLoading = signal(false);
   dashboardLoading = signal(true);
+  knowledgePosts = signal<KnowledgePost[]>([]);
+  knowledgeLoading = signal(false);
+  feedIndex = signal(0);
+  selectedArticle = signal<KnowledgePost | null>(null);
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -243,6 +253,97 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (!this.vehicles().length) this.loadVehicles();
     }
     if (tab === 'vehiculos') this.loadVehicles();
+    if (tab === 'conocimiento' || tab === 'dashboard') this.loadKnowledgeFeed();
+  }
+
+  loadKnowledgeFeed() {
+    this.knowledgeLoading.set(true);
+    this.knowledgeService.feed().subscribe({
+      next: posts => {
+        this.knowledgePosts.set(posts);
+        this.knowledgeLoading.set(false);
+        if (this.feedIndex() >= posts.length) this.feedIndex.set(0);
+      },
+      error: () => {
+        this.knowledgePosts.set([]);
+        this.knowledgeLoading.set(false);
+      },
+    });
+  }
+
+  currentFeedPost(): KnowledgePost | null {
+    const posts = this.knowledgePosts();
+    if (!posts.length) return null;
+    return posts[this.feedIndex() % posts.length] || null;
+  }
+
+  feedPrev() {
+    const n = this.knowledgePosts().length;
+    if (!n) return;
+    this.feedIndex.update(i => (i - 1 + n) % n);
+  }
+
+  feedNext() {
+    const n = this.knowledgePosts().length;
+    if (!n) return;
+    this.feedIndex.update(i => (i + 1) % n);
+  }
+
+  coverFor(post: KnowledgePost): string {
+    if (post.coverUrl) return post.coverUrl;
+    const yt = this.youtubeId(post.externalUrl || '');
+    if (yt) return `https://img.youtube.com/vi/${yt}/hqdefault.jpg`;
+    return '';
+  }
+
+  youtubeId(url: string): string | null {
+    if (!url) return null;
+    const m = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|v=)([\w-]{11})/);
+    return m?.[1] || null;
+  }
+
+  openKnowledge(post: KnowledgePost) {
+    if (post.type === 'article' && !post.externalUrl) {
+      this.selectedArticle.set(post);
+      return;
+    }
+    const url = post.externalUrl;
+    if (url) window.open(url, '_blank', 'noopener');
+  }
+
+  closeArticle() {
+    this.selectedArticle.set(null);
+  }
+
+  toggleLike(post: KnowledgePost, event?: Event) {
+    event?.stopPropagation();
+    this.knowledgeService.toggleLike(post.id).subscribe({
+      next: res => {
+        this.knowledgePosts.update(list =>
+          list.map(p => p.id === post.id
+            ? { ...p, likedByMe: res.likedByMe, likesCount: res.likesCount }
+            : p)
+        );
+        const art = this.selectedArticle();
+        if (art?.id === post.id) {
+          this.selectedArticle.set({ ...art, likedByMe: res.likedByMe, likesCount: res.likesCount });
+        }
+      },
+      error: () => this.toast.error('No se pudo guardar el me gusta', 'Error'),
+    });
+  }
+
+  shareWhatsApp(post: KnowledgePost, event?: Event) {
+    event?.stopPropagation();
+    const link = post.externalUrl || `${window.location.origin}/panel/cliente`;
+    const text = `${post.title}${post.body ? '\n' + post.body.slice(0, 120) : ''}\n${link}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+  }
+
+  typeLabel(type: KnowledgePost['type']) {
+    if (type === 'video') return 'Video';
+    if (type === 'article') return 'Artículo';
+    return 'Link';
   }
 
   loadVehicles() {
@@ -473,6 +574,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   loadDashboard() {
     this.dashboardLoading.set(true);
+    this.loadKnowledgeFeed();
     this.http.get<{ total: number; active: number; closed: number }>(`${environment.apiUrl}/client/deals/stats`).subscribe({
       next: stats => {
         this.stats.set(stats);

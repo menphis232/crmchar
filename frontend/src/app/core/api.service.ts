@@ -414,6 +414,36 @@ export class SupportService {
 }
 
 @Injectable({ providedIn: 'root' })
+export class KnowledgeService {
+  private base = `${environment.apiUrl}/knowledge`;
+  constructor(private http: HttpClient) {}
+
+  listAdmin() {
+    return this.http.get<import('../models').KnowledgePost[]>(`${this.base}/admin`);
+  }
+
+  create(data: Partial<import('../models').KnowledgePost>) {
+    return this.http.post<import('../models').KnowledgePost>(`${this.base}/admin`, data);
+  }
+
+  update(id: string, data: Partial<import('../models').KnowledgePost>) {
+    return this.http.put<import('../models').KnowledgePost>(`${this.base}/admin/${id}`, data);
+  }
+
+  remove(id: string) {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/admin/${id}`);
+  }
+
+  feed() {
+    return this.http.get<import('../models').KnowledgePost[]>(`${this.base}/feed`);
+  }
+
+  toggleLike(id: string) {
+    return this.http.post<{ likedByMe: boolean; likesCount: number }>(`${this.base}/${id}/like`, {});
+  }
+}
+
+@Injectable({ providedIn: 'root' })
 export class SiteService {
   private base = `${environment.apiUrl}/site`;
   constructor(private http: HttpClient) {}

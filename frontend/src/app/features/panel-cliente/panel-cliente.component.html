@@ -84,6 +84,10 @@
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'conocimiento'" (click)="setTab('conocimiento')">
+      <svg lucideBookOpen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Área de Conocimiento
+    </button>
     <a routerLink="/gestores" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
       <svg lucideBriefcase [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Consultorias Vehiculares
@@ -97,13 +101,83 @@
   <main class="dash-main">
 
     @if (activeTab() === 'dashboard') {
+      <div class="dash-card knowledge-feed-card">
+        <div class="knowledge-feed-header">
+          <div>
+            <h2 class="card-title card-title-with-icon" style="margin-bottom:4px">
+              <svg lucideBookOpen [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+              Para ti
+            </h2>
+            <p class="card-desc" style="margin:0">Videos, tips y artículos del equipo Trámites Vehiculares.</p>
+          </div>
+          <button type="button" class="btn-ghost" (click)="setTab('conocimiento')">Ver todos</button>
+        </div>
+
+        @if (knowledgeLoading()) {
+          <div class="client-empty">Cargando contenido…</div>
+        } @else if (!knowledgePosts().length) {
+          <div class="client-empty">
+            <div class="client-empty-icon"><svg lucideInbox [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
+            <strong>Pronto habrá contenido aquí</strong>
+            <p>El equipo publicará videos y artículos útiles para tus trámites.</p>
+          </div>
+        } @else if (currentFeedPost(); as post) {
+          <div class="knowledge-slider">
+            <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior">
+              <svg lucideChevronLeft [size]="22" aria-hidden="true"></svg>
+            </button>
+
+            <article class="knowledge-slide" (click)="openKnowledge(post)">
+              <div class="knowledge-slide-media">
+                @if (coverFor(post)) {
+                  <img [src]="coverFor(post)" [alt]="post.title" />
+                } @else {
+                  <div class="knowledge-slide-placeholder">
+                    <svg lucidePlay [size]="40" aria-hidden="true"></svg>
+                  </div>
+                }
+                @if (post.type === 'video') {
+                  <span class="knowledge-play-badge"><svg lucidePlay [size]="18" aria-hidden="true"></svg></span>
+                }
+                <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
+              </div>
+              <div class="knowledge-slide-body">
+                <h3>{{ post.title }}</h3>
+                @if (post.body) {
+                  <p>{{ post.body.length > 160 ? (post.body | slice:0:160) + '…' : post.body }}</p>
+                }
+                <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
+                  <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
+                    <svg lucideHeart [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                    <span>{{ post.likesCount || 0 }}</span>
+                  </button>
+                  <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)" title="Compartir en WhatsApp">
+                    <svg lucideShare2 [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                    <span>WhatsApp</span>
+                  </button>
+                  <span class="knowledge-slide-counter">{{ feedIndex() + 1 }} / {{ knowledgePosts().length }}</span>
+                </div>
+              </div>
+            </article>
+
+            <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente">
+              <svg lucideChevronRight [size]="22" aria-hidden="true"></svg>
+            </button>
+          </div>
+
+          <div class="knowledge-dots">
+            @for (p of knowledgePosts(); track p.id; let i = $index) {
+              <button type="button" class="knowledge-dot" [class.active]="i === feedIndex()" (click)="feedIndex.set(i)" [attr.aria-label]="'Ir a ' + (i + 1)"></button>
+            }
+          </div>
+        }
+      </div>
+
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideLayoutDashboard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           ¡Hola, {{ auth.user()?.name }}!
         </h2>
-        <p class="card-desc">Aquí está el resumen de tus trámites vehiculares. Usa el Asistente Virtual (botón abajo a la derecha) para consultar leyes de tránsito.</p>
-
         <div class="stats-grid">
           <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
             <div class="stat-num">{{ totalDeals() }}</div>
@@ -162,6 +236,75 @@
             }
           </div>
         }
+      </div>
+    }
+
+    @if (activeTab() === 'conocimiento') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBookOpen [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Área de Conocimiento
+        </h2>
+        <p class="card-desc">Todos los videos, artículos y recursos publicados para ti.</p>
+
+        @if (knowledgeLoading()) {
+          <div class="client-empty">Cargando…</div>
+        } @else if (!knowledgePosts().length) {
+          <div class="client-empty">
+            <strong>Sin contenido todavía</strong>
+            <p>Cuando el Super Admin publique material, lo verás aquí.</p>
+          </div>
+        } @else {
+          <div class="knowledge-grid">
+            @for (post of knowledgePosts(); track post.id) {
+              <article class="knowledge-card" (click)="openKnowledge(post)">
+                <div class="knowledge-card-media">
+                  @if (coverFor(post)) {
+                    <img [src]="coverFor(post)" [alt]="post.title" />
+                  } @else {
+                    <div class="knowledge-slide-placeholder"><svg lucidePlay [size]="28" aria-hidden="true"></svg></div>
+                  }
+                  <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
+                </div>
+                <div class="knowledge-card-body">
+                  <h3>{{ post.title }}</h3>
+                  @if (post.body) {
+                    <p>{{ post.body.length > 100 ? (post.body | slice:0:100) + '…' : post.body }}</p>
+                  }
+                  <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
+                    <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)">
+                      <svg lucideHeart [size]="16" aria-hidden="true"></svg>
+                      <span>{{ post.likesCount || 0 }}</span>
+                    </button>
+                    <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)">
+                      <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (selectedArticle(); as article) {
+      <div class="knowledge-modal-backdrop" (click)="closeArticle()">
+        <div class="knowledge-modal" (click)="$event.stopPropagation()">
+          <button type="button" class="knowledge-modal-close" (click)="closeArticle()" aria-label="Cerrar">×</button>
+          <h2>{{ article.title }}</h2>
+          <div class="knowledge-modal-body">{{ article.body }}</div>
+          <div class="knowledge-slide-actions">
+            <button type="button" class="knowledge-action" [class.liked]="article.likedByMe" (click)="toggleLike(article, $event)">
+              <svg lucideHeart [size]="16" aria-hidden="true"></svg>
+              <span>{{ article.likesCount || 0 }}</span>
+            </button>
+            <button type="button" class="knowledge-action" (click)="shareWhatsApp(article, $event)">
+              <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
+              WhatsApp
+            </button>
+          </div>
+        </div>
       </div>
     }
 

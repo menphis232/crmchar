@@ -188,10 +188,25 @@ export interface SupportMessage {
   senderId: string;
   message?: string | null;
   fileUrl?: string | null;
-  isRead: boolean | number;
-  createdAt: string;
-  senderName: string;
-  senderRole: User['role'];
+  isRead?: boolean | number;
+  createdAt?: string;
+  senderName?: string;
+  senderRole?: string;
+}
+
+export interface KnowledgePost {
+  id: string;
+  type: 'video' | 'article' | 'link';
+  title: string;
+  body?: string;
+  coverUrl?: string | null;
+  externalUrl?: string | null;
+  isPublished: boolean;
+  sortOrder: number;
+  likesCount: number;
+  likedByMe?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AdminStats {

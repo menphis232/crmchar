@@ -2,8 +2,8 @@ import { Component, OnInit, signal, effect } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-import { AdminService, SupportService } from '../../core/api.service';
-import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread } from '../../models';
+import { AdminService, SupportService, KnowledgeService, UploadService } from '../../core/api.service';
+import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread, KnowledgePost } from '../../models';
 import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 
@@ -36,14 +36,19 @@ import {
   LucideWrench,
   LucideX,
   LucideZap,
+  LucideBookOpen,
+  LucidePlus,
+  LucideTrash2,
+  LucideImage,
+  LucideVideo,
 } from '@lucide/angular';
 
-type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
+type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
@@ -68,6 +73,22 @@ export class PanelAdminComponent implements OnInit {
   supportThreads = signal<SupportThread[]>([]);
   openSupportTabs = signal<SupportThread[]>([]);
   activeSupportId = signal('');
+
+  knowledgePosts = signal<KnowledgePost[]>([]);
+  knowledgeLoading = signal(false);
+  knowledgeSaving = signal(false);
+  knowledgeMsg = signal('');
+  editingKnowledgeId = signal<string | null>(null);
+  knowledgeForm = {
+    type: 'video' as KnowledgePost['type'],
+    title: '',
+    body: '',
+    coverUrl: '',
+    externalUrl: '',
+    isPublished: true,
+    sortOrder: 0,
+  };
+  knowledgeUploading = signal(false);
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -132,6 +153,8 @@ export class PanelAdminComponent implements OnInit {
     public auth: AuthService,
     private adminService: AdminService,
     private supportService: SupportService,
+    private knowledgeService: KnowledgeService,
+    private uploadService: UploadService,
     private route: ActivatedRoute,
     private router: Router,
   ) {
@@ -413,6 +436,116 @@ export class PanelAdminComponent implements OnInit {
       next: () => { this.message.set('Usuario actualizado'); this.loadUsers(); },
       error: (e) => this.message.set(e.error?.error || 'Error'),
     });
+  }
+
+  loadKnowledgePosts() {
+    this.knowledgeLoading.set(true);
+    this.knowledgeService.listAdmin().subscribe({
+      next: rows => {
+        this.knowledgePosts.set(rows);
+        this.knowledgeLoading.set(false);
+      },
+      error: () => {
+        this.knowledgePosts.set([]);
+        this.knowledgeLoading.set(false);
+        this.knowledgeMsg.set('No se pudo cargar el contenido');
+      },
+    });
+  }
+
+  resetKnowledgeForm() {
+    this.editingKnowledgeId.set(null);
+    this.knowledgeForm = {
+      type: 'video',
+      title: '',
+      body: '',
+      coverUrl: '',
+      externalUrl: '',
+      isPublished: true,
+      sortOrder: 0,
+    };
+  }
+
+  editKnowledge(post: KnowledgePost) {
+    this.editingKnowledgeId.set(post.id);
+    this.knowledgeForm = {
+      type: post.type,
+      title: post.title,
+      body: post.body || '',
+      coverUrl: post.coverUrl || '',
+      externalUrl: post.externalUrl || '',
+      isPublished: post.isPublished,
+      sortOrder: post.sortOrder || 0,
+    };
+  }
+
+  onKnowledgeCoverSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.knowledgeUploading.set(true);
+    this.uploadService.uploadFile(file).subscribe({
+      next: res => {
+        this.knowledgeForm.coverUrl = res.url;
+        this.knowledgeUploading.set(false);
+      },
+      error: () => {
+        this.knowledgeUploading.set(false);
+        this.knowledgeMsg.set('Error al subir la imagen');
+      },
+    });
+  }
+
+  saveKnowledgePost() {
+    if (!this.knowledgeForm.title.trim()) {
+      this.knowledgeMsg.set('El título es obligatorio');
+      return;
+    }
+    this.knowledgeSaving.set(true);
+    this.knowledgeMsg.set('');
+    const payload = {
+      type: this.knowledgeForm.type,
+      title: this.knowledgeForm.title.trim(),
+      body: this.knowledgeForm.body,
+      coverUrl: this.knowledgeForm.coverUrl || null,
+      externalUrl: this.knowledgeForm.externalUrl || null,
+      isPublished: this.knowledgeForm.isPublished,
+      sortOrder: Number(this.knowledgeForm.sortOrder) || 0,
+    };
+    const id = this.editingKnowledgeId();
+    const req = id
+      ? this.knowledgeService.update(id, payload)
+      : this.knowledgeService.create(payload);
+    req.subscribe({
+      next: () => {
+        this.knowledgeSaving.set(false);
+        this.knowledgeMsg.set(id ? 'Contenido actualizado' : 'Contenido publicado');
+        this.resetKnowledgeForm();
+        this.loadKnowledgePosts();
+      },
+      error: (e) => {
+        this.knowledgeSaving.set(false);
+        this.knowledgeMsg.set(e.error?.error || 'Error al guardar');
+      },
+    });
+  }
+
+  deleteKnowledgePost(post: KnowledgePost) {
+    if (!confirm(`¿Eliminar "${post.title}"?`)) return;
+    this.knowledgeService.remove(post.id).subscribe({
+      next: () => {
+        this.knowledgeMsg.set('Contenido eliminado');
+        if (this.editingKnowledgeId() === post.id) this.resetKnowledgeForm();
+        this.loadKnowledgePosts();
+      },
+      error: () => this.knowledgeMsg.set('No se pudo eliminar'),
+    });
+  }
+
+  typeLabel(type: KnowledgePost['type']) {
+    if (type === 'video') return 'Video';
+    if (type === 'article') return 'Artículo';
+    return 'Link';
   }
 
   initials() { return 'SA'; }
