@@ -32,6 +32,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   constructor(private auth: AuthService, private route: ActivatedRoute) {}
 
   ngOnInit() {
+    // Con sesión activa no mostrar selector de roles: ir al panel del rol.
+    if (this.auth.isLoggedIn()) {
+      this.auth.redirectByRole();
+      return;
+    }
     // Rutas dedicadas (/login/gestor, /login/concesionaria, ...) traen el rol en data.
     this.dataSub = this.route.data.subscribe(data => {
       this.applyRole((data['role'] as string) || null);
@@ -56,10 +61,6 @@ export class LoginComponent implements OnInit, OnDestroy {
     } else {
       this.directRoleLogin.set(false);
     }
-  }
-
-  backHomeLink(): string {
-    return this.role() === 'gestor' ? '/gestores' : '/autos';
   }
 
   selectRole(r: 'gestor' | 'concesionaria' | 'cliente') {

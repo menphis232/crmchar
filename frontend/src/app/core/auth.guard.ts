@@ -15,6 +15,12 @@ export const roleGuard = (roles: string[]): CanActivateFn => () => {
   const router = inject(Router);
   const user = auth.user();
   if (user && roles.includes(user.role)) return true;
+  // Si ya hay sesión, llevar al panel del rol — nunca al selector de logins.
+  if (auth.isLoggedIn()) {
+    const panel = auth.panelPathByRole();
+    router.navigate([panel || '/']);
+    return false;
+  }
   router.navigate(['/login']);
   return false;
 };

@@ -186,11 +186,7 @@ export class NavComponent implements OnInit {
   }
 
   get panelLink(): string {
-    const role = this.auth.user()?.role;
-    if (role === 'gestor') return '/panel/gestor';
-    if (role === 'concesionaria') return '/panel/concesionaria';
-    if (role === 'admin') return '/panel/admin';
-    return '/login';
+    return this.auth.panelPathByRole() || '/login';
   }
 
   toggleNotifications() {

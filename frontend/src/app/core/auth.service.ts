@@ -70,14 +70,20 @@ export class AuthService {
     return raw ? JSON.parse(raw) : null;
   }
 
+  /** Ruta del panel según el rol de sesión. Nunca debe devolver /login si hay sesión. */
+  panelPathByRole(role?: string | null): string | null {
+    const r = role ?? this.user()?.role;
+    if (r === 'gestor') return '/panel/gestor';
+    if (r === 'concesionaria') return '/panel/concesionaria';
+    if (r === 'admin' || r === 'super_admin') return '/panel/admin';
+    if (r === 'cliente') return '/panel/cliente';
+    if (r === 'perito') return '/panel/perito';
+    return null;
+  }
+
   redirectByRole() {
-    const role = this.user()?.role;
-    if (role === 'gestor') this.router.navigate(['/panel/gestor']);
-    else if (role === 'concesionaria') this.router.navigate(['/panel/concesionaria']);
-    else if (role === 'admin') this.router.navigate(['/panel/admin']);
-    else if (role === 'cliente') this.router.navigate(['/panel/cliente']);
-    else if (role === 'perito') this.router.navigate(['/panel/perito']);
-    else this.router.navigate(['/']);
+    const path = this.panelPathByRole();
+    this.router.navigate([path || '/']);
   }
 
   updateMe(data: { name?: string; avatar_url?: string | null; logo_url?: string; pdf_settings?: any; google_analytics_id?: string; stripe_secret_key?: string; stripe_public_key?: string; stripe_price_id?: string; mp_access_token?: string; mp_public_key?: string; ai_provider?: string; ai_api_key?: string; page_builder_config?: any; chatbot_bg_color?: string; chatbot_btn_color?: string; chatbot_text_color?: string; panel_assistant_enabled?: boolean; panel_assistant_name?: string; panel_assistant_position?: string; panel_assistant_bg_color?: string; panel_assistant_btn_color?: string; panel_assistant_text_color?: string; panel_assistant_font?: string; panel_assistant_prompt?: string | null; chat_ai_auto_reply_enabled?: boolean; chat_ai_inactivity_minutes?: number; description?: string | null; phone?: string | null; address?: string | null; map_embed_url?: string | null; crm_stages?: any[]; }) {
