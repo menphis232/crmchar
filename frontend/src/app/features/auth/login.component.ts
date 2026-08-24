@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
@@ -8,7 +8,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })
