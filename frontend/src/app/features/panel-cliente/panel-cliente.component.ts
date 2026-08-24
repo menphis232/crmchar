@@ -134,8 +134,22 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   dashboardLoading = signal(true);
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
-  feedIndex = signal(0);
+  feedPage = signal(0);
+  readonly feedPageSize = 3;
   selectedArticle = signal<KnowledgePost | null>(null);
+
+  visibleFeedPosts = computed(() => {
+    const start = this.feedPage() * this.feedPageSize;
+    return this.knowledgePosts().slice(start, start + this.feedPageSize);
+  });
+
+  feedPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.knowledgePosts().length / this.feedPageSize))
+  );
+
+  feedPages = computed(() =>
+    Array.from({ length: this.feedPageCount() }, (_, i) => i)
+  );
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -262,7 +276,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       next: posts => {
         this.knowledgePosts.set(posts);
         this.knowledgeLoading.set(false);
-        if (this.feedIndex() >= posts.length) this.feedIndex.set(0);
+        const maxPage = Math.max(0, Math.ceil(posts.length / this.feedPageSize) - 1);
+        if (this.feedPage() > maxPage) this.feedPage.set(0);
       },
       error: () => {
         this.knowledgePosts.set([]);
@@ -271,22 +286,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  currentFeedPost(): KnowledgePost | null {
-    const posts = this.knowledgePosts();
-    if (!posts.length) return null;
-    return posts[this.feedIndex() % posts.length] || null;
-  }
-
   feedPrev() {
-    const n = this.knowledgePosts().length;
-    if (!n) return;
-    this.feedIndex.update(i => (i - 1 + n) % n);
+    this.feedPage.update(p => Math.max(0, p - 1));
   }
 
   feedNext() {
-    const n = this.knowledgePosts().length;
-    if (!n) return;
-    this.feedIndex.update(i => (i + 1) % n);
+    this.feedPage.update(p => Math.min(this.feedPageCount() - 1, p + 1));
   }
 
   coverFor(post: KnowledgePost): string {

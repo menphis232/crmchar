@@ -1865,10 +1865,10 @@ select.client-wallet-input option {
 }
 
 
-/* Knowledge feed / slider — compacto y sutil */
+/* Knowledge feed / slider — 3 por página, imagen completa */
 .knowledge-feed-card {
   padding: 14px 16px 12px !important;
-  max-width: 560px;
+  max-width: none;
 }
 
 .knowledge-feed-header {
@@ -1932,7 +1932,17 @@ select.client-wallet-input option {
 }
 
 .knowledge-slider {
-  display: block;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.knowledge-track {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .knowledge-slide {
@@ -1942,27 +1952,41 @@ select.client-wallet-input option {
   background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   text-align: left;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .knowledge-slide-media {
   position: relative;
-  aspect-ratio: 16 / 8;
-  max-height: 168px;
-  background: #0a0a0a;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  background: #0d0d0d;
+  overflow: hidden;
 }
 
-.knowledge-slide-media img,
+.knowledge-slide-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  background: #0d0d0d;
+}
+
 .knowledge-card-media img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   display: block;
+  background: #0d0d0d;
 }
 
 .knowledge-slide-placeholder {
   width: 100%;
   height: 100%;
-  min-height: 120px;
+  min-height: 100px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1971,40 +1995,38 @@ select.client-wallet-input option {
 }
 
 .knowledge-nav {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 2;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
-  border: none;
-  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.9);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  backdrop-filter: blur(4px);
-  opacity: 0.7;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  flex-shrink: 0;
+  opacity: 0.85;
+  align-self: center;
 }
 
-.knowledge-nav:hover {
+.knowledge-nav:hover:not(:disabled) {
   opacity: 1;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(255, 255, 255, 0.12);
 }
 
-.knowledge-nav-prev { left: 8px; }
-.knowledge-nav-next { right: 8px; }
+.knowledge-nav:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
 
 .knowledge-play-badge {
   position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 36px;
-  height: 36px;
+  width: 30px;
+  height: 30px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -2017,35 +2039,30 @@ select.client-wallet-input option {
 
 .knowledge-type-chip {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  font-size: 9px;
+  top: 6px;
+  left: 6px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: 3px 7px;
+  padding: 2px 6px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.65);
   color: rgba(255, 255, 255, 0.9);
 }
 
 .knowledge-slide-body {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px 11px;
-}
-
-.knowledge-slide-copy {
-  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px 10px;
   flex: 1;
 }
 
 .knowledge-slide-body h3,
 .knowledge-card-body h3 {
-  margin: 0 0 2px;
-  font-size: 13px;
+  margin: 0;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.25;
   color: #fff;
@@ -2055,6 +2072,7 @@ select.client-wallet-input option {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 2.5em;
 }
 
 .knowledge-slide-body p,
@@ -2064,7 +2082,7 @@ select.client-wallet-input option {
   line-height: 1.35;
   color: rgba(255, 255, 255, 0.45);
   display: -webkit-box;
-  -webkit-line-clamp: 1;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -2073,8 +2091,7 @@ select.client-wallet-input option {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
+  margin-top: auto;
 }
 
 .knowledge-action {
@@ -2085,8 +2102,8 @@ select.client-wallet-input option {
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-  padding: 4px 8px;
-  font-size: 11px;
+  padding: 3px 7px;
+  font-size: 10px;
   cursor: pointer;
 }
 
@@ -2101,10 +2118,11 @@ select.client-wallet-input option {
   background: rgba(255, 90, 122, 0.1);
 }
 
-.knowledge-slide-counter {
+.knowledge-page-label {
+  text-align: center;
   font-size: 10px;
   color: rgba(255, 255, 255, 0.35);
-  white-space: nowrap;
+  margin-top: 4px;
 }
 
 .knowledge-dots {
@@ -2145,8 +2163,8 @@ select.client-wallet-input option {
 
 .knowledge-card-media {
   position: relative;
-  aspect-ratio: 16 / 10;
-  background: #0a0a0a;
+  aspect-ratio: 16 / 9;
+  background: #0d0d0d;
 }
 
 .knowledge-card-body { padding: 10px; }
@@ -2198,21 +2216,18 @@ select.client-wallet-input option {
   cursor: pointer;
 }
 
-@media (max-width: 700px) {
-  .knowledge-feed-card {
-    max-width: none;
+@media (max-width: 900px) {
+  .knowledge-track {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .knowledge-nav {
+    display: none;
   }
 
-  .knowledge-slide-body {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .knowledge-slide-actions {
-    flex-wrap: wrap;
-  }
-
-  .knowledge-slide-media {
-    max-height: 148px;
+  .knowledge-track {
+    grid-template-columns: 1fr;
   }
 }
