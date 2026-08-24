@@ -235,6 +235,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     document.body.style.backgroundColor = '#000000';
     const tab = this.route.snapshot.queryParamMap.get('tab');
     if (tab === 'conocimiento') this.setTab('conocimiento');
+    this.auth.getMe().subscribe({ error: () => {} });
     this.loadDashboard();
     this.loadInvoices();
     this.loadWallet();

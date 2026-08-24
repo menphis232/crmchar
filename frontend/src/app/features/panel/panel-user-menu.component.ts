@@ -25,10 +25,15 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       @if (menuOpen()) {
         <div class="avatar-dropdown">
           <div class="avatar-dropdown-header">
-            <strong>{{ name }}</strong>
-            @if (email) {
-              <span>{{ email }}</span>
+            @if (avatarUrl) {
+              <img [src]="avatarUrl" [alt]="name || 'Avatar'" class="avatar-dropdown-photo" />
             }
+            <div class="avatar-dropdown-meta">
+              <strong>{{ name }}</strong>
+              @if (email) {
+                <span>{{ email }}</span>
+              }
+            </div>
           </div>
           <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openCredentials()">
             <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
@@ -109,14 +114,28 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       overflow: hidden;
     }
     .avatar-dropdown-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       padding: 14px 16px;
       border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .avatar-dropdown-photo {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,.15);
+    }
+    .avatar-dropdown-meta {
       display: flex;
       flex-direction: column;
       gap: 2px;
+      min-width: 0;
     }
     .avatar-dropdown-header strong { color: #fff; font-size: 14px; }
-    .avatar-dropdown-header span { color: rgba(255,255,255,.45); font-size: 12px; }
+    .avatar-dropdown-header span { color: rgba(255,255,255,.45); font-size: 12px; word-break: break-all; }
     .avatar-dropdown-item {
       display: flex;
       align-items: center;

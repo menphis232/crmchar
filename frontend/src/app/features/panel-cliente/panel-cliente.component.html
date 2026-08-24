@@ -241,11 +241,20 @@
         }
       </div>
 
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideLayoutDashboard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          ¡Hola, {{ auth.user()?.name }}!
-        </h2>
+      <div class="dash-card client-hello-card">
+        <div class="client-hello">
+          <div class="client-hello-avatar" aria-hidden="true">
+            @if (auth.user()?.avatar_url) {
+              <img [src]="auth.user()?.avatar_url" [alt]="auth.user()?.name || 'Avatar'" />
+            } @else {
+              <span>{{ initials(auth.user()?.name) }}</span>
+            }
+          </div>
+          <div class="client-hello-text">
+            <h2 class="card-title client-hello-title">¡Hola, {{ auth.user()?.name }}!</h2>
+            <p class="card-desc client-hello-sub">Este es tu panel de trámites y vehículos.</p>
+          </div>
+        </div>
         <div class="stats-grid">
           <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
             <div class="stat-num">{{ totalDeals() }}</div>
