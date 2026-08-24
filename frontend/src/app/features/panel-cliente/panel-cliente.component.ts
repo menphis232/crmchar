@@ -19,6 +19,12 @@ import { MEXICO_STATES } from '../../shared/mexico-states';
 import { CrmContactVehicle, CrmContactVehicleDocument, KnowledgePost } from '../../models';
 import { SupportWidgetComponent } from '../../shared/support-widget.component';
 import {
+  checkCirculationToday,
+  getMexicoCityCalendar,
+  ruleForPlate,
+  vehicleDisplayName,
+} from '../../shared/hoy-no-circula';
+import {
   LucideArrowLeft,
   LucideBot,
   LucideCar,
@@ -199,6 +205,30 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   activeDeals = computed(() => this.stats().active);
   completedDeals = computed(() => this.stats().closed);
 
+  /** Resumen Hoy No Circula por vehículo registrado (CDMX / ZM). */
+  vehicleCirculation = computed(() => {
+    return this.vehicles().map(v => {
+      const rule = ruleForPlate(v.plate);
+      const check = checkCirculationToday(v.plate);
+      return {
+        vehicle: v,
+        displayName: vehicleDisplayName(v),
+        rule,
+        color: rule?.color || v.engomadoColor || null,
+        colorLabel: rule?.colorLabel || (v.engomadoColor ? String(v.engomadoColor) : '—'),
+        weekdayLabel: rule?.weekdayLabel || '—',
+        verification1: rule?.verification1 || '—',
+        verification2: rule?.verification2 || '—',
+        blockedToday: check.blockedToday,
+        reason: check.reason,
+      };
+    });
+  });
+
+  blockedVehiclesToday = computed(() => this.vehicleCirculation().filter(x => x.blockedToday));
+
+  todayMexicoLabel = computed(() => getMexicoCityCalendar().weekdayLabel);
+
   ngOnInit() {
     document.documentElement.style.setProperty('--bg', '#000000');
     document.documentElement.style.setProperty('--panel-bg', '#000000');
@@ -208,6 +238,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadDashboard();
     this.loadInvoices();
     this.loadWallet();
+    this.loadVehicles();
+    this.loadKnowledgeFeed();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
     const user = this.auth.user();

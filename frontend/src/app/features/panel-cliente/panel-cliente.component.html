@@ -171,6 +171,76 @@
         }
       </div>
 
+      @if (blockedVehiclesToday().length) {
+        <div class="dash-card hnc-alert-card">
+          @for (item of blockedVehiclesToday(); track item.vehicle.id) {
+            <div class="hnc-alert" [attr.data-color]="item.color || 'none'">
+              <span class="hnc-alert-dot" [class]="'hnc-dot-' + (item.color || 'none')"></span>
+              <div>
+                <strong>Mira: tu auto {{ item.displayName }} no puede circular el día de hoy</strong>
+                <p>{{ item.reason }} · Hoy es {{ todayMexicoLabel() }} (hora CDMX)</p>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="dash-card hnc-card">
+        <div class="hnc-card-head">
+          <h2 class="card-title card-title-with-icon">
+            <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Hoy No Circula
+          </h2>
+          <span class="hnc-today-chip">Hoy: {{ todayMexicoLabel() }}</span>
+        </div>
+        <p class="card-desc">Según el último dígito de tu placa (CDMX y Zona Metropolitana).</p>
+
+        @if (vehiclesLoading() && !vehicles().length) {
+          <div class="client-empty">Cargando tus vehículos…</div>
+        } @else if (!vehicleCirculation().length) {
+          <div class="client-empty hnc-empty">
+            <strong>Aún no tienes autos registrados</strong>
+            <p>Registra un vehículo para ver qué día y color de engomado te toca.</p>
+            <button type="button" class="btn-copy small" (click)="setTab('vehiculos')">Ir a Mis Vehículos</button>
+          </div>
+        } @else {
+          <div class="hnc-list">
+            @for (item of vehicleCirculation(); track item.vehicle.id) {
+              <article class="hnc-item" [class.hnc-item-blocked]="item.blockedToday" [attr.data-color]="item.color || 'none'">
+                <div class="hnc-item-color" [class]="'hnc-dot-' + (item.color || 'none')" [title]="item.colorLabel"></div>
+                <div class="hnc-item-main">
+                  <div class="hnc-item-title">
+                    <strong>{{ item.vehicle.plate }}</strong>
+                    @if (item.vehicle.make || item.vehicle.model) {
+                      <span>{{ item.vehicle.make }} {{ item.vehicle.model }}@if (item.vehicle.year) { · {{ item.vehicle.year }} }</span>
+                    }
+                  </div>
+                  <div class="hnc-item-meta">
+                    <span class="hnc-pill" [class]="'hnc-pill-' + (item.color || 'none')">{{ item.colorLabel }}</span>
+                    <span>Parada: <strong>{{ item.weekdayLabel }}</strong></span>
+                    @if (item.rule) {
+                      <span class="hnc-digit">Placa …{{ item.rule.digit }}</span>
+                    }
+                  </div>
+                  @if (item.rule) {
+                    <div class="hnc-verif">
+                      <span>1er sem: {{ item.verification1 }}</span>
+                      <span>2do sem: {{ item.verification2 }}</span>
+                    </div>
+                  }
+                </div>
+                @if (item.blockedToday) {
+                  <span class="hnc-badge-stop">Hoy no circula</span>
+                } @else {
+                  <span class="hnc-badge-ok">Hoy sí puede</span>
+                }
+              </article>
+            }
+          </div>
+          <p class="hnc-footnote">Sábados: holograma 2 no circula; holograma 1 según placa non/par. Domingo sin restricción de engomado.</p>
+        }
+      </div>
+
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideLayoutDashboard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
