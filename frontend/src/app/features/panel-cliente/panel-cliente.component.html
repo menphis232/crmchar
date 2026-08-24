@@ -41,27 +41,13 @@
       </div>
     </div>
 
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'dashboard'" (click)="setTab('dashboard')">
-      <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Dashboard
-    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="setTab('ajustes')">
       <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Perfil
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="setTab('tramites'); closeDeal()">
-      <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Mis Trámites
-      @if (activeDeals() > 0) {
-        <span class="kanban-count">{{ activeDeals() }}</span>
-      }
-    </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'historial'" (click)="setTab('historial'); closeDeal()">
-      <svg lucideHistory [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Historial
-      @if (completedDeals() > 0) {
-        <span class="kanban-count">{{ completedDeals() }}</span>
-      }
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'dashboard'" (click)="setTab('dashboard')">
+      <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Dashboard
     </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'billetera'" (click)="setTab('billetera'); closeDeal()">
       <svg lucideWallet [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
@@ -77,6 +63,20 @@
         <span class="kanban-count">{{ vehicles().length }}</span>
       }
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="setTab('tramites'); closeDeal()">
+      <svg lucideClipboardList [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Mis Trámites
+      @if (activeDeals() > 0) {
+        <span class="kanban-count">{{ activeDeals() }}</span>
+      }
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'historial'" (click)="setTab('historial'); closeDeal()">
+      <svg lucideHistory [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Historial
+      @if (completedDeals() > 0) {
+        <span class="kanban-count">{{ completedDeals() }}</span>
+      }
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'facturas'" (click)="setTab('facturas'); closeDeal()">
       <svg lucideReceipt [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Comprobantes de pago
@@ -84,6 +84,14 @@
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
     </button>
+    <a routerLink="/gestores" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
+      <svg lucideBriefcase [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Consultorias Vehiculares
+    </a>
+    <a routerLink="/autos" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
+      <svg lucideStore [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Inventario de Seminuevos
+    </a>
   </aside>
 
   <main class="dash-main">

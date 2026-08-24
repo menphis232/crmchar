@@ -3,6 +3,7 @@ import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
@@ -44,6 +45,8 @@ import {
   LucideLoader,
   LucideWallet,
   LucidePlus,
+  LucideBriefcase,
+  LucideStore,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -60,13 +63,13 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
   selector: 'app-panel-cliente',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet,
+    CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
     PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent, SupportWidgetComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
-    LucideFolderOpen, LucideLoader,
+    LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
