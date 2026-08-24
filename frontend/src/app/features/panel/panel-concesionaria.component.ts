@@ -29,6 +29,7 @@ import { PanelSubscriptionLockComponent } from './panel-subscription-lock.compon
 import { AmountTipDirective } from '../../shared/amount-tip.directive';
 import { CrmTeamComponent } from './crm-team.component';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
+import { SupportWidgetComponent } from '../../shared/support-widget.component';
 import {
   LucideBot,
   LucideCamera,
@@ -87,7 +88,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, SupportWidgetComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-concesionaria.component.css'],
 })

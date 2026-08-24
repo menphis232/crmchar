@@ -5,7 +5,7 @@ import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
   CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   PeritoAccount, PeritoAssignOption, PeritoDeal, PeritoDealDetail, PeritoOverviewItem, PeritoPerformance,
-  MessageTemplate, SiteSettings, StateFilter,   FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
+  MessageTemplate, SiteSettings, StateFilter, SupportMessage, SupportThread, FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
 
@@ -332,7 +332,7 @@ export class AdminService {
 
   getStats() { return this.http.get<AdminStats>(`${this.base}/stats`); }
   getUsers() { return this.http.get(`${this.base}/users`); }
-  getManagedUsers(role?: 'gestor' | 'concesionaria') {
+  getManagedUsers(role?: 'gestor' | 'concesionaria' | 'cliente') {
     let params = new HttpParams();
     if (role) params = params.set('role', role);
     return this.http.get<ManagedUser[]>(`${this.base}/users/managed`, { params });
@@ -380,6 +380,37 @@ export class AdminService {
     });
   }
   disconnectAnalytics() { return this.http.delete<import('../models').AnalyticsConfig>(`${this.base}/analytics/disconnect`); }
+}
+
+@Injectable({ providedIn: 'root' })
+export class SupportService {
+  private base = `${environment.apiUrl}/support`;
+  constructor(private http: HttpClient) {}
+
+  getThreads(role?: SupportThread['role']) {
+    const params = role ? new HttpParams().set('role', role) : undefined;
+    return this.http.get<SupportThread[]>(`${this.base}/threads`, { params });
+  }
+
+  getMyMessages() {
+    return this.http.get<SupportMessage[]>(`${this.base}/messages`);
+  }
+
+  getMessages(clientId: string) {
+    return this.http.get<SupportMessage[]>(`${this.base}/messages/${clientId}`);
+  }
+
+  sendMyMessage(data: { message?: string; fileUrl?: string }) {
+    return this.http.post<SupportMessage>(`${this.base}/messages`, data);
+  }
+
+  sendMessage(clientId: string, data: { message?: string; fileUrl?: string }) {
+    return this.http.post<SupportMessage>(`${this.base}/messages/${clientId}`, data);
+  }
+
+  getUnread() {
+    return this.http.get<{ unread: number }>(`${this.base}/unread`);
+  }
 }
 
 @Injectable({ providedIn: 'root' })

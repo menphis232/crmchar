@@ -2,8 +2,8 @@ import { Component, OnInit, signal, effect } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-import { AdminService } from '../../core/api.service';
-import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty } from '../../models';
+import { AdminService, SupportService } from '../../core/api.service';
+import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread } from '../../models';
 import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 
@@ -13,6 +13,7 @@ import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
+import { SupportChatComponent } from '../../shared/support-chat.component';
 import {
   LucideBarChart3,
   LucideBot,
@@ -37,12 +38,12 @@ import {
   LucideZap,
 } from '@lucide/angular';
 
-type AdminTab = 'stats' | 'users' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
+type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
@@ -54,7 +55,7 @@ export class PanelAdminComponent implements OnInit {
   tab = signal<AdminTab>('stats');
   stats = signal<AdminStats | null>(null);
   managedUsers = signal<ManagedUser[]>([]);
-  userFilter = signal<'all' | 'gestor' | 'concesionaria'>('all');
+  userFilter = signal<'gestor' | 'concesionaria' | 'cliente'>('cliente');
   selectedUser = signal<ManagedUser | null>(null);
   newPassword = '';
   editName = '';
@@ -64,6 +65,9 @@ export class PanelAdminComponent implements OnInit {
   editBio = '';
   editWhatsapp = '';
   message = signal('');
+  supportThreads = signal<SupportThread[]>([]);
+  openSupportTabs = signal<SupportThread[]>([]);
+  activeSupportId = signal('');
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -127,6 +131,7 @@ export class PanelAdminComponent implements OnInit {
   constructor(
     public auth: AuthService,
     private adminService: AdminService,
+    private supportService: SupportService,
     private route: ActivatedRoute,
     private router: Router,
   ) {
@@ -315,9 +320,7 @@ export class PanelAdminComponent implements OnInit {
   }
 
   loadUsers() {
-    const f = this.userFilter();
-    const role = f === 'all' ? undefined : f;
-    this.adminService.getManagedUsers(role).subscribe({
+    this.adminService.getManagedUsers(this.userFilter()).subscribe({
       next: u => {
         this.managedUsers.set(u);
         const selected = this.selectedUser();
@@ -329,6 +332,50 @@ export class PanelAdminComponent implements OnInit {
       },
       error: e => this.message.set(e.error?.error || 'No se pudieron cargar los usuarios'),
     });
+  }
+
+  openUsersTab(tab: 'users' | 'gestores' | 'concesionarias') {
+    const role = tab === 'users' ? 'cliente' : tab === 'gestores' ? 'gestor' : 'concesionaria';
+    this.tab.set(tab);
+    this.userFilter.set(role);
+    this.loadUsers();
+    this.isMobileMenuOpen.set(false);
+  }
+
+  managedUsersTitle() {
+    return this.userFilter() === 'cliente' ? 'Usuarios (clientes)'
+      : this.userFilter() === 'gestor' ? 'Gestorías'
+      : 'Concesionarios';
+  }
+
+  loadSupportThreads() {
+    this.supportService.getThreads().subscribe({
+      next: threads => this.supportThreads.set(threads),
+      error: e => this.message.set(e.error?.error || 'No se pudo cargar soporte'),
+    });
+  }
+
+  openSupportThread(thread: SupportThread) {
+    this.openSupportTabs.update(tabs => tabs.some(t => t.id === thread.id) ? tabs : [...tabs, thread]);
+    this.activeSupportId.set(thread.id);
+    this.supportThreads.update(threads => threads.map(t => t.id === thread.id ? { ...t, unread: 0 } : t));
+  }
+
+  closeSupportThread(event: Event, threadId: string) {
+    event.stopPropagation();
+    const tabs = this.openSupportTabs().filter(t => t.id !== threadId);
+    this.openSupportTabs.set(tabs);
+    if (this.activeSupportId() === threadId) {
+      this.activeSupportId.set(tabs.at(-1)?.id || '');
+    }
+  }
+
+  activeSupportThread() {
+    return this.openSupportTabs().find(t => t.id === this.activeSupportId()) || null;
+  }
+
+  supportRoleLabel(role: SupportThread['role']) {
+    return role === 'gestor' ? 'Gestoría' : role === 'concesionaria' ? 'Concesionario' : 'Cliente';
   }
 
   userInitials(name?: string) {

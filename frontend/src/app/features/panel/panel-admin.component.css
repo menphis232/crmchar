@@ -1178,6 +1178,155 @@ app-crm-team {
   background: rgba(200, 169, 74, 0.10);
 }
 
+.user-role-badge.cliente {
+  border-color: rgba(74, 222, 128, 0.35);
+  color: rgba(134, 239, 172, 0.95);
+  background: rgba(34, 197, 94, 0.10);
+}
+
+.support-admin-card {
+  min-height: calc(100vh - 130px);
+}
+
+.support-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+  min-height: 620px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0d0d0d;
+}
+
+.support-thread-list {
+  padding: 10px;
+  border-right: 1px solid rgba(255,255,255,.1);
+  overflow-y: auto;
+}
+
+.support-thread-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #fff;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.support-thread-row:hover,
+.support-thread-row.active {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.14);
+}
+
+.support-thread-copy {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.support-thread-copy strong,
+.support-thread-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.support-thread-copy strong { font-size: 13px; }
+.support-thread-copy small { color: var(--muted); font-size: 11px; }
+
+.support-unread {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gold);
+  color: #000;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.support-workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #080808;
+}
+
+.support-browser-tabs {
+  display: flex;
+  gap: 3px;
+  padding: 8px 8px 0;
+  overflow-x: auto;
+  background: #171717;
+}
+
+.support-browser-tab {
+  min-width: 140px;
+  max-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 11px;
+  border: 0;
+  border-radius: 9px 9px 0 0;
+  background: #222;
+  color: rgba(255,255,255,.55);
+  cursor: pointer;
+}
+
+.support-browser-tab.active {
+  background: #080808;
+  color: #fff;
+}
+
+.support-browser-tab span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.support-tab-close {
+  flex-shrink: 0;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.support-workspace app-support-chat {
+  display: block;
+  flex: 1;
+  min-height: 0;
+}
+
+.support-empty {
+  margin: auto;
+  max-width: 320px;
+  text-align: center;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .support-admin-layout {
+    grid-template-columns: 1fr;
+  }
+  .support-thread-list {
+    max-height: 260px;
+    border-right: 0;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
+}
+
 .user-editor {
   border-radius: 12px !important;
   min-height: 360px;

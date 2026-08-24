@@ -47,9 +47,21 @@
       <svg lucideBarChart3 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Estadísticas
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'users'" (click)="tab.set('users'); loadUsers(); isMobileMenuOpen.set(false)">
-      <svg lucideUsers [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'users'" (click)="openUsersTab('users')">
+      <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Usuarios
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'gestores'" (click)="openUsersTab('gestores')">
+      <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Gestorías
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'concesionarias'" (click)="openUsersTab('concesionarias')">
+      <svg lucideBuilding2 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Concesionarios
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'support'" (click)="tab.set('support'); loadSupportThreads(); isMobileMenuOpen.set(false)">
+      <svg lucideMessageCircle [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Soporte
     </button>
     <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">
       <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
@@ -243,18 +255,13 @@
       </div>
     }
 
-    @if (tab() === 'users') {
+    @if (tab() === 'users' || tab() === 'gestores' || tab() === 'concesionarias') {
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideUsers [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Gestión de usuarios
+          {{ managedUsersTitle() }}
         </h2>
-        <p class="card-desc">Modifica datos y contraseñas de gestores y concesionarias.</p>
-        <div class="filter-tabs">
-          <button [class.active]="userFilter() === 'all'" (click)="userFilter.set('all'); loadUsers()">Todos</button>
-          <button [class.active]="userFilter() === 'gestor'" (click)="userFilter.set('gestor'); loadUsers()">Gestores</button>
-          <button [class.active]="userFilter() === 'concesionaria'" (click)="userFilter.set('concesionaria'); loadUsers()">Concesionarias</button>
-        </div>
+        <p class="card-desc">Consulta y administra las cuentas de esta categoría.</p>
         <div class="users-layout">
           <div class="users-list">
             @if (!managedUsers().length) {
@@ -267,8 +274,8 @@
                   <strong>{{ u.name }}</strong>
                   <span class="user-meta">{{ u.email }}</span>
                 </div>
-                <span class="user-role-badge" [class.gestor]="u.role === 'gestor'" [class.concesionaria]="u.role === 'concesionaria'">
-                  {{ u.role === 'gestor' ? 'Gestor' : 'Concesionaria' }}
+                <span class="user-role-badge" [class.gestor]="u.role === 'gestor'" [class.concesionaria]="u.role === 'concesionaria'" [class.cliente]="u.role === 'cliente'">
+                  {{ u.role === 'gestor' ? 'Gestoría' : u.role === 'concesionaria' ? 'Concesionario' : 'Cliente' }}
                 </span>
               </button>
             }
@@ -290,7 +297,7 @@
                 <div class="form-group"><label>Estado</label><input [(ngModel)]="editState"></div>
                 <div class="form-group"><label>WhatsApp</label><input [(ngModel)]="editWhatsapp"></div>
                 <div class="form-group"><label>Bio pública</label><textarea [(ngModel)]="editBio" rows="3"></textarea></div>
-              } @else {
+              } @else if (u.role === 'concesionaria') {
                 <p class="card-desc">{{ u.autosCount || 0 }} vehículos en inventario</p>
               }
               <button type="button" class="btn-copy" (click)="saveUser()">GUARDAR DATOS</button>
@@ -299,12 +306,14 @@
               <div class="form-group"><label>Nueva contraseña</label><input type="password" [(ngModel)]="newPassword"></div>
               <button type="button" class="btn-ghost warn" (click)="resetPassword()">ACTUALIZAR CONTRASEÑA</button>
               <hr class="divider">
-              <h4>Auditoría de Actividad</h4>
-              <p class="card-desc">Monitorea clientes, trámites y lee los mensajes de esta organización.</p>
-              <button type="button" class="btn-audit btn-with-icon" (click)="auditUser(u)">
-                <svg lucideSearch [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
-                Auditar Organización
-              </button>
+              @if (u.role !== 'cliente') {
+                <h4>Auditoría de Actividad</h4>
+                <p class="card-desc">Monitorea clientes, trámites y lee los mensajes de esta organización.</p>
+                <button type="button" class="btn-audit btn-with-icon" (click)="auditUser(u)">
+                  <svg lucideSearch [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+                  Auditar Organización
+                </button>
+              }
             </div>
           } @else {
             <div class="user-editor user-editor-placeholder">
@@ -312,6 +321,58 @@
               <p>Selecciona un usuario de la lista para ver y editar sus datos.</p>
             </div>
           }
+        </div>
+      </div>
+    }
+
+    @if (tab() === 'support') {
+      <div class="dash-card support-admin-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideMessageCircle [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Soporte en vivo
+        </h2>
+        <p class="card-desc">Conversaciones directas con clientes, gestorías y concesionarios.</p>
+        <div class="support-admin-layout">
+          <div class="support-thread-list">
+            @for (thread of supportThreads(); track thread.id) {
+              <button type="button" class="support-thread-row" [class.active]="activeSupportId() === thread.id" (click)="openSupportThread(thread)">
+                <span class="user-row-avatar">{{ userInitials(thread.name) }}</span>
+                <span class="support-thread-copy">
+                  <strong>{{ thread.name }}</strong>
+                  <small>{{ supportRoleLabel(thread.role) }} · {{ thread.lastMessage || 'Sin mensajes' }}</small>
+                </span>
+                @if (thread.unread) { <span class="support-unread">{{ thread.unread }}</span> }
+              </button>
+            }
+            @if (!supportThreads().length) {
+              <p class="card-desc">No hay conversaciones disponibles.</p>
+            }
+          </div>
+          <div class="support-workspace">
+            @if (openSupportTabs().length) {
+              <div class="support-browser-tabs">
+                @for (thread of openSupportTabs(); track thread.id) {
+                  <button type="button" class="support-browser-tab" [class.active]="activeSupportId() === thread.id" (click)="activeSupportId.set(thread.id)">
+                    <span>{{ thread.name }}</span>
+                    <span class="support-tab-close" role="button" aria-label="Cerrar conversación" (click)="closeSupportThread($event, thread.id)">×</span>
+                  </button>
+                }
+              </div>
+            }
+            @if (activeSupportThread(); as thread) {
+              <app-support-chat
+                mode="admin"
+                [peerId]="thread.id"
+                [title]="thread.name"
+                [subtitle]="supportRoleLabel(thread.role) + ' · ' + thread.email"
+              />
+            } @else {
+              <div class="support-empty">
+                <svg lucideMessageCircle [size]="48" [strokeWidth]="1.5" aria-hidden="true"></svg>
+                <p>Selecciona una conversación para abrirla en una pestaña.</p>
+              </div>
+            }
+          </div>
         </div>
       </div>
     }

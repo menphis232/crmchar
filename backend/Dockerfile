@@ -10,5 +10,5 @@ COPY . .
 # Expose the API port
 EXPOSE 3000
 
-# Start the Node.js server
-CMD ["node", "src/index.js"]
+# Apply idempotent migrations before starting the API
+CMD ["sh", "-c", "node src/migrate.js && node src/index.js"]

@@ -64,7 +64,7 @@ router.get('/users', authRequired, requireRole('admin'), async (_req, res) => {
   }
 });
 
-// Gestores y concesionarias con detalle para administración
+// Clientes y propietarios de gestorías/concesionarias con detalle para administración
 router.get('/users/managed', authRequired, requireRole('admin'), async (req, res) => {
   try {
     const { role } = req.query;
@@ -74,10 +74,11 @@ router.get('/users/managed', authRequired, requireRole('admin'), async (req, res
              (SELECT COUNT(*) FROM autos a WHERE a.user_id = u.id) as autosCount
       FROM users u
       LEFT JOIN gestores g ON g.user_id = u.id
-      WHERE u.role IN ('gestor', 'concesionaria')
+      WHERE u.role IN ('gestor', 'concesionaria', 'cliente')
+        AND (u.role = 'cliente' OR u.parent_id IS NULL)
     `;
     const params = [];
-    if (role === 'gestor' || role === 'concesionaria') {
+    if (['gestor', 'concesionaria', 'cliente'].includes(role)) {
       sql += ' AND u.role = ?';
       params.push(role);
     }
@@ -90,7 +91,7 @@ router.get('/users/managed', authRequired, requireRole('admin'), async (req, res
   }
 });
 
-// Cambiar contraseña de gestor o concesionaria
+// Cambiar contraseña de un usuario administrado
 router.patch('/users/:id/password', authRequired, requireRole('admin'), async (req, res) => {
   try {
     const { newPassword } = req.body;
@@ -99,8 +100,8 @@ router.patch('/users/:id/password', authRequired, requireRole('admin'), async (r
     }
     const user = await get('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!['gestor', 'concesionaria'].includes(user.role)) {
-      return res.status(403).json({ error: 'Solo puedes cambiar claves de gestores y concesionarias' });
+    if (!['gestor', 'concesionaria', 'cliente'].includes(user.role)) {
+      return res.status(403).json({ error: 'Solo puedes cambiar claves de usuarios administrados' });
     }
     const hash = bcrypt.hashSync(newPassword, 10);
     await run('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.params.id]);
@@ -115,8 +116,8 @@ router.put('/users/:id', authRequired, requireRole('admin'), async (req, res) =>
   try {
     const user = await get('SELECT id, role FROM users WHERE id = ?', [req.params.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    if (!['gestor', 'concesionaria'].includes(user.role)) {
-      return res.status(403).json({ error: 'Solo gestores y concesionarias' });
+    if (!['gestor', 'concesionaria', 'cliente'].includes(user.role)) {
+      return res.status(403).json({ error: 'Usuario no administrable' });
     }
     const { name, email } = req.body;
     await run('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?',

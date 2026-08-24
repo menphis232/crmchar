@@ -161,7 +161,7 @@ export interface ManagedUser {
   id: string;
   email: string;
   name: string;
-  role: 'gestor' | 'concesionaria';
+  role: 'gestor' | 'concesionaria' | 'cliente';
   createdAt?: string;
   gestorId?: string;
   slug?: string;
@@ -169,6 +169,29 @@ export interface ManagedUser {
   state?: string;
   rating?: number;
   autosCount?: number;
+}
+
+export interface SupportThread {
+  id: string;
+  email: string;
+  name: string;
+  role: 'gestor' | 'concesionaria' | 'cliente';
+  createdAt?: string;
+  lastMessage?: string | null;
+  lastAt?: string | null;
+  unread: number;
+}
+
+export interface SupportMessage {
+  id: string;
+  clientId: string;
+  senderId: string;
+  message?: string | null;
+  fileUrl?: string | null;
+  isRead: boolean | number;
+  createdAt: string;
+  senderName: string;
+  senderRole: User['role'];
 }
 
 export interface AdminStats {

@@ -22,6 +22,7 @@ import shareRoutes from './routes/share.js';
 import ogRoutes from './routes/og.js';
 import peritoRoutes from './routes/perito.js';
 import mpRoutes from './routes/mp.js';
+import supportRoutes from './routes/support.js';
 import { testConnection } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -41,7 +42,7 @@ app.set('trust proxy', 1);
 startAutomationsCron();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: '*' }));
+app.use(cors({ origin: true, credentials: true }));
 app.use(compression());
 app.use('/api/webhooks', express.raw({ type: 'application/json' }), webhooksRoutes);
 
@@ -72,6 +73,7 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/share', shareRoutes);
 app.use('/api/perito', peritoRoutes);
 app.use('/api/mp', mpRoutes);
+app.use('/api/support', supportRoutes);
 app.use('/og', ogRoutes);
 // Rutas cortas para compartir con OG tags
 app.use('/s', shareRoutes);   // /s/:id  → autos
@@ -85,7 +87,7 @@ app.use((err, _req, res, _next) => {
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' },
+  cors: { origin: true, credentials: true },
   pingInterval: 25000,
   pingTimeout: 20000,
   maxHttpBufferSize: 1e6,
@@ -116,6 +118,20 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', (data) => {
     if (data?.dealId) io.to(String(data.dealId)).emit('receive_message', data);
+  });
+
+  socket.on('join_support', (clientId) => {
+    if (clientId) socket.join(`support_${String(clientId)}`);
+  });
+
+  socket.on('leave_support', (clientId) => {
+    if (clientId) socket.leave(`support_${String(clientId)}`);
+  });
+
+  socket.on('send_support_message', (data) => {
+    if (data?.clientId) {
+      io.to(`support_${String(data.clientId)}`).emit('receive_support_message', data);
+    }
   });
 });
 

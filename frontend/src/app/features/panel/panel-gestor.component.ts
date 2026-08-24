@@ -62,6 +62,7 @@ import {
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
+import { SupportWidgetComponent } from '../../shared/support-widget.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { getGestorOgImageUrl, getGestorPanelPreviewImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
 import { MEXICO_STATES } from '../../shared/mexico-states';
@@ -107,7 +108,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
+    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent, SupportWidgetComponent,
     LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
   ],
   templateUrl: './panel-gestor.component.html',
