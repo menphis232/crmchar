@@ -1938,11 +1938,23 @@ select.client-wallet-input option {
 }
 
 .knowledge-track {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   gap: 10px;
   min-width: 0;
   flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.knowledge-track::-webkit-scrollbar {
+  display: none;
 }
 
 .knowledge-slide {
@@ -1954,7 +1966,10 @@ select.client-wallet-input option {
   text-align: left;
   display: flex;
   flex-direction: column;
-  min-width: 0;
+  flex: 0 0 calc((100% - 20px) / 3);
+  max-width: calc((100% - 20px) / 3);
+  min-width: calc((100% - 20px) / 3);
+  scroll-snap-align: start;
 }
 
 .knowledge-slide-media {
@@ -2217,17 +2232,25 @@ select.client-wallet-input option {
 }
 
 @media (max-width: 900px) {
-  .knowledge-track {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .knowledge-slide {
+    flex-basis: calc((100% - 10px) / 2);
+    max-width: calc((100% - 10px) / 2);
+    min-width: calc((100% - 10px) / 2);
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .knowledge-nav {
     display: none;
   }
 
+  .knowledge-slide {
+    flex-basis: 82%;
+    max-width: 82%;
+    min-width: 82%;
+  }
+
   .knowledge-track {
-    grid-template-columns: 1fr;
+    padding-bottom: 2px;
   }
 }

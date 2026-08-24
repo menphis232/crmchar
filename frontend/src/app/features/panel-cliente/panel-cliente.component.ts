@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -134,22 +134,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   dashboardLoading = signal(true);
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
-  feedPage = signal(0);
-  readonly feedPageSize = 3;
   selectedArticle = signal<KnowledgePost | null>(null);
-
-  visibleFeedPosts = computed(() => {
-    const start = this.feedPage() * this.feedPageSize;
-    return this.knowledgePosts().slice(start, start + this.feedPageSize);
-  });
-
-  feedPageCount = computed(() =>
-    Math.max(1, Math.ceil(this.knowledgePosts().length / this.feedPageSize))
-  );
-
-  feedPages = computed(() =>
-    Array.from({ length: this.feedPageCount() }, (_, i) => i)
-  );
+  @ViewChild('knowledgeTrack') knowledgeTrack?: ElementRef<HTMLDivElement>;
+  readonly feedPageSize = 3;
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -276,8 +263,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       next: posts => {
         this.knowledgePosts.set(posts);
         this.knowledgeLoading.set(false);
-        const maxPage = Math.max(0, Math.ceil(posts.length / this.feedPageSize) - 1);
-        if (this.feedPage() > maxPage) this.feedPage.set(0);
       },
       error: () => {
         this.knowledgePosts.set([]);
@@ -287,11 +272,20 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   feedPrev() {
-    this.feedPage.update(p => Math.max(0, p - 1));
+    this.scrollFeed(-1);
   }
 
   feedNext() {
-    this.feedPage.update(p => Math.min(this.feedPageCount() - 1, p + 1));
+    this.scrollFeed(1);
+  }
+
+  private scrollFeed(direction: 1 | -1) {
+    const el = this.knowledgeTrack?.nativeElement;
+    if (!el) return;
+    const slide = el.querySelector('.knowledge-slide') as HTMLElement | null;
+    const step = slide ? slide.offsetWidth + 10 : Math.round(el.clientWidth * 0.85);
+    const visible = Math.max(1, Math.round(el.clientWidth / step));
+    el.scrollBy({ left: direction * step * Math.min(visible, this.feedPageSize), behavior: 'smooth' });
   }
 
   coverFor(post: KnowledgePost): string {

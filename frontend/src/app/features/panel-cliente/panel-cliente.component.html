@@ -121,14 +121,14 @@
           </div>
         } @else {
           <div class="knowledge-slider">
-            @if (feedPageCount() > 1) {
-              <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior" [disabled]="feedPage() === 0">
+            @if (knowledgePosts().length > 1) {
+              <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior">
                 <svg lucideChevronLeft [size]="16" aria-hidden="true"></svg>
               </button>
             }
 
-            <div class="knowledge-track">
-              @for (post of visibleFeedPosts(); track post.id) {
+            <div class="knowledge-track" #knowledgeTrack>
+              @for (post of knowledgePosts(); track post.id) {
                 <article class="knowledge-slide" (click)="openKnowledge(post)">
                   <div class="knowledge-slide-media">
                     @if (coverFor(post)) {
@@ -162,21 +162,12 @@
               }
             </div>
 
-            @if (feedPageCount() > 1) {
-              <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente" [disabled]="feedPage() >= feedPageCount() - 1">
+            @if (knowledgePosts().length > 1) {
+              <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente">
                 <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
               </button>
             }
           </div>
-
-          @if (feedPageCount() > 1) {
-            <div class="knowledge-dots">
-              @for (page of feedPages(); track page) {
-                <button type="button" class="knowledge-dot" [class.active]="page === feedPage()" (click)="feedPage.set(page)" [attr.aria-label]="'Página ' + (page + 1)"></button>
-              }
-            </div>
-            <div class="knowledge-page-label">{{ feedPage() + 1 }} / {{ feedPageCount() }}</div>
-          }
         }
       </div>
 
