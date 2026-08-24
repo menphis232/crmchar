@@ -121,55 +121,57 @@
             <strong>Pronto habrá contenido aquí</strong>
             <p>El equipo publicará videos y artículos útiles para tus trámites.</p>
           </div>
-        } @else if (currentFeedPost(); as post) {
-          <div class="knowledge-slider">
-            <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior">
-              <svg lucideChevronLeft [size]="22" aria-hidden="true"></svg>
-            </button>
+        } @else {
+          @if (currentFeedPost(); as post) {
+            <div class="knowledge-slider">
+              <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior">
+                <svg lucideChevronLeft [size]="22" aria-hidden="true"></svg>
+              </button>
 
-            <article class="knowledge-slide" (click)="openKnowledge(post)">
-              <div class="knowledge-slide-media">
-                @if (coverFor(post)) {
-                  <img [src]="coverFor(post)" [alt]="post.title" />
-                } @else {
-                  <div class="knowledge-slide-placeholder">
-                    <svg lucidePlay [size]="40" aria-hidden="true"></svg>
-                  </div>
-                }
-                @if (post.type === 'video') {
-                  <span class="knowledge-play-badge"><svg lucidePlay [size]="18" aria-hidden="true"></svg></span>
-                }
-                <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
-              </div>
-              <div class="knowledge-slide-body">
-                <h3>{{ post.title }}</h3>
-                @if (post.body) {
-                  <p>{{ post.body.length > 160 ? (post.body | slice:0:160) + '…' : post.body }}</p>
-                }
-                <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
-                  <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
-                    <svg lucideHeart [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
-                    <span>{{ post.likesCount || 0 }}</span>
-                  </button>
-                  <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)" title="Compartir en WhatsApp">
-                    <svg lucideShare2 [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
-                    <span>WhatsApp</span>
-                  </button>
-                  <span class="knowledge-slide-counter">{{ feedIndex() + 1 }} / {{ knowledgePosts().length }}</span>
+              <article class="knowledge-slide" (click)="openKnowledge(post)">
+                <div class="knowledge-slide-media">
+                  @if (coverFor(post)) {
+                    <img [src]="coverFor(post)" [alt]="post.title" />
+                  } @else {
+                    <div class="knowledge-slide-placeholder">
+                      <svg lucidePlay [size]="40" aria-hidden="true"></svg>
+                    </div>
+                  }
+                  @if (post.type === 'video') {
+                    <span class="knowledge-play-badge"><svg lucidePlay [size]="18" aria-hidden="true"></svg></span>
+                  }
+                  <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
                 </div>
-              </div>
-            </article>
+                <div class="knowledge-slide-body">
+                  <h3>{{ post.title }}</h3>
+                  @if (post.body) {
+                    <p>{{ post.body.length > 160 ? (post.body | slice:0:160) + '…' : post.body }}</p>
+                  }
+                  <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
+                    <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
+                      <svg lucideHeart [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                      <span>{{ post.likesCount || 0 }}</span>
+                    </button>
+                    <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)" title="Compartir en WhatsApp">
+                      <svg lucideShare2 [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                      <span>WhatsApp</span>
+                    </button>
+                    <span class="knowledge-slide-counter">{{ feedIndex() + 1 }} / {{ knowledgePosts().length }}</span>
+                  </div>
+                </div>
+              </article>
 
-            <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente">
-              <svg lucideChevronRight [size]="22" aria-hidden="true"></svg>
-            </button>
-          </div>
+              <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente">
+                <svg lucideChevronRight [size]="22" aria-hidden="true"></svg>
+              </button>
+            </div>
 
-          <div class="knowledge-dots">
-            @for (p of knowledgePosts(); track p.id; let i = $index) {
-              <button type="button" class="knowledge-dot" [class.active]="i === feedIndex()" (click)="feedIndex.set(i)" [attr.aria-label]="'Ir a ' + (i + 1)"></button>
-            }
-          </div>
+            <div class="knowledge-dots">
+              @for (p of knowledgePosts(); track p.id; let i = $index) {
+                <button type="button" class="knowledge-dot" [class.active]="i === feedIndex()" (click)="feedIndex.set(i)" [attr.aria-label]="'Ir a ' + (i + 1)"></button>
+              }
+            </div>
+          }
         }
       </div>
 
