@@ -1389,6 +1389,26 @@ app-crm-team {
   padding: 16px;
 }
 
+.knowledge-admin-form h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #ffffff !important;
+}
+
+.knowledge-admin-form .form-group label,
+.knowledge-admin-form label,
+:host .knowledge-admin-form .form-group label {
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+.knowledge-admin-form small {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
 .knowledge-admin-list {
   display: flex;
   flex-direction: column;
