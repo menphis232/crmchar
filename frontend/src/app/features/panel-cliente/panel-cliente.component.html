@@ -146,7 +146,7 @@
                   <div class="knowledge-slide-body">
                     <h3>{{ post.title }}</h3>
                     @if (post.body) {
-                      <p>{{ post.body.length > 70 ? (post.body | slice:0:70) + '…' : post.body }}</p>
+                      <p>{{ plainSnippet(post.body) }}</p>
                     }
                     <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
                       <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
@@ -267,7 +267,7 @@
                 <div class="knowledge-card-body">
                   <h3>{{ post.title }}</h3>
                   @if (post.body) {
-                    <p>{{ post.body.length > 100 ? (post.body | slice:0:100) + '…' : post.body }}</p>
+                    <p>{{ plainSnippet(post.body, 100) }}</p>
                   }
                   <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
                     <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)">
@@ -288,19 +288,38 @@
 
     @if (selectedArticle(); as article) {
       <div class="knowledge-modal-backdrop" (click)="closeArticle()">
-        <div class="knowledge-modal" (click)="$event.stopPropagation()">
-          <button type="button" class="knowledge-modal-close" (click)="closeArticle()" aria-label="Cerrar">×</button>
-          <h2>{{ article.title }}</h2>
-          <div class="knowledge-modal-body">{{ article.body }}</div>
-          <div class="knowledge-slide-actions">
-            <button type="button" class="knowledge-action" [class.liked]="article.likedByMe" (click)="toggleLike(article, $event)">
-              <svg lucideHeart [size]="16" aria-hidden="true"></svg>
-              <span>{{ article.likesCount || 0 }}</span>
-            </button>
-            <button type="button" class="knowledge-action" (click)="shareWhatsApp(article, $event)">
-              <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
-              WhatsApp
-            </button>
+        <div class="knowledge-reader" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+          <button type="button" class="knowledge-reader-close" (click)="closeArticle()" aria-label="Cerrar">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
+
+          @if (coverFor(article)) {
+            <div class="knowledge-reader-hero">
+              <img [src]="coverFor(article)" [alt]="article.title" />
+            </div>
+          }
+
+          <div class="knowledge-reader-content">
+            <div class="knowledge-reader-meta">
+              <span class="knowledge-reader-chip">Artículo</span>
+              @if (article.createdAt) {
+                <span>{{ article.createdAt | date:'dd MMM yyyy' }}</span>
+              }
+            </div>
+            <h2>{{ article.title }}</h2>
+            <div class="knowledge-reader-body" [innerHTML]="articleHtml(article)"></div>
+
+            <div class="knowledge-reader-actions">
+              <button type="button" class="knowledge-action" [class.liked]="article.likedByMe" (click)="toggleLike(article, $event)">
+                <svg lucideHeart [size]="16" aria-hidden="true"></svg>
+                <span>{{ article.likesCount || 0 }} Me gusta</span>
+              </button>
+              <button type="button" class="knowledge-action" (click)="shareWhatsApp(article, $event)">
+                <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
+                Compartir
+              </button>
+              <button type="button" class="knowledge-reader-done" (click)="closeArticle()">Cerrar</button>
+            </div>
           </div>
         </div>
       </div>

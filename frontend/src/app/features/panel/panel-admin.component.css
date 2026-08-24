@@ -1409,6 +1409,45 @@ app-crm-team {
   color: rgba(255, 255, 255, 0.55) !important;
 }
 
+.knowledge-admin-form app-rich-text-editor {
+  display: block;
+}
+
+.knowledge-admin-form ::ng-deep .rte {
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  background: #111 !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-toolbar {
+  background: #1a1a1a !important;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-btn {
+  background: #222 !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-btn:hover {
+  background: #333 !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-sep {
+  background: rgba(255, 255, 255, 0.18) !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-editor {
+  min-height: 200px !important;
+  max-height: 420px !important;
+  background: #111 !important;
+  color: #fff !important;
+}
+
+.knowledge-admin-form ::ng-deep .rte-editor:empty::before {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+
 .knowledge-admin-list {
   display: flex;
   flex-direction: column;

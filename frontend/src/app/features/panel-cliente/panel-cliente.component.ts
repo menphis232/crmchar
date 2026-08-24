@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
-import { DomSanitizer } from '@angular/platform-browser';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
@@ -51,6 +51,7 @@ import {
   LucideHeart,
   LucideShare2,
   LucidePlay,
+  LucideX,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -74,7 +75,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
-    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay,
+    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideX,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -302,7 +303,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   openKnowledge(post: KnowledgePost) {
-    if (post.type === 'article' && !post.externalUrl) {
+    if (post.type === 'article') {
       this.selectedArticle.set(post);
       return;
     }
@@ -312,6 +313,30 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   closeArticle() {
     this.selectedArticle.set(null);
+  }
+
+  articleHtml(post: KnowledgePost): SafeHtml {
+    const raw = post.body || '';
+    if (!raw.trim()) return this.sanitizer.bypassSecurityTrustHtml('<p>Sin contenido.</p>');
+    if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
+      return this.sanitizer.bypassSecurityTrustHtml(raw);
+    }
+    const escaped = raw
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\n/g, '<br>');
+    return this.sanitizer.bypassSecurityTrustHtml(`<p>${escaped}</p>`);
+  }
+
+  plainSnippet(html: string | undefined, max = 70): string {
+    const text = (html || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (text.length <= max) return text;
+    return text.slice(0, max) + '…';
   }
 
   toggleLike(post: KnowledgePost, event?: Event) {
@@ -335,7 +360,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   shareWhatsApp(post: KnowledgePost, event?: Event) {
     event?.stopPropagation();
     const link = post.externalUrl || `${window.location.origin}/panel/cliente`;
-    const text = `${post.title}${post.body ? '\n' + post.body.slice(0, 120) : ''}\n${link}`;
+    const snippet = this.plainSnippet(post.body, 120);
+    const text = `${post.title}${snippet ? '\n' + snippet : ''}\n${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
   }
 

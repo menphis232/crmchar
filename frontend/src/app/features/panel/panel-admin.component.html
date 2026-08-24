@@ -402,7 +402,7 @@
               <label>Tipo</label>
               <select [(ngModel)]="knowledgeForm.type">
                 <option value="video">Video (YouTube / red)</option>
-                <option value="article">Artículo / texto</option>
+                <option value="article">Artículo / blog</option>
                 <option value="link">Link externo</option>
               </select>
             </div>
@@ -410,26 +410,75 @@
               <label>Título</label>
               <input [(ngModel)]="knowledgeForm.title" placeholder="Ej: Cómo renovar tu tarjeta de circulación" />
             </div>
-            <div class="form-group">
-              <label>Texto / descripción</label>
-              <textarea [(ngModel)]="knowledgeForm.body" rows="4" placeholder="Contenido del artículo o descripción del video"></textarea>
-            </div>
-            <div class="form-group">
-              <label>URL del video o enlace (YouTube, TikTok, etc.)</label>
-              <input [(ngModel)]="knowledgeForm.externalUrl" placeholder="https://www.youtube.com/watch?v=..." />
-            </div>
-            <div class="form-group">
-              <label>Imagen de portada</label>
-              <input type="file" accept="image/*" (change)="onKnowledgeCoverSelected($event)" />
-              @if (knowledgeUploading()) {
-                <small style="color:var(--muted)">Subiendo imagen…</small>
-              }
-              @if (knowledgeForm.coverUrl) {
-                <div style="margin-top:8px">
-                  <img [src]="knowledgeForm.coverUrl" alt="Portada" style="max-width:180px;border-radius:8px;border:1px solid var(--border)" />
-                </div>
-              }
-            </div>
+
+            @if (knowledgeForm.type === 'article') {
+              <div class="form-group">
+                <label>Contenido del artículo</label>
+                <app-rich-text-editor
+                  [(ngModel)]="knowledgeForm.body"
+                  placeholder="Escribe tu artículo: párrafos, negritas, listas…"
+                ></app-rich-text-editor>
+              </div>
+              <div class="form-group">
+                <label>Imagen de portada (opcional)</label>
+                <input type="file" accept="image/*" (change)="onKnowledgeCoverSelected($event)" />
+                @if (knowledgeUploading()) {
+                  <small>Subiendo imagen…</small>
+                }
+                @if (knowledgeForm.coverUrl) {
+                  <div style="margin-top:8px">
+                    <img [src]="knowledgeForm.coverUrl" alt="Portada" style="max-width:180px;border-radius:8px;border:1px solid var(--border)" />
+                  </div>
+                }
+              </div>
+            }
+
+            @if (knowledgeForm.type === 'video') {
+              <div class="form-group">
+                <label>Descripción corta</label>
+                <textarea [(ngModel)]="knowledgeForm.body" rows="3" placeholder="Resumen que verá el cliente bajo el video"></textarea>
+              </div>
+              <div class="form-group">
+                <label>URL del video (YouTube, TikTok, etc.)</label>
+                <input [(ngModel)]="knowledgeForm.externalUrl" placeholder="https://www.youtube.com/watch?v=..." />
+              </div>
+              <div class="form-group">
+                <label>Imagen de portada</label>
+                <input type="file" accept="image/*" (change)="onKnowledgeCoverSelected($event)" />
+                @if (knowledgeUploading()) {
+                  <small>Subiendo imagen…</small>
+                }
+                @if (knowledgeForm.coverUrl) {
+                  <div style="margin-top:8px">
+                    <img [src]="knowledgeForm.coverUrl" alt="Portada" style="max-width:180px;border-radius:8px;border:1px solid var(--border)" />
+                  </div>
+                }
+              </div>
+            }
+
+            @if (knowledgeForm.type === 'link') {
+              <div class="form-group">
+                <label>Descripción corta</label>
+                <textarea [(ngModel)]="knowledgeForm.body" rows="3" placeholder="Qué encontrará el cliente en este enlace"></textarea>
+              </div>
+              <div class="form-group">
+                <label>URL del enlace</label>
+                <input [(ngModel)]="knowledgeForm.externalUrl" placeholder="https://..." />
+              </div>
+              <div class="form-group">
+                <label>Imagen de portada (opcional)</label>
+                <input type="file" accept="image/*" (change)="onKnowledgeCoverSelected($event)" />
+                @if (knowledgeUploading()) {
+                  <small>Subiendo imagen…</small>
+                }
+                @if (knowledgeForm.coverUrl) {
+                  <div style="margin-top:8px">
+                    <img [src]="knowledgeForm.coverUrl" alt="Portada" style="max-width:180px;border-radius:8px;border:1px solid var(--border)" />
+                  </div>
+                }
+              </div>
+            }
+
             <div class="form-group" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
               <label style="display:flex;align-items:center;gap:8px;margin:0;">
                 <input type="checkbox" [(ngModel)]="knowledgeForm.isPublished" /> Publicado

@@ -6,6 +6,7 @@ import { AdminService, SupportService, KnowledgeService, UploadService } from '.
 import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread, KnowledgePost } from '../../models';
 import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
+import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
 
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
@@ -48,7 +49,7 @@ type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
@@ -501,14 +502,26 @@ export class PanelAdminComponent implements OnInit {
       this.knowledgeMsg.set('El título es obligatorio');
       return;
     }
+    const type = this.knowledgeForm.type;
+    if (type === 'article') {
+      const text = (this.knowledgeForm.body || '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim();
+      if (!text) {
+        this.knowledgeMsg.set('Escribe el contenido del artículo');
+        return;
+      }
+    }
+    if ((type === 'video' || type === 'link') && !this.knowledgeForm.externalUrl.trim()) {
+      this.knowledgeMsg.set(type === 'video' ? 'Indica la URL del video' : 'Indica la URL del enlace');
+      return;
+    }
     this.knowledgeSaving.set(true);
     this.knowledgeMsg.set('');
     const payload = {
-      type: this.knowledgeForm.type,
+      type,
       title: this.knowledgeForm.title.trim(),
       body: this.knowledgeForm.body,
       coverUrl: this.knowledgeForm.coverUrl || null,
-      externalUrl: this.knowledgeForm.externalUrl || null,
+      externalUrl: type === 'article' ? null : (this.knowledgeForm.externalUrl.trim() || null),
       isPublished: this.knowledgeForm.isPublished,
       sortOrder: Number(this.knowledgeForm.sortOrder) || 0,
     };
