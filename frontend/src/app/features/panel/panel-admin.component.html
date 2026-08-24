@@ -451,36 +451,48 @@
           </div>
 
           <div class="knowledge-admin-list">
-            <h3 style="margin:0 0 12px;font-size:14px;letter-spacing:.08em;text-transform:uppercase;">Publicados</h3>
+            <div class="knowledge-admin-list-head">
+              <h3>Publicados</h3>
+              <span class="knowledge-admin-count">{{ knowledgePosts().length }}</span>
+            </div>
             @if (knowledgeLoading()) {
               <p class="card-desc">Cargando…</p>
             } @else if (!knowledgePosts().length) {
               <p class="card-desc">Aún no hay contenido. Crea el primero a la izquierda.</p>
             } @else {
-              @for (post of knowledgePosts(); track post.id) {
-                <div class="knowledge-admin-item">
-                  <div class="knowledge-admin-thumb">
-                    @if (post.coverUrl) {
-                      <img [src]="post.coverUrl" [alt]="post.title" />
-                    } @else {
-                      <span>
-                        @if (post.type === 'video') { <svg lucideVideo [size]="20" aria-hidden="true"></svg> }
-                        @else { <svg lucideImage [size]="20" aria-hidden="true"></svg> }
-                      </span>
-                    }
+              <div class="knowledge-admin-scroll">
+                @for (post of knowledgePosts(); track post.id; let i = $index) {
+                  <div class="knowledge-admin-item" [class.is-editing]="editingKnowledgeId() === post.id">
+                    <div class="knowledge-admin-thumb">
+                      @if (post.coverUrl) {
+                        <img [src]="post.coverUrl" [alt]="post.title" />
+                      } @else {
+                        <span class="knowledge-admin-thumb-fallback">
+                          @if (post.type === 'video') { <svg lucideVideo [size]="22" aria-hidden="true"></svg> }
+                          @else { <svg lucideImage [size]="22" aria-hidden="true"></svg> }
+                        </span>
+                      }
+                    </div>
+                    <div class="knowledge-admin-meta">
+                      <strong [title]="post.title">{{ post.title }}</strong>
+                      <div class="knowledge-admin-tags">
+                        <span class="knowledge-admin-tag">{{ typeLabel(post.type) }}</span>
+                        <span class="knowledge-admin-tag" [class.tag-on]="post.isPublished" [class.tag-off]="!post.isPublished">
+                          {{ post.isPublished ? 'Publicado' : 'Borrador' }}
+                        </span>
+                        <span class="knowledge-admin-tag">♥ {{ post.likesCount || 0 }}</span>
+                        <span class="knowledge-admin-tag">#{{ i + 1 }}</span>
+                      </div>
+                    </div>
+                    <div class="knowledge-admin-actions">
+                      <button type="button" class="knowledge-admin-btn" (click)="editKnowledge(post)">Editar</button>
+                      <button type="button" class="knowledge-admin-btn knowledge-admin-btn-danger" (click)="deleteKnowledgePost(post)" title="Eliminar">
+                        <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
                   </div>
-                  <div class="knowledge-admin-meta">
-                    <strong>{{ post.title }}</strong>
-                    <span>{{ typeLabel(post.type) }} · {{ post.isPublished ? 'Publicado' : 'Borrador' }} · ♥ {{ post.likesCount }}</span>
-                  </div>
-                  <div class="knowledge-admin-actions">
-                    <button type="button" class="btn-ghost" (click)="editKnowledge(post)">Editar</button>
-                    <button type="button" class="btn-ghost" (click)="deleteKnowledgePost(post)" title="Eliminar">
-                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
-                    </button>
-                  </div>
-                </div>
-              }
+                }
+              </div>
             }
           </div>
         </div>
