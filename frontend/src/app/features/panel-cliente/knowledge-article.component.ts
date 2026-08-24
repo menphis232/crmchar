@@ -37,7 +37,8 @@ import {
           <strong>{{ error() }}</strong>
           <a routerLink="/panel/cliente" class="ka-link">Ir al panel</a>
         </div>
-      } @else if (post(); as article) {
+      } @else if (post()) {
+        @if (post(); as article) {
         <article class="ka-article">
           @if (coverFor(article)) {
             <div class="ka-hero">
@@ -73,6 +74,7 @@ import {
             </footer>
           </div>
         </article>
+        }
       }
     </div>
   `,
