@@ -148,6 +148,29 @@ router.get('/feed', async (req, res) => {
   }
 });
 
+/** Cliente: detalle de un post publicado */
+router.get('/:id', async (req, res) => {
+  try {
+    if (req.params.id === 'admin' || req.params.id === 'feed') {
+      return res.status(404).json({ error: 'No encontrado' });
+    }
+    const row = await get(`
+      ${SELECT_BASE},
+        EXISTS(
+          SELECT 1 FROM knowledge_likes kl
+          WHERE kl.post_id = p.id AND kl.user_id = ?
+        ) AS liked_by_me
+      FROM knowledge_posts p
+      WHERE p.id = ? AND p.is_published = 1
+    `, [req.user.id, req.params.id]);
+    if (!row) return res.status(404).json({ error: 'Contenido no encontrado' });
+    res.json(mapPost(row));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar el contenido' });
+  }
+});
+
 /** Toggle like */
 router.post('/:id/like', async (req, res) => {
   try {

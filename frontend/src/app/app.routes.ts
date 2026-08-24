@@ -35,6 +35,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/panel/panel-admin.component').then(m => m.PanelAdminComponent),
   },
   {
+    path: 'panel/cliente/conocimiento/:id',
+    canActivate: [authGuard, roleGuard(['cliente'])],
+    loadComponent: () => import('./features/panel-cliente/knowledge-article.component').then(m => m.KnowledgeArticleComponent),
+  },
+  {
     path: 'panel/cliente',
     canActivate: [authGuard, roleGuard(['cliente'])],
     loadComponent: () => import('./features/panel-cliente/panel-cliente.component').then(m => m.PanelClienteComponent),

@@ -1,9 +1,9 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { UploadService, CHAT_ATTACHMENT_ACCEPT, KnowledgeService } from '../../core/api.service';
@@ -51,7 +51,6 @@ import {
   LucideHeart,
   LucideShare2,
   LucidePlay,
-  LucideX,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -75,7 +74,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
-    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideX,
+    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -96,6 +95,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   auth = inject(AuthService);
   http = inject(HttpClient);
+  router = inject(Router);
+  private route = inject(ActivatedRoute);
   uploadService = inject(UploadService);
   knowledgeService = inject(KnowledgeService);
   readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
@@ -135,7 +136,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   dashboardLoading = signal(true);
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
-  selectedArticle = signal<KnowledgePost | null>(null);
   @ViewChild('knowledgeTrack') knowledgeTrack?: ElementRef<HTMLDivElement>;
   readonly feedPageSize = 3;
 
@@ -203,6 +203,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     document.documentElement.style.setProperty('--bg', '#000000');
     document.documentElement.style.setProperty('--panel-bg', '#000000');
     document.body.style.backgroundColor = '#000000';
+    const tab = this.route.snapshot.queryParamMap.get('tab');
+    if (tab === 'conocimiento') this.setTab('conocimiento');
     this.loadDashboard();
     this.loadInvoices();
     this.loadWallet();
@@ -304,29 +306,11 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   openKnowledge(post: KnowledgePost) {
     if (post.type === 'article') {
-      this.selectedArticle.set(post);
+      this.router.navigate(['/panel/cliente/conocimiento', post.id]);
       return;
     }
     const url = post.externalUrl;
     if (url) window.open(url, '_blank', 'noopener');
-  }
-
-  closeArticle() {
-    this.selectedArticle.set(null);
-  }
-
-  articleHtml(post: KnowledgePost): SafeHtml {
-    const raw = post.body || '';
-    if (!raw.trim()) return this.sanitizer.bypassSecurityTrustHtml('<p>Sin contenido.</p>');
-    if (/<\/?[a-z][\s\S]*>/i.test(raw)) {
-      return this.sanitizer.bypassSecurityTrustHtml(raw);
-    }
-    const escaped = raw
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/\n/g, '<br>');
-    return this.sanitizer.bypassSecurityTrustHtml(`<p>${escaped}</p>`);
   }
 
   plainSnippet(html: string | undefined, max = 70): string {
@@ -348,10 +332,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
             ? { ...p, likedByMe: res.likedByMe, likesCount: res.likesCount }
             : p)
         );
-        const art = this.selectedArticle();
-        if (art?.id === post.id) {
-          this.selectedArticle.set({ ...art, likedByMe: res.likedByMe, likesCount: res.likesCount });
-        }
       },
       error: () => this.toast.error('No se pudo guardar el me gusta', 'Error'),
     });
@@ -359,7 +339,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   shareWhatsApp(post: KnowledgePost, event?: Event) {
     event?.stopPropagation();
-    const link = post.externalUrl || `${window.location.origin}/panel/cliente`;
+    const link = post.type === 'article'
+      ? `${window.location.origin}/panel/cliente/conocimiento/${post.id}`
+      : (post.externalUrl || `${window.location.origin}/panel/cliente`);
     const snippet = this.plainSnippet(post.body, 120);
     const text = `${post.title}${snippet ? '\n' + snippet : ''}\n${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');

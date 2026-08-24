@@ -438,6 +438,10 @@ export class KnowledgeService {
     return this.http.get<import('../models').KnowledgePost[]>(`${this.base}/feed`);
   }
 
+  getById(id: string) {
+    return this.http.get<import('../models').KnowledgePost>(`${this.base}/${id}`);
+  }
+
   toggleLike(id: string) {
     return this.http.post<{ likedByMe: boolean; likesCount: number }>(`${this.base}/${id}/like`, {});
   }
