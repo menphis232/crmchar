@@ -54,7 +54,7 @@ INSERT IGNORE INTO site_settings (page_key, settings) VALUES
   'cardRadius', '12'
 )),
 ('gestores', JSON_OBJECT(
-  'pageTitle', 'DIRECTORIO DE GESTORES',
+  'pageTitle', 'CONSULTORIAS VEHICULARES',
   'pageSubtitle', 'Encuentra expertos certificados para realizar tus trámites vehiculares.',
   'primaryColor', '#006847',
   'accentColor', '#c8a94a',

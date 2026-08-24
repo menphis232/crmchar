@@ -16,13 +16,17 @@
 
 .gestores-hero-title {
   font-family: var(--f-display);
-  font-size: 72px;
+  font-size: clamp(18px, 3.6vw, 36px);
   font-weight: var(--display-weight);
-  letter-spacing: var(--display-letter-spacing);
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
   margin: 0;
-  line-height: 1.08;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .gestores-toolbar {
@@ -614,7 +618,8 @@
   }
 
   .gestores-hero-title {
-    font-size: clamp(28px, 8vw, 72px);
+    font-size: clamp(14px, 4.8vw, 24px);
+    letter-spacing: 0.02em;
   }
 
   .gestores-toolbar {
