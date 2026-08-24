@@ -218,6 +218,9 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
   ngOnInit() {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    // Solo móvil: no mostrar invitación en desktop/web
+    if (!this.isMobile()) return;
+
     if (this.isStandalone() || this.isDismissed()) return;
 
     const ua = navigator.userAgent || '';
@@ -234,6 +237,7 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
 
     this.onBeforeInstall = (e: Event) => {
       e.preventDefault();
+      if (!this.isMobile()) return;
       this.deferred = e as BeforeInstallPromptEvent;
       this.canPrompt.set(true);
       this.message.set(
@@ -251,14 +255,15 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
     window.addEventListener('beforeinstallprompt', this.onBeforeInstall);
     window.addEventListener('appinstalled', this.onAppInstalled);
 
-    // Fallback si el navegador no dispara el evento (Chrome desktop a veces tarda)
+    // Android/otros móviles: si no llega beforeinstallprompt, guía manual
     setTimeout(() => {
-      if (!this.visible() && !this.isStandalone() && !this.isDismissed() && !this.canPrompt()) {
-        this.message.set(
-          'Agrega Trámites MX a tu pantalla de inicio desde el menú del navegador (Instalar aplicación / Agregar a inicio) y úsala como app.',
-        );
-        this.visible.set(true);
+      if (!this.isMobile() || this.visible() || this.isStandalone() || this.isDismissed() || this.canPrompt()) {
+        return;
       }
+      this.message.set(
+        'Agrega Trámites MX a tu pantalla de inicio desde el menú del navegador (Instalar aplicación / Agregar a inicio) y úsala como app.',
+      );
+      this.visible.set(true);
     }, 8000);
   }
 
@@ -288,6 +293,19 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
     try {
       localStorage.setItem(DISMISS_KEY, String(until));
     } catch { /* ignore */ }
+  }
+
+  /** Teléfono/tablet táctil; excluye escritorio aunque el viewport sea estrecho. */
+  private isMobile(): boolean {
+    const ua = navigator.userAgent || '';
+    const mobileUa = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/i.test(ua);
+    const iPadOs = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const narrow = window.matchMedia('(max-width: 900px)').matches;
+    // Desktop clásico: sin UA móvil y sin coarse → no mostrar
+    if (!mobileUa && !iPadOs && !coarsePointer) return false;
+    // Móvil/tablet real, o táctil + viewport estrecho
+    return mobileUa || iPadOs || (coarsePointer && narrow);
   }
 
   private isStandalone(): boolean {
