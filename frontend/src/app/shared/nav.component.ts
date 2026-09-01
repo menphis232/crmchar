@@ -41,7 +41,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
             <a [routerLink]="panelLink" class="btn-primary" (click)="closeMobileMenu()">Mi Panel</a>
             <button class="btn-text" (click)="logout()">Salir</button>
           } @else {
-            <div class="login-menu-wrapper">
+            <div class="login-menu-wrapper" [class.is-open]="loginMenuOpen()">
               <button
                 type="button"
                 class="btn-text login-menu-trigger"
@@ -49,7 +49,10 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
                 [attr.aria-expanded]="loginMenuOpen()"
                 aria-haspopup="menu"
               >
-                👤 Iniciar Sesión
+                Iniciar Sesión
+                <svg class="login-menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
               </button>
               @if (loginMenuOpen()) {
                 <div class="login-menu-dropdown" role="menu">
@@ -177,7 +180,14 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
     .login-menu-trigger {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .login-menu-chevron {
+      display: none;
+      flex-shrink: 0;
+      transition: transform 0.2s ease;
     }
 
     .login-menu-dropdown {
@@ -213,14 +223,60 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
       text-transform: uppercase;
       cursor: pointer;
       transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .login-menu-item:last-child {
       border-bottom: none;
     }
 
-    .login-menu-item:hover {
+    .login-menu-item:hover,
+    .login-menu-item:active {
       background: rgba(255,255,255,0.08);
+    }
+
+    @media (max-width: 900px) {
+      .login-menu-wrapper {
+        display: block;
+        width: 100%;
+      }
+
+      .login-menu-trigger {
+        width: 100%;
+      }
+
+      .login-menu-chevron {
+        display: block;
+      }
+
+      .login-menu-wrapper.is-open .login-menu-chevron {
+        transform: rotate(180deg);
+      }
+
+      .login-menu-wrapper.is-open {
+        border: 2px solid rgba(255,255,255,0.5);
+      }
+
+      .login-menu-wrapper.is-open .login-menu-trigger {
+        border: none;
+        border-bottom: 1px solid rgba(255,255,255,0.15);
+      }
+
+      .login-menu-dropdown {
+        position: static;
+        width: 100%;
+        min-width: 0;
+        border: none;
+        animation: none;
+        background: transparent;
+      }
+
+      .login-menu-item {
+        padding: 16px 20px;
+        font-size: 13px;
+        min-height: 48px;
+        text-align: left;
+      }
     }
   `]
 })
