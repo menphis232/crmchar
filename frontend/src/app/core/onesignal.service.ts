@@ -104,7 +104,7 @@ export class OneSignalService {
     if (window.__onesignalInitError) {
       return Promise.resolve({
         ok: false,
-        error: `OneSignal no inició: ${window.__onesignalInitError}`,
+        error: this.formatInitError(window.__onesignalInitError),
       });
     }
 
@@ -203,6 +203,14 @@ export class OneSignalService {
     if (this.permissionState() === 'granted') return 'Permiso OK, falta suscripción';
     if (this.permissionState() === 'unsupported') return 'No soportadas aquí';
     return 'Sin activar';
+  }
+
+  private formatInitError(raw: string): string {
+    const match = raw.match(/Can only be used on:\s*(https?:\/\/[^\s]+)/i);
+    if (match) {
+      return `OneSignal está configurado para ${match[1]}, pero esta app usa https://central.tramitesvehicularesdemexico.com. En el dashboard de OneSignal cambia Site URL a central.tramitesvehicularesdemexico.com (Settings → Web → Site URL).`;
+    }
+    return `OneSignal no inició: ${raw}`;
   }
 
   private nativePermission(): NotificationPermission {
