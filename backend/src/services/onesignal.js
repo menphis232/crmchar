@@ -15,6 +15,15 @@ function resolveUrl(url) {
   return `${siteBaseUrl()}${trimmed.startsWith('/') ? trimmed : `/${trimmed}`}`;
 }
 
+function parseOneSignalError(data, status) {
+  if (Array.isArray(data?.errors) && data.errors.length) {
+    return data.errors.join(', ');
+  }
+  if (data?.error) return String(data.error);
+  if (!data?.id) return `OneSignal HTTP ${status}`;
+  return null;
+}
+
 /**
  * @param {{ title: string, body: string, url?: string, audience: string, audienceValue?: string, adminUserId?: string }} opts
  */
@@ -38,7 +47,8 @@ export async function sendOneSignalPush(opts) {
 
   switch (audience) {
     case 'all':
-      payload.included_segments = ['Subscribed Users'];
+      // "Subscribed Users" devuelve 0 en web push v16; Total Subscriptions incluye suscripciones web activas.
+      payload.included_segments = ['Total Subscriptions'];
       break;
     case 'test':
       if (!adminUserId) throw new Error('Usuario admin requerido para prueba');
@@ -69,9 +79,15 @@ export async function sendOneSignalPush(opts) {
   });
 
   const data = await res.json().catch(() => ({}));
+  const apiError = parseOneSignalError(data, res.status);
   if (!res.ok) {
-    const msg = Array.isArray(data.errors) ? data.errors.join(', ') : (data.error || `OneSignal HTTP ${res.status}`);
-    throw new Error(msg);
+    throw new Error(apiError || `OneSignal HTTP ${res.status}`);
+  }
+  if (apiError) {
+    const hint = audience === 'test' || audience === 'user'
+      ? ' El usuario debe tener la app abierta, haber activado push y haber iniciado sesión después de suscribirse.'
+      : '';
+    throw new Error(`${apiError}.${hint}`);
   }
 
   return {
@@ -79,4 +95,20 @@ export async function sendOneSignalPush(opts) {
     recipients: Number(data.recipients) || 0,
     externalId: data.external_id || null,
   };
+}
+
+/**
+ * Push transaccional a un usuario (external_id = user.id del CRM).
+ */
+export async function notifyUserPush(userId, { title, body, url } = {}) {
+  if (!userId || !isOneSignalConfigured()) return null;
+  const message = String(body || '').trim();
+  if (!message) return null;
+  return sendOneSignalPush({
+    title: String(title || 'Trámites MX').trim() || 'Trámites MX',
+    body: message,
+    url,
+    audience: 'user',
+    audienceValue: String(userId),
+  });
 }

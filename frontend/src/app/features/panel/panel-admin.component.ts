@@ -718,8 +718,8 @@ export class PanelAdminComponent implements OnInit {
       next: res => {
         this.pushMsg.set(
           testOnly
-            ? `Prueba enviada. Destinatarios estimados: ${res.recipients}.`
-            : `Notificación enviada. Destinatarios: ${res.recipients}.`,
+            ? `Prueba enviada${res.onesignalId ? ` (ID ${res.onesignalId.slice(0, 8)}…)` : ''}. Revisa tu teléfono.`
+            : `Notificación enviada${res.onesignalId ? ` (ID ${res.onesignalId.slice(0, 8)}…)` : ''}. Revisa OneSignal → Delivery.`,
         );
         this.pushSending.set(false);
         this.loadPushTab();
@@ -733,7 +733,7 @@ export class PanelAdminComponent implements OnInit {
 
   pushAudienceLabel(type: string, value?: string | null): string {
     const map: Record<string, string> = {
-      all: 'Todos (suscritos)',
+      all: 'Todos (suscripciones activas)',
       test: 'Prueba (yo)',
       cliente: 'Clientes',
       gestor: 'Gestores',

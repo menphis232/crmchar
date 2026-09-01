@@ -1,4 +1,6 @@
 /** Referencia al servidor Socket.IO (se asigna desde index.js). */
+import { notifyUserPush } from '../services/onesignal.js';
+
 let ioRef = null;
 
 export function setSocketIo(io) {
@@ -19,8 +21,20 @@ export function emitChatMessage(dealId, saved) {
   ioRef.to(String(dealId)).emit('receive_message', { dealId: String(dealId), ...saved });
 }
 
-/** Notificación en tiempo real a un usuario (gestor, cliente, etc.). */
+/** Notificación en tiempo real + push OneSignal al usuario. */
 export function emitUserNotification(userId, notif) {
-  if (!ioRef || !userId || !notif) return;
-  ioRef.to(`user_${userId}`).emit('notification', notif);
+  if (!userId || !notif) return;
+
+  if (ioRef) {
+    ioRef.to(`user_${userId}`).emit('notification', notif);
+  }
+
+  const title = notif.title || 'Trámites MX';
+  const body = notif.body || '';
+  const refId = notif.ref_id || notif.refId;
+  const url = refId ? `/panel/cliente?tramite=${refId}` : '/panel/cliente';
+
+  void notifyUserPush(userId, { title, body, url }).catch(err => {
+    console.warn('[OneSignal] emitUserNotification:', err.message);
+  });
 }
