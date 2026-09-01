@@ -20,7 +20,13 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
           </div>
           <div class="push-prompt-copy">
             <p id="push-prompt-title" class="push-prompt-title">Activa las notificaciones</p>
-            <p class="push-prompt-text">Recibe avisos de trámites, mensajes y actualizaciones importantes en tu teléfono.</p>
+            <p class="push-prompt-text">
+              @if (errorMsg()) {
+                {{ errorMsg() }}
+              } @else {
+                Recibe avisos de trámites, mensajes y actualizaciones importantes en tu teléfono.
+              }
+            </p>
           </div>
           <div class="push-prompt-actions">
             <button type="button" class="push-prompt-btn push-prompt-btn--primary" [disabled]="activating()" (click)="activate()">
@@ -125,6 +131,7 @@ export class PushPermissionPromptComponent implements OnInit {
 
   visible = signal(false);
   activating = signal(false);
+  errorMsg = signal('');
 
   constructor() {
     effect(() => {
@@ -159,16 +166,26 @@ export class PushPermissionPromptComponent implements OnInit {
   }
 
   async activate() {
+    this.errorMsg.set('');
     this.activating.set(true);
-    const ok = await this.oneSignal.enablePushFromUserGesture();
-    this.activating.set(false);
-    if (ok) {
-      this.visible.set(false);
-      return;
-    }
-    await this.oneSignal.refreshPermissionState();
-    if (this.oneSignal.permissionState() === 'denied') {
-      this.visible.set(false);
+    try {
+      const result = await Promise.race([
+        this.oneSignal.enablePushFromUserGesture(),
+        new Promise<{ ok: boolean; error?: string }>(resolve =>
+          setTimeout(() => resolve({ ok: false, error: 'Tiempo agotado. Intenta de nuevo.' }), 50000),
+        ),
+      ]);
+      if (result.ok) {
+        this.visible.set(false);
+        return;
+      }
+      this.errorMsg.set(result.error || 'No se pudo activar. Intenta de nuevo.');
+      await this.oneSignal.refreshPermissionState();
+      if (this.oneSignal.permissionState() === 'denied') {
+        this.visible.set(false);
+      }
+    } finally {
+      this.activating.set(false);
     }
   }
 
