@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, HostListener } from '@angular/core';
+import { Component, OnInit, signal, effect, HostListener, ElementRef, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AuthService } from '../core/auth.service';
@@ -41,7 +41,31 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
             <a [routerLink]="panelLink" class="btn-primary" (click)="closeMobileMenu()">Mi Panel</a>
             <button class="btn-text" (click)="logout()">Salir</button>
           } @else {
-            <a [routerLink]="loginLink" class="btn-text" (click)="closeMobileMenu()">👤 Iniciar Sesión</a>
+            <div class="login-menu-wrapper">
+              <button
+                type="button"
+                class="btn-text login-menu-trigger"
+                (click)="toggleLoginMenu(); $event.stopPropagation()"
+                [attr.aria-expanded]="loginMenuOpen()"
+                aria-haspopup="menu"
+              >
+                👤 Iniciar Sesión
+              </button>
+              @if (loginMenuOpen()) {
+                <div class="login-menu-dropdown" role="menu">
+                  @for (opt of loginOptions; track opt.path) {
+                    <button
+                      type="button"
+                      class="login-menu-item"
+                      role="menuitem"
+                      (click)="goToLogin(opt.path)"
+                    >
+                      {{ opt.label }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
           }
         </div>
       </div>
@@ -144,16 +168,79 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
       font-size: 10px; color: rgba(255,255,255,0.32);
       text-align: right; font-family: var(--f-display);
     }
+
+    .login-menu-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .login-menu-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .login-menu-dropdown {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      min-width: 220px;
+      background: #0a0a0a;
+      border: 2px solid rgba(255,255,255,0.5);
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+      animation: login-menu-in 0.18s ease-out;
+    }
+
+    @keyframes login-menu-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-menu-item {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      background: transparent;
+      color: #fff;
+      text-align: center;
+      padding: 14px 20px;
+      font-family: var(--f-display);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .login-menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .login-menu-item:hover {
+      background: rgba(255,255,255,0.08);
+    }
   `]
 })
 export class NavComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
 
+  readonly loginOptions = [
+    { label: 'Administrador', path: '/login/admin' },
+    { label: 'Cliente', path: '/login/cliente' },
+    { label: 'Consultor', path: '/login/gestor' },
+    { label: 'Concesionaria', path: '/login/concesionaria' },
+  ];
+
   showDropdown = signal(false);
+  loginMenuOpen = signal(false);
   isMobileMenuOpen = signal(false);
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
+  private readonly host = inject(ElementRef);
 
   constructor(public auth: AuthService, private crmService: CrmService, private router: Router) {
     effect(() => {
@@ -169,24 +256,19 @@ export class NavComponent implements OnInit {
     }
   }
 
-  get loginLink(): string {
-    if (this.isAutosContext()) return '/login/concesionaria';
-    if (this.isGestoresContext()) return '/login/gestor';
-    return '/login';
+  toggleLoginMenu() {
+    this.loginMenuOpen.update(v => !v);
+    if (this.loginMenuOpen()) this.showDropdown.set(false);
   }
 
-  private isAutosContext(): boolean {
-    const url = this.router.url.split('?')[0];
-    return url === '/' || url === '/autos' || url.startsWith('/autos/') || url.startsWith('/concesionarias/');
-  }
-
-  private isGestoresContext(): boolean {
-    const url = this.router.url.split('?')[0];
-    return url === '/gestores' || url.startsWith('/gestores/');
+  goToLogin(path: string) {
+    this.loginMenuOpen.set(false);
+    this.closeMobileMenu();
+    this.router.navigate([path]);
   }
 
   get panelLink(): string {
-    return this.auth.panelPathByRole() || '/login';
+    return this.auth.panelPathByRole() || '/login/cliente';
   }
 
   toggleNotifications() {
@@ -215,6 +297,9 @@ export class NavComponent implements OnInit {
     const target = event.target as HTMLElement;
     if (this.showDropdown() && !target.closest('.notification-wrapper')) {
       this.showDropdown.set(false);
+    }
+    if (this.loginMenuOpen() && !this.host.nativeElement.contains(event.target)) {
+      this.loginMenuOpen.set(false);
     }
   }
 
