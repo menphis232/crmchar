@@ -13,8 +13,8 @@ const PUSH_BRAND_NAME = 'Trámites Vehiculares de México';
 function pushBrandAssets() {
   const base = siteBaseUrl();
   return {
-    icon: `${base}/assets/pwa/icon-192.png`,
-    badge: `${base}/assets/pwa/icon-72.png`,
+    largeIcon: `${base}/assets/pwa/icon-192.png`,
+    smallIcon: `${base}/assets/pwa/notification-badge.png`,
   };
 }
 
@@ -101,10 +101,10 @@ export async function sendOneSignalPush(opts) {
     target_channel: 'push',
     headings: { es: PUSH_BRAND_NAME, en: PUSH_BRAND_NAME },
     contents: { es: buildPushContents(title, body), en: buildPushContents(title, body) },
-    chrome_web_icon: brand.icon,
-    chrome_web_badge: brand.badge,
-    firefox_icon: brand.icon,
-    large_icon: brand.icon,
+    chrome_web_icon: brand.smallIcon,
+    chrome_web_badge: brand.smallIcon,
+    firefox_icon: brand.largeIcon,
+    large_icon: brand.largeIcon,
   };
 
   const launchUrl = resolveUrl(url);
