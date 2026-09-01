@@ -24,7 +24,7 @@ import { OneSignalService } from '../core/onesignal.service';
               } @else if (oneSignal.permissionState() === 'denied') {
                 Las notificaciones están bloqueadas en tu teléfono. Actívalas en Ajustes → Apps → Trámites MX → Notificaciones.
               } @else {
-                Recibe avisos de trámites, mensajes y actualizaciones importantes en tu teléfono.
+                Recibe avisos de trámites, mensajes y actualizaciones importantes. Tras tocar Activar, elige Permitir en el mensaje del sistema Android.
               }
             </p>
             <p class="push-prompt-status">Estado: {{ oneSignal.statusLabel() }}</p>

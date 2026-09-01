@@ -36,7 +36,15 @@
           autoResubscribe: true,
           promptOptions: {
             slidedown: {
-              prompts: [{ type: 'push', autoPrompt: false }],
+              prompts: [{
+                type: 'push',
+                autoPrompt: false,
+                text: {
+                  actionMessage: 'Recibe avisos de trámites y mensajes importantes en tu teléfono.',
+                  acceptButton: 'Activar',
+                  cancelButton: 'Ahora no',
+                },
+              }],
             },
           },
         });
