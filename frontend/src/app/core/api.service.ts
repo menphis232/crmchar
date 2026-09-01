@@ -434,8 +434,10 @@ export class KnowledgeService {
     return this.http.delete<{ ok: boolean }>(`${this.base}/admin/${id}`);
   }
 
-  feed() {
-    return this.http.get<import('../models').KnowledgePost[]>(`${this.base}/feed`);
+  feed(page = 1, limit = 5) {
+    return this.http.get<import('../models').KnowledgeFeedPage>(`${this.base}/feed`, {
+      params: { page: String(page), limit: String(limit) },
+    });
   }
 
   getById(id: string) {

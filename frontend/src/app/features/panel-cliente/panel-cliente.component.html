@@ -120,52 +120,18 @@
             <strong>Pronto habrá contenido aquí</strong>
           </div>
         } @else {
-          <div class="knowledge-slider">
-            @if (knowledgePosts().length > 1) {
-              <button type="button" class="knowledge-nav knowledge-nav-prev" (click)="feedPrev()" aria-label="Anterior">
-                <svg lucideChevronLeft [size]="16" aria-hidden="true"></svg>
-              </button>
+          <div
+            class="knowledge-reels knowledge-reels--boxed"
+            #knowledgeReelsBox
+            (scroll)="onKnowledgeReelsScroll($event)"
+          >
+            @for (post of knowledgePosts(); track post.id) {
+              <ng-container *ngTemplateOutlet="knowledgeReelCard; context: { post }" />
             }
-
-            <div class="knowledge-track" #knowledgeTrack>
-              @for (post of knowledgePosts(); track post.id) {
-                <article class="knowledge-slide" (click)="openKnowledge(post)">
-                  <div class="knowledge-slide-media">
-                    @if (coverFor(post)) {
-                      <img [src]="coverFor(post)" [alt]="post.title" />
-                    } @else {
-                      <div class="knowledge-slide-placeholder">
-                        <svg lucidePlay [size]="24" aria-hidden="true"></svg>
-                      </div>
-                    }
-                    @if (post.type === 'video') {
-                      <span class="knowledge-play-badge"><svg lucidePlay [size]="12" aria-hidden="true"></svg></span>
-                    }
-                    <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
-                  </div>
-                  <div class="knowledge-slide-body">
-                    <h3>{{ post.title }}</h3>
-                    @if (post.body) {
-                      <p>{{ plainSnippet(post.body) }}</p>
-                    }
-                    <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
-                      <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
-                        <svg lucideHeart [size]="13" [strokeWidth]="2" aria-hidden="true"></svg>
-                        <span>{{ post.likesCount || 0 }}</span>
-                      </button>
-                      <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)" title="WhatsApp">
-                        <svg lucideShare2 [size]="13" [strokeWidth]="2" aria-hidden="true"></svg>
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              }
-            </div>
-
-            @if (knowledgePosts().length > 1) {
-              <button type="button" class="knowledge-nav knowledge-nav-next" (click)="feedNext()" aria-label="Siguiente">
-                <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
-              </button>
+            @if (knowledgeFeedLoadingMore()) {
+              <div class="knowledge-reels-status">Cargando más…</div>
+            } @else if (knowledgeFeedHasMore()) {
+              <div class="knowledge-reels-status knowledge-reels-hint">Desliza para ver más</div>
             }
           </div>
         }
@@ -332,33 +298,13 @@
             <p>Cuando el Super Admin publique material, lo verás aquí.</p>
           </div>
         } @else {
-          <div class="knowledge-grid">
+          <div class="knowledge-reels knowledge-reels--page">
             @for (post of knowledgePosts(); track post.id) {
-              <article class="knowledge-card" (click)="openKnowledge(post)">
-                <div class="knowledge-card-media">
-                  @if (coverFor(post)) {
-                    <img [src]="coverFor(post)" [alt]="post.title" />
-                  } @else {
-                    <div class="knowledge-slide-placeholder"><svg lucidePlay [size]="28" aria-hidden="true"></svg></div>
-                  }
-                  <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
-                </div>
-                <div class="knowledge-card-body">
-                  <h3>{{ post.title }}</h3>
-                  @if (post.body) {
-                    <p>{{ plainSnippet(post.body, 100) }}</p>
-                  }
-                  <div class="knowledge-slide-actions" (click)="$event.stopPropagation()">
-                    <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)">
-                      <svg lucideHeart [size]="16" aria-hidden="true"></svg>
-                      <span>{{ post.likesCount || 0 }}</span>
-                    </button>
-                    <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)">
-                      <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
-                    </button>
-                  </div>
-                </div>
-              </article>
+              <ng-container *ngTemplateOutlet="knowledgeReelCard; context: { post }" />
+            }
+            <div #knowledgeFeedSentinel class="knowledge-reels-sentinel" aria-hidden="true"></div>
+            @if (knowledgeFeedLoadingMore()) {
+              <div class="knowledge-reels-status">Cargando más…</div>
             }
           </div>
         }
@@ -1253,6 +1199,45 @@
       }
     </div>
   </div>
+</ng-template>
+
+<ng-template #knowledgeReelCard let-post="post">
+  <article class="knowledge-reel" (click)="openKnowledge(post)">
+    <div class="knowledge-reel-head">
+      <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
+      @if (post.createdAt) {
+        <time class="knowledge-reel-date">{{ post.createdAt | date:'dd MMM yyyy' }}</time>
+      }
+    </div>
+    <div class="knowledge-reel-media">
+      @if (coverFor(post)) {
+        <img [src]="coverFor(post)" [alt]="post.title" />
+      } @else {
+        <div class="knowledge-slide-placeholder">
+          <svg lucidePlay [size]="28" aria-hidden="true"></svg>
+        </div>
+      }
+      @if (post.type === 'video') {
+        <span class="knowledge-play-badge"><svg lucidePlay [size]="14" aria-hidden="true"></svg></span>
+      }
+    </div>
+    <div class="knowledge-reel-body">
+      <h3>{{ post.title }}</h3>
+      @if (post.body) {
+        <p>{{ plainSnippet(post.body, 120) }}</p>
+      }
+      <div class="knowledge-reel-actions" (click)="$event.stopPropagation()">
+        <button type="button" class="knowledge-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
+          <svg lucideHeart [size]="16" aria-hidden="true"></svg>
+          <span>{{ post.likesCount || 0 }}</span>
+        </button>
+        <button type="button" class="knowledge-action" (click)="shareWhatsApp(post, $event)" title="WhatsApp">
+          <svg lucideShare2 [size]="16" aria-hidden="true"></svg>
+          <span>Compartir</span>
+        </button>
+      </div>
+    </div>
+  </article>
 </ng-template>
 
 <app-support-widget />

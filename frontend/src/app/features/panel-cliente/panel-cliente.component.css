@@ -1971,68 +1971,81 @@ select.client-wallet-input option {
   font-size: 12px;
 }
 
-.knowledge-slider {
+.knowledge-reels {
   display: flex;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.knowledge-track {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  gap: 10px;
-  min-width: 0;
-  flex: 1;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scroll-snap-type: x mandatory;
+  flex-direction: column;
+  gap: 14px;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  overscroll-behavior-x: contain;
 }
 
-.knowledge-track::-webkit-scrollbar {
-  display: none;
+.knowledge-reels--boxed {
+  max-height: min(480px, 58vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding-right: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
 }
 
-.knowledge-slide {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+.knowledge-reels--boxed::-webkit-scrollbar {
+  width: 5px;
+}
+
+.knowledge-reels--boxed::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+}
+
+.knowledge-reels--page {
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.knowledge-reel {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.02);
   cursor: pointer;
   text-align: left;
   display: flex;
   flex-direction: column;
-  flex: 0 0 calc((100% - 20px) / 3);
-  max-width: calc((100% - 20px) / 3);
-  min-width: calc((100% - 20px) / 3);
-  scroll-snap-align: start;
+  flex-shrink: 0;
 }
 
-.knowledge-slide-media {
+.knowledge-reel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px 0;
+}
+
+.knowledge-reel-head .knowledge-type-chip {
+  position: static;
+  display: inline-block;
+}
+
+.knowledge-reel-date {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  white-space: nowrap;
+}
+
+.knowledge-reel-media {
   position: relative;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 4 / 5;
   width: 100%;
   background: #0d0d0d;
   overflow: hidden;
 }
 
-.knowledge-slide-media img {
+.knowledge-reel-media img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center;
-  display: block;
-  background: #0d0d0d;
-}
-
-.knowledge-card-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: center;
   display: block;
   background: #0d0d0d;
@@ -2049,30 +2062,56 @@ select.client-wallet-input option {
   background: linear-gradient(135deg, #161616, #0c0c0c);
 }
 
-.knowledge-nav {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.9);
+.knowledge-reel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px 12px;
+}
+
+.knowledge-reel-body h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #fff;
+  font-family: var(--f-display);
+  letter-spacing: 0.02em;
+}
+
+.knowledge-reel-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.5);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.knowledge-reel-actions {
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  flex-shrink: 0;
-  opacity: 0.85;
-  align-self: center;
+  gap: 8px;
+  margin-top: 2px;
 }
 
-.knowledge-nav:hover:not(:disabled) {
-  opacity: 1;
-  background: rgba(255, 255, 255, 0.12);
+.knowledge-reels-status {
+  text-align: center;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  padding: 8px 0 4px;
 }
 
-.knowledge-nav:disabled {
-  opacity: 0.25;
-  cursor: default;
+.knowledge-reels-hint {
+  opacity: 0.7;
+}
+
+.knowledge-reels-sentinel {
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
 }
 
 .knowledge-play-badge {
@@ -2080,8 +2119,8 @@ select.client-wallet-input option {
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.28);
@@ -2106,49 +2145,6 @@ select.client-wallet-input option {
   color: rgba(255, 255, 255, 0.9);
 }
 
-.knowledge-slide-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px 10px;
-  flex: 1;
-}
-
-.knowledge-slide-body h3,
-.knowledge-card-body h3 {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.25;
-  color: #fff;
-  font-family: var(--f-display);
-  letter-spacing: 0.02em;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 2.5em;
-}
-
-.knowledge-slide-body p,
-.knowledge-card-body p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.35;
-  color: rgba(255, 255, 255, 0.45);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.knowledge-slide-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
-}
-
 .knowledge-action {
   display: inline-flex;
   align-items: center;
@@ -2157,8 +2153,8 @@ select.client-wallet-input option {
   background: transparent;
   color: rgba(255, 255, 255, 0.7);
   border-radius: 999px;
-  padding: 3px 7px;
-  font-size: 10px;
+  padding: 5px 10px;
+  font-size: 11px;
   cursor: pointer;
 }
 
@@ -2171,81 +2167,6 @@ select.client-wallet-input option {
   color: #ff5a7a;
   border-color: rgba(255, 90, 122, 0.4);
   background: rgba(255, 90, 122, 0.1);
-}
-
-.knowledge-page-label {
-  text-align: center;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  margin-top: 4px;
-}
-
-.knowledge-dots {
-  display: flex;
-  justify-content: center;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.knowledge-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(255, 255, 255, 0.22);
-  cursor: pointer;
-  padding: 0;
-}
-
-.knowledge-dot.active {
-  background: rgba(255, 255, 255, 0.85);
-  width: 12px;
-}
-
-.knowledge-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-
-.knowledge-card {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-}
-
-.knowledge-card-media {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  background: #0d0d0d;
-}
-
-.knowledge-card-body { padding: 10px; }
-
-@media (max-width: 900px) {
-  .knowledge-slide {
-    flex-basis: calc((100% - 10px) / 2);
-    max-width: calc((100% - 10px) / 2);
-    min-width: calc((100% - 10px) / 2);
-  }
-}
-
-@media (max-width: 640px) {
-  .knowledge-nav {
-    display: none;
-  }
-
-  .knowledge-slide {
-    flex-basis: 82%;
-    max-width: 82%;
-    min-width: 82%;
-  }
-
-  .knowledge-track {
-    padding-bottom: 2px;
-  }
 }
 
 /* —— Hoy No Circula (dashboard) —— */

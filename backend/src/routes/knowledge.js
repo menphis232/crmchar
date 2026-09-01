@@ -128,9 +128,18 @@ router.delete('/admin/:id', requireRole('admin'), async (req, res) => {
   }
 });
 
-/** Cliente (y cualquier autenticado): feed publicado */
+/** Cliente (y cualquier autenticado): feed publicado paginado */
 router.get('/feed', async (req, res) => {
   try {
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+    const limit = Math.min(20, Math.max(1, parseInt(String(req.query.limit || '5'), 10) || 5));
+    const offset = (page - 1) * limit;
+
+    const totalRow = await get(
+      'SELECT COUNT(*) AS total FROM knowledge_posts WHERE is_published = 1',
+    );
+    const total = Number(totalRow?.total) || 0;
+
     const rows = await query(`
       ${SELECT_BASE},
         EXISTS(
@@ -140,8 +149,17 @@ router.get('/feed', async (req, res) => {
       FROM knowledge_posts p
       WHERE p.is_published = 1
       ORDER BY p.sort_order ASC, p.created_at DESC
-    `, [req.user.id]);
-    res.json(rows.map(r => mapPost(r)));
+      LIMIT ? OFFSET ?
+    `, [req.user.id, limit, offset]);
+
+    const items = rows.map(r => mapPost(r));
+    res.json({
+      items,
+      page,
+      limit,
+      total,
+      hasMore: offset + items.length < total,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar el feed' });

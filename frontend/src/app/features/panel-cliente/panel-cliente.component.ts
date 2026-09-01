@@ -142,8 +142,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   dashboardLoading = signal(true);
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
-  @ViewChild('knowledgeTrack') knowledgeTrack?: ElementRef<HTMLDivElement>;
-  readonly feedPageSize = 3;
+  knowledgeFeedLoadingMore = signal(false);
+  knowledgeFeedHasMore = signal(false);
+  private knowledgeFeedPage = 1;
+  readonly knowledgeFeedPageSize = 5;
+  @ViewChild('knowledgeReelsBox') knowledgeReelsBox?: ElementRef<HTMLDivElement>;
+  @ViewChild('knowledgeFeedSentinel') knowledgeFeedSentinel?: ElementRef<HTMLDivElement>;
+  private knowledgeFeedObserver?: IntersectionObserver;
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -240,7 +245,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadInvoices();
     this.loadWallet();
     this.loadVehicles();
-    this.loadKnowledgeFeed();
+    this.loadKnowledgeFeed(true);
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
     const user = this.auth.user();
@@ -278,6 +283,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.socket) this.socket.disconnect();
+    this.knowledgeFeedObserver?.disconnect();
   }
 
   setTab(tab: ClientTab) {
@@ -290,38 +296,68 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (!this.vehicles().length) this.loadVehicles();
     }
     if (tab === 'vehiculos') this.loadVehicles();
-    if (tab === 'conocimiento' || tab === 'dashboard') this.loadKnowledgeFeed();
+    if (tab === 'conocimiento' || tab === 'dashboard') {
+      this.loadKnowledgeFeed(true);
+      if (tab === 'conocimiento') {
+        setTimeout(() => this.setupKnowledgeFeedObserver(), 0);
+      }
+    }
   }
 
-  loadKnowledgeFeed() {
-    this.knowledgeLoading.set(true);
-    this.knowledgeService.feed().subscribe({
-      next: posts => {
-        this.knowledgePosts.set(posts);
+  loadKnowledgeFeed(reset = false) {
+    if (reset) {
+      this.knowledgeFeedPage = 1;
+      this.knowledgeFeedHasMore.set(false);
+      if (!this.knowledgePosts().length) this.knowledgeLoading.set(true);
+    } else {
+      if (this.knowledgeFeedLoadingMore() || !this.knowledgeFeedHasMore()) return;
+      this.knowledgeFeedLoadingMore.set(true);
+    }
+
+    const page = reset ? 1 : this.knowledgeFeedPage + 1;
+    this.knowledgeService.feed(page, this.knowledgeFeedPageSize).subscribe({
+      next: res => {
+        if (reset) {
+          this.knowledgePosts.set(res.items);
+        } else {
+          const existing = new Set(this.knowledgePosts().map(p => p.id));
+          const merged = [...this.knowledgePosts(), ...res.items.filter(p => !existing.has(p.id))];
+          this.knowledgePosts.set(merged);
+        }
+        this.knowledgeFeedPage = res.page;
+        this.knowledgeFeedHasMore.set(res.hasMore);
         this.knowledgeLoading.set(false);
+        this.knowledgeFeedLoadingMore.set(false);
+        if (this.activeTab() === 'conocimiento') {
+          setTimeout(() => this.setupKnowledgeFeedObserver(), 0);
+        }
       },
       error: () => {
-        this.knowledgePosts.set([]);
+        if (reset) this.knowledgePosts.set([]);
         this.knowledgeLoading.set(false);
+        this.knowledgeFeedLoadingMore.set(false);
       },
     });
   }
 
-  feedPrev() {
-    this.scrollFeed(-1);
+  onKnowledgeReelsScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+      this.loadKnowledgeFeed(false);
+    }
   }
 
-  feedNext() {
-    this.scrollFeed(1);
-  }
-
-  private scrollFeed(direction: 1 | -1) {
-    const el = this.knowledgeTrack?.nativeElement;
-    if (!el) return;
-    const slide = el.querySelector('.knowledge-slide') as HTMLElement | null;
-    const step = slide ? slide.offsetWidth + 10 : Math.round(el.clientWidth * 0.85);
-    const visible = Math.max(1, Math.round(el.clientWidth / step));
-    el.scrollBy({ left: direction * step * Math.min(visible, this.feedPageSize), behavior: 'smooth' });
+  setupKnowledgeFeedObserver() {
+    if (typeof IntersectionObserver === 'undefined') return;
+    const sentinel = this.knowledgeFeedSentinel?.nativeElement;
+    if (!sentinel) return;
+    this.knowledgeFeedObserver?.disconnect();
+    this.knowledgeFeedObserver = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) {
+        this.loadKnowledgeFeed(false);
+      }
+    }, { root: null, rootMargin: '120px', threshold: 0 });
+    this.knowledgeFeedObserver.observe(sentinel);
   }
 
   coverFor(post: KnowledgePost): string {
@@ -614,7 +650,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   loadDashboard() {
     this.dashboardLoading.set(true);
-    this.loadKnowledgeFeed();
+    this.loadKnowledgeFeed(true);
     this.http.get<{ total: number; active: number; closed: number }>(`${environment.apiUrl}/client/deals/stats`).subscribe({
       next: stats => {
         this.stats.set(stats);

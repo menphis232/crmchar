@@ -209,6 +209,14 @@ export interface KnowledgePost {
   updatedAt?: string;
 }
 
+export interface KnowledgeFeedPage {
+  items: KnowledgePost[];
+  page: number;
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
 export interface AdminStats {
   totals: {
     users: number;
