@@ -149,8 +149,8 @@ router.get('/feed', async (req, res) => {
       FROM knowledge_posts p
       WHERE p.is_published = 1
       ORDER BY p.sort_order ASC, p.created_at DESC
-      LIMIT ? OFFSET ?
-    `, [req.user.id, limit, offset]);
+      LIMIT ${limit} OFFSET ${offset}
+    `, [req.user.id]);
 
     const items = rows.map(r => mapPost(r));
     res.json({
