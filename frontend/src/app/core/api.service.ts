@@ -391,7 +391,7 @@ export class AdminService {
     audienceValue?: string;
     testOnly?: boolean;
   }) {
-    return this.http.post<{ ok: boolean; id: string; onesignalId?: string; recipients: number }>(
+    return this.http.post<{ ok: boolean; id: string; onesignalId?: string; recipients: number; delivered?: number }>(
       `${this.base}/push/send`,
       data,
     );
