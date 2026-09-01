@@ -88,6 +88,7 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
       font-size: 13px;
       line-height: 1.45;
       color: rgba(255,255,255,0.62);
+      word-break: break-word;
     }
     .push-prompt-actions {
       display: flex;
