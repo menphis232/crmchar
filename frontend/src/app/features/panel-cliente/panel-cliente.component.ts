@@ -17,7 +17,6 @@ import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.compo
 import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { CrmContactVehicle, CrmContactVehicleDocument, KnowledgePost } from '../../models';
-import { SupportWidgetComponent } from '../../shared/support-widget.component';
 import {
   checkCirculationToday,
   getMexicoCityCalendar,
@@ -74,7 +73,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
-    PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent, SupportWidgetComponent,
+    PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideCheck, LucideMessageCircle,
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
