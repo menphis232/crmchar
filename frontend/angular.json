@@ -33,6 +33,11 @@
                 "glob": "**/*",
                 "input": "src/push",
                 "output": "/push"
+              },
+              {
+                "glob": "OneSignalSDK*.js",
+                "input": "src/onesignal-root",
+                "output": "/"
               }
             ],
             "styles": ["src/styles.css"],

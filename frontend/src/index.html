@@ -24,41 +24,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&family=Work+Sans:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Raleway:wght@400;600;700;800&family=Bebas+Neue&family=Anton&family=Merriweather:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Archivo+Black&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
-    async function cleanupLegacyPushWorkers() {
-      if (!('serviceWorker' in navigator)) return;
-      try {
-        const legacy = await navigator.serviceWorker.getRegistration('/push/onesignal/');
-        if (legacy) await legacy.unregister();
-      } catch (e) {
-        console.warn('[OneSignal] legacy SW cleanup:', e);
-      }
-    }
-
-    async function prepareMergedServiceWorker() {
-      if (!('serviceWorker' in navigator)) return;
-      try {
-        await cleanupLegacyPushWorkers();
-        const workerPath = '/ngsw-worker.js';
-        const scope = '/';
-        const existing = await navigator.serviceWorker.getRegistration(scope);
-        if (!existing) {
-          await navigator.serviceWorker.register(workerPath, { scope });
-        }
-        await navigator.serviceWorker.ready;
-      } catch (e) {
-        console.warn('[OneSignal] prepare SW:', e);
-      }
-    }
-
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       if (window.__onesignalInitDone) return;
       try {
-        await prepareMergedServiceWorker();
         await OneSignal.init({
           appId: '82f642c1-68c5-4067-b0c5-52384f8ecf4f',
-          serviceWorkerPath: 'ngsw-worker.js',
-          serviceWorkerParam: { scope: '/' },
+          serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerUpdaterPath: 'push/onesignal/OneSignalSDKUpdaterWorker.js',
+          serviceWorkerParam: { scope: '/push/onesignal/' },
           notifyButton: { enable: false },
           autoResubscribe: true,
           promptOptions: {

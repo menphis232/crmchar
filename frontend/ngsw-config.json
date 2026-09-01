@@ -10,6 +10,8 @@
           "/favicon.ico",
           "/index.html",
           "/manifest.webmanifest",
+          "/OneSignalSDKWorker.js",
+          "/OneSignalSDKUpdaterWorker.js",
           "/*.css",
           "/*.js"
         ]
