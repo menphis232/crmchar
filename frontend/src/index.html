@@ -24,10 +24,29 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Open+Sans:wght@400;600;700&family=Lato:wght@400;700&family=Poppins:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Source+Sans+3:wght@400;600;700&family=Work+Sans:wght@400;600;700&family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;500;600;700&family=Montserrat:wght@400;600;700;800&family=Oswald:wght@400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Raleway:wght@400;600;700;800&family=Bebas+Neue&family=Anton&family=Merriweather:wght@400;700&family=Libre+Baskerville:wght@400;700&family=Archivo+Black&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <script>
+    async function preparePushServiceWorker() {
+      if (!('serviceWorker' in navigator)) return;
+      try {
+        const workerFile = 'OneSignalSDKWorker.js';
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          const scriptUrl = (reg.active || reg.installing || reg.waiting)?.scriptURL || '';
+          if (!scriptUrl.includes(workerFile)) {
+            await reg.unregister();
+          }
+        }
+        await navigator.serviceWorker.register('/' + workerFile, { scope: '/' });
+        await navigator.serviceWorker.ready;
+      } catch (e) {
+        console.warn('[OneSignal] prepare SW:', e);
+      }
+    }
+
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       if (window.__onesignalInitDone) return;
       try {
+        await preparePushServiceWorker();
         await OneSignal.init({
           appId: '82f642c1-68c5-4067-b0c5-52384f8ecf4f',
           serviceWorkerPath: 'OneSignalSDKWorker.js',
