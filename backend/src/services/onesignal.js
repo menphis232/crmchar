@@ -8,6 +8,23 @@ function siteBaseUrl() {
   return (process.env.FRONTEND_URL || 'https://central.tramitesvehicularesdemexico.com').replace(/\/$/, '');
 }
 
+const PUSH_BRAND_NAME = 'Trámites Vehiculares de México';
+
+function pushBrandAssets() {
+  const base = siteBaseUrl();
+  return {
+    icon: `${base}/assets/pwa/icon-192.png`,
+    badge: `${base}/assets/pwa/icon-72.png`,
+  };
+}
+
+function buildPushContents(messageTitle, messageBody) {
+  const headline = String(messageTitle || '').trim();
+  const body = String(messageBody || '').trim();
+  if (headline && body) return `${headline}\n${body}`;
+  return headline || body;
+}
+
 function resolveUrl(url) {
   if (!url?.trim()) return undefined;
   const trimmed = url.trim();
@@ -78,11 +95,16 @@ export async function sendOneSignalPush(opts) {
   }
 
   const { title, body, url, audience, audienceValue, adminUserId } = opts;
+  const brand = pushBrandAssets();
   const payload = {
     app_id: appId,
     target_channel: 'push',
-    headings: { es: title, en: title },
-    contents: { es: body, en: body },
+    headings: { es: PUSH_BRAND_NAME, en: PUSH_BRAND_NAME },
+    contents: { es: buildPushContents(title, body), en: buildPushContents(title, body) },
+    chrome_web_icon: brand.icon,
+    chrome_web_badge: brand.badge,
+    firefox_icon: brand.icon,
+    large_icon: brand.icon,
   };
 
   const launchUrl = resolveUrl(url);
@@ -196,7 +218,7 @@ export async function notifyUserPush(userId, { title, body, url } = {}) {
   const message = String(body || '').trim();
   if (!message) return null;
   return sendOneSignalPush({
-    title: String(title || 'Trámites MX').trim() || 'Trámites MX',
+    title: String(title || '').trim(),
     body: message,
     url,
     audience: 'user',

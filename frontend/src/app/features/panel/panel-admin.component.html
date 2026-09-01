@@ -596,9 +596,13 @@
           <p class="banner-msg" style="color:#fbbf24;">OneSignal no está configurado en el servidor (falta REST API Key en .env).</p>
         }
 
+        <p class="card-desc" style="margin-top:8px;font-size:12px;opacity:.85;">
+          Encabezado fijo: <strong>Trámites Vehiculares de México</strong> con logo oficial. El título y mensaje van en el cuerpo del aviso.
+        </p>
+
         <div class="form-row" style="margin-top:16px;">
           <div class="form-group">
-            <label>Título</label>
+            <label>Título del aviso</label>
             <input [(ngModel)]="pushForm.title" maxlength="200" placeholder="Ej: Tu trámite fue actualizado">
           </div>
         </div>
