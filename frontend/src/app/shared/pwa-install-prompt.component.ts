@@ -21,12 +21,8 @@ const DISMISS_DAYS = 7;
           <svg lucideX [size]="16" aria-hidden="true"></svg>
         </button>
 
-        <div class="pwa-brand">
-          <img src="assets/pwa/icon-192.png" alt="Trámites Vehiculares de México" width="56" height="56" />
-        </div>
-
         <div class="pwa-copy">
-          <h2 id="pwa-title">Lleva Trámites MX en tu celular</h2>
+          <h2 id="pwa-title">Instala Trámites MX</h2>
           <p id="pwa-desc">
             {{ message() }}
           </p>
@@ -80,9 +76,6 @@ const DISMISS_DAYS = 7;
       border-radius: 18px;
       padding: 16px 16px 14px;
       box-shadow: 0 18px 48px rgba(0,0,0,0.55);
-      display: grid;
-      grid-template-columns: 56px 1fr;
-      gap: 12px 14px;
       animation: pwa-in 0.35s ease-out;
     }
 
@@ -105,16 +98,6 @@ const DISMISS_DAYS = 7;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-    }
-
-    .pwa-brand img {
-      width: 56px;
-      height: 56px;
-      border-radius: 12px;
-      object-fit: cover;
-      background: #000;
-      border: 1px solid rgba(255,255,255,0.12);
-      display: block;
     }
 
     .pwa-copy {
@@ -212,7 +195,7 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
   canPrompt = signal(false);
   isIos = signal(false);
   message = signal(
-    'Instala la app gratis: ábrela desde tu pantalla de inicio, más rápido y con el look de Trámites Vehiculares de México.',
+    'Instala la app gratis y ábrela desde tu pantalla de inicio, más rápido y siempre a la mano.',
   );
 
   ngOnInit() {
@@ -229,7 +212,7 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
 
     if (ios) {
       this.message.set(
-        'En iPhone/iPad puedes instalar Trámites MX como app desde Safari. Así la tendrás en tu pantalla de inicio con fondo negro e icono oficial.',
+        'En iPhone/iPad puedes instalar Trámites MX desde Safari y tenerla en tu pantalla de inicio.',
       );
       setTimeout(() => this.visible.set(true), 1800);
       return;
@@ -241,7 +224,7 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
       this.deferred = e as BeforeInstallPromptEvent;
       this.canPrompt.set(true);
       this.message.set(
-        'Descarga Trámites MX en tu dispositivo. Acceso directo, splash negro con el logo oficial y experiencia a pantalla completa.',
+        'Descarga Trámites MX en tu celular. Acceso directo desde tu pantalla de inicio y experiencia a pantalla completa.',
       );
       this.visible.set(true);
     };
@@ -261,7 +244,7 @@ export class PwaInstallPromptComponent implements OnInit, OnDestroy {
         return;
       }
       this.message.set(
-        'Agrega Trámites MX a tu pantalla de inicio desde el menú del navegador (Instalar aplicación / Agregar a inicio) y úsala como app.',
+        'Agrega Trámites MX a tu pantalla de inicio desde el menú del navegador e instálala como app.',
       );
       this.visible.set(true);
     }, 8000);
