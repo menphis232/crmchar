@@ -168,9 +168,10 @@ export class PushPermissionPromptComponent implements OnInit {
   async activate() {
     this.errorMsg.set('');
     this.activating.set(true);
+    const user = this.auth.user();
     try {
       const result = await Promise.race([
-        this.oneSignal.enablePushFromUserGesture(),
+        this.oneSignal.enablePushFromUserGesture(user?.id, user?.role),
         new Promise<{ ok: boolean; error?: string }>(resolve =>
           setTimeout(() => resolve({ ok: false, error: 'Tiempo agotado. Intenta de nuevo.' }), 50000),
         ),

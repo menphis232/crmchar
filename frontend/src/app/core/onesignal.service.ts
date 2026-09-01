@@ -12,8 +12,11 @@ type OneSignalClient = {
     addTag: (key: string, value: string) => Promise<void>;
     PushSubscription?: {
       optedIn?: boolean;
+      id?: string | null;
+      token?: string | null;
       optIn?: () => Promise<void>;
       optOut?: () => Promise<void>;
+      addEventListener?: (event: string, listener: (e: { current?: { optedIn?: boolean; id?: string } }) => void) => void;
     };
   };
   Notifications?: {
@@ -41,6 +44,8 @@ export class OneSignalService {
   private instance: OneSignalClient | null = null;
   private initPromise: Promise<OneSignalClient | null> | null = null;
   readonly permissionState = signal<PushPermissionState>('default');
+  /** Suscripción real en OneSignal (no solo permiso del navegador). */
+  readonly subscribed = signal(false);
 
   init(): void {
     if (!isPlatformBrowser(this.platformId)) return;
@@ -56,10 +61,11 @@ export class OneSignalService {
       if (!OS) return;
 
       if (userId) {
-        await OS.login(userId);
+        await OS.login(String(userId));
         if (role && OS.User?.addTag) {
           await OS.User.addTag('role', role);
         }
+        await this.ensureSubscribed(OS);
       } else {
         await OS.logout();
       }
@@ -70,10 +76,13 @@ export class OneSignalService {
   }
 
   /**
-   * Pedir permiso en el mismo gesto del usuario: primero el prompt nativo,
-   * luego sincronizar con OneSignal (iOS PWA pierde el gesto si hay awaits antes).
+   * Flujo completo OneSignal: login → permiso → optIn → verificar suscripción.
+   * El permiso nativo solo NO registra al usuario en OneSignal.
    */
-  async enablePushFromUserGesture(): Promise<{ ok: boolean; error?: string }> {
+  async enablePushFromUserGesture(
+    userId?: string | null,
+    role?: string | null,
+  ): Promise<{ ok: boolean; error?: string }> {
     if (!isPlatformBrowser(this.platformId)) {
       return { ok: false, error: 'Entorno no compatible' };
     }
@@ -81,62 +90,57 @@ export class OneSignalService {
       return { ok: false, error: 'OneSignal no configurado' };
     }
 
-    if (typeof Notification === 'undefined') {
-      return { ok: false, error: 'Este dispositivo no soporta notificaciones web' };
-    }
-
-    if (Notification.permission === 'denied') {
-      return { ok: false, error: 'Permiso bloqueado. Actívalo en Ajustes del teléfono → Notificaciones → Trámites MX' };
-    }
-
     try {
-      if (Notification.permission === 'default') {
-        const native = await Promise.race([
-          Notification.requestPermission(),
-          this.delay(45000).then(() => 'default' as NotificationPermission),
-        ]);
-        if (native !== 'granted') {
-          return { ok: false, error: native === 'denied' ? 'Permiso denegado' : 'No se completó el permiso' };
-        }
-      }
-
       const OS = await Promise.race([
         this.getInstance(),
-        this.delay(15000).then(() => null),
+        this.delay(12000).then(() => null),
       ]);
-
       if (!OS) {
-        await this.refreshPermissionState();
-        if (Notification.permission === 'granted') {
-          return { ok: true };
+        return { ok: false, error: 'No se pudo cargar OneSignal. Revisa tu conexión e intenta de nuevo.' };
+      }
+
+      if (OS.Notifications?.isPushSupported && !OS.Notifications.isPushSupported()) {
+        return { ok: false, error: 'Este dispositivo no soporta notificaciones push web' };
+      }
+
+      if (userId) {
+        await OS.login(String(userId));
+        if (role && OS.User?.addTag) {
+          await OS.User.addTag('role', role);
         }
-        return { ok: false, error: 'No se pudo conectar con el servicio de notificaciones. Intenta de nuevo.' };
       }
 
-      if (OS.User?.PushSubscription?.optIn) {
-        await Promise.race([
-          OS.User.PushSubscription.optIn(),
-          this.delay(12000),
-        ]);
-      } else if (OS.Notifications?.requestPermission) {
-        await Promise.race([
+      const native = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+      if (native === 'denied') {
+        return { ok: false, error: 'Permiso bloqueado. Actívalo en Ajustes → Notificaciones → Trámites MX' };
+      }
+
+      if (native !== 'granted' && OS.Notifications?.requestPermission) {
+        const granted = await Promise.race([
           OS.Notifications.requestPermission(),
-          this.delay(12000),
+          this.delay(60000).then(() => false),
         ]);
+        if (!granted) {
+          return { ok: false, error: 'Permiso denegado o no completado' };
+        }
       }
 
+      await this.ensureSubscribed(OS);
+
+      const subscribed = await this.waitForSubscription(OS, 10000);
       await this.refreshPermissionState(OS);
-      const granted = Notification.permission === 'granted' || OS.Notifications?.permission === true;
-      return granted
-        ? { ok: true }
-        : { ok: false, error: 'Permiso concedido pero no se pudo activar la suscripción' };
-    } catch (err) {
-      console.warn('[OneSignal] enablePush:', err);
-      await this.refreshPermissionState();
-      if (Notification.permission === 'granted') {
+
+      if (subscribed) {
         return { ok: true };
       }
-      return { ok: false, error: 'Error al activar notificaciones' };
+
+      return {
+        ok: false,
+        error: 'Permiso concedido pero OneSignal no completó la suscripción. Cierra la app, ábrela de nuevo y toca Activar otra vez.',
+      };
+    } catch (err) {
+      console.warn('[OneSignal] enablePush:', err);
+      return { ok: false, error: 'Error al activar notificaciones push' };
     }
   }
 
@@ -146,17 +150,30 @@ export class OneSignalService {
     const read = (OS?: OneSignalClient | null) => {
       if (typeof Notification === 'undefined') {
         this.permissionState.set('unsupported');
+        this.subscribed.set(false);
         return;
       }
+
       const notif = OS?.Notifications;
       if (notif?.isPushSupported && !notif.isPushSupported()) {
         this.permissionState.set('unsupported');
+        this.subscribed.set(false);
         return;
       }
+
+      const optedIn = OS?.User?.PushSubscription?.optedIn === true;
+      const hasSubId = !!OS?.User?.PushSubscription?.id;
+      const isSubscribed = optedIn || hasSubId;
+      this.subscribed.set(isSubscribed);
+
       const native = notif?.permissionNative ?? Notification.permission;
-      this.permissionState.set(
-        native === 'granted' ? 'granted' : native === 'denied' ? 'denied' : 'default',
-      );
+      if (isSubscribed || native === 'granted') {
+        this.permissionState.set('granted');
+      } else if (native === 'denied') {
+        this.permissionState.set('denied');
+      } else {
+        this.permissionState.set('default');
+      }
     };
 
     if (oneSignal) {
@@ -176,7 +193,39 @@ export class OneSignalService {
   }
 
   shouldShowPrompt(): boolean {
-    return this.permissionState() === 'default';
+    if (this.permissionState() === 'denied') return false;
+    return !this.subscribed();
+  }
+
+  private async ensureSubscribed(OS: OneSignalClient): Promise<void> {
+    const sub = OS.User?.PushSubscription;
+    if (!sub) return;
+
+    if (sub.optedIn && sub.id) return;
+
+    if (sub.optIn) {
+      await Promise.race([
+        sub.optIn(),
+        this.delay(15000),
+      ]);
+    } else if (OS.Notifications?.requestPermission) {
+      await Promise.race([
+        OS.Notifications.requestPermission(),
+        this.delay(15000),
+      ]);
+    }
+  }
+
+  private async waitForSubscription(OS: OneSignalClient, timeoutMs: number): Promise<boolean> {
+    const start = Date.now();
+    while (Date.now() - start < timeoutMs) {
+      const sub = OS.User?.PushSubscription;
+      if (sub?.optedIn === true || sub?.id) {
+        return true;
+      }
+      await this.delay(400);
+    }
+    return !!(OS.User?.PushSubscription?.optedIn || OS.User?.PushSubscription?.id);
   }
 
   private async getInstance(): Promise<OneSignalClient | null> {
@@ -196,7 +245,7 @@ export class OneSignalService {
     return new Promise<OneSignalClient | null>((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('OneSignal init timeout'));
-      }, 20000);
+      }, 25000);
 
       window.OneSignalDeferred = window.OneSignalDeferred || [];
       window.OneSignalDeferred.push(async (OneSignal) => {
@@ -224,7 +273,7 @@ export class OneSignalService {
   }
 
   private ensureSdkScript(): Promise<void> {
-    if (window.OneSignal || window.OneSignalDeferred?.length) {
+    if (window.OneSignalDeferred) {
       return Promise.resolve();
     }
 
