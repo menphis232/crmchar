@@ -231,8 +231,8 @@ export class NavComponent implements OnInit {
   readonly loginOptions = [
     { label: 'Administrador', path: '/login/admin' },
     { label: 'Cliente', path: '/login/cliente' },
-    { label: 'Consultor', path: '/login/gestor' },
     { label: 'Concesionaria', path: '/login/concesionaria' },
+    { label: 'Consultor', path: '/login/gestor' },
   ];
 
   showDropdown = signal(false);
