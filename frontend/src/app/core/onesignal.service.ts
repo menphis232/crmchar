@@ -77,7 +77,43 @@ export class OneSignalService {
     }
   }
 
-  async enablePushFromUserGesture(
+  /** Llamar en el mismo click de "Activar", antes de cualquier otra operación async. */
+  async requestPermissionFromGesture(): Promise<{ ok: boolean; error?: string }> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return { ok: false, error: 'Entorno no compatible' };
+    }
+    if (typeof Notification === 'undefined') {
+      return { ok: false, error: 'Este navegador no soporta notificaciones' };
+    }
+
+    const iosHint = this.iosPwaRequiredMessage();
+    if (iosHint) {
+      return { ok: false, error: iosHint };
+    }
+
+    if (Notification.permission === 'denied') {
+      return { ok: false, error: 'Permiso bloqueado. Ve a Ajustes del teléfono → Notificaciones → Trámites MX y actívalo.' };
+    }
+
+    if (Notification.permission === 'granted') {
+      return { ok: true };
+    }
+
+    const perm = await Notification.requestPermission();
+    if (perm === 'granted') {
+      return { ok: true };
+    }
+    if (perm === 'denied') {
+      return { ok: false, error: 'Permiso denegado. Actívalo en Ajustes del teléfono → Notificaciones → Trámites MX.' };
+    }
+
+    return {
+      ok: false,
+      error: this.iosPwaRequiredMessage() || 'No apareció el permiso del sistema. Toca Activar de nuevo y elige Permitir.',
+    };
+  }
+
+  async completePushSubscription(
     userId?: string | null,
     role?: string | null,
   ): Promise<{ ok: boolean; error?: string }> {
@@ -87,6 +123,9 @@ export class OneSignalService {
     if (!environment.onesignalAppId) {
       return { ok: false, error: 'OneSignal no configurado en la app' };
     }
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+      return { ok: false, error: 'Primero debes permitir notificaciones en el mensaje del sistema.' };
+    }
 
     try {
       return await this.withOneSignal(async OS => {
@@ -94,9 +133,11 @@ export class OneSignalService {
           return { ok: false, error: 'Este navegador no soporta notificaciones push' };
         }
 
-        const native = typeof Notification !== 'undefined' ? Notification.permission : 'default';
-        if (native === 'denied') {
-          return { ok: false, error: 'Permiso bloqueado. Ve a Ajustes → Notificaciones → Trámites MX y actívalo.' };
+        try {
+          await this.ensureSubscribed(OS);
+        } catch (optErr) {
+          const msg = optErr instanceof Error ? optErr.message : 'optIn';
+          return { ok: false, error: `No se pudo suscribir: ${msg}` };
         }
 
         if (userId) {
@@ -109,13 +150,6 @@ export class OneSignalService {
             const msg = loginErr instanceof Error ? loginErr.message : 'login';
             return { ok: false, error: `No se pudo vincular tu usuario: ${msg}` };
           }
-        }
-
-        try {
-          await this.ensureSubscribed(OS);
-        } catch (optErr) {
-          const msg = optErr instanceof Error ? optErr.message : 'optIn';
-          return { ok: false, error: `No se pudo suscribir: ${msg}` };
         }
 
         const subscribed = await this.waitForSubscription(OS, 20000);
@@ -134,7 +168,7 @@ export class OneSignalService {
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn('[OneSignal] enablePush:', err);
+      console.warn('[OneSignal] completePush:', err);
       return { ok: false, error: msg || 'Error al activar notificaciones' };
     }
   }
@@ -188,6 +222,18 @@ export class OneSignalService {
     }
   }
 
+  private iosPwaRequiredMessage(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    const ua = navigator.userAgent || '';
+    const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!isIos) return null;
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+    if (standalone) return null;
+    return 'En iPhone: instala la app primero (Compartir → Añadir a inicio) y activa notificaciones desde el icono de la PWA.';
+  }
+
   private async ensureSubscribed(OS: OneSignalClient): Promise<void> {
     const sub = OS.User?.PushSubscription;
     if (!sub?.optIn) {
@@ -195,6 +241,13 @@ export class OneSignalService {
     }
 
     if (sub.optedIn && (sub.id || sub.token)) return;
+
+    if (OS.Notifications?.requestPermission && Notification.permission !== 'granted') {
+      const granted = await OS.Notifications.requestPermission();
+      if (!granted) {
+        throw new Error('Debes tocar Permitir en el mensaje del sistema');
+      }
+    }
 
     await sub.optIn();
   }

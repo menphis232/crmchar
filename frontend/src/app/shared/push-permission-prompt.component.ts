@@ -171,8 +171,18 @@ export class PushPermissionPromptComponent implements OnInit {
     this.activating.set(true);
     const user = this.auth.user();
     try {
+      const permission = await this.oneSignal.requestPermissionFromGesture();
+      if (!permission.ok) {
+        this.errorMsg.set(permission.error || 'No se pudo pedir permiso.');
+        await this.oneSignal.refreshPermissionState();
+        if (this.oneSignal.permissionState() === 'denied') {
+          this.visible.set(false);
+        }
+        return;
+      }
+
       const result = await Promise.race([
-        this.oneSignal.enablePushFromUserGesture(user?.id, user?.role),
+        this.oneSignal.completePushSubscription(user?.id, user?.role),
         new Promise<{ ok: boolean; error?: string }>(resolve =>
           setTimeout(() => resolve({ ok: false, error: 'Tiempo agotado. Intenta de nuevo.' }), 50000),
         ),
