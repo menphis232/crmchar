@@ -1,6 +1,7 @@
 /**
- * Fusiona OneSignal en el service worker de Angular PWA y publica
- * /OneSignalSDKWorker.js en la raíz (ruta que el SDK busca por defecto).
+ * Fusiona OneSignal en el service worker de Angular PWA.
+ * Un solo SW en scope / evita la notificación genérica de Chrome
+ * ("Este sitio se actualizó en segundo plano") cuando el push no se muestra.
  */
 const fs = require('fs');
 const path = require('path');

@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build --configuration=production
+RUN npm run build --configuration=production && node scripts/patch-ngsw-onesignal.js
 
 # Etapa 2: Servidor Web Nginx
 FROM nginx:alpine
