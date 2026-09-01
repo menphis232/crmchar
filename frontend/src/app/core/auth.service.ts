@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { User } from '../models';
+import { OneSignalService } from './onesignal.service';
 
 const TOKEN_KEY = 'tramites_token';
 const USER_KEY = 'tramites_user';
@@ -13,7 +14,11 @@ export class AuthService {
   readonly user = signal<User | null>(this.loadUser());
   readonly isLoggedIn = signal(!!this.getToken());
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(
+    private http: HttpClient,
+    private router: Router,
+    private oneSignal: OneSignalService,
+  ) {}
 
   login(email: string, password: string) {
     return this.http.post<{ token: string; user: User }>(`${environment.apiUrl}/auth/login`, { email, password }).pipe(
@@ -41,6 +46,7 @@ export class AuthService {
     localStorage.removeItem(USER_KEY);
     this.user.set(null);
     this.isLoggedIn.set(false);
+    this.oneSignal.syncUser(null);
     this.router.navigate([target]);
   }
 
@@ -63,6 +69,7 @@ export class AuthService {
     localStorage.setItem(USER_KEY, JSON.stringify(user));
     this.user.set(user);
     this.isLoggedIn.set(true);
+    this.oneSignal.syncUser(user.id, user.role);
   }
 
   private loadUser(): User | null {
