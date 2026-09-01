@@ -362,6 +362,7 @@ router.post('/push/send', authRequired, requireRole('admin'), async (req, res) =
       id: campaignId,
       onesignalId: result.id,
       recipients: result.recipients,
+      delivered: result.delivered ?? result.recipients,
     });
   } catch (err) {
     console.error('push/send:', err);

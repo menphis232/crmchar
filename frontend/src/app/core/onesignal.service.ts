@@ -32,7 +32,10 @@ type OneSignalClient = {
     permissionNative?: NotificationPermission;
     isPushSupported?: () => boolean;
     requestPermission: () => Promise<boolean>;
-    addEventListener?: (event: 'permissionChange', listener: (granted: boolean) => void) => void;
+    addEventListener?: (
+      event: 'permissionChange' | 'foregroundWillDisplay' | 'click',
+      listener: (event: unknown) => void,
+    ) => void;
   };
 };
 
@@ -59,6 +62,7 @@ export class OneSignalService {
     if (!isPlatformBrowser(this.platformId) || !environment.onesignalAppId) return;
     void this.registerListeners().catch(err => console.warn('[OneSignal] listeners:', err));
     void this.refreshPermissionState().catch(err => console.warn('[OneSignal] init:', err));
+    void this.repairBrokenSubscription().catch(err => console.warn('[OneSignal] repair:', err));
   }
 
   async syncUser(userId: string | null, role?: string | null): Promise<void> {
@@ -73,13 +77,20 @@ export class OneSignalService {
     try {
       await this.withOneSignal(async OS => {
         if (userId) {
-          await OS.login(String(userId));
-          if (role && OS.User?.addTag) {
-            await OS.User.addTag('role', role);
-          }
           if (this.nativePermission() === 'granted') {
             await this.ensureSubscribed(OS);
-            await this.waitForSubscription(OS, 12000);
+            const ok = await this.waitForSubscription(OS, 12000);
+            if (ok) {
+              await OS.login(String(userId));
+              if (role && OS.User?.addTag) {
+                await OS.User.addTag('role', role);
+              }
+            }
+          } else {
+            await OS.login(String(userId));
+            if (role && OS.User?.addTag) {
+              await OS.User.addTag('role', role);
+            }
           }
         } else {
           await OS.logout();
@@ -162,9 +173,29 @@ export class OneSignalService {
   statusLabel(): string {
     if (this.subscribed()) return 'Activadas';
     if (this.permissionState() === 'denied') return 'Bloqueadas en el teléfono';
-    if (this.permissionState() === 'granted') return 'Permiso OK, falta suscripción';
+    if (this.permissionState() === 'granted') return 'Permiso OK, falta token push — toca Activar';
     if (this.permissionState() === 'unsupported') return 'No soportadas aquí';
     return 'Sin activar';
+  }
+
+  private async repairBrokenSubscription(): Promise<void> {
+    if (this.nativePermission() !== 'granted') return;
+
+    await this.withOneSignal(async OS => {
+      const sub = OS.User?.PushSubscription;
+      if (sub?.token && sub.optedIn !== false) return;
+
+      await this.ensureSubscribed(OS);
+      const ok = await this.waitForSubscription(OS, 15000);
+      const user = this.pendingUser;
+      if (ok && user?.id) {
+        await OS.login(String(user.id));
+        if (user.role && OS.User?.addTag) {
+          await OS.User.addTag('role', user.role);
+        }
+      }
+      this.readState(OS);
+    });
   }
 
   private async registerListeners(): Promise<void> {
@@ -181,6 +212,17 @@ export class OneSignalService {
             if (!result.ok && result.error) this.lastError.set(result.error);
           }),
         ).catch(() => {});
+      });
+
+      OS.Notifications?.addEventListener?.('foregroundWillDisplay', (event: unknown) => {
+        const detail = event as { preventDefault?: () => void };
+        detail?.preventDefault?.();
+      });
+
+      OS.Notifications?.addEventListener?.('click', (event: unknown) => {
+        const detail = event as { notification?: { launchUrl?: string } };
+        const url = detail?.notification?.launchUrl;
+        if (url) window.location.href = url;
       });
 
       OS.User?.PushSubscription?.addEventListener?.('change', () => {
@@ -205,14 +247,6 @@ export class OneSignalService {
       return { ok: false, error: this.blockedPermissionMessage() };
     }
 
-    if (userId) {
-      await OS.login(String(userId));
-      if (role && OS.User?.addTag) {
-        await OS.User.addTag('role', role);
-      }
-      this.pendingUser = { id: String(userId), role };
-    }
-
     if (this.nativePermission() !== 'granted') {
       let granted = false;
       if (OS.Notifications?.requestPermission) {
@@ -230,28 +264,35 @@ export class OneSignalService {
       }
     }
 
+    // Token FCM primero; login después (evita suscripción inválida en Android PWA).
     await this.ensureSubscribed(OS);
-
-    const subscribed = await this.waitForSubscription(OS, 30000);
-    this.readState(OS);
-
-    if (subscribed) {
-      this.lastError.set('');
-      return { ok: true };
+    const hasToken = await this.waitForSubscription(OS, 30000);
+    if (!hasToken) {
+      this.readState(OS);
+      const sub = OS.User?.PushSubscription;
+      const detail = [
+        sub?.optedIn ? 'optedIn' : 'no-optedIn',
+        sub?.id ? `id=${sub.id}` : 'sin-id',
+        sub?.token ? 'token' : 'sin-token',
+        `permiso=${this.nativePermission()}`,
+      ].join(', ');
+      return {
+        ok: false,
+        error: `No se obtuvo token push (${detail}). Borra datos del sitio, reinstala la PWA y vuelve a activar.`,
+      };
     }
 
-    const sub = OS.User?.PushSubscription;
-    const detail = [
-      sub?.optedIn ? 'optedIn' : 'no-optedIn',
-      sub?.id ? `id=${sub.id}` : 'sin-id',
-      sub?.token ? 'token' : 'sin-token',
-      `permiso=${this.nativePermission()}`,
-    ].join(', ');
+    if (userId) {
+      await OS.login(String(userId));
+      if (role && OS.User?.addTag) {
+        await OS.User.addTag('role', role);
+      }
+      this.pendingUser = { id: String(userId), role };
+    }
 
-    return {
-      ok: false,
-      error: `No se completó la suscripción (${detail}). Cierra la app, ábrela de nuevo y toca Activar.`,
-    };
+    this.readState(OS);
+    this.lastError.set('');
+    return { ok: true };
   }
 
   private formatInitError(raw: string): string {
@@ -281,10 +322,9 @@ export class OneSignalService {
     }
 
     const sub = OS?.User?.PushSubscription;
-    const hasSubId = !!sub?.id;
     const hasToken = !!sub?.token;
-    const optedIn = sub?.optedIn === true;
-    const isSubscribed = hasSubId || (hasToken && optedIn !== false) || (optedIn && this.nativePermission() === 'granted');
+    const optedIn = sub?.optedIn !== false;
+    const isSubscribed = hasToken && optedIn;
     this.subscribed.set(isSubscribed);
 
     const native = notif?.permissionNative ?? Notification.permission;
@@ -323,7 +363,15 @@ export class OneSignalService {
       throw new Error('OneSignal no está listo. Recarga la app e intenta de nuevo.');
     }
 
-    if (sub.id || (sub.token && sub.optedIn !== false)) return;
+    if (sub.token && sub.optedIn !== false) return;
+
+    if (sub.optOut && (sub.id || sub.optedIn)) {
+      try {
+        await sub.optOut();
+      } catch {
+        /* re-suscribir desde cero */
+      }
+    }
 
     await sub.optIn();
   }
@@ -363,7 +411,6 @@ export class OneSignalService {
 
   private hasActiveSubscription(sub?: OneSignalPushSubscription | PushSubscriptionChangeEvent['current']): boolean {
     if (!sub) return false;
-    if (sub.id) return true;
     return !!(sub.token && sub.optedIn !== false);
   }
 

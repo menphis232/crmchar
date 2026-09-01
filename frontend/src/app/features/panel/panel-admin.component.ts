@@ -716,11 +716,18 @@ export class PanelAdminComponent implements OnInit {
       testOnly,
     }).subscribe({
       next: res => {
-        this.pushMsg.set(
-          testOnly
-            ? `Prueba enviada${res.onesignalId ? ` (ID ${res.onesignalId.slice(0, 8)}…)` : ''}. Revisa tu teléfono.`
-            : `Notificación enviada${res.onesignalId ? ` (ID ${res.onesignalId.slice(0, 8)}…)` : ''}. Revisa OneSignal → Delivery.`,
-        );
+        const delivered = res.delivered ?? res.recipients ?? 0;
+        if (delivered <= 0) {
+          this.pushMsg.set(
+            'OneSignal aceptó el envío pero entregó 0 dispositivos. En el teléfono: Ajustes → reactivar push (o borrar datos del sitio y volver a suscribir).',
+          );
+        } else {
+          this.pushMsg.set(
+            testOnly
+              ? `Prueba enviada a ${delivered} dispositivo(s). Revisa el teléfono con la app en segundo plano.`
+              : `Enviado a ${delivered} dispositivo(s). Revisa el teléfono con la app en segundo plano.`,
+          );
+        }
         this.pushSending.set(false);
         this.loadPushTab();
       },

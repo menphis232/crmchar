@@ -24,6 +24,27 @@ function parseOneSignalError(data, status) {
   return null;
 }
 
+async function fetchNotificationDelivery(notificationId) {
+  const appId = process.env.ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  if (!appId || !apiKey || !notificationId) {
+    return { successful: 0, failed: 0, errored: 0 };
+  }
+
+  await new Promise(r => setTimeout(r, 2500));
+
+  const res = await fetch(`${ONESIGNAL_API}/${notificationId}?app_id=${appId}`, {
+    headers: { Authorization: `Key ${apiKey}` },
+  });
+  const data = await res.json().catch(() => ({}));
+  return {
+    successful: Number(data.successful) || 0,
+    failed: Number(data.failed) || 0,
+    errored: Number(data.errored) || 0,
+    remaining: Number(data.remaining) || 0,
+  };
+}
+
 /**
  * @param {{ title: string, body: string, url?: string, audience: string, audienceValue?: string, adminUserId?: string }} opts
  */
@@ -90,9 +111,14 @@ export async function sendOneSignalPush(opts) {
     throw new Error(`${apiError}.${hint}`);
   }
 
+  const delivery = await fetchNotificationDelivery(data.id);
+
   return {
     id: data.id,
-    recipients: Number(data.recipients) || 0,
+    recipients: delivery.successful || Number(data.recipients) || 0,
+    delivered: delivery.successful,
+    failed: delivery.failed,
+    errored: delivery.errored,
     externalId: data.external_id || null,
   };
 }
