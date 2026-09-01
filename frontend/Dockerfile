@@ -4,7 +4,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npm run build --configuration=production
+RUN npm run build --configuration=production && \
+    printf "\nimportScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');\n" \
+    >> dist/tramites-frontend/browser/ngsw-worker.js
 
 # Etapa 2: Servidor Web Nginx
 FROM nginx:alpine

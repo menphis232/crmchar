@@ -9,6 +9,11 @@ type OneSignalClient = {
   User?: {
     addTag: (key: string, value: string) => Promise<void>;
   };
+  Notifications?: {
+    permission: boolean;
+    permissionNative?: NotificationPermission;
+    requestPermission: () => Promise<boolean>;
+  };
 };
 
 declare global {
@@ -32,7 +37,8 @@ export class OneSignalService {
       window.OneSignalDeferred.push(async (OneSignal) => {
         await OneSignal.init({
           appId: environment.onesignalAppId,
-          serviceWorkerPath: '/OneSignalSDKWorker.js',
+          // Usa el mismo SW que Angular PWA (con OneSignal importado en build)
+          serviceWorkerPath: '/ngsw-worker.js',
           notifyButton: { enable: false },
           allowLocalhostAsSecureOrigin: !environment.production,
         });
@@ -54,6 +60,7 @@ export class OneSignalService {
             if (role && OneSignal.User?.addTag) {
               await OneSignal.User.addTag('role', role);
             }
+            await this.requestPermission(OneSignal);
           } else {
             await OneSignal.logout();
           }
@@ -62,6 +69,20 @@ export class OneSignalService {
       });
     } catch (err) {
       console.warn('[OneSignal] syncUser:', err);
+    }
+  }
+
+  private async requestPermission(OneSignal: OneSignalClient): Promise<void> {
+    const notif = OneSignal.Notifications;
+    if (!notif?.requestPermission) return;
+
+    const native = notif.permissionNative ?? (typeof Notification !== 'undefined' ? Notification.permission : 'default');
+    if (native === 'granted' || native === 'denied') return;
+
+    try {
+      await notif.requestPermission();
+    } catch (err) {
+      console.warn('[OneSignal] requestPermission:', err);
     }
   }
 }
