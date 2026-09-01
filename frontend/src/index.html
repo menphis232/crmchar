@@ -27,15 +27,12 @@
     async function preparePushServiceWorker() {
       if (!('serviceWorker' in navigator)) return;
       try {
-        const workerFile = 'OneSignalSDKWorker.js';
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const reg of registrations) {
-          const scriptUrl = (reg.active || reg.installing || reg.waiting)?.scriptURL || '';
-          if (!scriptUrl.includes(workerFile)) {
-            await reg.unregister();
-          }
+        const workerPath = '/push/onesignal/OneSignalSDKWorker.js';
+        const scope = '/push/onesignal/';
+        const existing = await navigator.serviceWorker.getRegistration(scope);
+        if (!existing) {
+          await navigator.serviceWorker.register(workerPath, { scope });
         }
-        await navigator.serviceWorker.register('/' + workerFile, { scope: '/' });
         await navigator.serviceWorker.ready;
       } catch (e) {
         console.warn('[OneSignal] prepare SW:', e);
@@ -49,8 +46,8 @@
         await preparePushServiceWorker();
         await OneSignal.init({
           appId: '82f642c1-68c5-4067-b0c5-52384f8ecf4f',
-          serviceWorkerPath: 'OneSignalSDKWorker.js',
-          serviceWorkerParam: { scope: '/' },
+          serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerParam: { scope: '/push/onesignal/' },
           notifyButton: { enable: false },
           autoResubscribe: true,
           promptOptions: {
