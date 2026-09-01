@@ -20,6 +20,11 @@
             "assets": [
               "src/assets",
               {
+                "glob": "OneSignalSDKWorker.js",
+                "input": "src",
+                "output": "/"
+              },
+              {
                 "glob": "favicon.ico",
                 "input": "src",
                 "output": "/"
