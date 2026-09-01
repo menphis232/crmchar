@@ -11,7 +11,7 @@ export const routes: Routes = [
   { path: 'review/:dealId', loadComponent: () => import('./features/site/pages/review.component').then(m => m.ReviewComponent) },
   { path: 'pay/success', loadComponent: () => import('./features/site/pay-success.component').then(m => m.PaySuccessComponent) },
   { path: 'pay/mp/:token', loadComponent: () => import('./features/payment/mp-checkout.component').then(m => m.MpCheckoutComponent) },
-  { path: 'login', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent) },
+  { path: 'login', redirectTo: 'login/cliente', pathMatch: 'full' },
   { path: 'login/gestor', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'gestor' } },
   { path: 'login/concesionaria', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'concesionaria' } },
   { path: 'login/cliente', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente' } },

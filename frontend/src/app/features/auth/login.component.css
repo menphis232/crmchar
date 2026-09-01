@@ -189,6 +189,77 @@
   background: rgba(186,201,207,0.06);
 }
 
+.portal-select-group {
+  margin-bottom: 24px;
+}
+
+.portal-select {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 14px 16px;
+  color: #ffffff;
+  border-radius: 0;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  transition: border-color 0.2s, background 0.2s;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+
+.portal-select:focus {
+  border-color: var(--brand-blue);
+  background-color: rgba(186,201,207,0.06);
+}
+
+.portal-select option {
+  background: #111;
+  color: #fff;
+}
+
+.auth-hint {
+  color: rgba(255,255,255,0.55);
+  font-size: 14px;
+  margin: -12px 0 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.success-msg {
+  color: #48bb78;
+  font-size: 13px;
+  text-align: center;
+  margin-bottom: 16px;
+  background: rgba(72,187,120,0.1);
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.trial-banner {
+  color: #48bb78;
+  font-size: 13px;
+  text-align: center;
+  margin: 0 0 16px;
+  background: rgba(72,187,120,0.1);
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.forgot-row {
+  text-align: right;
+  margin-top: 6px;
+}
+
+.link-btn--sm {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
 .btn-submit {
   width: 100%;
   background: #ffffff;
@@ -248,7 +319,5 @@
 
 @media (max-width: 600px) {
   .login-container { padding: 32px 16px; }
-  .roles-grid { grid-template-columns: repeat(2, 1fr); }
   .auth-form { padding: 32px 24px; }
-  .role-card { padding: 32px 16px 28px; }
 }

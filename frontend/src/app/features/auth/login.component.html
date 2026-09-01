@@ -1,5 +1,5 @@
-<div class="login-page" [class.login-page--portal]="role() === 'concesionaria' || role() === 'gestor' || role() === 'cliente'">
-  @if (role() !== 'concesionaria' && role() !== 'gestor' && role() !== 'cliente') {
+<div class="login-page" [class.login-page--portal]="isPortalStyle()">
+  @if (!isPortalStyle()) {
     <div class="bg-particles"></div>
   }
   <a [href]="tvmMainSite" class="btn-back-top">← VOLVER AL INICIO</a>
@@ -12,56 +12,49 @@
     </div>
     <div class="login-title">ACCESO AL PORTAL</div>
 
-    @if (mode() === 'select') {
-      <div class="roles-grid">
-        <button class="role-card" (click)="selectRole('cliente')">
-          <div class="role-icon">👤</div>
-          <div class="role-name">Soy Cliente</div>
-          <div class="role-desc">Sigue el estado de tus trámites y chatea con tu gestor.</div>
-        </button>
-        <button class="role-card" (click)="selectRole('gestor')">
-          <div class="role-icon">💼</div>
-          <div class="role-name">Soy Gestor</div>
-          <div class="role-desc">Administra tu gestoría, servicios y solicitudes de clientes.</div>
-        </button>
-        <button class="role-card" (click)="selectRole('concesionaria')">
-          <div class="role-icon">🏢</div>
-          <div class="role-name">Concesionaria</div>
-          <div class="role-desc">Publica y gestiona tu inventario de vehículos.</div>
-        </button>
-        <button class="role-card" (click)="loginAsAdmin()">
-          <div class="role-icon">🛡️</div>
-          <div class="role-name">Super Admin</div>
-          <div class="role-desc">Estadísticas globales y personalización del sitio.</div>
-        </button>
+    <div class="auth-form">
+      <div class="form-group portal-select-group">
+        <label>Tipo de acceso</label>
+        <select
+          class="portal-select"
+          [ngModel]="role()"
+          (ngModelChange)="onPortalChange($event)"
+        >
+          @for (opt of portalOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+          @if (role() === 'perito') {
+            <option value="perito">Perito</option>
+          }
+        </select>
       </div>
-      <p class="demo-hint">Demo: gestor&#64;demo.com / concesionaria&#64;demo.com / admin&#64;demo.com — contraseña: demo1234</p>
-    } @else {
-      <div class="auth-form">
-        @if (mode() === 'forgot') {
-          <h2>Recuperar Contraseña</h2>
-          <p style="color: #a0aec0; font-size: 14px; margin-bottom: 20px; text-align: center;">Ingresa tu correo electrónico y te enviaremos una contraseña provisional.</p>
-          <div class="form-group">
-            <label>Email</label>
-            <input type="email" [(ngModel)]="email" placeholder="tu@email.com">
-          </div>
 
-          @if (error()) {
-            <p class="error-msg">{{ error() }}</p>
-          }
-          @if (successMsg()) {
-            <p style="color: #48bb78; font-size: 13px; text-align: center; margin-bottom: 16px; background: rgba(72,187,120,0.1); padding: 10px; border-radius: 6px;">{{ successMsg() }}</p>
-          }
+      @if (mode() === 'forgot') {
+        <h2>Recuperar contraseña — {{ roleLabel() }}</h2>
+        <p class="auth-hint">Ingresa tu correo y te enviaremos una contraseña provisional.</p>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" [(ngModel)]="email" placeholder="tu@email.com">
+        </div>
 
-          <button class="btn-submit" [disabled]="loading()" (click)="submitForgot()">
-            {{ loading() ? 'Enviando...' : 'ENVIAR CLAVE' }}
-          </button>
+        @if (error()) {
+          <p class="error-msg">{{ error() }}</p>
+        }
+        @if (successMsg()) {
+          <p class="success-msg">{{ successMsg() }}</p>
+        }
 
-          <div class="auth-links">
-            <button class="link-btn" (click)="mode.set('login')">← Volver a Iniciar Sesión</button>
-          </div>
-        } @else {
-          <h2>Iniciar sesión — {{ role() === 'gestor' ? 'Gestor' : role() === 'concesionaria' ? 'Concesionaria' : role() === 'cliente' ? 'Cliente' : 'Super Admin' }}</h2>
+        <button class="btn-submit" [disabled]="loading()" (click)="submitForgot()">
+          {{ loading() ? 'Enviando...' : 'ENVIAR CLAVE' }}
+        </button>
+
+        <div class="auth-links">
+          <button type="button" class="link-btn" (click)="mode.set('login')">← Volver a iniciar sesión</button>
+        </div>
+      } @else {
+        <h2>
+          {{ mode() === 'register' ? 'Crear cuenta' : 'Iniciar sesión' }} — {{ roleLabel() }}
+        </h2>
 
         @if (mode() === 'register' && role() !== 'admin') {
           <div class="form-group">
@@ -69,9 +62,7 @@
             <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
           </div>
           @if (role() === 'concesionaria' || role() === 'gestor') {
-            <p style="color: #48bb78; font-size: 13px; text-align: center; margin: 0 0 16px; background: rgba(72,187,120,0.1); padding: 10px; border-radius: 6px;">
-              Empieza hoy tu PRUEBA GRATIS de 7 días
-            </p>
+            <p class="trial-banner">Empieza hoy tu PRUEBA GRATIS de 7 días</p>
           }
         }
 
@@ -83,8 +74,8 @@
           <label>Contraseña</label>
           <input type="password" [(ngModel)]="password" placeholder="••••••••">
           @if (mode() === 'login') {
-            <div style="text-align: right; margin-top: 6px;">
-              <button class="link-btn" style="font-size: 12px; opacity: 0.8;" (click)="mode.set('forgot')">¿Olvidaste tu contraseña?</button>
+            <div class="forgot-row">
+              <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña?</button>
             </div>
           }
         </div>
@@ -93,22 +84,24 @@
           <p class="error-msg">{{ error() }}</p>
         }
 
-        <button class="btn-submit" [disabled]="loading()" (click)="mode() === 'login' || role() === 'admin' ? submitLogin() : submitRegister()">
+        <button
+          class="btn-submit"
+          [disabled]="loading()"
+          (click)="mode() === 'login' || role() === 'admin' ? submitLogin() : submitRegister()"
+        >
           {{ loading() ? 'Procesando...' : (mode() === 'login' || role() === 'admin' ? 'ENTRAR' : 'CREAR CUENTA') }}
         </button>
 
         <div class="auth-links">
           @if (mode() === 'login' && role() !== 'admin' && role() !== 'cliente') {
-            <button class="link-btn" (click)="mode.set('register')">¿No tienes cuenta? Regístrate</button>
+            <button type="button" class="link-btn" (click)="mode.set('register')">¿No tienes cuenta? Regístrate</button>
           } @else if (role() !== 'admin' && role() !== 'cliente') {
-            <button class="link-btn" (click)="mode.set('login')">¿Ya tienes cuenta? Inicia sesión</button>
-          }
-          @if (!directRoleLogin()) {
-            <button class="link-btn" (click)="mode.set('select')">← Cambiar perfil</button>
+            <button type="button" class="link-btn" (click)="mode.set('login')">¿Ya tienes cuenta? Inicia sesión</button>
           }
         </div>
-        }
-      </div>
-    }
+      }
+    </div>
+
+    <p class="demo-hint">Demo: gestor&#64;demo.com / concesionaria&#64;demo.com / admin&#64;demo.com — contraseña: demo1234</p>
   </div>
 </div>

@@ -1,9 +1,17 @@
 import { Component, OnInit, signal, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+
+export type LoginRole = 'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'perito';
+
+interface LoginPortalOption {
+  value: LoginRole;
+  label: string;
+  path: string;
+}
 
 @Component({
   selector: 'app-login',
@@ -16,9 +24,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
 
-  mode = signal<'select' | 'login' | 'register' | 'forgot'>('select');
-  role = signal<'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'perito'>('cliente');
-  directRoleLogin = signal(false);
+  readonly portalOptions: LoginPortalOption[] = [
+    { value: 'cliente', label: 'Cliente', path: '/login/cliente' },
+    { value: 'gestor', label: 'Consultor', path: '/login/gestor' },
+    { value: 'concesionaria', label: 'Concesionaria', path: '/login/concesionaria' },
+    { value: 'admin', label: 'Administrador', path: '/login/admin' },
+  ];
+
+  mode = signal<'login' | 'register' | 'forgot'>('login');
+  role = signal<LoginRole>('cliente');
   email = '';
   password = '';
   name = '';
@@ -29,19 +43,20 @@ export class LoginComponent implements OnInit, OnDestroy {
   private querySub?: Subscription;
   private dataSub?: Subscription;
 
-  constructor(private auth: AuthService, private route: ActivatedRoute) {}
+  constructor(
+    private auth: AuthService,
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
 
   ngOnInit() {
-    // Con sesión activa no mostrar selector de roles: ir al panel del rol.
     if (this.auth.isLoggedIn()) {
       this.auth.redirectByRole();
       return;
     }
-    // Rutas dedicadas (/login/gestor, /login/concesionaria, ...) traen el rol en data.
     this.dataSub = this.route.data.subscribe(data => {
       this.applyRole((data['role'] as string) || null);
     });
-    // Compatibilidad con el formato anterior (/login?role=gestor).
     this.querySub = this.route.queryParamMap.subscribe(params => {
       const queryRole = params.get('role');
       if (queryRole) this.applyRole(queryRole);
@@ -56,21 +71,38 @@ export class LoginComponent implements OnInit, OnDestroy {
   private applyRole(role: string | null) {
     if (role === 'concesionaria' || role === 'gestor' || role === 'cliente' || role === 'admin' || role === 'perito') {
       this.role.set(role);
-      this.mode.set('login');
-      this.directRoleLogin.set(true);
     } else {
-      this.directRoleLogin.set(false);
+      this.role.set('cliente');
     }
-  }
-
-  selectRole(r: 'gestor' | 'concesionaria' | 'cliente') {
-    this.role.set(r);
     this.mode.set('login');
   }
 
-  loginAsAdmin() {
-    this.role.set('admin');
-    this.mode.set('login');
+  onPortalChange(value: string) {
+    if (value === 'perito') {
+      this.router.navigate(['/login/perito']);
+      return;
+    }
+    const option = this.portalOptions.find(o => o.value === value);
+    if (!option || option.value === this.role()) return;
+    this.error.set('');
+    this.successMsg.set('');
+    this.router.navigate([option.path]);
+  }
+
+  roleLabel(): string {
+    const map: Record<LoginRole, string> = {
+      cliente: 'Cliente',
+      gestor: 'Consultor',
+      concesionaria: 'Concesionaria',
+      admin: 'Administrador',
+      perito: 'Perito',
+    };
+    return map[this.role()] || 'Portal';
+  }
+
+  isPortalStyle(): boolean {
+    const r = this.role();
+    return r === 'concesionaria' || r === 'gestor' || r === 'cliente';
   }
 
   submitLogin() {
@@ -121,7 +153,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       error: () => {
         this.loading.set(false);
         this.error.set('Hubo un error al intentar restablecer la contraseña.');
-      }
+      },
     });
   }
 }

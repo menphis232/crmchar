@@ -57,7 +57,7 @@ export class AuthService {
     if (path.startsWith('/panel/gestor')) return '/login/gestor';
     if (path.startsWith('/panel/perito')) return '/login/perito';
     if (path.startsWith('/panel/cliente')) return '/login/cliente';
-    return '/login';
+    return '/login/cliente';
   }
 
   getToken(): string | null {
