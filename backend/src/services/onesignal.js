@@ -24,6 +24,28 @@ function parseOneSignalError(data, status) {
   return null;
 }
 
+async function fetchUserPushSubscriptionIds(externalId) {
+  const appId = process.env.ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  if (!appId || !apiKey || !externalId) return [];
+
+  const res = await fetch(
+    `https://api.onesignal.com/apps/${appId}/users/by/external_id/${encodeURIComponent(String(externalId))}`,
+    { headers: { Authorization: `Key ${apiKey}` } },
+  );
+  if (!res.ok) return [];
+
+  const data = await res.json().catch(() => ({}));
+  const subs = Array.isArray(data.subscriptions) ? data.subscriptions : [];
+  return subs
+    .filter(s => s.enabled !== false && s.id)
+    .filter(s => {
+      const type = String(s.type || s.channel || '').toLowerCase();
+      return !type || type.includes('web') || type.includes('chrome') || type.includes('push');
+    })
+    .map(s => String(s.id));
+}
+
 async function fetchNotificationDelivery(notificationId) {
   const appId = process.env.ONESIGNAL_APP_ID;
   const apiKey = process.env.ONESIGNAL_REST_API_KEY;
@@ -31,7 +53,7 @@ async function fetchNotificationDelivery(notificationId) {
     return { successful: 0, failed: 0, errored: 0 };
   }
 
-  await new Promise(r => setTimeout(r, 2500));
+  await new Promise(r => setTimeout(r, 5000));
 
   const res = await fetch(`${ONESIGNAL_API}/${notificationId}?app_id=${appId}`, {
     headers: { Authorization: `Key ${apiKey}` },
@@ -65,6 +87,7 @@ export async function sendOneSignalPush(opts) {
 
   const launchUrl = resolveUrl(url);
   if (launchUrl) payload.url = launchUrl;
+  payload.priority = 10;
 
   switch (audience) {
     case 'all':
@@ -73,11 +96,25 @@ export async function sendOneSignalPush(opts) {
       break;
     case 'test':
       if (!adminUserId) throw new Error('Usuario admin requerido para prueba');
-      payload.include_aliases = { external_id: [String(adminUserId)] };
+      {
+        const subIds = await fetchUserPushSubscriptionIds(adminUserId);
+        if (subIds.length) {
+          payload.include_subscription_ids = subIds;
+        } else {
+          payload.include_aliases = { external_id: [String(adminUserId)] };
+        }
+      }
       break;
     case 'user':
       if (!audienceValue) throw new Error('Selecciona un usuario destino');
-      payload.include_aliases = { external_id: [String(audienceValue)] };
+      {
+        const subIds = await fetchUserPushSubscriptionIds(audienceValue);
+        if (subIds.length) {
+          payload.include_subscription_ids = subIds;
+        } else {
+          payload.include_aliases = { external_id: [String(audienceValue)] };
+        }
+      }
       break;
     case 'cliente':
     case 'gestor':

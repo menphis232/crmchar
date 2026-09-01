@@ -54,7 +54,32 @@ for (const n of notifs.data.notifications || []) {
   }));
 }
 
+const latestId = notifs.data.notifications?.[0]?.id;
+if (latestId) {
+  const detail = await get(`https://api.onesignal.com/notifications/${latestId}?app_id=${appId}`);
+  console.log('\n=== LATEST NOTIF DETAIL ===');
+  console.log(JSON.stringify({
+    id: detail.data.id,
+    successful: detail.data.successful,
+    failed: detail.data.failed,
+    platform_delivery_stats: detail.data.platform_delivery_stats,
+    include_player_ids: detail.data.include_player_ids,
+  }, null, 2));
+}
+
 const withExt = (players.data.players || []).find(p => p.external_user_id && Number(p.notification_types) === 1);
+const validAndroid = (players.data.players || []).find(p => !p.invalid_identifier && p.identifier && String(p.device_model || '').includes('Linux'));
+if (validAndroid) {
+  console.log('\n=== TEST SEND subscription_id (player id) ===', validAndroid.id);
+  const sendSub = await post('https://api.onesignal.com/notifications', {
+    app_id: appId,
+    target_channel: 'push',
+    include_subscription_ids: [validAndroid.id],
+    headings: { es: 'Diag sub ID', en: 'Diag sub ID' },
+    contents: { es: `Direct sub ${new Date().toISOString()}`, en: `Direct sub ${new Date().toISOString()}` },
+  });
+  console.log('create sub', sendSub.status, JSON.stringify(sendSub.data));
+}
 if (withExt) {
   console.log('\n=== TEST SEND external_id ===', withExt.external_user_id);
   const send = await post('https://api.onesignal.com/notifications', {

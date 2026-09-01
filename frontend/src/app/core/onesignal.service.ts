@@ -63,6 +63,14 @@ export class OneSignalService {
     void this.registerListeners().catch(err => console.warn('[OneSignal] listeners:', err));
     void this.refreshPermissionState().catch(err => console.warn('[OneSignal] init:', err));
     void this.repairBrokenSubscription().catch(err => console.warn('[OneSignal] repair:', err));
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      const user = this.pendingUser;
+      if (user?.id) {
+        void this.syncUser(user.id, user.role);
+      }
+    });
   }
 
   async syncUser(userId: string | null, role?: string | null): Promise<void> {
@@ -221,8 +229,10 @@ export class OneSignalService {
         ).catch(() => {});
       });
 
-      OS.Notifications?.addEventListener?.('foregroundWillDisplay', () => {
-        // Dejar que el sistema muestre la notificación (no llamar preventDefault).
+      OS.Notifications?.addEventListener?.('foregroundWillDisplay', (event: unknown) => {
+        const detail = event as { notification?: { display?: () => void } };
+        // Android/Chrome: con la app abierta hay que mostrar la notificación explícitamente.
+        detail.notification?.display?.();
       });
 
       OS.Notifications?.addEventListener?.('click', (event: unknown) => {

@@ -762,8 +762,8 @@ export class PanelAdminComponent implements OnInit {
         } else {
           this.pushMsg.set(
             testOnly
-              ? `Prueba enviada a ${delivered} dispositivo(s). Revisa el teléfono con la app en segundo plano.`
-              : `Enviado a ${delivered} dispositivo(s). Revisa el teléfono con la app en segundo plano.`,
+              ? `Prueba enviada a ${delivered} dispositivo(s). Si no la ves con la app abierta, minimízala o bloquea la pantalla.`
+              : `Enviado a ${delivered} dispositivo(s). Si no la ves con la app abierta, minimízala o bloquea la pantalla.`,
           );
         }
         this.pushSending.set(false);
