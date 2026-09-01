@@ -27,14 +27,19 @@
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(OneSignal) {
       if (window.__onesignalInitDone) return;
-      await OneSignal.init({
-        appId: '82f642c1-68c5-4067-b0c5-52384f8ecf4f',
-        serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
-        serviceWorkerParam: { scope: '/push/onesignal/' },
-        notifyButton: { enable: false },
-        autoResubscribe: true,
-      });
-      window.__onesignalInitDone = true;
+      try {
+        await OneSignal.init({
+          appId: '82f642c1-68c5-4067-b0c5-52384f8ecf4f',
+          serviceWorkerPath: 'push/onesignal/OneSignalSDKWorker.js',
+          serviceWorkerParam: { scope: '/push/onesignal/' },
+          notifyButton: { enable: false },
+          autoResubscribe: true,
+        });
+        window.__onesignalInitDone = true;
+      } catch (e) {
+        window.__onesignalInitError = e && e.message ? e.message : String(e);
+        console.error('[OneSignal] init failed:', e);
+      }
     });
   </script>
 </head>

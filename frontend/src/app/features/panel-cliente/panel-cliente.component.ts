@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { OneSignalService } from '../../core/onesignal.service';
 import { UploadService, CHAT_ATTACHMENT_ACCEPT, KnowledgeService } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
@@ -56,6 +57,7 @@ import {
   LucideHeart,
   LucideShare2,
   LucidePlay,
+  LucideBell,
 } from '@lucide/angular';
 
 interface PaginatedDeals {
@@ -79,7 +81,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
-    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay,
+    LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideBell,
   ],
   templateUrl: './panel-cliente.component.html',
   styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
@@ -106,6 +108,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   knowledgeService = inject(KnowledgeService);
   readonly chatAttachmentAccept = CHAT_ATTACHMENT_ACCEPT;
   toast = inject(ToastService);
+  oneSignal = inject(OneSignalService);
   zone = inject(NgZone);
   private sanitizer = inject(DomSanitizer);
 
@@ -166,6 +169,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   associateVehicleId = '';
 
   avatarUploading = signal(false);
+  pushActivating = signal(false);
 
   vehicles = signal<CrmContactVehicle[]>([]);
   vehiclesLoading = signal(false);
@@ -245,6 +249,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadWallet();
     this.loadVehicles();
     this.loadKnowledgeFeed(true);
+    void this.oneSignal.refreshPermissionState();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
     const user = this.auth.user();
@@ -598,6 +603,22 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         window.open(url, '_blank', 'noopener,noreferrer');
         this.toast.info('Se abrió el documento en una nueva pestaña.', 'Descarga');
       },
+    });
+  }
+
+  activatePush(): void {
+    if (this.pushActivating()) return;
+    const user = this.auth.user();
+    this.pushActivating.set(true);
+    void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
+      if (result.ok) {
+        this.toast.success('Notificaciones activadas', 'Listo');
+        return;
+      }
+      this.toast.error(result.error || 'No se pudo activar', 'Notificaciones');
+    }).finally(() => {
+      this.pushActivating.set(false);
+      void this.oneSignal.refreshPermissionState();
     });
   }
 

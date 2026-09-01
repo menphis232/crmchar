@@ -3,8 +3,6 @@ import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../core/auth.service';
 import { OneSignalService } from '../core/onesignal.service';
 
-const DISMISS_KEY = 'push_prompt_dismissed_until';
-
 @Component({
   selector: 'app-push-permission-prompt',
   standalone: true,
@@ -23,16 +21,19 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
             <p class="push-prompt-text">
               @if (errorMsg()) {
                 {{ errorMsg() }}
+              } @else if (oneSignal.permissionState() === 'denied') {
+                Las notificaciones están bloqueadas en tu teléfono. Actívalas en Ajustes → Apps → Trámites MX → Notificaciones.
               } @else {
                 Recibe avisos de trámites, mensajes y actualizaciones importantes en tu teléfono.
               }
             </p>
+            <p class="push-prompt-status">Estado: {{ oneSignal.statusLabel() }}</p>
           </div>
           <div class="push-prompt-actions">
             <button type="button" class="push-prompt-btn push-prompt-btn--primary" [disabled]="activating()" (click)="activate()">
               @if (activating()) { Activando... } @else { Activar }
             </button>
-            <button type="button" class="push-prompt-btn push-prompt-btn--ghost" (click)="dismiss()">Ahora no</button>
+            <button type="button" class="push-prompt-btn push-prompt-btn--ghost" (click)="hideForNow()">Ahora no</button>
           </div>
         </div>
       </div>
@@ -44,7 +45,7 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
       left: 16px;
       right: 16px;
       bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      z-index: 8500;
+      z-index: 99999;
       pointer-events: none;
     }
     .push-prompt-inner {
@@ -90,6 +91,12 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
       color: rgba(255,255,255,0.62);
       word-break: break-word;
     }
+    .push-prompt-status {
+      margin: 6px 0 0;
+      font-family: var(--f-ui);
+      font-size: 11px;
+      color: rgba(165,180,252,0.85);
+    }
     .push-prompt-actions {
       display: flex;
       gap: 8px;
@@ -128,16 +135,19 @@ const DISMISS_KEY = 'push_prompt_dismissed_until';
 export class PushPermissionPromptComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
   private readonly auth = inject(AuthService);
-  private readonly oneSignal = inject(OneSignalService);
+  readonly oneSignal = inject(OneSignalService);
 
   visible = signal(false);
   activating = signal(false);
   errorMsg = signal('');
+  private hiddenForSession = false;
 
   constructor() {
     effect(() => {
       if (this.auth.isLoggedIn()) {
-        setTimeout(() => this.updateVisibility(), 800);
+        setTimeout(() => this.updateVisibility(), 400);
+        setTimeout(() => this.updateVisibility(), 2000);
+        setTimeout(() => this.updateVisibility(), 6000);
       } else {
         this.visible.set(false);
       }
@@ -148,16 +158,10 @@ export class PushPermissionPromptComponent implements OnInit {
     if (!isPlatformBrowser(this.platformId)) return;
     this.auth.user();
     this.updateVisibility();
-    setTimeout(() => this.updateVisibility(), 1500);
-    setTimeout(() => this.updateVisibility(), 5000);
   }
 
   private updateVisibility() {
-    if (!this.auth.isLoggedIn()) {
-      this.visible.set(false);
-      return;
-    }
-    if (this.isDismissed()) {
+    if (!this.auth.isLoggedIn() || this.hiddenForSession) {
       this.visible.set(false);
       return;
     }
@@ -166,58 +170,27 @@ export class PushPermissionPromptComponent implements OnInit {
     });
   }
 
-  async activate() {
+  /** Sin await antes de encolar OneSignal — requisito en Android PWA. */
+  activate(): void {
+    if (this.activating()) return;
     this.errorMsg.set('');
-    this.activating.set(true);
     const user = this.auth.user();
-    try {
-      const permission = await this.oneSignal.requestPermissionFromGesture();
-      if (!permission.ok) {
-        this.errorMsg.set(permission.error || 'No se pudo pedir permiso.');
-        await this.oneSignal.refreshPermissionState();
-        if (this.oneSignal.permissionState() === 'denied') {
-          this.visible.set(false);
-        }
-        return;
-      }
+    this.activating.set(true);
 
-      const result = await Promise.race([
-        this.oneSignal.completePushSubscription(user?.id, user?.role),
-        new Promise<{ ok: boolean; error?: string }>(resolve =>
-          setTimeout(() => resolve({ ok: false, error: 'Tiempo agotado. Intenta de nuevo.' }), 50000),
-        ),
-      ]);
+    void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
       if (result.ok) {
         this.visible.set(false);
         return;
       }
       this.errorMsg.set(result.error || 'No se pudo activar. Intenta de nuevo.');
-      await this.oneSignal.refreshPermissionState();
-      if (this.oneSignal.permissionState() === 'denied') {
-        this.visible.set(false);
-      }
-    } finally {
+      void this.oneSignal.refreshPermissionState();
+    }).finally(() => {
       this.activating.set(false);
-    }
+    });
   }
 
-  dismiss() {
-    if (isPlatformBrowser(this.platformId)) {
-      const until = Date.now() + 7 * 24 * 60 * 60 * 1000;
-      localStorage.setItem(DISMISS_KEY, String(until));
-    }
+  hideForNow() {
+    this.hiddenForSession = true;
     this.visible.set(false);
-  }
-
-  private isDismissed(): boolean {
-    if (!isPlatformBrowser(this.platformId)) return true;
-    const raw = localStorage.getItem(DISMISS_KEY);
-    if (!raw) return false;
-    const until = Number(raw);
-    if (!Number.isFinite(until) || Date.now() > until) {
-      localStorage.removeItem(DISMISS_KEY);
-      return false;
-    }
-    return true;
   }
 }
