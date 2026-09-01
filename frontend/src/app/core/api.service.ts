@@ -380,6 +380,22 @@ export class AdminService {
     });
   }
   disconnectAnalytics() { return this.http.delete<import('../models').AnalyticsConfig>(`${this.base}/analytics/disconnect`); }
+
+  getPushStatus() { return this.http.get<{ configured: boolean }>(`${this.base}/push/status`); }
+  getPushHistory() { return this.http.get<import('../models').PushCampaign[]>(`${this.base}/push/history`); }
+  sendPush(data: {
+    title: string;
+    body: string;
+    url?: string;
+    audience: string;
+    audienceValue?: string;
+    testOnly?: boolean;
+  }) {
+    return this.http.post<{ ok: boolean; id: string; onesignalId?: string; recipients: number }>(
+      `${this.base}/push/send`,
+      data,
+    );
+  }
 }
 
 @Injectable({ providedIn: 'root' })

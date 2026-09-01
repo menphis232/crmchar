@@ -1205,6 +1205,25 @@ async function migrate() {
       console.log('Migración v57 (knowledge feed) aplicada.');
     }
 
+    const v58Path = path.join(__dirname, '..', 'sql', 'migration-v58-push-campaigns.sql');
+    if (fs.existsSync(v58Path)) {
+      const v58 = fs.readFileSync(v58Path, 'utf8');
+      const conn58 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v58.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn58.query(stmt); } catch (e) {
+          if (!['ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn58.end();
+      console.log('Migración v58 (push campaigns) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

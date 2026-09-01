@@ -217,6 +217,18 @@ export interface KnowledgeFeedPage {
   hasMore: boolean;
 }
 
+export interface PushCampaign {
+  id: string;
+  title: string;
+  body: string;
+  url?: string | null;
+  audienceType: string;
+  audienceValue?: string | null;
+  recipients: number;
+  onesignalId?: string | null;
+  createdAt?: string;
+}
+
 export interface AdminStats {
   totals: {
     users: number;

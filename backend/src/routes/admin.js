@@ -1,8 +1,10 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
+import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import * as ga from '../services/googleAnalytics.js';
+import { isOneSignalConfigured, sendOneSignalPush } from '../services/onesignal.js';
 
 const router = Router();
 
@@ -283,6 +285,87 @@ router.delete('/analytics/disconnect', authRequired, requireRole('admin'), async
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al desconectar Analytics' });
+  }
+});
+
+/** OneSignal: estado de configuración */
+router.get('/push/status', authRequired, requireRole('admin'), (_req, res) => {
+  res.json({ configured: isOneSignalConfigured() });
+});
+
+/** OneSignal: historial de campañas enviadas */
+router.get('/push/history', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    const rows = await query(`
+      SELECT id, title, body, url, audience_type as audienceType, audience_value as audienceValue,
+             recipients, onesignal_id as onesignalId, created_at as createdAt
+      FROM push_campaigns
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar historial push' });
+  }
+});
+
+/** OneSignal: enviar notificación push personalizada */
+router.post('/push/send', authRequired, requireRole('admin'), async (req, res) => {
+  try {
+    const title = String(req.body?.title || '').trim();
+    const body = String(req.body?.body || '').trim();
+    const url = String(req.body?.url || '').trim();
+    const audience = String(req.body?.audience || 'all').trim();
+    const audienceValue = req.body?.audienceValue ? String(req.body.audienceValue).trim() : '';
+    const testOnly = !!req.body?.testOnly;
+
+    if (!title || title.length > 200) {
+      return res.status(400).json({ error: 'El título es obligatorio (máx. 200 caracteres)' });
+    }
+    if (!body || body.length > 1000) {
+      return res.status(400).json({ error: 'El mensaje es obligatorio (máx. 1000 caracteres)' });
+    }
+    if (!isOneSignalConfigured()) {
+      return res.status(503).json({ error: 'OneSignal no está configurado en el servidor' });
+    }
+
+    const effectiveAudience = testOnly ? 'test' : audience;
+    const result = await sendOneSignalPush({
+      title,
+      body,
+      url: url || undefined,
+      audience: effectiveAudience,
+      audienceValue: effectiveAudience === 'user' ? audienceValue : undefined,
+      adminUserId: req.user.id,
+    });
+
+    const campaignId = uuid();
+    await run(`
+      INSERT INTO push_campaigns
+        (id, title, body, url, audience_type, audience_value, recipients, onesignal_id, created_by)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      campaignId,
+      title,
+      body,
+      url || null,
+      effectiveAudience,
+      effectiveAudience === 'user' ? audienceValue : null,
+      result.recipients,
+      result.id || null,
+      req.user.id,
+    ]);
+
+    res.json({
+      ok: true,
+      id: campaignId,
+      onesignalId: result.id,
+      recipients: result.recipients,
+    });
+  } catch (err) {
+    console.error('push/send:', err);
+    res.status(500).json({ error: err.message || 'Error al enviar notificación push' });
   }
 });
 

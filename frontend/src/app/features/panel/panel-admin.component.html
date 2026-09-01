@@ -67,6 +67,10 @@
       <svg lucideBookOpen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Contenido / Feed
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'push'" (click)="tab.set('push'); loadPushTab(); isMobileMenuOpen.set(false)">
+      <svg lucideBell [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Push / Notificaciones
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'autos-theme'" (click)="tab.set('autos-theme'); isMobileMenuOpen.set(false)">
       <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Página Autos
@@ -545,6 +549,111 @@
             }
           </div>
         </div>
+      </div>
+    }
+
+    @if (tab() === 'push') {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBell [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Notificaciones push (OneSignal)
+        </h2>
+        <p class="card-desc">
+          Envía alertas al celular de tus usuarios aunque no tengan la app abierta.
+          Los usuarios deben haber aceptado notificaciones en el navegador o PWA.
+        </p>
+
+        @if (!pushConfigured()) {
+          <p class="banner-msg" style="color:#fbbf24;">OneSignal no está configurado en el servidor (falta REST API Key en .env).</p>
+        }
+
+        <div class="form-row" style="margin-top:16px;">
+          <div class="form-group">
+            <label>Título</label>
+            <input [(ngModel)]="pushForm.title" maxlength="200" placeholder="Ej: Tu trámite fue actualizado">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Mensaje</label>
+          <textarea [(ngModel)]="pushForm.body" rows="3" maxlength="1000" placeholder="Texto de la notificación"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Enlace al tocar (opcional)</label>
+            <input [(ngModel)]="pushForm.url" placeholder="/panel/cliente">
+          </div>
+          <div class="form-group">
+            <label>Audiencia</label>
+            <select [(ngModel)]="pushForm.audience">
+              <option value="all">Todos los suscritos</option>
+              <option value="cliente">Solo clientes</option>
+              <option value="gestor">Solo gestores</option>
+              <option value="concesionaria">Solo concesionarias</option>
+              <option value="perito">Solo peritos</option>
+              <option value="admin">Solo administradores</option>
+              <option value="user">Usuario específico</option>
+            </select>
+          </div>
+        </div>
+        @if (pushForm.audience === 'user') {
+          <div class="form-group">
+            <label>Usuario destino</label>
+            <select [(ngModel)]="pushForm.audienceUserId">
+              <option value="">— Seleccionar —</option>
+              @for (u of pushUsers(); track u.id) {
+                <option [value]="u.id">{{ u.name || u.email }} ({{ u.role }})</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (pushMsg()) {
+          <p class="success-msg banner-msg" style="margin-top:12px;">{{ pushMsg() }}</p>
+        }
+
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
+          <button type="button" class="btn-ghost btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(true)">
+            Enviarme prueba
+          </button>
+          <button type="button" class="btn-copy btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(false)">
+            @if (pushSending()) { Enviando... } @else { Enviar notificación }
+          </button>
+        </div>
+      </div>
+
+      <div class="dash-card" style="margin-top:16px;">
+        <h3 class="card-title">Historial de envíos</h3>
+        @if (pushLoading()) {
+          <p>Cargando...</p>
+        } @else if (!pushHistory().length) {
+          <p class="card-desc">Aún no hay envíos registrados.</p>
+        } @else {
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Título</th>
+                  <th>Audiencia</th>
+                  <th>Entregados</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (c of pushHistory(); track c.id) {
+                  <tr>
+                    <td>{{ c.createdAt | date:'dd/MM/yy HH:mm' }}</td>
+                    <td>
+                      <strong>{{ c.title }}</strong>
+                      <div class="muted-sm">{{ c.body }}</div>
+                    </td>
+                    <td>{{ pushAudienceLabel(c.audienceType, c.audienceValue) }}</td>
+                    <td>{{ c.recipients }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     }
 

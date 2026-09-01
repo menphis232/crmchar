@@ -3,7 +3,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
 import { AdminService, SupportService, KnowledgeService, UploadService } from '../../core/api.service';
-import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread, KnowledgePost } from '../../models';
+import { AdminStats, ManagedUser, AnalyticsConfig, AnalyticsDashboard, GaProperty, SupportThread, KnowledgePost, PushCampaign } from '../../models';
 import { PanelThemeEditorComponent } from './panel-theme-editor.component';
 import { DatePipe, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { RichTextEditorComponent } from '../../shared/rich-text-editor.component';
@@ -42,14 +42,15 @@ import {
   LucideTrash2,
   LucideImage,
   LucideVideo,
+  LucideBell,
 } from '@lucide/angular';
 
-type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
+type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'push' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
@@ -90,6 +91,20 @@ export class PanelAdminComponent implements OnInit {
     sortOrder: 0,
   };
   knowledgeUploading = signal(false);
+
+  pushConfigured = signal(false);
+  pushHistory = signal<PushCampaign[]>([]);
+  pushLoading = signal(false);
+  pushSending = signal(false);
+  pushMsg = signal('');
+  pushForm = {
+    title: '',
+    body: '',
+    url: '/panel/cliente',
+    audience: 'all' as 'all' | 'cliente' | 'gestor' | 'concesionaria' | 'perito' | 'admin' | 'user',
+    audienceUserId: '',
+  };
+  pushUsers = signal<{ id: string; email: string; name: string; role: string }[]>([]);
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -658,5 +673,79 @@ export class PanelAdminComponent implements OnInit {
         this.panelAssistantSaving.set(false);
       }
     });
+  }
+
+  loadPushTab() {
+    this.pushLoading.set(true);
+    this.pushMsg.set('');
+    this.adminService.getPushStatus().subscribe({
+      next: s => this.pushConfigured.set(s.configured),
+      error: () => this.pushConfigured.set(false),
+    });
+    this.adminService.getPushHistory().subscribe({
+      next: rows => {
+        this.pushHistory.set(rows);
+        this.pushLoading.set(false);
+      },
+      error: () => this.pushLoading.set(false),
+    });
+    if (!this.pushUsers().length) {
+      this.adminService.getUsers().subscribe(users => {
+        this.pushUsers.set(users as { id: string; email: string; name: string; role: string }[]);
+      });
+    }
+  }
+
+  sendPushNotification(testOnly = false) {
+    if (!this.pushForm.title.trim() || !this.pushForm.body.trim()) {
+      this.pushMsg.set('Título y mensaje son obligatorios.');
+      return;
+    }
+    if (this.pushForm.audience === 'user' && !this.pushForm.audienceUserId) {
+      this.pushMsg.set('Selecciona un usuario destino.');
+      return;
+    }
+    this.pushSending.set(true);
+    this.pushMsg.set('');
+    this.adminService.sendPush({
+      title: this.pushForm.title.trim(),
+      body: this.pushForm.body.trim(),
+      url: this.pushForm.url.trim() || undefined,
+      audience: this.pushForm.audience,
+      audienceValue: this.pushForm.audience === 'user' ? this.pushForm.audienceUserId : undefined,
+      testOnly,
+    }).subscribe({
+      next: res => {
+        this.pushMsg.set(
+          testOnly
+            ? `Prueba enviada. Destinatarios estimados: ${res.recipients}.`
+            : `Notificación enviada. Destinatarios: ${res.recipients}.`,
+        );
+        this.pushSending.set(false);
+        this.loadPushTab();
+      },
+      error: e => {
+        this.pushMsg.set(e.error?.error || 'Error al enviar push');
+        this.pushSending.set(false);
+      },
+    });
+  }
+
+  pushAudienceLabel(type: string, value?: string | null): string {
+    const map: Record<string, string> = {
+      all: 'Todos (suscritos)',
+      test: 'Prueba (yo)',
+      cliente: 'Clientes',
+      gestor: 'Gestores',
+      concesionaria: 'Concesionarias',
+      perito: 'Peritos',
+      admin: 'Administradores',
+      user: 'Usuario específico',
+    };
+    if (type === 'user' && value) {
+      const u = this.pushUsers().find(x => x.id === value);
+      return u ? `${u.name || u.email}` : 'Usuario específico';
+    }
+    return map[type] || type;
   }
 }
