@@ -105,6 +105,8 @@ export class PanelAdminComponent implements OnInit {
     audienceUserId: '',
   };
   pushUsers = signal<{ id: string; email: string; name: string; role: string }[]>([]);
+  pushSubscriptions = signal<Array<{ id: string; deviceModel: string; invalid: boolean; hasToken: boolean; externalUserId: string }>>([]);
+  pushValidCount = signal(0);
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -688,6 +690,16 @@ export class PanelAdminComponent implements OnInit {
         this.pushLoading.set(false);
       },
       error: () => this.pushLoading.set(false),
+    });
+    this.adminService.getPushSubscriptions().subscribe({
+      next: res => {
+        this.pushSubscriptions.set(res.subscriptions || []);
+        this.pushValidCount.set(res.validCount ?? 0);
+      },
+      error: () => {
+        this.pushSubscriptions.set([]);
+        this.pushValidCount.set(0);
+      },
     });
     if (!this.pushUsers().length) {
       this.adminService.getUsers().subscribe(users => {

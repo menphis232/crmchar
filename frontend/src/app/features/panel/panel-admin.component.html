@@ -560,8 +560,28 @@
         </h2>
         <p class="card-desc">
           Envía alertas al celular de tus usuarios aunque no tengan la app abierta.
-          Los usuarios deben haber aceptado notificaciones en el navegador o PWA.
+          En Android debe ser desde la <strong>PWA instalada</strong> (icono en inicio), no desde Chrome.
         </p>
+
+        @if (pushConfigured()) {
+          <p class="card-desc" style="margin-top:8px;">
+            Dispositivos en OneSignal: <strong>{{ pushValidCount() }} válido(s)</strong> de {{ pushSubscriptions().length }} registrado(s).
+            @if (pushValidCount() === 0) {
+              <span style="color:#fbbf24;"> Ningún teléfono con token push activo.</span>
+            }
+          </p>
+          @if (pushSubscriptions().length) {
+            <ul class="card-desc" style="margin-top:8px;font-size:12px;">
+              @for (s of pushSubscriptions(); track s.id) {
+                <li>
+                  {{ s.deviceModel || '?' }}
+                  — {{ s.hasToken && !s.invalid ? 'OK' : 'inválido' }}
+                  @if (s.externalUserId) { (user {{ s.externalUserId.slice(0, 8) }}…) }
+                </li>
+              }
+            </ul>
+          }
+        }
 
         @if (!pushConfigured()) {
           <p class="banner-msg" style="color:#fbbf24;">OneSignal no está configurado en el servidor (falta REST API Key en .env).</p>

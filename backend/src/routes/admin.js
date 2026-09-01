@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { authRequired, requireRole } from '../middleware/auth.js';
 import * as ga from '../services/googleAnalytics.js';
-import { isOneSignalConfigured, sendOneSignalPush } from '../services/onesignal.js';
+import { isOneSignalConfigured, sendOneSignalPush, listPushSubscriptions } from '../services/onesignal.js';
 
 const router = Router();
 
@@ -291,6 +291,21 @@ router.delete('/analytics/disconnect', authRequired, requireRole('admin'), async
 /** OneSignal: estado de configuración */
 router.get('/push/status', authRequired, requireRole('admin'), (_req, res) => {
   res.json({ configured: isOneSignalConfigured() });
+});
+
+/** OneSignal: suscripciones registradas (diagnóstico) */
+router.get('/push/subscriptions', authRequired, requireRole('admin'), async (_req, res) => {
+  try {
+    if (!isOneSignalConfigured()) {
+      return res.json({ configured: false, subscriptions: [] });
+    }
+    const subscriptions = await listPushSubscriptions();
+    const valid = subscriptions.filter(s => s.hasToken && !s.invalid).length;
+    res.json({ configured: true, validCount: valid, subscriptions });
+  } catch (err) {
+    console.error('push/subscriptions:', err);
+    res.status(500).json({ error: err.message || 'Error al listar suscripciones' });
+  }
 });
 
 /** OneSignal: historial de campañas enviadas */

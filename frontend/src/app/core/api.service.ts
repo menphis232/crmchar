@@ -382,6 +382,19 @@ export class AdminService {
   disconnectAnalytics() { return this.http.delete<import('../models').AnalyticsConfig>(`${this.base}/analytics/disconnect`); }
 
   getPushStatus() { return this.http.get<{ configured: boolean }>(`${this.base}/push/status`); }
+  getPushSubscriptions() {
+    return this.http.get<{
+      configured: boolean;
+      validCount?: number;
+      subscriptions: Array<{
+        id: string;
+        deviceModel: string;
+        invalid: boolean;
+        hasToken: boolean;
+        externalUserId: string;
+      }>;
+    }>(`${this.base}/push/subscriptions`);
+  }
   getPushHistory() { return this.http.get<import('../models').PushCampaign[]>(`${this.base}/push/history`); }
   sendPush(data: {
     title: string;

@@ -118,6 +118,11 @@ export class OneSignalService {
       return Promise.resolve({ ok: false, error: iosHint });
     }
 
+    const androidHint = this.androidPwaRequiredMessage();
+    if (androidHint) {
+      return Promise.resolve({ ok: false, error: androidHint });
+    }
+
     if (window.__onesignalInitError) {
       return Promise.resolve({
         ok: false,
@@ -214,9 +219,8 @@ export class OneSignalService {
         ).catch(() => {});
       });
 
-      OS.Notifications?.addEventListener?.('foregroundWillDisplay', (event: unknown) => {
-        const detail = event as { preventDefault?: () => void };
-        detail?.preventDefault?.();
+      OS.Notifications?.addEventListener?.('foregroundWillDisplay', () => {
+        // Dejar que el sistema muestre la notificación (no llamar preventDefault).
       });
 
       OS.Notifications?.addEventListener?.('click', (event: unknown) => {
@@ -350,11 +354,33 @@ export class OneSignalService {
     const ua = navigator.userAgent || '';
     const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if (!isIos) return null;
-    const standalone =
-      window.matchMedia('(display-mode: standalone)').matches ||
-      (navigator as Navigator & { standalone?: boolean }).standalone === true;
-    if (standalone) return null;
+    if (this.isStandalonePwa()) return null;
     return 'En iPhone: instala la app (Compartir → Añadir a inicio) y activa notificaciones desde el icono de la PWA.';
+  }
+
+  private androidPwaRequiredMessage(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+    const ua = navigator.userAgent || '';
+    if (!/Android/i.test(ua)) return null;
+    if (this.isStandalonePwa()) return null;
+    return 'En Android abre la app desde el icono instalado (PWA), no desde la pestaña de Chrome. Menú ⋮ → Instalar aplicación → luego activa notificaciones en Ajustes.';
+  }
+
+  private isStandalonePwa(): boolean {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true
+    );
+  }
+
+  deviceHint(): string {
+    if (!isPlatformBrowser(this.platformId)) return '';
+    const ua = navigator.userAgent || '';
+    const parts = [this.isStandalonePwa() ? 'PWA instalada' : 'Navegador (no PWA)'];
+    if (/Android/i.test(ua)) parts.push('Android');
+    else if (/iPhone|iPad/i.test(ua)) parts.push('iOS');
+    else parts.push(navigator.platform || 'desconocido');
+    return parts.join(' · ');
   }
 
   private async ensureSubscribed(OS: OneSignalClient): Promise<void> {

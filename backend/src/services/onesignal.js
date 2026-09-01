@@ -124,6 +124,32 @@ export async function sendOneSignalPush(opts) {
 }
 
 /**
+ * Lista suscripciones web registradas en OneSignal (diagnóstico admin).
+ */
+export async function listPushSubscriptions() {
+  const appId = process.env.ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY;
+  if (!appId || !apiKey) return [];
+
+  const res = await fetch(`${ONESIGNAL_API.replace('/notifications', '')}/players?app_id=${appId}&limit=50`, {
+    headers: { Authorization: `Key ${apiKey}` },
+  });
+  const data = await res.json().catch(() => ({}));
+  const players = Array.isArray(data.players) ? data.players : [];
+
+  return players.map(p => ({
+    id: p.id,
+    deviceModel: p.device_model || '',
+    deviceOs: p.device_os || '',
+    invalid: !!p.invalid_identifier,
+    hasToken: !!p.identifier,
+    externalUserId: p.external_user_id || '',
+    lastActive: p.last_active || null,
+    tags: p.tags || {},
+  }));
+}
+
+/**
  * Push transaccional a un usuario (external_id = user.id del CRM).
  */
 export async function notifyUserPush(userId, { title, body, url } = {}) {
