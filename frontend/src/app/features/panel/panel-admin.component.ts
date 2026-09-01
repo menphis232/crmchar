@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, NgZone } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
@@ -15,6 +15,7 @@ import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { SupportChatComponent } from '../../shared/support-chat.component';
+import { OneSignalService } from '../../core/onesignal.service';
 import {
   LucideBarChart3,
   LucideBot,
@@ -107,6 +108,7 @@ export class PanelAdminComponent implements OnInit {
   pushUsers = signal<{ id: string; email: string; name: string; role: string }[]>([]);
   pushSubscriptions = signal<Array<{ id: string; deviceModel: string; invalid: boolean; hasToken: boolean; externalUserId: string }>>([]);
   pushValidCount = signal(0);
+  pushActivating = signal(false);
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -169,12 +171,14 @@ export class PanelAdminComponent implements OnInit {
 
   constructor(
     public auth: AuthService,
+    public oneSignal: OneSignalService,
     private adminService: AdminService,
     private supportService: SupportService,
     private knowledgeService: KnowledgeService,
     private uploadService: UploadService,
     private route: ActivatedRoute,
     private router: Router,
+    private zone: NgZone,
   ) {
     effect(() => {
       const me = this.auth.user();
@@ -706,6 +710,28 @@ export class PanelAdminComponent implements OnInit {
         this.pushUsers.set(users as { id: string; email: string; name: string; role: string }[]);
       });
     }
+  }
+
+  activatePushOnDevice(): void {
+    if (this.pushActivating()) return;
+    const user = this.auth.user();
+    this.pushActivating.set(true);
+    this.pushMsg.set('');
+    this.zone.runOutsideAngular(() => {
+      void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
+        this.zone.run(() => {
+          if (result.ok) {
+            this.pushMsg.set('Notificaciones activadas en este dispositivo.');
+            this.loadPushTab();
+            return;
+          }
+          this.pushMsg.set(result.error || 'No se pudo activar push en este dispositivo.');
+          void this.oneSignal.refreshPermissionState();
+        });
+      }).finally(() => {
+        this.zone.run(() => this.pushActivating.set(false));
+      });
+    });
   }
 
   sendPushNotification(testOnly = false) {

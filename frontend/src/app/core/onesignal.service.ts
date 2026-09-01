@@ -86,12 +86,8 @@ export class OneSignalService {
                 await OS.User.addTag('role', role);
               }
             }
-          } else {
-            await OS.login(String(userId));
-            if (role && OS.User?.addTag) {
-              await OS.User.addTag('role', role);
-            }
           }
+          // Sin permiso aún: no hacer login (evita jugador inválido sin token FCM).
         } else {
           await OS.logout();
         }
@@ -123,6 +119,11 @@ export class OneSignalService {
         ok: false,
         error: this.formatInitError(window.__onesignalInitError),
       });
+    }
+
+    // Android: disparar el diálogo nativo en la pila del clic (antes de encolar OneSignal).
+    if (this.nativePermission() === 'default' && typeof Notification !== 'undefined') {
+      void Notification.requestPermission();
     }
 
     return new Promise(resolve => {
@@ -248,17 +249,19 @@ export class OneSignalService {
 
     if (this.nativePermission() !== 'granted') {
       let granted = false;
-      if (OS.Notifications?.requestPermission) {
-        granted = await OS.Notifications.requestPermission();
-      }
-      if (!granted && this.nativePermission() === 'default') {
+      try {
         const native = await Notification.requestPermission();
         granted = native === 'granted';
+      } catch {
+        granted = false;
+      }
+      if (!granted && OS.Notifications?.requestPermission) {
+        granted = await OS.Notifications.requestPermission();
       }
       if (!granted && this.nativePermission() !== 'granted') {
         return {
           ok: false,
-          error: 'Después de Subscribe, debes tocar Permitir en el mensaje del sistema Android.',
+          error: 'Después de Activar, debes tocar Permitir en el mensaje del sistema Android.',
         };
       }
     }

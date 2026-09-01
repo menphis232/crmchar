@@ -610,15 +610,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (this.pushActivating()) return;
     const user = this.auth.user();
     this.pushActivating.set(true);
-    void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
-      if (result.ok) {
-        this.toast.success('Notificaciones activadas', 'Listo');
-        return;
-      }
-      this.toast.error(result.error || 'No se pudo activar', 'Notificaciones');
-    }).finally(() => {
-      this.pushActivating.set(false);
-      void this.oneSignal.refreshPermissionState();
+    this.zone.runOutsideAngular(() => {
+      void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
+        this.zone.run(() => {
+          if (result.ok) {
+            this.toast.success('Notificaciones activadas', 'Listo');
+            return;
+          }
+          this.toast.error(result.error || 'No se pudo activar', 'Notificaciones');
+          void this.oneSignal.refreshPermissionState();
+        });
+      }).finally(() => {
+        this.zone.run(() => this.pushActivating.set(false));
+      });
     });
   }
 

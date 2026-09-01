@@ -560,8 +560,17 @@
         </h2>
         <p class="card-desc">
           Envía alertas al celular de tus usuarios aunque no tengan la app abierta.
-          En Android debe ser desde la <strong>PWA instalada</strong> (icono en inicio), no desde Chrome.
+          En este teléfono, primero activa push con el botón de abajo y toca <strong>Permitir</strong> en Android.
         </p>
+
+        <div class="form-row" style="margin-top:12px;align-items:center;gap:12px;flex-wrap:wrap;">
+          <button type="button" class="btn-copy btn-with-icon" [disabled]="pushActivating()" (click)="activatePushOnDevice()">
+            @if (pushActivating()) { Activando... } @else { Activar push en este dispositivo }
+          </button>
+          <span class="card-desc" style="margin:0;font-size:12px;">
+            {{ oneSignal.deviceHint() }} · {{ oneSignal.statusLabel() }}
+          </span>
+        </div>
 
         @if (pushConfigured()) {
           <p class="card-desc" style="margin-top:8px;">
