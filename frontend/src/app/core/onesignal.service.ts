@@ -33,6 +33,9 @@ type OneSignalClient = {
     isPushSupported?: () => boolean;
     requestPermission: () => Promise<boolean>;
   };
+  Slidedown?: {
+    promptPush?: (options?: { force?: boolean }) => Promise<void>;
+  };
 };
 
 declare global {
@@ -80,7 +83,7 @@ export class OneSignalService {
   }
 
   /**
-   * Llamar SIN await previo, directo en el handler del click (Android exige el gesto del usuario).
+   * Encolar en el mismo click del usuario (sin await antes). Android PWA lo exige.
    */
   activatePushFromClick(
     userId?: string | null,
@@ -108,7 +111,7 @@ export class OneSignalService {
     return new Promise(resolve => {
       const timeout = setTimeout(() => {
         resolve({ ok: false, error: 'OneSignal tardó demasiado. Cierra la app por completo y vuelve a abrirla.' });
-      }, 45000);
+      }, 50000);
 
       const finish = (result: { ok: boolean; error?: string }) => {
         clearTimeout(timeout);
@@ -123,24 +126,23 @@ export class OneSignalService {
             return;
           }
 
-          const nativePerm = typeof Notification !== 'undefined' ? Notification.permission : 'default';
-          if (nativePerm === 'denied') {
+          const nativeBefore = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+          if (nativeBefore === 'denied') {
             finish({ ok: false, error: this.blockedPermissionMessage() });
             return;
           }
 
-          if (nativePerm !== 'granted' && OS.Notifications?.requestPermission) {
-            const granted = await OS.Notifications.requestPermission();
-            if (!granted) {
-              const after = typeof Notification !== 'undefined' ? Notification.permission : 'default';
-              finish({
-                ok: false,
-                error: after === 'denied'
-                  ? this.blockedPermissionMessage()
-                  : 'No apareció el permiso. Toca Activar otra vez y elige Permitir.',
-              });
-              return;
-            }
+          await this.requestPermissionWithOneSignal(OS);
+
+          const nativeAfter = typeof Notification !== 'undefined' ? Notification.permission : 'default';
+          if (nativeAfter !== 'granted') {
+            finish({
+              ok: false,
+              error: nativeAfter === 'denied'
+                ? this.blockedPermissionMessage()
+                : 'No apareció el permiso del sistema. Toca Activar otra vez y elige Permitir.',
+            });
+            return;
           }
 
           await this.ensureSubscribed(OS);
@@ -165,7 +167,7 @@ export class OneSignalService {
           const detail = sub?.id ? `id=${sub.id}` : (sub?.token ? 'token sin id' : 'sin token');
           finish({
             ok: false,
-            error: `Suscripción incompleta (${detail}, permiso=${Notification.permission}). ${this.blockedPermissionMessage()}`,
+            error: `Suscripción incompleta (${detail}). ${this.blockedPermissionMessage()}`,
           });
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
@@ -201,6 +203,33 @@ export class OneSignalService {
     if (this.permissionState() === 'granted') return 'Permiso OK, falta suscripción';
     if (this.permissionState() === 'unsupported') return 'No soportadas aquí';
     return 'Sin activar';
+  }
+
+  private nativePermission(): NotificationPermission {
+    return typeof Notification !== 'undefined' ? Notification.permission : 'denied';
+  }
+
+  private async requestPermissionWithOneSignal(OS: OneSignalClient): Promise<void> {
+    if (typeof Notification === 'undefined') return;
+    if (this.nativePermission() === 'granted') return;
+
+    if (OS.Slidedown?.promptPush) {
+      try {
+        await OS.Slidedown.promptPush({ force: true });
+      } catch {
+        // Slidedown puede fallar si ya se mostró; seguimos con permiso nativo.
+      }
+    }
+
+    if (this.nativePermission() === 'granted') return;
+
+    if (OS.Notifications?.requestPermission) {
+      await OS.Notifications.requestPermission();
+    }
+
+    if (this.nativePermission() === 'default') {
+      await Notification.requestPermission();
+    }
   }
 
   private readState(OS: OneSignalClient | null): void {

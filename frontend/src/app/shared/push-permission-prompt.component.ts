@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, PLATFORM_ID, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, PLATFORM_ID, effect, NgZone } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { AuthService } from '../core/auth.service';
 import { OneSignalService } from '../core/onesignal.service';
@@ -134,6 +134,7 @@ import { OneSignalService } from '../core/onesignal.service';
 })
 export class PushPermissionPromptComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly zone = inject(NgZone);
   private readonly auth = inject(AuthService);
   readonly oneSignal = inject(OneSignalService);
 
@@ -170,22 +171,26 @@ export class PushPermissionPromptComponent implements OnInit {
     });
   }
 
-  /** Sin await antes de encolar OneSignal — requisito en Android PWA. */
+  /** Sin await antes de encolar OneSignal — Android PWA pierde el gesto si no. */
   activate(): void {
     if (this.activating()) return;
     this.errorMsg.set('');
     const user = this.auth.user();
-    this.activating.set(true);
 
-    void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
-      if (result.ok) {
-        this.visible.set(false);
-        return;
-      }
-      this.errorMsg.set(result.error || 'No se pudo activar. Intenta de nuevo.');
-      void this.oneSignal.refreshPermissionState();
-    }).finally(() => {
-      this.activating.set(false);
+    this.zone.runOutsideAngular(() => {
+      this.activating.set(true);
+      void this.oneSignal.activatePushFromClick(user?.id, user?.role).then(result => {
+        this.zone.run(() => {
+          if (result.ok) {
+            this.visible.set(false);
+            return;
+          }
+          this.errorMsg.set(result.error || 'No se pudo activar. Intenta de nuevo.');
+          void this.oneSignal.refreshPermissionState();
+        });
+      }).finally(() => {
+        this.zone.run(() => this.activating.set(false));
+      });
     });
   }
 
