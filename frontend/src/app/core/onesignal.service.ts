@@ -118,11 +118,6 @@ export class OneSignalService {
       return Promise.resolve({ ok: false, error: iosHint });
     }
 
-    const androidHint = this.androidPwaRequiredMessage();
-    if (androidHint) {
-      return Promise.resolve({ ok: false, error: androidHint });
-    }
-
     if (window.__onesignalInitError) {
       return Promise.resolve({
         ok: false,
@@ -356,14 +351,6 @@ export class OneSignalService {
     if (!isIos) return null;
     if (this.isStandalonePwa()) return null;
     return 'En iPhone: instala la app (Compartir → Añadir a inicio) y activa notificaciones desde el icono de la PWA.';
-  }
-
-  private androidPwaRequiredMessage(): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    const ua = navigator.userAgent || '';
-    if (!/Android/i.test(ua)) return null;
-    if (this.isStandalonePwa()) return null;
-    return 'En Android abre la app desde el icono instalado (PWA), no desde la pestaña de Chrome. Menú ⋮ → Instalar aplicación → luego activa notificaciones en Ajustes.';
   }
 
   private isStandalonePwa(): boolean {
