@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, HostListener, ElementRef, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -25,14 +25,15 @@ export class LoginComponent implements OnInit, OnDestroy {
   readonly tvmLogo = TVM_LOGO_URL;
 
   readonly portalOptions: LoginPortalOption[] = [
+    { value: 'admin', label: 'Administrador', path: '/login/admin' },
     { value: 'cliente', label: 'Cliente', path: '/login/cliente' },
     { value: 'gestor', label: 'Consultor', path: '/login/gestor' },
     { value: 'concesionaria', label: 'Concesionaria', path: '/login/concesionaria' },
-    { value: 'admin', label: 'Administrador', path: '/login/admin' },
   ];
 
   mode = signal<'login' | 'register' | 'forgot'>('login');
   role = signal<LoginRole>('cliente');
+  portalMenuOpen = signal(false);
   email = '';
   password = '';
   name = '';
@@ -42,6 +43,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   private querySub?: Subscription;
   private dataSub?: Subscription;
+  private readonly host = inject(ElementRef);
 
   constructor(
     private auth: AuthService,
@@ -75,18 +77,27 @@ export class LoginComponent implements OnInit, OnDestroy {
       this.role.set('cliente');
     }
     this.mode.set('login');
+    this.portalMenuOpen.set(false);
   }
 
-  onPortalChange(value: string) {
-    if (value === 'perito') {
-      this.router.navigate(['/login/perito']);
-      return;
-    }
-    const option = this.portalOptions.find(o => o.value === value);
-    if (!option || option.value === this.role()) return;
+  togglePortalMenu() {
+    this.portalMenuOpen.update(v => !v);
+  }
+
+  pickPortal(option: LoginPortalOption) {
+    this.portalMenuOpen.set(false);
+    if (option.value === this.role()) return;
     this.error.set('');
     this.successMsg.set('');
     this.router.navigate([option.path]);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.portalMenuOpen()) return;
+    if (!this.host.nativeElement.contains(event.target)) {
+      this.portalMenuOpen.set(false);
+    }
   }
 
   roleLabel(): string {
