@@ -300,7 +300,7 @@ router.get('/push/subscriptions', authRequired, requireRole('admin'), async (_re
       return res.json({ configured: false, subscriptions: [] });
     }
     const subscriptions = await listPushSubscriptions();
-    const valid = subscriptions.filter(s => s.hasToken && !s.invalid).length;
+    const valid = subscriptions.filter(s => s.hasToken && !s.invalid && s.subscribed).length;
     res.json({ configured: true, validCount: valid, subscriptions });
   } catch (err) {
     console.error('push/subscriptions:', err);

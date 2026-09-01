@@ -106,7 +106,7 @@ export class PanelAdminComponent implements OnInit {
     audienceUserId: '',
   };
   pushUsers = signal<{ id: string; email: string; name: string; role: string }[]>([]);
-  pushSubscriptions = signal<Array<{ id: string; deviceModel: string; invalid: boolean; hasToken: boolean; externalUserId: string }>>([]);
+  pushSubscriptions = signal<Array<{ id: string; deviceModel: string; invalid: boolean; hasToken: boolean; subscribed?: boolean; externalUserId: string }>>([]);
   pushValidCount = signal(0);
   pushActivating = signal(false);
 
@@ -757,7 +757,7 @@ export class PanelAdminComponent implements OnInit {
         const delivered = res.delivered ?? res.recipients ?? 0;
         if (delivered <= 0) {
           this.pushMsg.set(
-            'OneSignal aceptó el envío pero entregó 0 dispositivos. En el teléfono: Ajustes → reactivar push (o borrar datos del sitio y volver a suscribir).',
+            'OneSignal aceptó el envío pero entregó 0 dispositivos. En el teléfono: cierra y abre la app (logueado), Admin → Push → Activar push, y vuelve a tocar Permitir si hace falta.',
           );
         } else {
           this.pushMsg.set(

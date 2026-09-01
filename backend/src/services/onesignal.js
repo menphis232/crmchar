@@ -143,6 +143,8 @@ export async function listPushSubscriptions() {
     deviceOs: p.device_os || '',
     invalid: !!p.invalid_identifier,
     hasToken: !!p.identifier,
+    subscribed: Number(p.notification_types) === 1,
+    notificationTypes: p.notification_types,
     externalUserId: p.external_user_id || '',
     lastActive: p.last_active || null,
     tags: p.tags || {},

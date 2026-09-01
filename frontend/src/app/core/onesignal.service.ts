@@ -77,17 +77,16 @@ export class OneSignalService {
     try {
       await this.withOneSignal(async OS => {
         if (userId) {
+          // Vincular siempre el usuario CRM (OneSignal v16: login en cada sesión).
+          await OS.login(String(userId));
+          if (role && OS.User?.addTag) {
+            await OS.User.addTag('role', role);
+          }
+
           if (this.nativePermission() === 'granted') {
             await this.ensureSubscribed(OS);
-            const ok = await this.waitForSubscription(OS, 12000);
-            if (ok) {
-              await OS.login(String(userId));
-              if (role && OS.User?.addTag) {
-                await OS.User.addTag('role', role);
-              }
-            }
+            await this.waitForSubscription(OS, 12000);
           }
-          // Sin permiso aún: no hacer login (evita jugador inválido sin token FCM).
         } else {
           await OS.logout();
         }
@@ -183,12 +182,19 @@ export class OneSignalService {
     if (this.nativePermission() !== 'granted') return;
 
     await this.withOneSignal(async OS => {
+      const user = this.pendingUser;
+      if (user?.id) {
+        await OS.login(String(user.id));
+        if (user.role && OS.User?.addTag) {
+          await OS.User.addTag('role', user.role);
+        }
+      }
+
       const sub = OS.User?.PushSubscription;
-      if (sub?.token && sub.optedIn !== false) return;
+      if (sub?.token && sub.optedIn === true) return;
 
       await this.ensureSubscribed(OS);
       const ok = await this.waitForSubscription(OS, 15000);
-      const user = this.pendingUser;
       if (ok && user?.id) {
         await OS.login(String(user.id));
         if (user.role && OS.User?.addTag) {
@@ -225,8 +231,16 @@ export class OneSignalService {
         if (url) window.location.href = url;
       });
 
-      OS.User?.PushSubscription?.addEventListener?.('change', () => {
+      OS.User?.PushSubscription?.addEventListener?.('change', (event: PushSubscriptionChangeEvent) => {
         this.readState(OS);
+        const user = this.pendingUser;
+        if (!user?.id || !this.hasActiveSubscription(event.current)) return;
+        void this.withOneSignal(async inner => {
+          await inner.login(String(user.id));
+          if (user.role && inner.User?.addTag) {
+            await inner.User.addTag('role', user.role);
+          }
+        }).catch(() => {});
       });
 
       this.listenersRegistered = true;
@@ -324,9 +338,7 @@ export class OneSignalService {
     }
 
     const sub = OS?.User?.PushSubscription;
-    const hasToken = !!sub?.token;
-    const optedIn = sub?.optedIn !== false;
-    const isSubscribed = hasToken && optedIn;
+    const isSubscribed = this.hasActiveSubscription(sub);
     this.subscribed.set(isSubscribed);
 
     const native = notif?.permissionNative ?? Notification.permission;
@@ -379,7 +391,7 @@ export class OneSignalService {
       throw new Error('OneSignal no está listo. Recarga la app e intenta de nuevo.');
     }
 
-    if (sub.token && sub.optedIn !== false) return;
+    if (sub.token && sub.optedIn === true) return;
 
     if (sub.optOut && (sub.id || sub.optedIn)) {
       try {
@@ -427,7 +439,7 @@ export class OneSignalService {
 
   private hasActiveSubscription(sub?: OneSignalPushSubscription | PushSubscriptionChangeEvent['current']): boolean {
     if (!sub) return false;
-    return !!(sub.token && sub.optedIn !== false);
+    return !!(sub.token && sub.optedIn === true);
   }
 
   private withOneSignal<T>(fn: (OS: OneSignalClient) => Promise<T>): Promise<T> {

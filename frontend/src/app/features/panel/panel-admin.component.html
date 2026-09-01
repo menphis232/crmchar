@@ -584,8 +584,8 @@
               @for (s of pushSubscriptions(); track s.id) {
                 <li>
                   {{ s.deviceModel || '?' }}
-                  — {{ s.hasToken && !s.invalid ? 'OK' : 'inválido' }}
-                  @if (s.externalUserId) { (user {{ s.externalUserId.slice(0, 8) }}…) }
+                  — {{ s.hasToken && !s.invalid && s.subscribed ? 'Suscrito' : (s.hasToken ? 'token sin suscripción' : 'sin token') }}
+                  @if (s.externalUserId) { (user {{ s.externalUserId.slice(0, 8) }}…) } @else { (anónimo) }
                 </li>
               }
             </ul>
