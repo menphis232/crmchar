@@ -5,14 +5,16 @@ import { AnalyticsTrackerService } from './core/analytics-tracker.service';
 import { OneSignalService } from './core/onesignal.service';
 import { AuthService } from './core/auth.service';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt.component';
+import { PushPermissionPromptComponent } from './shared/push-permission-prompt.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PwaInstallPromptComponent],
+  imports: [RouterOutlet, PwaInstallPromptComponent, PushPermissionPromptComponent],
   template: `
     <router-outlet />
     <app-pwa-install-prompt />
+    <app-push-permission-prompt />
   `,
 })
 export class AppComponent implements OnInit {

@@ -30,9 +30,9 @@
                 "output": "/"
               },
               {
-                "glob": "OneSignalSDKWorker.js",
-                "input": "src",
-                "output": "/"
+                "glob": "**/*",
+                "input": "src/push",
+                "output": "/push"
               }
             ],
             "styles": ["src/styles.css"],
