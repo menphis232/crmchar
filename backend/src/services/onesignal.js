@@ -105,6 +105,7 @@ export async function sendOneSignalPush(opts) {
     chrome_web_badge: brand.smallIcon,
     firefox_icon: brand.largeIcon,
     large_icon: brand.largeIcon,
+    android_accent_color: 'FF000000',
   };
 
   const launchUrl = resolveUrl(url);
