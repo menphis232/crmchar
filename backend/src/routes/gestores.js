@@ -38,6 +38,43 @@ function parseGestorServices(rows) {
   });
 }
 
+function normalizeStringList(value, { allowObjects = false } = {}) {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === 'string') return item.trim();
+        if (allowObjects && item && typeof item === 'object' && item.text) {
+          return String(item.text).trim();
+        }
+        return '';
+      })
+      .filter(Boolean);
+  }
+  if (typeof value === 'string') {
+    return value.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function parseServicePayload(body) {
+  const { name, timeEstimate, price, required_documents, includes, bonus } = body;
+  if (!name || !timeEstimate) {
+    return { error: 'Datos incompletos' };
+  }
+  const priceValue = (price === null || price === undefined || price === '')
+    ? null
+    : Number(price);
+  if (priceValue !== null && (Number.isNaN(priceValue) || priceValue < 0)) {
+    return { error: 'Precio inválido' };
+  }
+  let docs = normalizeStringList(required_documents, { allowObjects: true });
+  if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
+  const includesList = normalizeStringList(includes, { allowObjects: true });
+  const bonusList = normalizeStringList(bonus, { allowObjects: true });
+  return { name, timeEstimate, priceValue, docs, includesList, bonusList };
+}
+
 function parseReviewDate(value) {
   if (value === undefined || value === null || value === '') return new Date();
   const raw = String(value).trim();
@@ -263,39 +300,11 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
 router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
-    const { name, timeEstimate, price, required_documents, includes, bonus } = req.body;
-    if (!name || !timeEstimate) {
-      return res.status(400).json({ error: 'Datos incompletos' });
-    }
-    const priceValue = (price === null || price === undefined || price === '')
-      ? null
-      : Number(price);
-    if (priceValue !== null && (Number.isNaN(priceValue) || priceValue < 0)) {
-      return res.status(400).json({ error: 'Precio inválido' });
-    }
+    const parsed = parseServicePayload(req.body);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList } = parsed;
+
     const id = uuid();
-    let docs = [];
-    if (required_documents && Array.isArray(required_documents)) {
-      docs = required_documents;
-    } else if (typeof required_documents === 'string') {
-      docs = required_documents.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
-
-    let includesList = [];
-    if (includes && Array.isArray(includes)) {
-      includesList = includes;
-    } else if (typeof includes === 'string') {
-      includesList = includes.split(',').map(s => s.trim()).filter(Boolean);
-    }
-
-    let bonusList = [];
-    if (bonus && Array.isArray(bonus)) {
-      bonusList = bonus;
-    } else if (typeof bonus === 'string') {
-      bonusList = bonus.split(',').map(s => s.trim()).filter(Boolean);
-    }
-
     const maxOrder = await get(
       'SELECT COALESCE(MAX(sort_order), -1) as maxOrder FROM gestor_services WHERE gestor_id = ?',
       [row.id],
@@ -309,6 +318,39 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs, includes: includesList, bonus: bonusList });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
+  }
+});
+
+router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
+    const existing = await get(
+      'SELECT id FROM gestor_services WHERE id = ? AND gestor_id = ?',
+      [req.params.id, row.id],
+    );
+    if (!existing) return res.status(404).json({ error: 'Servicio no encontrado' });
+
+    const parsed = parseServicePayload(req.body);
+    if (parsed.error) return res.status(400).json({ error: parsed.error });
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList } = parsed;
+
+    await run(
+      `UPDATE gestor_services
+       SET name = ?, time_estimate = ?, price = ?, required_documents = ?, includes = ?, bonus = ?
+       WHERE id = ? AND gestor_id = ?`,
+      [name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), req.params.id, row.id],
+    );
+    res.json({
+      id: req.params.id,
+      name,
+      timeEstimate,
+      price: priceValue,
+      required_documents: docs,
+      includes: includesList,
+      bonus: bonusList,
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Error al actualizar servicio' });
   }
 });
 

@@ -57,12 +57,31 @@
                             <div class="service-name">{{ s.name }}</div>
                             <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                             <details class="service-requisitos">
-                              <summary>Ver requisitos</summary>
-                              <ul class="service-requisitos-list">
-                                @for (doc of serviceRequirements(s); track doc) {
-                                  <li>{{ doc }}</li>
+                              <summary>Ver detalles</summary>
+                              <div class="service-requisitos-body">
+                                <p class="service-requisitos-heading">Documentos requeridos</p>
+                                <ul class="service-requisitos-list">
+                                  @for (doc of serviceRequirements(s); track doc) {
+                                    <li>{{ doc }}</li>
+                                  }
+                                </ul>
+                                @if (serviceIncludes(s).length) {
+                                  <p class="service-requisitos-heading">Qué incluye</p>
+                                  <ul class="service-requisitos-list">
+                                    @for (item of serviceIncludes(s); track item) {
+                                      <li>{{ item }}</li>
+                                    }
+                                  </ul>
                                 }
-                              </ul>
+                                @if (serviceBonus(s).length) {
+                                  <p class="service-requisitos-heading">Bonus</p>
+                                  <ul class="service-requisitos-list">
+                                    @for (item of serviceBonus(s); track item) {
+                                      <li>{{ item }}</li>
+                                    }
+                                  </ul>
+                                }
+                              </div>
                             </details>
                           </div>
                           @if (b.data.showPrices) {
@@ -245,12 +264,31 @@
                   <div class="service-name">{{ s.name }}</div>
                   <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                   <details class="service-requisitos">
-                    <summary>Ver requisitos</summary>
-                    <ul class="service-requisitos-list">
-                      @for (doc of serviceRequirements(s); track doc) {
-                        <li>{{ doc }}</li>
+                    <summary>Ver detalles</summary>
+                    <div class="service-requisitos-body">
+                      <p class="service-requisitos-heading">Documentos requeridos</p>
+                      <ul class="service-requisitos-list">
+                        @for (doc of serviceRequirements(s); track doc) {
+                          <li>{{ doc }}</li>
+                        }
+                      </ul>
+                      @if (serviceIncludes(s).length) {
+                        <p class="service-requisitos-heading">Qué incluye</p>
+                        <ul class="service-requisitos-list">
+                          @for (item of serviceIncludes(s); track item) {
+                            <li>{{ item }}</li>
+                          }
+                        </ul>
                       }
-                    </ul>
+                      @if (serviceBonus(s).length) {
+                        <p class="service-requisitos-heading">Bonus</p>
+                        <ul class="service-requisitos-list">
+                          @for (item of serviceBonus(s); track item) {
+                            <li>{{ item }}</li>
+                          }
+                        </ul>
+                      }
+                    </div>
                   </details>
                 </div>
                 <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">

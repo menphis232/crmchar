@@ -7,7 +7,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
+import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, GestorService, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
@@ -26,7 +26,13 @@ import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.com
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
-import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
+import { hasServicePrice, serviceRequirements, serviceIncludes, serviceBonus } from '../../shared/gestor-service.utils';
+import {
+  QuoteCheckItem,
+  checklistFromTexts,
+  nextChecklistId,
+  resetChecklistSeq,
+} from '../../shared/quote-checklist.utils';
 import { googleEmbedFromAddress, googleEmbedFromCoords, toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
 import {
   LucideBot,
@@ -224,7 +230,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   verificationAlerts = signal<CrmVerificationAlert[]>([]);
   isAiLoading = signal(false);
   message = signal('');
-  newService = { name: '', timeEstimate: '', price: null as number | null, requiredDocumentsStr: '', includesStr: '', bonusStr: '' };
+  editingServiceId: string | null = null;
+  serviceForm = { name: '', timeEstimate: '', price: null as number | null };
+  serviceDocs: QuoteCheckItem[] = [];
+  serviceIncludesList: QuoteCheckItem[] = [];
+  serviceBonusList: QuoteCheckItem[] = [];
   newTemplate = { name: '', content: '' };
   automations = signal<any[]>([]);
   newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
@@ -1215,27 +1225,91 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     }
   }
 
-  addService() {
-    if (!this.newService.name || !this.newService.timeEstimate) return;
-    const docs = this.newService.requiredDocumentsStr.split(',').map(s => s.trim()).filter(Boolean);
-    const includes = this.newService.includesStr.split(',').map(s => s.trim()).filter(Boolean);
-    const bonus = this.newService.bonusStr.split(',').map(s => s.trim()).filter(Boolean);
-    const payload: any = {
-      name: this.newService.name,
-      timeEstimate: this.newService.timeEstimate,
-      price: this.newService.price,
+  addServiceChecklistItem(section: 'docs' | 'includes' | 'bonus') {
+    const item: QuoteCheckItem = { id: nextChecklistId(section), text: '', checked: true };
+    if (section === 'docs') this.serviceDocs = [...this.serviceDocs, item];
+    if (section === 'includes') this.serviceIncludesList = [...this.serviceIncludesList, item];
+    if (section === 'bonus') this.serviceBonusList = [...this.serviceBonusList, item];
+  }
+
+  removeServiceChecklistItem(section: 'docs' | 'includes' | 'bonus', itemId: string) {
+    if (section === 'docs') this.serviceDocs = this.serviceDocs.filter(i => i.id !== itemId);
+    if (section === 'includes') this.serviceIncludesList = this.serviceIncludesList.filter(i => i.id !== itemId);
+    if (section === 'bonus') this.serviceBonusList = this.serviceBonusList.filter(i => i.id !== itemId);
+  }
+
+  private checklistTexts(items: QuoteCheckItem[]): string[] {
+    return items.map(i => i.text.trim()).filter(Boolean);
+  }
+
+  private resetServiceForm() {
+    resetChecklistSeq();
+    this.editingServiceId = null;
+    this.serviceForm = { name: '', timeEstimate: '', price: null };
+    this.serviceDocs = [];
+    this.serviceIncludesList = [];
+    this.serviceBonusList = [];
+  }
+
+  startEditService(s: GestorService) {
+    resetChecklistSeq();
+    this.editingServiceId = s.id;
+    this.serviceForm = {
+      name: s.name,
+      timeEstimate: s.timeEstimate,
+      price: s.price,
+    };
+    this.serviceDocs = checklistFromTexts(serviceRequirements(s));
+    this.serviceIncludesList = checklistFromTexts(serviceIncludes(s));
+    this.serviceBonusList = checklistFromTexts(serviceBonus(s));
+    this.message.set('Editando servicio — guarda los cambios abajo');
+    setTimeout(() => this.message.set(''), 4000);
+  }
+
+  cancelEditService() {
+    this.resetServiceForm();
+  }
+
+  saveService() {
+    if (!this.serviceForm.name || !this.serviceForm.timeEstimate) return;
+    const docs = this.checklistTexts(this.serviceDocs);
+    const includes = this.checklistTexts(this.serviceIncludesList);
+    const bonus = this.checklistTexts(this.serviceBonusList);
+    const payload: {
+      name: string;
+      timeEstimate: string;
+      price: number | null;
+      required_documents?: string[];
+      includes?: string[];
+      bonus?: string[];
+    } = {
+      name: this.serviceForm.name,
+      timeEstimate: this.serviceForm.timeEstimate,
+      price: this.serviceForm.price,
     };
     if (docs.length > 0) payload.required_documents = docs;
     if (includes.length > 0) payload.includes = includes;
     if (bonus.length > 0) payload.bonus = bonus;
-    
-    this.gestoresService.addService(payload).subscribe({
-      next: () => {
-        this.newService = { name: '', timeEstimate: '', price: null, requiredDocumentsStr: '', includesStr: '', bonusStr: '' };
-        this.loadProfile();
-        this.message.set('Servicio agregado');
-      },
-    });
+
+    const onSuccess = (msg: string) => {
+      this.resetServiceForm();
+      this.loadProfile();
+      this.message.set(msg);
+    };
+
+    if (this.editingServiceId) {
+      this.gestoresService.updateService(this.editingServiceId, payload).subscribe({
+        next: () => onSuccess('Servicio actualizado'),
+      });
+    } else {
+      this.gestoresService.addService(payload).subscribe({
+        next: () => onSuccess('Servicio agregado'),
+      });
+    }
+  }
+
+  addService() {
+    this.saveService();
   }
 
   onServiceDragStart(event: DragEvent, idx: number) {
@@ -1304,6 +1378,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   readonly hasServicePrice = hasServicePrice;
   readonly serviceRequirements = serviceRequirements;
+  readonly serviceIncludes = serviceIncludes;
+  readonly serviceBonus = serviceBonus;
 
   deleteService(id: string) {
     if (!confirm('¿Eliminar este servicio?')) return;

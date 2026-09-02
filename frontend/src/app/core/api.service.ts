@@ -25,7 +25,26 @@ export class GestoresService {
   getBySlug(slug: string) { return this.http.get<Gestor>(`${this.base}/${slug}`); }
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
-  addService(data: { name: string; timeEstimate: string; price: number; required_documents?: string[] }) { return this.http.post(`${this.base}/me/services`, data); }
+  addService(data: {
+    name: string;
+    timeEstimate: string;
+    price: number | null;
+    required_documents?: string[];
+    includes?: string[];
+    bonus?: string[];
+  }) {
+    return this.http.post(`${this.base}/me/services`, data);
+  }
+  updateService(id: string, data: {
+    name: string;
+    timeEstimate: string;
+    price: number | null;
+    required_documents?: string[];
+    includes?: string[];
+    bonus?: string[];
+  }) {
+    return this.http.put(`${this.base}/me/services/${id}`, data);
+  }
   reorderServices(order: string[]) {
     return this.http.put<{ ok: boolean; services: import('../models').GestorService[] }>(`${this.base}/me/services/order`, { order });
   }

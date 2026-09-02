@@ -18,7 +18,7 @@ import { MEXICO_STATES } from '../../shared/mexico-states';
 import { GestorShowcaseGalleryComponent } from '../../shared/gestor-showcase-gallery.component';
 import { GestorReviewsSectionComponent } from '../../shared/gestor-reviews-section.component';
 import { PageBlock, PageBuilderConfig } from '../../models';
-import { hasServicePrice, serviceRequirements } from '../../shared/gestor-service.utils';
+import { hasServicePrice, serviceRequirements, serviceIncludes, serviceBonus } from '../../shared/gestor-service.utils';
 import { toGoogleMapsEmbedUrl } from '../../shared/map-embed.utils';
 
 @Component({
@@ -144,6 +144,8 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
 
   readonly hasServicePrice = hasServicePrice;
   readonly serviceRequirements = serviceRequirements;
+  readonly serviceIncludes = serviceIncludes;
+  readonly serviceBonus = serviceBonus;
 
   hasSidebarFormBlock(config: PageBuilderConfig): boolean {
     return !!config.blocks?.some(b => b.region === 'sidebar' && b.type === 'form');

@@ -1296,31 +1296,108 @@ app-crm-team {
   margin-top: 4px;
 }
 
-.service-catalog-item {
-  align-items: flex-start;
-}
-
-.service-requisitos-panel {
+.service-requisitos-body {
   margin-top: 8px;
-  font-size: 12px;
 }
 
-.service-requisitos-panel summary {
+.service-requisitos-heading {
+  margin: 10px 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.service-requisitos-heading:first-child {
+  margin-top: 0;
+}
+
+.service-catalog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.service-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.quote-checklist-block {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+}
+
+.quote-checklist-block h5 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.quote-checklist-row {
+  display: grid;
+  grid-template-columns: 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.quote-checklist-row input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quote-checklist-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.quote-item-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.82);
-  user-select: none;
-  list-style: none;
+}
+
+.quote-item-remove:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.deal-outline-btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  cursor: pointer;
 }
 
-.service-requisitos-panel summary::-webkit-details-marker {
-  display: none;
+.deal-outline-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .service-requisitos-panel summary::after {
-  content: '?';
+  content: '▾';
   font-size: 11px;
   opacity: 0.7;
   transition: transform 0.15s ease;
@@ -1339,4 +1416,104 @@ app-crm-team {
 
 .service-requisitos-list li + li {
   margin-top: 4px;
+}
+
+.service-requisitos-body {
+  margin-top: 8px;
+}
+
+.service-requisitos-heading {
+  margin: 10px 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+.service-requisitos-heading:first-child {
+  margin-top: 0;
+}
+
+.service-catalog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.service-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.quote-checklist-block {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+}
+
+.quote-checklist-block h5 {
+  margin: 0 0 10px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.50);
+}
+
+.quote-checklist-row {
+  display: grid;
+  grid-template-columns: 1fr 36px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.quote-checklist-row input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.quote-checklist-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+
+.quote-item-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+
+.quote-item-remove:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.deal-outline-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.deal-outline-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
 }

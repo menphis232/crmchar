@@ -366,15 +366,37 @@
                 }
               </p>
               <details class="service-requisitos-panel">
-                <summary>Ver requisitos</summary>
-                <ul class="service-requisitos-list">
-                  @for (doc of serviceRequirements(s); track doc) {
-                    <li>{{ doc }}</li>
+                <summary>Ver detalles</summary>
+                <div class="service-requisitos-body">
+                  <p class="service-requisitos-heading">Documentos requeridos</p>
+                  <ul class="service-requisitos-list">
+                    @for (doc of serviceRequirements(s); track doc) {
+                      <li>{{ doc }}</li>
+                    }
+                  </ul>
+                  @if (serviceIncludes(s).length) {
+                    <p class="service-requisitos-heading">Qué incluye</p>
+                    <ul class="service-requisitos-list">
+                      @for (item of serviceIncludes(s); track item) {
+                        <li>{{ item }}</li>
+                      }
+                    </ul>
                   }
-                </ul>
+                  @if (serviceBonus(s).length) {
+                    <p class="service-requisitos-heading">Bonus</p>
+                    <ul class="service-requisitos-list">
+                      @for (item of serviceBonus(s); track item) {
+                        <li>{{ item }}</li>
+                      }
+                    </ul>
+                  }
+                </div>
               </details>
             </div>
-              <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
+              <div class="service-catalog-actions">
+                <button type="button" class="btn-copy small" (click)="startEditService(s)">Editar</button>
+                <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
+              </div>
             </div>
           }
         </div>
@@ -382,41 +404,103 @@
           <p class="empty">Aún no tienes servicios. Agrega el primero abajo.</p>
         }
         <hr class="divider">
-        <h4 class="section-sub">Nuevo servicio</h4>
+        <h4 class="section-sub">{{ editingServiceId ? 'Editar servicio' : 'Nuevo servicio' }}</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Nombre del trámite</label>
-            <input [(ngModel)]="newService.name" placeholder="Ej: Cambio de placas">
+            <input [(ngModel)]="serviceForm.name" placeholder="Ej: Cambio de placas">
           </div>
           <div class="form-group">
             <label>Tiempo estimado</label>
-            <input [(ngModel)]="newService.timeEstimate" placeholder="Ej: 2-3 días">
+            <input [(ngModel)]="serviceForm.timeEstimate" placeholder="Ej: 2-3 días">
           </div>
           <div class="form-group">
             <label>Precio (MXN)</label>
-            <input type="number" [(ngModel)]="newService.price" placeholder="Opcional" min="0">
+            <input type="number" [(ngModel)]="serviceForm.price" placeholder="Opcional" min="0">
             <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas vacío, en tu ficha pública se mostrará «Precio por definir».</p>
           </div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label>Documentos Requeridos (separados por coma)</label>
-          <input [(ngModel)]="newService.requiredDocumentsStr" placeholder="Ej: INE, Tarjeta de Circulación, Factura">
-          <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas en blanco, se pedirá por defecto: INE, Tarjeta de Circulación, Factura de Origen. Se cargan automáticamente en la cotización.</p>
+
+        <div class="quote-checklist-block">
+          <h5>Documentos requeridos</h5>
+          @if (serviceDocs.length === 0) {
+            <p class="card-desc">Agrega los documentos uno por uno. Si no agregas ninguno, se usarán INE, Tarjeta de Circulación y Factura de Origen.</p>
+          } @else {
+            @for (item of serviceDocs; track item.id) {
+              <div class="quote-checklist-row">
+                <input type="text" [(ngModel)]="item.text" placeholder="Ej: INE, Factura de origen">
+                <button type="button" class="quote-item-remove" title="Quitar" (click)="removeServiceChecklistItem('docs', item.id)">
+                  <svg lucideX [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
+          }
+          <div class="quote-checklist-actions">
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="addServiceChecklistItem('docs')">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agregar documento
+            </button>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label>Qué incluye (separados por coma)</label>
-          <input [(ngModel)]="newService.includesStr" placeholder="Ej: Alta de placas, Engomado, Cambio de propietario">
-          <p class="card-desc" style="font-size:11px; margin-top:4px;">Opcional. Se suman a tu plantilla al crear cotizaciones de este trámite.</p>
+
+        <div class="quote-checklist-block">
+          <h5>Qué incluye el trámite</h5>
+          @if (serviceIncludesList.length === 0) {
+            <p class="card-desc">Opcional. Aparece en tu ficha pública y en cotizaciones.</p>
+          } @else {
+            @for (item of serviceIncludesList; track item.id) {
+              <div class="quote-checklist-row">
+                <input type="text" [(ngModel)]="item.text" placeholder="Ej: Alta de placas, Engomado">
+                <button type="button" class="quote-item-remove" title="Quitar" (click)="removeServiceChecklistItem('includes', item.id)">
+                  <svg lucideX [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
+          }
+          <div class="quote-checklist-actions">
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="addServiceChecklistItem('includes')">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agregar ítem
+            </button>
+          </div>
         </div>
-        <div class="form-group" style="margin-bottom: 15px;">
-          <label>Bonus (separados por coma)</label>
-          <input [(ngModel)]="newService.bonusStr" placeholder="Ej: Envío gratis, MSI con tarjeta">
-          <p class="card-desc" style="font-size:11px; margin-top:4px;">Opcional. Beneficios extra que aparecerán en la cotización.</p>
+
+        <div class="quote-checklist-block">
+          <h5>Bonus</h5>
+          @if (serviceBonusList.length === 0) {
+            <p class="card-desc">Opcional. Beneficios extra visibles en tu ficha y cotizaciones.</p>
+          } @else {
+            @for (item of serviceBonusList; track item.id) {
+              <div class="quote-checklist-row">
+                <input type="text" [(ngModel)]="item.text" placeholder="Ej: Envío gratis, MSI con tarjeta">
+                <button type="button" class="quote-item-remove" title="Quitar" (click)="removeServiceChecklistItem('bonus', item.id)">
+                  <svg lucideX [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
+          }
+          <div class="quote-checklist-actions">
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="addServiceChecklistItem('bonus')">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Agregar bonus
+            </button>
+          </div>
         </div>
-        <button class="btn-copy btn-with-icon" (click)="addService()">
-          <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
-          Agregar servicio
-        </button>
+
+        <div class="service-form-actions">
+          @if (editingServiceId) {
+            <button type="button" class="deal-outline-btn" (click)="cancelEditService()">Cancelar</button>
+          }
+          <button class="btn-copy btn-with-icon" (click)="saveService()">
+            @if (editingServiceId) {
+              <svg lucideSquarePen [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+              Guardar cambios
+            } @else {
+              <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+              Agregar servicio
+            }
+          </button>
+        </div>
       </div>
     }
 

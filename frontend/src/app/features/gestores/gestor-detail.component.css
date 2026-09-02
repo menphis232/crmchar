@@ -209,14 +209,28 @@ app-gestor-showcase-gallery {
 }
 .service-price span { font-size: 12px; color: rgba(255, 255, 255, 0.5); font-family: var(--f-ui); }
 .service-price-tbd {
-  font-size: 14px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.72);
   font-family: var(--f-ui);
   font-weight: 500;
   letter-spacing: 0.02em;
   text-align: right;
-  max-width: 140px;
-  line-height: 1.35;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.service-requisitos-body {
+  margin-top: 8px;
+}
+.service-requisitos-heading {
+  margin: 10px 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.48);
+  font-family: var(--f-ui);
+}
+.service-requisitos-heading:first-child {
+  margin-top: 0;
 }
 .service-requisitos {
   margin-top: 10px;
@@ -641,8 +655,9 @@ aside {
   .ps-lbl { font-size: 9px; }
   .bio { font-size: 13px; }
   .section-title { font-size: 18px; }
-  .service-item { padding: 14px; flex-direction: column; align-items: flex-start; }
-  .service-price { margin-top: 8px; font-size: 18px; }
+  .service-item { padding: 14px; flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  .service-price { margin-top: 0; font-size: 16px; flex-shrink: 0; }
+  .service-price-tbd { font-size: 12px; }
   .review-item { padding: 16px 0; }
   .gallery-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
   .chatbot-widget { right: 12px; bottom: 12px; }
