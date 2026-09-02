@@ -120,6 +120,7 @@ export class PanelAdminComponent implements OnInit {
   stripePublicKey = '';
   stripeSecretKey = '';
   stripePriceId = '';
+  stripePriceIdGestor = '';
   stripeMsg = signal('');
   stripeSaving = signal(false);
 
@@ -186,6 +187,7 @@ export class PanelAdminComponent implements OnInit {
         this.stripePublicKey = me.stripe_public_key || '';
         this.stripeSecretKey = me.stripe_secret_key || '';
         this.stripePriceId = me.stripe_price_id || '';
+        this.stripePriceIdGestor = me.stripe_price_id_gestor || '';
         
         const rawApiKey = me.ai_api_key || '';
         try {
@@ -611,7 +613,8 @@ export class PanelAdminComponent implements OnInit {
     this.adminService.updateMyProfile({
       stripe_public_key: this.stripePublicKey,
       stripe_secret_key: this.stripeSecretKey,
-      stripe_price_id: this.stripePriceId
+      stripe_price_id: this.stripePriceId,
+      stripe_price_id_gestor: this.stripePriceIdGestor,
     }).subscribe({
       next: (res) => {
         this.auth.user.set(res.user);

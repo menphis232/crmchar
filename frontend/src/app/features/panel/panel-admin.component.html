@@ -794,7 +794,7 @@
           <svg lucideCreditCard [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Configuración de Pagos y Suscripción
         </h2>
-        <p class="card-desc">Define las claves de Stripe y el precio de suscripción mensual. Al activar esto, los gestores y concesionarias deberán pagar antes de activar su cuenta.</p>
+        <p class="card-desc">Define las claves de Stripe y el precio de suscripción por tipo de cuenta. Consultor y concesionaria usan productos distintos.</p>
 
         <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 20px 0 14px;">Claves de API de Stripe</h4>
         <div class="stripe-settings">
@@ -808,18 +808,23 @@
           </div>
         </div>
 
-        <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 24px 0 14px;">Stripe Price ID</h4>
+        <h4 style="font-family: var(--f-ui); font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 24px 0 14px;">Price ID por tipo de cuenta</h4>
         <div class="stripe-settings">
-          <div class="form-group" style="grid-column: 1 / -1;">
-            <label>Price ID de la Suscripción (ej. price_1Pxx...)</label>
+          <div class="form-group">
+            <label>Price ID — Concesionaria</label>
             <input type="text" [(ngModel)]="stripePriceId" placeholder="price_1Pxx...">
-            <p style="margin: 6px 0 0; font-size: 11px; color: var(--muted);">Este ID se obtiene desde tu panel de Stripe > Catálogo de Productos.</p>
+            <p style="margin: 6px 0 0; font-size: 11px; color: var(--muted);">Producto que se cobra al registrar una concesionaria.</p>
+          </div>
+          <div class="form-group">
+            <label>Price ID — Consultor</label>
+            <input type="text" [(ngModel)]="stripePriceIdGestor" placeholder="price_1Pxx...">
+            <p style="margin: 6px 0 0; font-size: 11px; color: var(--muted);">Producto distinto que se cobra al registrar un consultor.</p>
           </div>
         </div>
 
         <div class="stripe-settings-note deal-meta-with-icon">
           <svg lucideZap [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
-          <strong>Cómo funciona:</strong> Cuando guardas la configuración, al registrarse un nuevo gestor o concesionaria se les pedirá pagar la suscripción mediante Stripe Checkout. Su cuenta no se activará hasta que el pago sea confirmado por el webhook de Stripe.
+          <strong>Cómo funciona:</strong> Al registrarse, cada rol usa su propio Price ID de Stripe. La cuenta queda en pendiente de pago hasta confirmar el checkout (con trial de 7 días).
         </div>
 
         @if (stripeMsg()) {

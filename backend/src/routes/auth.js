@@ -14,6 +14,7 @@ import {
   createActivationCheckout,
   buildSubscriptionCheckoutParams,
   isSubscriptionSessionComplete,
+  resolveSubscriptionPriceId,
   STRIPE_TRIAL_DAYS,
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
@@ -73,7 +74,8 @@ router.post('/register', async (req, res) => {
 
     if (role === 'gestor' || role === 'concesionaria') {
       const admin = await getPlatformStripeAdmin();
-      if (admin) {
+      const priceId = resolveSubscriptionPriceId(admin, role);
+      if (admin && priceId) {
         try {
           initialStatus = 'pending_payment';
           const origin = getRegisterOrigin();
@@ -83,7 +85,7 @@ router.post('/register', async (req, res) => {
               userId,
               role,
               email: email.toLowerCase(),
-              priceId: admin.stripe_price_id,
+              priceId,
               origin,
               withTrial: true,
             }),
@@ -178,8 +180,17 @@ router.post('/resume-payment', authRequired, async (req, res) => {
     const admin = await getPlatformStripeAdmin();
     if (!admin) return res.status(400).json({ error: 'Stripe no configurado' });
 
+    const priceId = resolveSubscriptionPriceId(admin, user.role);
+    if (!priceId) {
+      return res.status(400).json({
+        error: user.role === 'gestor'
+          ? 'Falta el Price ID de suscripción del consultor en el panel admin'
+          : 'Falta el Price ID de suscripción de la concesionaria en el panel admin',
+      });
+    }
+
     const stripe = new Stripe(admin.stripe_secret_key);
-    const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+    const checkoutUrl = await createActivationCheckout(user, stripe, priceId);
 
     if (user.status !== 'pending_payment' && user.status !== 'deactivated') {
       await run("UPDATE users SET status = 'pending_payment' WHERE id = ?", [user.id]);
@@ -257,7 +268,7 @@ router.post('/forgot-password', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
@@ -342,7 +353,7 @@ router.patch('/me', authRequired, async (req, res) => {
       return res.status(403).json({ error: 'No tienes permiso para editar el perfil' });
     }
 
-    const { name, avatar_url, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, description, phone, address, map_embed_url, crm_stages } = req.body;
+    const { name, avatar_url, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, description, phone, address, map_embed_url, crm_stages } = req.body;
     
     const sets = [];
     const params = [];
@@ -354,6 +365,7 @@ router.patch('/me', authRequired, async (req, res) => {
     if (stripe_secret_key !== undefined) { sets.push('stripe_secret_key = ?'); params.push(stripe_secret_key || null); }
     if (stripe_public_key !== undefined) { sets.push('stripe_public_key = ?'); params.push(stripe_public_key || null); }
     if (stripe_price_id !== undefined) { sets.push('stripe_price_id = ?'); params.push(stripe_price_id || null); }
+    if (stripe_price_id_gestor !== undefined) { sets.push('stripe_price_id_gestor = ?'); params.push(stripe_price_id_gestor || null); }
     if (mp_access_token !== undefined) { sets.push('mp_access_token = ?'); params.push(mp_access_token || null); }
     if (mp_public_key !== undefined) { sets.push('mp_public_key = ?'); params.push(mp_public_key || null); }
     if (page_builder_config !== undefined) { sets.push('page_builder_config = ?'); params.push(JSON.stringify(page_builder_config)); }
@@ -397,7 +409,7 @@ router.patch('/me', authRequired, async (req, res) => {
       await run('UPDATE users SET avatar_url = ? WHERE id = ?', [avatar_url || null, req.user.id]);
     }
     
-    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {
       try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}

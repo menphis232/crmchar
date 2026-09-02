@@ -5,6 +5,7 @@ import { authRequired } from '../middleware/auth.js';
 import {
   getPlatformStripeAdmin,
   createActivationCheckout,
+  resolveSubscriptionPriceId,
 } from '../utils/subscription-lifecycle.js';
 import {
   tsToIso,
@@ -440,7 +441,15 @@ router.post('/resubscribe', async (req, res) => {
     }
 
     const stripe = new Stripe(admin.stripe_secret_key);
-    const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+    const priceId = resolveSubscriptionPriceId(admin, user.role);
+    if (!priceId) {
+      return res.status(400).json({
+        error: user.role === 'gestor'
+          ? 'Falta el Price ID de suscripción del consultor en el panel admin'
+          : 'Falta el Price ID de suscripción de la concesionaria en el panel admin',
+      });
+    }
+    const checkoutUrl = await createActivationCheckout(user, stripe, priceId);
     res.json({ success: true, checkoutUrl });
   } catch (err) {
     console.error('Billing resubscribe error:', err);

@@ -14,18 +14,29 @@ export function stripeRefId(value) {
 
 export async function getPlatformStripeAdmin() {
   return get(`
-    SELECT stripe_secret_key, stripe_price_id, stripe_public_key
+    SELECT stripe_secret_key, stripe_price_id, stripe_price_id_gestor, stripe_public_key
     FROM users
     WHERE role IN ('admin', 'super_admin')
       AND stripe_secret_key IS NOT NULL AND stripe_secret_key != ''
-      AND stripe_price_id IS NOT NULL AND stripe_price_id != ''
     ORDER BY CASE role WHEN 'super_admin' THEN 0 ELSE 1 END
     LIMIT 1
   `);
 }
 
+/** Price ID de suscripción según rol (consultor ≠ concesionaria). */
+export function resolveSubscriptionPriceId(admin, role) {
+  if (!admin) return null;
+  if (role === 'gestor') {
+    return admin.stripe_price_id_gestor || null;
+  }
+  if (role === 'concesionaria') {
+    return admin.stripe_price_id || null;
+  }
+  return admin.stripe_price_id || admin.stripe_price_id_gestor || null;
+}
+
 export function roleDisplayName(role) {
-  if (role === 'gestor') return 'Gestoría';
+  if (role === 'gestor') return 'Consultor';
   if (role === 'concesionaria') return 'Concesionaria';
   return 'Tu cuenta';
 }
@@ -123,8 +134,11 @@ export async function sendActivationEmailForUser(userId) {
   const admin = await getPlatformStripeAdmin();
   if (!admin) return { sent: false, reason: 'no_stripe' };
 
+  const priceId = resolveSubscriptionPriceId(admin, user.role);
+  if (!priceId) return { sent: false, reason: 'no_price_for_role' };
+
   const stripe = new Stripe(admin.stripe_secret_key);
-  const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+  const checkoutUrl = await createActivationCheckout(user, stripe, priceId);
   await sendActivationEmail(user.email, user.name, roleDisplayName(user.role), checkoutUrl);
   return { sent: true, checkoutUrl };
 }
@@ -140,12 +154,15 @@ export async function sendActivationEmailByEmail(email) {
   const admin = await getPlatformStripeAdmin();
   if (!admin) return { sent: false, reason: 'no_stripe' };
 
+  const priceId = resolveSubscriptionPriceId(admin, user.role);
+  if (!priceId) return { sent: false, reason: 'no_price_for_role' };
+
   if (user.status !== 'pending_payment') {
     await run("UPDATE users SET status = 'pending_payment' WHERE id = ?", [user.id]);
   }
 
   const stripe = new Stripe(admin.stripe_secret_key);
-  const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+  const checkoutUrl = await createActivationCheckout(user, stripe, priceId);
   await sendActivationEmail(user.email, user.name, roleDisplayName(user.role), checkoutUrl);
   return { sent: true };
 }
@@ -173,7 +190,9 @@ export async function handlePaymentFailed(subscriptionId) {
   if (!admin) return;
 
   const stripe = new Stripe(admin.stripe_secret_key);
-  const checkoutUrl = await createActivationCheckout(user, stripe, admin.stripe_price_id);
+  const priceId = resolveSubscriptionPriceId(admin, user.role);
+  if (!priceId) return;
+  const checkoutUrl = await createActivationCheckout(user, stripe, priceId);
 
   if (newCount >= MAX_PAYMENT_FAILURES) {
     await run(
