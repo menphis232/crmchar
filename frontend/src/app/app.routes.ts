@@ -15,7 +15,6 @@ export const routes: Routes = [
   { path: 'login/gestor', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'gestor' } },
   { path: 'login/concesionaria', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'concesionaria' } },
   { path: 'login/cliente', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente' } },
-  { path: 'registro', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente', mode: 'register' } },
   { path: 'login/perito', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'perito' } },
   { path: 'login/admin', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'admin' } },
   { path: 'registro-pendiente', loadComponent: () => import('./features/auth/registro-pendiente.component').then(m => m.RegistroPendienteComponent) },

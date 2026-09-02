@@ -56,12 +56,12 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
               </button>
               @if (loginMenuOpen()) {
                 <div class="login-menu-dropdown" role="menu">
-                  @for (opt of loginOptions; track opt.path + opt.label) {
+                  @for (opt of loginOptions; track opt.path) {
                     <button
                       type="button"
                       class="login-menu-item"
                       role="menuitem"
-                      (click)="goToLogin(opt.path, opt.mode)"
+                      (click)="goToLogin(opt.path)"
                     >
                       {{ opt.label }}
                     </button>
@@ -286,7 +286,6 @@ export class NavComponent implements OnInit {
 
   readonly loginOptions = [
     { label: 'Usuario', path: '/login/cliente' },
-    { label: 'Registrarse (Usuario)', path: '/login/cliente', mode: 'register' as const },
     { label: 'Concesionaria', path: '/login/concesionaria' },
     { label: 'Consultor', path: '/login/gestor' },
   ];
@@ -317,13 +316,9 @@ export class NavComponent implements OnInit {
     if (this.loginMenuOpen()) this.showDropdown.set(false);
   }
 
-  goToLogin(path: string, mode?: 'register') {
+  goToLogin(path: string) {
     this.loginMenuOpen.set(false);
     this.closeMobileMenu();
-    if (mode === 'register') {
-      this.router.navigate([path], { queryParams: { mode: 'register' } });
-      return;
-    }
     this.router.navigate([path]);
   }
 
