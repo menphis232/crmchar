@@ -45,11 +45,17 @@ export class LoginComponent implements OnInit, OnDestroy {
       return;
     }
     this.dataSub = this.route.data.subscribe(data => {
-      this.applyRole((data['role'] as string) || null);
+      this.applyRole((data['role'] as string) || null, data['mode'] !== 'register');
+      if (data['mode'] === 'register') {
+        this.mode.set('register');
+      }
     });
     this.querySub = this.route.queryParamMap.subscribe(params => {
       const queryRole = params.get('role');
-      if (queryRole) this.applyRole(queryRole);
+      if (queryRole) this.applyRole(queryRole, params.get('mode') !== 'register');
+      if (params.get('mode') === 'register') {
+        this.mode.set('register');
+      }
     });
   }
 
@@ -58,13 +64,15 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.dataSub?.unsubscribe();
   }
 
-  private applyRole(role: string | null) {
+  private applyRole(role: string | null, resetMode = true) {
     if (role === 'concesionaria' || role === 'gestor' || role === 'cliente' || role === 'admin' || role === 'perito') {
       this.role.set(role);
     } else {
       this.role.set('cliente');
     }
-    this.mode.set('login');
+    if (resetMode) {
+      this.mode.set('login');
+    }
   }
 
   roleLabel(): string {
@@ -128,7 +136,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       payload.name = this.name.trim();
       if (!payload.name) {
         this.loading.set(false);
-        this.error.set('El nombre comercial es obligatorio.');
+        this.error.set(role === 'cliente' ? 'El nombre completo es obligatorio.' : 'El nombre comercial es obligatorio.');
         return;
       }
     }

@@ -60,14 +60,17 @@
               <label>Teléfono</label>
               <input type="tel" [(ngModel)]="phone" placeholder="Ej: 5512345678" autocomplete="tel">
             </div>
-          } @else {
+          } @else if (role() === 'concesionaria') {
             <div class="form-group">
               <label>Nombre comercial</label>
-              <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
+              <input [(ngModel)]="name" placeholder="Ej: Autos del Norte">
             </div>
-            @if (role() === 'concesionaria') {
-              <p class="trial-banner">Empieza hoy tu PRUEBA GRATIS de 7 días</p>
-            }
+            <p class="trial-banner">Empieza hoy tu PRUEBA GRATIS de 7 días</p>
+          } @else if (role() === 'cliente') {
+            <div class="form-group">
+              <label>Nombre completo</label>
+              <input [(ngModel)]="name" placeholder="Ej: Juan Pérez" autocomplete="name">
+            </div>
           }
         }
 
@@ -102,9 +105,9 @@
         </button>
 
         <div class="auth-links">
-          @if (mode() === 'login' && role() !== 'admin' && role() !== 'cliente') {
+          @if (mode() === 'login' && role() !== 'admin' && role() !== 'perito') {
             <button type="button" class="link-btn" (click)="mode.set('register')">¿No tienes cuenta? Regístrate</button>
-          } @else if (role() !== 'admin' && role() !== 'cliente') {
+          } @else if (role() !== 'admin' && role() !== 'perito') {
             <button type="button" class="link-btn" (click)="mode.set('login')">¿Ya tienes cuenta? Inicia sesión</button>
           }
         </div>
