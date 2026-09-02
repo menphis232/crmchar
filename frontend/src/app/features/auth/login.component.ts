@@ -23,6 +23,10 @@ export class LoginComponent implements OnInit, OnDestroy {
   email = '';
   password = '';
   name = '';
+  firstName = '';
+  lastName = '';
+  companyName = '';
+  phone = '';
   error = signal('');
   successMsg = signal('');
   loading = signal(false);
@@ -92,14 +96,62 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.error.set('');
     this.successMsg.set('');
-    this.auth.register({ email: this.email, password: this.password, role: this.role(), name: this.name }).subscribe({
+
+    const role = this.role();
+    const payload: {
+      email: string;
+      password: string;
+      role: string;
+      name?: string;
+      firstName?: string;
+      lastName?: string;
+      companyName?: string;
+      phone?: string;
+    } = {
+      email: this.email.trim(),
+      password: this.password,
+      role,
+    };
+
+    if (role === 'gestor') {
+      payload.firstName = this.firstName.trim();
+      payload.lastName = this.lastName.trim();
+      payload.companyName = this.companyName.trim();
+      payload.phone = this.phone.trim();
+      payload.name = this.companyName.trim();
+      if (!payload.firstName || !payload.lastName || !payload.companyName || !payload.phone) {
+        this.loading.set(false);
+        this.error.set('Completa nombre, apellido, empresa, teléfono, correo y contraseña.');
+        return;
+      }
+    } else {
+      payload.name = this.name.trim();
+      if (!payload.name) {
+        this.loading.set(false);
+        this.error.set('El nombre comercial es obligatorio.');
+        return;
+      }
+    }
+
+    if (!payload.email || payload.password.length < 6) {
+      this.loading.set(false);
+      this.error.set('Ingresa un correo válido y una contraseña de al menos 6 caracteres.');
+      return;
+    }
+
+    this.auth.register(payload).subscribe({
       next: (res) => {
         this.loading.set(false);
         if (res.requirePayment && res.checkoutUrl) {
           window.location.href = res.checkoutUrl;
-        } else {
-          this.auth.redirectByRole();
+          return;
         }
+        if (res.requirePayment && !res.checkoutUrl) {
+          this.error.set(res.error || 'Cuenta creada. Completa el pago desde el panel.');
+          this.auth.redirectByRole();
+          return;
+        }
+        this.auth.redirectByRole();
       },
       error: (e) => {
         this.loading.set(false);

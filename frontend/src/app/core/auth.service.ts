@@ -30,10 +30,28 @@ export class AuthService {
     return this.http.post<{ success: boolean }>(`${environment.apiUrl}/auth/forgot-password`, { email });
   }
 
-  register(data: { email: string; password: string; role: string; name: string }) {
-    return this.http.post<{ token?: string; user?: User; requirePayment?: boolean; checkoutUrl?: string }>(`${environment.apiUrl}/auth/register`, data).pipe(
+  register(data: {
+    email: string;
+    password: string;
+    role: string;
+    name?: string;
+    firstName?: string;
+    lastName?: string;
+    companyName?: string;
+    phone?: string;
+  }) {
+    return this.http.post<{
+      token?: string;
+      user?: User;
+      requirePayment?: boolean;
+      checkoutUrl?: string;
+      error?: string;
+    }>(`${environment.apiUrl}/auth/register`, data).pipe(
       tap(res => {
         if (!res.requirePayment && res.token && res.user) {
+          this.setSession(res.token, res.user);
+        } else if (res.requirePayment && !res.checkoutUrl && res.token && res.user) {
+          // Cuenta creada pero Stripe falló: entrar al panel bloqueado para poder pagar.
           this.setSession(res.token, res.user);
         }
       })

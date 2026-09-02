@@ -49,12 +49,19 @@ const router = Router();
 
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, role, name } = req.body;
-    if (!email || !password || !role || !name) {
+    const {
+      email,
+      password,
+      role,
+      name,
+      firstName,
+      lastName,
+      companyName,
+      phone,
+    } = req.body;
+
+    if (!email || !password || !role) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
-    }
-    if (String(name).trim().length < 2) {
-      return res.status(400).json({ error: 'El nombre comercial es obligatorio' });
     }
     if (String(password).length < 6) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
@@ -62,81 +69,117 @@ router.post('/register', async (req, res) => {
     if (!['gestor', 'concesionaria', 'cliente'].includes(role)) {
       return res.status(400).json({ error: 'Rol inválido' });
     }
+
+    let displayName = String(name || '').trim();
+    let company = String(companyName || name || '').trim();
+    let contactFirst = String(firstName || '').trim();
+    let contactLast = String(lastName || '').trim();
+    let phoneValue = String(phone || '').trim();
+
+    if (role === 'gestor') {
+      company = String(companyName || name || '').trim();
+      if (!contactFirst || contactFirst.length < 2) {
+        return res.status(400).json({ error: 'El nombre es obligatorio' });
+      }
+      if (!contactLast || contactLast.length < 2) {
+        return res.status(400).json({ error: 'El apellido es obligatorio' });
+      }
+      if (!company || company.length < 2) {
+        return res.status(400).json({ error: 'El nombre de la empresa es obligatorio' });
+      }
+      if (!phoneValue || phoneValue.length < 8) {
+        return res.status(400).json({ error: 'El teléfono es obligatorio' });
+      }
+      displayName = `${contactFirst} ${contactLast}`.trim();
+    } else {
+      if (!displayName || displayName.length < 2) {
+        return res.status(400).json({ error: 'El nombre comercial es obligatorio' });
+      }
+      company = displayName;
+    }
+
     const exists = await get('SELECT id FROM users WHERE email = ?', [email.toLowerCase()]);
     if (exists) return res.status(409).json({ error: 'El email ya está registrado' });
-    
+
     const userId = uuid();
-    
-    // Check if we need to enforce subscription payment
     let stripeCheckoutUrl = null;
     let stripeSessionId = null;
     let initialStatus = 'active';
 
-    if (role === 'gestor' || role === 'concesionaria') {
-      const admin = await getPlatformStripeAdmin();
-      const priceId = resolveSubscriptionPriceId(admin, role);
-      if (admin && priceId) {
-        try {
-          initialStatus = 'pending_payment';
-          const origin = getRegisterOrigin();
-          const stripe = new Stripe(admin.stripe_secret_key);
-          const session = await stripe.checkout.sessions.create(
-            buildSubscriptionCheckoutParams({
-              userId,
-              role,
-              email: email.toLowerCase(),
-              priceId,
-              origin,
-              withTrial: true,
-            }),
-          );
-          stripeCheckoutUrl = session.url;
-          stripeSessionId = session.id;
-        } catch (stripeErr) {
-          console.error('Stripe register error:', stripeErr);
-          return res.status(400).json({
-            error: 'No se pudo iniciar el pago de suscripción. Revisa la configuración de Stripe (clave y Price ID) en el panel admin.',
-            details: stripeErr.message,
-          });
-        }
-      }
-    }
+    const admin = (role === 'gestor' || role === 'concesionaria')
+      ? await getPlatformStripeAdmin()
+      : null;
+    const priceId = resolveSubscriptionPriceId(admin, role);
+    const needsPayment = !!(admin && priceId);
+    if (needsPayment) initialStatus = 'pending_payment';
 
     const hash = bcrypt.hashSync(password, 10);
-    await run('INSERT INTO users (id, email, password_hash, role, name, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [userId, email.toLowerCase(), hash, role, String(name).trim(), initialStatus]);
+    await run(
+      'INSERT INTO users (id, email, password_hash, role, name, status, phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userId, email.toLowerCase(), hash, role, displayName, initialStatus, phoneValue || null],
+    );
 
     if (role === 'concesionaria') {
-      const baseSlug = slugify(name) || 'concesionaria';
+      const baseSlug = slugify(company) || 'concesionaria';
       const slug = await uniqueUserSlug(get, baseSlug);
       await run('UPDATE users SET slug = ? WHERE id = ?', [slug, userId]);
     }
 
     if (role === 'gestor') {
-      const slugBase = slugify(name) || 'gestor';
+      const slugBase = slugify(company) || 'gestor';
       const slug = await uniqueGestorSlug(get, slugBase);
+      const contactLine = `Contacto: ${displayName}`;
       await run(`
-        INSERT INTO gestores (id, user_id, slug, name, location, state, banner_url, photo_url, bio, whatsapp, schedule)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO gestores (id, user_id, slug, name, location, state, banner_url, photo_url, bio, phone, whatsapp, schedule)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
-        uuid(), userId, slug, String(name).trim(),
+        uuid(), userId, slug, company,
         'Ciudad de México', 'CDMX',
         'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=600',
         'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200',
-        'Gestoría vehicular certificada.', '525500000000', 'Lunes a Viernes de 9am a 6pm',
+        contactLine,
+        phoneValue,
+        phoneValue,
+        'Lunes a Viernes de 9am a 6pm',
       ]);
     }
 
-    if (stripeSessionId) {
-      await run('UPDATE users SET stripe_checkout_session_id = ? WHERE id = ?', [stripeSessionId, userId]).catch(() => {});
-    }
+    if (needsPayment) {
+      try {
+        const origin = getRegisterOrigin();
+        const stripe = new Stripe(admin.stripe_secret_key);
+        // Consultor: cobro inmediato. Concesionaria: trial 7 días (sin cambios).
+        const withTrial = role === 'concesionaria';
+        const session = await stripe.checkout.sessions.create(
+          buildSubscriptionCheckoutParams({
+            userId,
+            role,
+            email: email.toLowerCase(),
+            priceId,
+            origin,
+            withTrial,
+          }),
+        );
+        stripeCheckoutUrl = session.url;
+        stripeSessionId = session.id;
+        await run('UPDATE users SET stripe_checkout_session_id = ? WHERE id = ?', [stripeSessionId, userId]).catch(() => {});
+      } catch (stripeErr) {
+        console.error('Stripe register error:', stripeErr);
+        const user = { id: userId, email: email.toLowerCase(), role, name: displayName, status: initialStatus };
+        return res.status(201).json({
+          requirePayment: true,
+          checkoutUrl: null,
+          token: signToken(user),
+          user,
+          error: 'Tu cuenta se creó, pero no se pudo abrir el pago. Inicia sesión y completa el pago desde el panel.',
+          details: stripeErr.message,
+        });
+      }
 
-    if (stripeCheckoutUrl) {
-      // No enviar correo aquí: el usuario va directo a pagar. El correo se envía solo si cancela o falla el pago.
       return res.status(201).json({ requirePayment: true, checkoutUrl: stripeCheckoutUrl });
     }
 
-    const user = { id: userId, email: email.toLowerCase(), role, name: String(name).trim() };
+    const user = { id: userId, email: email.toLowerCase(), role, name: displayName };
     res.status(201).json({ token: signToken(user), user });
   } catch (err) {
     console.error('Register error:', err);

@@ -41,22 +41,44 @@
         </h2>
 
         @if (mode() === 'register' && role() !== 'admin') {
-          <div class="form-group">
-            <label>Nombre comercial</label>
-            <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
-          </div>
-          @if (role() === 'concesionaria' || role() === 'gestor') {
-            <p class="trial-banner">Empieza hoy tu PRUEBA GRATIS de 7 días</p>
+          @if (role() === 'gestor') {
+            <p class="pay-banner">Completa tus datos y activa tu plan. Sin periodo de prueba: al registrarte pasarás al pago.</p>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label>Nombre</label>
+                <input [(ngModel)]="firstName" placeholder="Tu nombre" autocomplete="given-name">
+              </div>
+              <div class="form-group">
+                <label>Apellido</label>
+                <input [(ngModel)]="lastName" placeholder="Tu apellido" autocomplete="family-name">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Nombre de la empresa</label>
+              <input [(ngModel)]="companyName" placeholder="Ej: Consultoría Vehicular MX" autocomplete="organization">
+            </div>
+            <div class="form-group">
+              <label>Teléfono</label>
+              <input type="tel" [(ngModel)]="phone" placeholder="Ej: 5512345678" autocomplete="tel">
+            </div>
+          } @else {
+            <div class="form-group">
+              <label>Nombre comercial</label>
+              <input [(ngModel)]="name" placeholder="Ej: Gestoría López">
+            </div>
+            @if (role() === 'concesionaria') {
+              <p class="trial-banner">Empieza hoy tu PRUEBA GRATIS de 7 días</p>
+            }
           }
         }
 
         <div class="form-group">
           <label>Email</label>
-          <input type="email" [(ngModel)]="email" placeholder="tu@email.com">
+          <input type="email" [(ngModel)]="email" placeholder="tu@email.com" autocomplete="email">
         </div>
         <div class="form-group">
           <label>Contraseña</label>
-          <input type="password" [(ngModel)]="password" placeholder="••••••••">
+          <input type="password" [(ngModel)]="password" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
           @if (mode() === 'login') {
             <div class="forgot-row">
               <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña?</button>
@@ -73,7 +95,11 @@
           [disabled]="loading()"
           (click)="mode() === 'login' || role() === 'admin' ? submitLogin() : submitRegister()"
         >
-          {{ loading() ? 'Procesando...' : (mode() === 'login' || role() === 'admin' ? 'ENTRAR' : 'CREAR CUENTA') }}
+          {{ loading() ? 'Procesando...' : (
+            mode() === 'login' || role() === 'admin'
+              ? 'ENTRAR'
+              : (role() === 'gestor' ? 'CREAR CUENTA Y PAGAR' : 'CREAR CUENTA')
+          ) }}
         </button>
 
         <div class="auth-links">

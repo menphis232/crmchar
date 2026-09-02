@@ -326,6 +326,29 @@
   border-radius: 6px;
 }
 
+.pay-banner {
+  color: #fbbf24;
+  font-size: 13px;
+  text-align: center;
+  margin: 0 0 16px;
+  background: rgba(251, 191, 36, 0.12);
+  padding: 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 520px) {
+  .form-row-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .forgot-row {
   text-align: right;
   margin-top: 6px;
