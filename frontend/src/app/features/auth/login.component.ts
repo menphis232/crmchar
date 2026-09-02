@@ -69,7 +69,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   roleLabel(): string {
     const map: Record<LoginRole, string> = {
-      cliente: 'Cliente',
+      cliente: 'Usuario',
       gestor: 'Consultor',
       concesionaria: 'Concesionaria',
       admin: 'Administrador',

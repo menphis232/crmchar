@@ -285,8 +285,7 @@ export class NavComponent implements OnInit {
   readonly tvmLogo = TVM_LOGO_URL;
 
   readonly loginOptions = [
-    { label: 'Administrador', path: '/login/admin' },
-    { label: 'Cliente', path: '/login/cliente' },
+    { label: 'Usuario', path: '/login/cliente' },
     { label: 'Concesionaria', path: '/login/concesionaria' },
     { label: 'Consultor', path: '/login/gestor' },
   ];
