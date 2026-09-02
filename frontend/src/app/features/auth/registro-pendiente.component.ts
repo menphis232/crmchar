@@ -2,49 +2,106 @@ import { Component, OnInit, signal, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-registro-pendiente',
   standalone: true,
   imports: [RouterLink],
   template: `
-    <div class="auth-container">
-      <div class="auth-card" style="text-align: center;">
-        <h2 style="color: var(--primary);">Registro Pendiente</h2>
-        <p style="margin: 16px 0; color: var(--muted); line-height: 1.5;">
-          ¡Tu cuenta fue creada con éxito! Sin embargo, no completaste el pago.
-        </p>
-        <p style="margin: 16px 0; color: var(--muted); line-height: 1.5;">
-          Para activar tu cuenta y usar el panel, completa tu suscripción mensual.
-        </p>
-        <div style="background: rgba(200, 169, 74, 0.1); padding: 16px; border-radius: 8px; border: 1px solid rgba(200, 169, 74, 0.3); margin: 24px 0;">
-          @if (emailSent()) {
-            <p style="margin: 0; font-size: 14px;">
-              Te enviamos un correo a <strong style="color: white;">{{ email() }}</strong> con el enlace para activar tu cuenta.
-            </p>
-          } @else if (sending()) {
-            <p style="margin: 0; font-size: 14px; color: var(--muted);">Enviando correo de activación…</p>
-          } @else {
-            <p style="margin: 0; font-size: 14px; color: #ff6b6b;">{{ error() || 'No se pudo enviar el correo. Inicia sesión e intenta desde el panel.' }}</p>
+    <div class="login-page login-page--portal">
+      <a [href]="tvmMainSite" class="btn-back-top">← VOLVER AL INICIO</a>
+
+      <div class="login-container">
+        <div class="login-logo">
+          <a [href]="tvmMainSite">
+            <img [src]="tvmLogo" alt="Trámites Vehiculares de México" />
+          </a>
+        </div>
+        <div class="login-title">ACCESO AL PORTAL</div>
+
+        <div class="auth-form pending-form">
+          <h2 class="auth-subtitle">Pago pendiente</h2>
+          <p class="auth-hint">
+            Tu cuenta ya está creada. Para activarla y usar el panel, completa el pago de tu suscripción.
+          </p>
+
+          <div class="pending-box">
+            @if (emailSent()) {
+              <p class="pending-msg">
+                Te enviamos un correo a
+                <strong>{{ email() }}</strong>
+                con el enlace para completar el pago.
+              </p>
+            } @else if (sending()) {
+              <p class="pending-msg muted">Enviando correo de activación…</p>
+            } @else if (error()) {
+              <p class="pending-msg error">{{ error() }}</p>
+            } @else {
+              <p class="pending-msg muted">
+                Inicia sesión con tu correo y contraseña; el panel te pedirá completar el pago.
+              </p>
+            }
+          </div>
+
+          <a routerLink="/login/gestor" class="btn-submit pending-btn">IR AL LOGIN</a>
+
+          @if (email()) {
+            <div class="auth-links">
+              <button type="button" class="link-btn" [disabled]="sending()" (click)="resend()">
+                {{ sending() ? 'Enviando…' : 'Reenviar enlace de pago' }}
+              </button>
+            </div>
           }
         </div>
-        <a routerLink="/login" class="btn-copy full" style="text-decoration: none; display: inline-block;">
-          IR AL LOGIN
-        </a>
       </div>
     </div>
   `,
-  styleUrl: './login.component.css'
+  styles: [`
+    .pending-form { text-align: center; }
+    .pending-box {
+      margin: 0 0 22px;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid rgba(200, 169, 74, 0.35);
+      background: rgba(200, 169, 74, 0.1);
+    }
+    .pending-msg {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.85);
+      word-break: break-word;
+    }
+    .pending-msg strong {
+      color: #c8a94a;
+      font-weight: 700;
+    }
+    .pending-msg.muted { color: rgba(255, 255, 255, 0.55); }
+    .pending-msg.error { color: #ff6b6b; }
+    .pending-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+    .auth-links { margin-top: 16px; }
+    .link-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  `],
+  styleUrl: './login.component.css',
 })
 export class RegistroPendienteComponent implements OnInit {
-  email = signal<string>('');
+  readonly tvmMainSite = TVM_MAIN_SITE_URL;
+  readonly tvmLogo = TVM_LOGO_URL;
+
+  email = signal('');
   emailSent = signal(false);
   sending = signal(false);
   error = signal('');
 
   private http = inject(HttpClient);
-
-  constructor(private route: ActivatedRoute) {}
+  private route = inject(ActivatedRoute);
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
@@ -55,8 +112,15 @@ export class RegistroPendienteComponent implements OnInit {
     });
   }
 
+  resend() {
+    const email = this.email();
+    if (!email || this.sending()) return;
+    this.sendActivationEmail(email);
+  }
+
   private sendActivationEmail(email: string) {
     this.sending.set(true);
+    this.error.set('');
     this.http.post<{ success: boolean }>(`${environment.apiUrl}/auth/send-activation-email`, { email }).subscribe({
       next: () => {
         this.sending.set(false);
@@ -68,7 +132,7 @@ export class RegistroPendienteComponent implements OnInit {
           this.emailSent.set(true);
           return;
         }
-        this.error.set(err.error?.error || 'Error al enviar correo');
+        this.error.set(err.error?.error || 'No se pudo enviar el correo. Inicia sesión e intenta desde el panel.');
       },
     });
   }
