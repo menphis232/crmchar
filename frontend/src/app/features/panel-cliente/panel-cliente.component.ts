@@ -144,14 +144,20 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   tramitesLoading = signal(false);
   historialLoading = signal(false);
   dashboardLoading = signal(true);
+  /** Feed reels estilo Instagram — solo dashboard */
+  knowledgeFeedPosts = signal<KnowledgePost[]>([]);
+  knowledgeFeedLoading = signal(false);
+  knowledgeFeedLoadingMore = signal(false);
+  knowledgeFeedHasMore = signal(false);
+  private knowledgeFeedPage = 1;
+  readonly knowledgeFeedPageSize = 5;
+  @ViewChild('knowledgeReelsBox') knowledgeReelsBox?: ElementRef<HTMLDivElement>;
+
+  /** Grid paginado — solo tab Área de Conocimiento */
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
   knowledgeMeta = signal({ page: 1, total: 0, totalPages: 1, limit: 10 });
   readonly knowledgePageSize = 10;
-
-  knowledgePreviewPosts = signal<KnowledgePost[]>([]);
-  knowledgePreviewLoading = signal(false);
-  readonly knowledgePreviewSize = 3;
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -249,7 +255,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadInvoices();
     this.loadWallet();
     this.loadVehicles();
-    this.loadKnowledgePreview();
+    this.loadKnowledgeFeed(true);
     void this.oneSignal.refreshPermissionState();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
@@ -303,23 +309,49 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (tab === 'conocimiento') {
       this.loadKnowledgePage(1);
     }
-    if (tab === 'dashboard') {
-      this.loadKnowledgePreview();
+    if (tab === 'dashboard' && !this.knowledgeFeedPosts().length) {
+      this.loadKnowledgeFeed(true);
     }
   }
 
-  loadKnowledgePreview() {
-    this.knowledgePreviewLoading.set(true);
-    this.knowledgeService.feed(1, this.knowledgePreviewSize).subscribe({
+  loadKnowledgeFeed(reset = false) {
+    if (reset) {
+      this.knowledgeFeedPage = 1;
+      this.knowledgeFeedHasMore.set(false);
+      if (!this.knowledgeFeedPosts().length) this.knowledgeFeedLoading.set(true);
+    } else {
+      if (this.knowledgeFeedLoadingMore() || !this.knowledgeFeedHasMore()) return;
+      this.knowledgeFeedLoadingMore.set(true);
+    }
+
+    const page = reset ? 1 : this.knowledgeFeedPage + 1;
+    this.knowledgeService.feed(page, this.knowledgeFeedPageSize).subscribe({
       next: res => {
-        this.knowledgePreviewPosts.set(res.items);
-        this.knowledgePreviewLoading.set(false);
+        if (reset) {
+          this.knowledgeFeedPosts.set(res.items);
+        } else {
+          const existing = new Set(this.knowledgeFeedPosts().map(p => p.id));
+          const merged = [...this.knowledgeFeedPosts(), ...res.items.filter(p => !existing.has(p.id))];
+          this.knowledgeFeedPosts.set(merged);
+        }
+        this.knowledgeFeedPage = res.page;
+        this.knowledgeFeedHasMore.set(res.hasMore);
+        this.knowledgeFeedLoading.set(false);
+        this.knowledgeFeedLoadingMore.set(false);
       },
       error: () => {
-        this.knowledgePreviewPosts.set([]);
-        this.knowledgePreviewLoading.set(false);
+        if (reset) this.knowledgeFeedPosts.set([]);
+        this.knowledgeFeedLoading.set(false);
+        this.knowledgeFeedLoadingMore.set(false);
       },
     });
+  }
+
+  onKnowledgeReelsScroll(event: Event) {
+    const el = event.target as HTMLElement;
+    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
+      this.loadKnowledgeFeed(false);
+    }
   }
 
   loadKnowledgePage(page: number) {
@@ -383,7 +415,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
             ? { ...p, likedByMe: res.likedByMe, likesCount: res.likesCount }
             : p);
         this.knowledgePosts.update(patch);
-        this.knowledgePreviewPosts.update(patch);
+        this.knowledgeFeedPosts.update(patch);
       },
       error: () => this.toast.error('No se pudo guardar el me gusta', 'Error'),
     });
@@ -653,7 +685,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   loadDashboard() {
     this.dashboardLoading.set(true);
-    this.loadKnowledgePreview();
+    this.loadKnowledgeFeed(true);
     this.http.get<{ total: number; active: number; closed: number }>(`${environment.apiUrl}/client/deals/stats`).subscribe({
       next: stats => {
         this.stats.set(stats);

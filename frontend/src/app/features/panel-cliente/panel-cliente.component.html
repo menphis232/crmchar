@@ -291,7 +291,7 @@
                 <svg lucideBookOpen [size]="15" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
                 Para ti
               </h2>
-              <p class="knowledge-feed-sub">Últimos contenidos publicados</p>
+              <p class="knowledge-feed-sub">Desliza hacia abajo · estilo reels</p>
             </div>
             <button type="button" class="client-section-link" (click)="setTab('conocimiento')">
               Ver todos
@@ -299,16 +299,25 @@
             </button>
           </div>
 
-          @if (knowledgePreviewLoading()) {
+          @if (knowledgeFeedLoading()) {
             <div class="client-empty knowledge-empty-sm">Cargando contenido…</div>
-          } @else if (!knowledgePreviewPosts().length) {
+          } @else if (!knowledgeFeedPosts().length) {
             <div class="client-empty knowledge-empty-sm">
               <strong>Pronto habrá contenido aquí</strong>
             </div>
           } @else {
-            <div class="knowledge-grid knowledge-grid--preview">
-              @for (post of knowledgePreviewPosts(); track post.id) {
-                <ng-container *ngTemplateOutlet="knowledgeGridCard; context: { post }" />
+            <div
+              class="knowledge-reels knowledge-reels--ig"
+              #knowledgeReelsBox
+              (scroll)="onKnowledgeReelsScroll($event)"
+            >
+              @for (post of knowledgeFeedPosts(); track post.id) {
+                <ng-container *ngTemplateOutlet="knowledgeReelCard; context: { post, variant: 'ig' }" />
+              }
+              @if (knowledgeFeedLoadingMore()) {
+                <div class="knowledge-reels-status">Cargando más…</div>
+              } @else if (knowledgeFeedHasMore()) {
+                <div class="knowledge-reels-status knowledge-reels-hint">Desliza hacia abajo para ver más</div>
               }
             </div>
           }
@@ -1263,6 +1272,49 @@
       }
     </div>
   </div>
+</ng-template>
+
+<ng-template #knowledgeReelCard let-post="post" let-variant="variant">
+  @if (variant === 'ig') {
+    <article class="knowledge-reel knowledge-reel--ig" (click)="openKnowledge(post)">
+      <div class="knowledge-reel-media">
+        @if (coverFor(post)) {
+          <img [src]="coverFor(post)" [alt]="post.title" />
+        } @else {
+          <div class="knowledge-slide-placeholder">
+            <svg lucidePlay [size]="36" aria-hidden="true"></svg>
+          </div>
+        }
+        @if (post.type === 'video') {
+          <span class="knowledge-play-badge knowledge-play-badge--lg">
+            <svg lucidePlay [size]="22" aria-hidden="true"></svg>
+          </span>
+        }
+        <div class="knowledge-reel-overlay">
+          <div class="knowledge-reel-overlay-bottom">
+            <span class="knowledge-type-chip">{{ typeLabel(post.type) }}</span>
+            <h3>{{ post.title }}</h3>
+            @if (post.body) {
+              <p>{{ plainSnippet(post.body, 140) }}</p>
+            }
+            @if (post.createdAt) {
+              <time class="knowledge-reel-date">{{ post.createdAt | date:'dd MMM yyyy' }}</time>
+            }
+          </div>
+          <div class="knowledge-reel-overlay-side" (click)="$event.stopPropagation()">
+            <button type="button" class="knowledge-ig-action" [class.liked]="post.likedByMe" (click)="toggleLike(post, $event)" title="Me gusta">
+              <svg lucideHeart [size]="22" aria-hidden="true"></svg>
+              <span>{{ post.likesCount || 0 }}</span>
+            </button>
+            <button type="button" class="knowledge-ig-action" (click)="shareWhatsApp(post, $event)" title="Compartir">
+              <svg lucideShare2 [size]="22" aria-hidden="true"></svg>
+              <span>Compartir</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  }
 </ng-template>
 
 <ng-template #knowledgeGridCard let-post="post">
