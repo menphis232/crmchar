@@ -2040,8 +2040,13 @@ export class CrmDealPanelComponent implements OnDestroy {
     const d = this.deal();
     if (!d) return;
     const label = d.contact?.name ? `${d.title} (${d.contact.name})` : d.title;
-    if (!confirm(`¿Eliminar "${label}" del embudo? Esta acción no se puede deshacer.`)) return;
-    this.crmService.deleteDeal(d.id).subscribe({
+    void this.confirmAndDeleteDeal(d.id, label);
+  }
+
+  private async confirmAndDeleteDeal(dealId: string, label: string) {
+    const ok = await this.toast.confirmDelete(label);
+    if (!ok) return;
+    this.crmService.deleteDeal(dealId).subscribe({
       next: () => {
         this.toast.success('Eliminado del embudo');
         this.deleted.emit();

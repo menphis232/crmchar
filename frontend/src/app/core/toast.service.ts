@@ -62,7 +62,50 @@ export class ToastService {
       cancelButtonText: 'Cancelar',
       background: '#1a1a1a',
       color: '#e2e2e2',
+      customClass: { popup: 'swal-dark-modal' },
+      reverseButtons: true,
     });
     return result.isConfirmed;
+  }
+
+  async confirmDelete(itemLabel: string, options?: {
+    title?: string;
+    subtitle?: string;
+    confirmText?: string;
+  }): Promise<boolean> {
+    const title = options?.title || '¿Eliminar del embudo?';
+    const subtitle = options?.subtitle || 'Esta acción no se puede deshacer.';
+    const safeLabel = this.escapeHtml(itemLabel);
+    const result = await Swal.fire({
+      title,
+      html: `
+        <p class="swal-delete-sub">${subtitle}</p>
+        <p class="swal-delete-item">${safeLabel}</p>
+      `,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: options?.confirmText || 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
+      confirmButtonColor: '#e63d2f',
+      cancelButtonColor: '#2a2a2a',
+      background: '#111111',
+      color: '#e8e8e8',
+      customClass: {
+        popup: 'swal-dark-modal swal-delete-modal',
+        confirmButton: 'swal-btn-delete',
+        cancelButton: 'swal-btn-cancel',
+      },
+      reverseButtons: true,
+      focusCancel: true,
+    });
+    return result.isConfirmed;
+  }
+
+  private escapeHtml(text: string): string {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 }

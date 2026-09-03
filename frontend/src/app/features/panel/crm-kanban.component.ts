@@ -637,8 +637,12 @@ export class CrmKanbanComponent {
   requestDeleteDeal(deal: CrmDeal, event: Event) {
     event.stopPropagation();
     const label = deal.contact?.name ? `${deal.title} (${deal.contact.name})` : deal.title;
-    if (!confirm(`¿Eliminar "${label}" del embudo? Esta acción no se puede deshacer.`)) return;
-    this.dealDelete.emit(deal);
+    void this.confirmAndDeleteDeal(deal, label);
+  }
+
+  private async confirmAndDeleteDeal(deal: CrmDeal, label: string) {
+    const ok = await this.toast.confirmDelete(label);
+    if (ok) this.dealDelete.emit(deal);
   }
 
   stopClick(event: Event) { event.stopPropagation(); }

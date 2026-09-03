@@ -71,6 +71,70 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--gold) !important;
 }
 
+/* Modal de confirmación (SweetAlert2) */
+.swal-dark-modal {
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.65) !important;
+  font-family: var(--f-ui, 'Spartan', sans-serif) !important;
+}
+
+.swal-dark-modal .swal2-title {
+  color: #ffffff !important;
+  font-family: var(--f-display, 'Spartan', sans-serif) !important;
+  font-size: 1.25rem !important;
+  letter-spacing: 0.04em !important;
+}
+
+.swal-dark-modal .swal2-html-container {
+  color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.swal-delete-modal .swal2-icon.swal2-warning {
+  border-color: rgba(230, 61, 47, 0.45) !important;
+  color: #e63d2f !important;
+}
+
+.swal-delete-sub {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.5;
+}
+
+.swal-delete-item {
+  margin: 0;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.swal-dark-modal .swal2-actions {
+  gap: 10px;
+  margin-top: 1.5em;
+}
+
+.swal-dark-modal .swal2-styled.swal2-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+}
+
+.swal-dark-modal .swal2-styled.swal2-confirm {
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  padding: 10px 20px !important;
+  box-shadow: 0 4px 14px rgba(230, 61, 47, 0.35);
+}
+
 .amount-tip-portal {
   position: fixed;
   z-index: 99999;
