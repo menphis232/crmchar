@@ -262,6 +262,65 @@ export interface KanbanStage extends CrmStageConfig {}
       color: #f87171;
       background: rgba(248,113,113,0.12);
     }
+
+    /* Tema negro puro — columnas y tarjetas del embudo */
+    .kanban-hint,
+    .kanban-scroll-hint {
+      background: #000 !important;
+      color: rgba(255,255,255,0.45) !important;
+      border: 1px solid rgba(255,255,255,0.12) !important;
+    }
+    .kanban-col {
+      background: #000 !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      border-top: 3px solid rgba(255,255,255,0.28) !important;
+      border-radius: 12px !important;
+      scrollbar-color: rgba(255,255,255,0.14) transparent;
+    }
+    .kanban-col.drag-over {
+      border-color: rgba(255,255,255,0.40) !important;
+      background: #000 !important;
+    }
+    .kanban-col-header {
+      color: rgba(255,255,255,0.90) !important;
+      border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+    }
+    .kanban-col-header span:first-child { color: #fff !important; }
+    .kanban-count {
+      background: rgba(255,255,255,0.16) !important;
+      color: #fff !important;
+      border-radius: 999px !important;
+    }
+    .kanban-card {
+      background: #000 !important;
+      border: 1px solid rgba(255,255,255,0.14) !important;
+      border-left: 3px solid rgba(255,255,255,0.30) !important;
+      border-radius: 10px !important;
+      color: #fff !important;
+      box-shadow: none !important;
+    }
+    .kanban-card:hover {
+      border-left-color: #fff !important;
+      background: #000 !important;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.18) !important;
+      transform: translateY(-2px);
+    }
+    .kanban-empty {
+      border-color: rgba(255,255,255,0.12) !important;
+      color: rgba(255,255,255,0.28) !important;
+      background: transparent !important;
+    }
+    .kanban-col.drag-over .kanban-empty {
+      border-color: rgba(255,255,255,0.35) !important;
+      color: rgba(255,255,255,0.45) !important;
+      background: rgba(255,255,255,0.04) !important;
+    }
+    .kanban-contact { color: rgba(255,255,255,0.75) !important; }
+    .kanban-meta, .kanban-days { color: rgba(255,255,255,0.42) !important; }
+    .kanban-value { color: rgba(255,255,255,0.85) !important; }
+    .kanban-card-top strong { color: #fff !important; }
+    .kanban-stage-select { background-color: #000 !important; }
+    .kanban-stage-select option { background: #000; }
   `],
 })
 export class CrmKanbanComponent {

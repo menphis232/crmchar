@@ -9,7 +9,7 @@
   --muted: rgba(255, 255, 255, 0.45);
   --brand-grey: rgba(255, 255, 255, 0.35);
   --bg: #000000;
-  --surface: #141414;
+  --surface: #000000;
   --border: rgba(255, 255, 255, 0.12);
 }
 
@@ -54,7 +54,7 @@
 ?????????????????????????????????????????? */
 .dash-card,
 :host ::ng-deep .dash-card {
-  background: #141414 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-top: 2px solid rgba(255,255,255,0.28) !important;
   border-radius: 14px !important;
@@ -75,7 +75,7 @@
    STATS
 ?????????????????????????????????????????? */
 .stat-box {
-  background: #141414 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-top: 2px solid rgba(255,255,255,0.30) !important;
   border-radius: 12px !important;
@@ -213,7 +213,7 @@
 .form-group input,
 .form-group textarea,
 .form-group select {
-  background-color: #111111 !important;
+  background-color: #000 !important;
   border: 1px solid rgba(255,255,255,0.14) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -242,18 +242,18 @@
 .form-group textarea:focus,
 .form-group select:focus {
   border-color: rgba(255,255,255,0.45) !important;
-  background-color: #111111 !important;
+  background-color: #000 !important;
   box-shadow: 0 0 0 3px rgba(255,255,255,0.06) !important;
 }
 
 .dash-card input:-webkit-autofill,
 .dash-container input:-webkit-autofill {
-  -webkit-box-shadow: 0 0 0 1000px #111111 inset !important;
-  box-shadow: 0 0 0 1000px #111111 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #000 inset !important;
+  box-shadow: 0 0 0 1000px #000 inset !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
-select option { background: #111111; color: #ffffff; }
+select option { background: #000; color: #ffffff; }
 
 .form-group label {
   color: rgba(255,255,255,0.50) !important;
@@ -314,7 +314,7 @@ select option { background: #111111; color: #ffffff; }
    PIPELINE FILTERS
 ?????????????????????????????????????????? */
 .pipeline-filters {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-left: 3px solid rgba(255,255,255,0.22) !important;
   border-radius: 12px !important;
@@ -322,6 +322,30 @@ select option { background: #111111; color: #ffffff; }
 }
 .pipeline-filter-field label {
   color: rgba(255,255,255,0.40) !important;
+}
+.pipeline-filters input,
+.pipeline-filters select,
+:host ::ng-deep .pipeline-filters input,
+:host ::ng-deep .pipeline-filters select {
+  background: #000 !important;
+  background-color: #000 !important;
+  border: 1px solid rgba(255,255,255,0.18) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  color-scheme: dark !important;
+}
+.pipeline-filters input::placeholder {
+  color: rgba(255,255,255,0.35) !important;
+}
+.pipeline-filters input:focus,
+.pipeline-filters select:focus {
+  border-color: rgba(255,255,255,0.45) !important;
+  outline: none !important;
+}
+.dash-card.kanban-wrap,
+.kanban-wrap.dash-card,
+:host ::ng-deep .dash-card.kanban-wrap {
+  background: #000 !important;
 }
 
 /* ??????????????????????????????????????????
@@ -335,15 +359,15 @@ select option { background: #111111; color: #ffffff; }
 /* Hint bar */
 :host ::ng-deep .kanban-hint,
 :host ::ng-deep .kanban-scroll-hint {
-  background: #161616 !important;
+  background: #000 !important;
   color: rgba(255,255,255,0.45) !important;
   border-color: rgba(255,255,255,0.10) !important;
 }
 
-/* Columnas ? fondo gris oscuro visible */
+/* Columnas — negro puro */
 .kanban-col,
 :host ::ng-deep .kanban-col {
-  background: #181818 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.13) !important;
   border-top: 3px solid rgba(255,255,255,0.28) !important;
   border-radius: 12px !important;
@@ -352,7 +376,7 @@ select option { background: #111111; color: #ffffff; }
 .kanban-col.drag-over,
 :host ::ng-deep .kanban-col.drag-over {
   border-color: rgba(255,255,255,0.40) !important;
-  background: #202020 !important;
+  background: #000 !important;
 }
 
 /* Header de columna */
@@ -376,21 +400,21 @@ select option { background: #111111; color: #ffffff; }
   border-radius: 999px !important;
 }
 
-/* Tarjetas ? gris m�s claro que la columna */
+/* Tarjetas — negro con borde blanco */
 .kanban-card,
 :host ::ng-deep .kanban-card {
-  background: #242424 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-left: 3px solid rgba(255,255,255,0.30) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.40) !important;
+  box-shadow: none !important;
 }
 .kanban-card:hover,
 :host ::ng-deep .kanban-card:hover {
   border-left-color: #ffffff !important;
-  background: #2c2c2c !important;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.60) !important;
+  background: #000 !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18) !important;
 }
 .kanban-card.stalled,
 :host ::ng-deep .kanban-card.stalled {
@@ -414,7 +438,7 @@ select option { background: #111111; color: #ffffff; }
   display: block !important;
 }
 :host ::ng-deep .kanban-stage-select {
-  background-color: #1a1a1a !important;
+  background-color: #000 !important;
   border: 1px solid rgba(255,255,255,0.18) !important;
   color: rgba(255,255,255,0.80) !important;
   -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
@@ -431,7 +455,7 @@ select option { background: #111111; color: #ffffff; }
   outline: none !important;
 }
 :host ::ng-deep .kanban-stage-select option {
-  background: #1a1a1a !important;
+  background: #000 !important;
   color: #ffffff !important;
 }
 
@@ -453,13 +477,13 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep .section-sub { color: rgba(255,255,255,0.80) !important; }
 :host ::ng-deep .inquiry-msg { color: rgba(255,255,255,0.70) !important; }
 :host ::ng-deep .task-row {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-radius: 8px !important;
   color: #ffffff !important;
 }
 :host ::ng-deep .review-card {
-  background: #181818 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-left: 4px solid rgba(255,255,255,0.30) !important;
   border-radius: 10px !important;
@@ -492,7 +516,7 @@ select option { background: #111111; color: #ffffff; }
   border: 1px solid rgba(255,255,255,0.22) !important;
 }
 :host ::ng-deep app-crm-clients-directory .btn-copy {
-  background: #111111 !important;
+  background: #000 !important;
   color: #ffffff !important;
   border: 1px solid rgba(255,255,255,0.35) !important;
   border-radius: 8px !important;
@@ -570,7 +594,7 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
 :host ::ng-deep textarea,
 :host ::ng-deep select {
-  background-color: #111111 !important;
+  background-color: #000 !important;
   border: 1px solid rgba(255,255,255,0.14) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -579,17 +603,17 @@ select option { background: #111111; color: #ffffff; }
 }
 :host ::ng-deep input::placeholder,
 :host ::ng-deep textarea::placeholder { color: rgba(255,255,255,0.28) !important; opacity: 1; }
-:host ::ng-deep select option { background: #111111; color: #ffffff; }
+:host ::ng-deep select option { background: #000; color: #ffffff; }
 
 /* ??????????????????????????????????????????
    DOCUMENTACI�N PRIVADA DEL VEH�CULO
 ?????????????????????????????????????????? */
 .auto-private-docs {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.14) !important;
 }
 .auto-private-doc-item {
-  background: #1a1a1a !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.10) !important;
 }
 .auto-private-doc-meta strong { color: #ffffff !important; }
@@ -605,7 +629,7 @@ select option { background: #111111; color: #ffffff; }
    INVENTARIO / CARS
 ?????????????????????????????????????????? */
 .car-item {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-top: 2px solid rgba(255,255,255,0.18) !important;
   border-radius: 12px !important;
@@ -652,7 +676,7 @@ select option { background: #111111; color: #ffffff; }
 .status-tag { border-radius: 999px !important; }
 
 .review-card {
-  background: #181818 !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-left: 4px solid rgba(255,255,255,0.30) !important;
   border-radius: 10px !important;
@@ -662,37 +686,37 @@ select option { background: #111111; color: #ffffff; }
 .review-author { color: rgba(255,255,255,0.50) !important; -webkit-text-fill-color: rgba(255,255,255,0.50) !important; }
 
 .task-row {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-radius: 8px !important;
   color: #ffffff !important;
 }
 
 .crm-stage-row {
-  background: #111111 !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.10) !important;
   border-radius: 10px !important;
 }
 
 .user-row {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.09) !important;
   border-radius: 10px !important;
   color: #ffffff !important;
 }
 .user-row:hover {
   border-color: rgba(255,255,255,0.30) !important;
-  background: #141414 !important;
+  background: #000 !important;
 }
 .user-meta { color: rgba(255,255,255,0.45) !important; }
 .user-editor {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.09) !important;
   border-top: 3px solid rgba(255,255,255,0.22) !important;
 }
 
 .link-input {
-  background: #111111 !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.14) !important;
   color: rgba(255,255,255,0.75) !important;
   border-radius: 8px !important;
@@ -705,7 +729,7 @@ select option { background: #111111; color: #ffffff; }
 }
 
 .block-editor {
-  background: #111111 !important;
+  background: #000 !important;
   border-color: rgba(255,255,255,0.09) !important;
 }
 
@@ -713,7 +737,7 @@ select option { background: #111111; color: #ffffff; }
    MODAL (+ Nuevo Lead)
 ?????????????????????????????????????????? */
 .modal-content {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   border-radius: 20px !important;
 }
@@ -724,10 +748,10 @@ select option { background: #111111; color: #ffffff; }
    ROLES Y PERMISOS (app-crm-team)
 ?????????????????????????????????????????? */
 app-crm-team {
-  --team-sub-bg: #0d0d0d;
+  --team-sub-bg: #000;
   --team-sub-border: rgba(255, 255, 255, 0.10);
-  --team-item-bg: #181818;
-  --team-perm-bg: #111111;
+  --team-item-bg: #000;
+  --team-perm-bg: #000;
   --team-badge-bg: rgba(255, 255, 255, 0.06);
   --team-badge-border: rgba(255, 255, 255, 0.14);
   --team-badge-text: rgba(255, 255, 255, 0.85);
@@ -737,7 +761,7 @@ app-crm-team {
   --team-divider: rgba(255, 255, 255, 0.08);
   --team-text: #ffffff;
   --team-text-secondary: rgba(255, 255, 255, 0.45);
-  --team-input-bg: #111111;
+  --team-input-bg: #000;
   --team-input-border: rgba(255, 255, 255, 0.14);
   --team-input-focus-border: rgba(255, 255, 255, 0.45);
   --team-input-focus-ring: rgba(255, 255, 255, 0.06);
@@ -748,7 +772,7 @@ app-crm-team {
 /* ── Automatizaciones (gestor) ── */
 .automation-guide,
 :host ::ng-deep .automation-guide {
-  background: #161616 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-left: 3px solid rgba(255, 255, 255, 0.35) !important;
   border-radius: 10px !important;
@@ -763,7 +787,7 @@ app-crm-team {
 }
 .automation-item,
 :host ::ng-deep .automation-item {
-  background: #181818 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
   border-left: 3px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 10px !important;
@@ -794,7 +818,7 @@ app-crm-team {
 }
 .automation-var-chip,
 :host ::ng-deep .automation-var-chip {
-  background: #111111 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: rgba(255, 255, 255, 0.78) !important;
 }
@@ -808,7 +832,7 @@ app-crm-team {
 }
 .automation-preview,
 :host ::ng-deep .automation-preview {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
   border-radius: 8px !important;
 }
@@ -855,7 +879,7 @@ app-crm-team {
 }
 :host ::ng-deep app-page-builder .builder-sidebar,
 :host ::ng-deep app-page-builder .edit-sidebar {
-  background: #141414 !important;
+  background: #000 !important;
   border-color: rgba(255, 255, 255, 0.10) !important;
   color: #ffffff !important;
   scrollbar-color: rgba(255, 255, 255, 0.2) transparent !important;
@@ -888,17 +912,17 @@ app-crm-team {
 :host ::ng-deep app-page-builder input,
 :host ::ng-deep app-page-builder textarea,
 :host ::ng-deep app-page-builder select {
-  background: #111111 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   color: #ffffff !important;
   color-scheme: dark !important;
 }
 :host ::ng-deep app-page-builder .edit-panel input[type="color"] {
-  background: #111111 !important;
+  background: #000 !important;
   border-color: rgba(255, 255, 255, 0.14) !important;
 }
 :host ::ng-deep app-page-builder .block-card {
-  background: #181818 !important;
+  background: #000 !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 :host ::ng-deep app-page-builder .block-card:hover {
@@ -907,7 +931,7 @@ app-crm-team {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.45) !important;
 }
 :host ::ng-deep app-page-builder .block-card-icon {
-  background: #0d0d0d !important;
+  background: #000 !important;
   border-color: rgba(255, 255, 255, 0.12) !important;
   color: rgba(255, 255, 255, 0.85) !important;
 }
@@ -925,7 +949,7 @@ app-crm-team {
   background: #0a0a0a !important;
 }
 :host ::ng-deep app-page-builder .canvas-toolbar {
-  background: #141414 !important;
+  background: #000 !important;
   border-bottom-color: rgba(255, 255, 255, 0.10) !important;
 }
 :host ::ng-deep app-page-builder .canvas-toolbar-label {
