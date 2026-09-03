@@ -994,7 +994,7 @@
         </h3>
         <p class="card-desc">Recibe avisos de trámites y mensajes en tu teléfono (app instalada).</p>
         <p class="card-desc" style="margin-top:8px;">Estado: <strong>{{ oneSignal.statusLabel() }}</strong></p>
-        <p class="card-desc" style="font-size:12px;opacity:.85;">Dispositivo: {{ oneSignal.deviceHint() }}</p>
+        <p class="card-desc" style="font-size:12px;">Dispositivo: {{ oneSignal.deviceHint() }}</p>
         @if (oneSignal.lastError()) {
           <p class="banner-msg" style="color:#fbbf24;margin-top:8px;">{{ oneSignal.lastError() }}</p>
         }

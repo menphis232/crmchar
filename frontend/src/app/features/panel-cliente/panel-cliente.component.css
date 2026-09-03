@@ -9,8 +9,8 @@
   --client-surface-2: #000;
   --text: #ffffff;
   --mx-white: #ffffff;
-  --muted: rgba(255, 255, 255, 0.45);
-  --brand-grey: rgba(255, 255, 255, 0.35);
+  --muted: #ffffff;
+  --brand-grey: #ffffff;
   --bg: #000;
   --surface: #000;
   --border: rgba(255, 255, 255, 0.12);
@@ -103,7 +103,7 @@
 
 .sidebar-role-label {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-top: 2px;
@@ -121,7 +121,7 @@
 .card-desc {
   font-family: var(--f-display) !important;
   font-size: 14px !important;
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
 }
 
 .card-title-with-icon {
@@ -147,6 +147,7 @@
 .dash-main {
   font-family: var(--f-display) !important;
   font-size: 14px !important;
+  color: #ffffff;
 }
 
 .stat-box {
@@ -169,7 +170,7 @@
 }
 
 .stat-label {
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
   letter-spacing: 0.14em !important;
 }
 
@@ -247,7 +248,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   margin-bottom: 6px;
 }
 
@@ -264,7 +265,7 @@
 .client-hero-sub {
   margin: 0;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   line-height: 1.45;
   max-width: 420px;
 }
@@ -316,13 +317,13 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
   margin-top: 2px;
   transition: color 0.2s;
 }
 
 .client-stat-card:hover .client-stat-icon {
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
 }
 
 .client-stat-num {
@@ -342,7 +343,7 @@
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   line-height: 1.25;
   overflow-wrap: break-word;
   word-break: break-word;
@@ -411,7 +412,7 @@
 
 .client-quick-text small {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.42);
+  color: #ffffff;
 }
 
 .client-quick-badge {
@@ -434,7 +435,7 @@
 
 .client-quick-badge--muted {
   background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.75);
+  color: #ffffff;
 }
 
 /* Dashboard grid */
@@ -481,7 +482,7 @@
   text-transform: uppercase;
   cursor: pointer;
   padding: 6px 0;
-  opacity: 0.75;
+  opacity: 1;
   transition: opacity 0.2s;
 }
 
@@ -547,7 +548,7 @@
   display: block;
   margin-top: 2px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .hnc-simple-status {
@@ -573,7 +574,7 @@
   gap: 8px;
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   line-height: 1.4;
 }
 
@@ -589,7 +590,7 @@
   padding-top: 12px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .hnc-details summary {
@@ -598,7 +599,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   list-style: none;
 }
 
@@ -669,7 +670,7 @@
 .deal-simple-meta {
   margin: 0 0 10px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .deal-simple-progress {
@@ -690,7 +691,7 @@
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   text-transform: uppercase;
 }
 
@@ -736,7 +737,7 @@
   height: 38px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
   flex-shrink: 0;
 }
 
@@ -758,7 +759,7 @@
 
 .client-recent-main > span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-recent-side {
@@ -919,7 +920,7 @@
   background: #000;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
 }
 
 .client-deal-title {
@@ -937,7 +938,7 @@
   align-items: center;
   gap: 5px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   margin: 0 0 12px;
 }
 
@@ -966,7 +967,7 @@
   justify-content: space-between;
   align-items: center;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1027,7 +1028,7 @@
   border: 1px dashed rgba(255, 255, 255, 0.15);
   background: #000;
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   font-size: 14px;
 }
 
@@ -1035,7 +1036,7 @@
   display: flex;
   justify-content: center;
   margin-bottom: 12px;
-  color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
 }
 
 .client-empty strong {
@@ -1057,7 +1058,7 @@
   padding: 0;
   border: none;
   background: none;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   font-family: var(--f-ui);
   font-size: 12px;
   font-weight: 600;
@@ -1097,7 +1098,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-detail-title {
@@ -1117,7 +1118,7 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-detail-meta strong {
@@ -1125,7 +1126,7 @@
 }
 
 .client-detail-dot {
-  color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .client-code {
@@ -1168,7 +1169,7 @@
   justify-content: center;
   font-size: 11px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   transition: all 0.2s;
 }
 
@@ -1192,7 +1193,7 @@
 
 .client-step span {
   font-size: 9px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 700;
@@ -1234,7 +1235,7 @@
   gap: 6px;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   padding: 0 0 12px;
   font-family: var(--f-display);
   font-size: 11px;
@@ -1293,7 +1294,7 @@
   display: block;
   margin-top: 2px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-online {
@@ -1329,7 +1330,7 @@
   margin: auto;
   max-width: 320px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   font-size: 14px;
   line-height: 1.5;
 }
@@ -1379,7 +1380,7 @@
   gap: 8px;
   margin-bottom: 4px;
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
 }
 
 .client-chat-row.mine .client-chat-meta {
@@ -1390,7 +1391,7 @@
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
 }
 
 .client-chat-bubble {
@@ -1474,7 +1475,7 @@
 }
 
 .client-chat-input::placeholder {
-  color: rgba(255, 255, 255, 0.28);
+  color: #ffffff;
 }
 
 .client-chat-send {
@@ -1498,7 +1499,7 @@
 .client-docs-intro p {
   margin: 0 0 18px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   line-height: 1.5;
 }
 
@@ -1555,7 +1556,7 @@
 .client-wallet-picker-hint {
   margin: 0 0 4px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
 }
 
 .client-wallet-picker-item {
@@ -1588,7 +1589,7 @@
 
 .client-wallet-picker-item span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-wallet-picker-item:disabled {
@@ -1605,7 +1606,7 @@
   background: #000;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
 }
 
 .client-settings-hint svg {
@@ -1642,7 +1643,7 @@
 
 .client-info-row span {
   min-width: 80px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1892,7 +1893,7 @@
 }
 
 :host .dash-card .client-search-bar input.client-search-input::placeholder {
-  color: rgba(255, 255, 255, 0.45) !important;
+  color: #ffffff !important;
   opacity: 1;
 }
 
@@ -1907,7 +1908,7 @@
 .client-search-bar svg {
   flex-shrink: 0;
   opacity: 0.75;
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
 }
 
 .client-pagination {
@@ -1919,17 +1920,17 @@
   padding-top: 16px;
   border-top: 1px solid var(--border);
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
   flex-wrap: wrap;
 }
 
 .client-pagination span {
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
 }
 
 .client-deal-code {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   margin: 4px 0 8px;
   font-family: monospace;
 }
@@ -1984,7 +1985,7 @@
 
 .client-history-main span {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: #ffffff !important;
 }
 
 .client-history-main .client-code {
@@ -2002,7 +2003,7 @@
 
 .client-history-date {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
 }
 
 .client-wallet-upload {
@@ -2018,7 +2019,7 @@
   margin: 0 0 14px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
+  color: #ffffff;
 }
 
 .client-wallet-form {
@@ -2133,7 +2134,7 @@ select.client-wallet-input option {
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(4px);
   pointer-events: none;
@@ -2152,7 +2153,7 @@ select.client-wallet-input option {
 
 .wdoc-placeholder--file {
   background: #000;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .wdoc-placeholder-label {
@@ -2160,7 +2161,7 @@ select.client-wallet-input option {
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 /* Overlay de acciones (aparece al hover) */
@@ -2261,13 +2262,13 @@ select.client-wallet-input option {
   background: rgba(0, 0, 0, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(6px);
-  color: rgba(255, 255, 255, 0.85);
+  color: #ffffff;
   pointer-events: none;
 }
 
 .wdoc-vehicle-chip--personal {
   border-color: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.75);
+  color: #ffffff;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
@@ -2295,7 +2296,7 @@ select.client-wallet-input option {
   font-style: normal;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
 }
 
 .wdoc-card--vehicle .wdoc-preview {
@@ -2462,7 +2463,7 @@ select.client-wallet-input option {
 .client-vehicle-mmy {
   margin: 4px 0 0;
   font-size: 13px;
-  color: rgba(255,255,255,0.65);
+  color: #ffffff;
 }
 
 .client-vehicle-delete {
@@ -2485,7 +2486,7 @@ select.client-wallet-input option {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   margin-bottom: 4px;
-  color: rgba(255,255,255,0.45);
+  color: #ffffff;
 }
 
 .client-vehicle-form select,
@@ -2534,7 +2535,7 @@ select.client-wallet-input option {
   padding: 3px 9px;
   border-radius: 999px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
   border: 1px solid var(--border);
   text-transform: capitalize;
 }
@@ -2561,13 +2562,13 @@ select.client-wallet-input option {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
+  color: #ffffff;
 }
 
 .client-vehicle-docs-desc {
   margin: 0 0 14px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .client-vehicle-docs-upload {
@@ -2596,7 +2597,7 @@ select.client-wallet-input option {
   padding: 28px 16px;
   border: 1px dashed rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
   font-size: 13px;
 }
 
@@ -2713,7 +2714,7 @@ select.client-wallet-input option {
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2722,7 +2723,7 @@ select.client-wallet-input option {
 
 .knowledge-grid-date {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
   letter-spacing: 0.04em;
 }
 
@@ -2757,7 +2758,7 @@ select.client-wallet-input option {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.92);
+  color: #ffffff;
 }
 
 .knowledge-feed-title .card-title-icon {
@@ -2767,7 +2768,7 @@ select.client-wallet-input option {
 .knowledge-feed-sub {
   margin: 2px 0 0;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.42);
+  color: #ffffff;
   letter-spacing: 0.02em;
 }
 
@@ -2783,7 +2784,7 @@ select.client-wallet-input option {
   text-transform: uppercase;
   cursor: pointer;
   padding: 4px 0;
-  opacity: 0.85;
+  opacity: 1;
   text-decoration: underline;
   text-underline-offset: 3px;
   text-decoration-color: rgba(255, 255, 255, 0.35);
@@ -2934,7 +2935,7 @@ select.client-wallet-input option {
   margin: 0 0 6px;
   font-size: 13px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.78);
+  color: #ffffff;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -2944,7 +2945,7 @@ select.client-wallet-input option {
 
 .knowledge-reel-overlay-bottom .knowledge-reel-date {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
 }
 
 .knowledge-reel-overlay-side {
@@ -3084,7 +3085,7 @@ select.client-wallet-input option {
 
 .knowledge-reel-date {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.38);
+  color: #ffffff;
   white-space: nowrap;
 }
 
@@ -3112,7 +3113,7 @@ select.client-wallet-input option {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
   background: #000;
 }
 
@@ -3137,7 +3138,7 @@ select.client-wallet-input option {
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -3154,7 +3155,7 @@ select.client-wallet-input option {
 .knowledge-reels-status {
   text-align: center;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
   padding: 8px 0 4px;
 }
 
@@ -3196,7 +3197,7 @@ select.client-wallet-input option {
   padding: 2px 6px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.65);
-  color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
 }
 
 .knowledge-action {
@@ -3254,7 +3255,7 @@ select.client-wallet-input option {
 .hnc-alert p {
   margin: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.55);
+  color: #ffffff;
   line-height: 1.4;
 }
 
@@ -3342,7 +3343,7 @@ select.client-wallet-input option {
 
 .hnc-item-title span {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
 }
 
 .hnc-item-meta {
@@ -3351,7 +3352,7 @@ select.client-wallet-input option {
   gap: 8px 12px;
   align-items: center;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
 }
 
 .hnc-item-meta strong { color: #fff; }
@@ -3368,7 +3369,7 @@ select.client-wallet-input option {
 }
 
 .hnc-digit {
-  opacity: 0.55;
+  opacity: 1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3378,7 +3379,7 @@ select.client-wallet-input option {
   gap: 6px 14px;
   margin-top: 8px;
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #ffffff;
 }
 
 .hnc-badge-stop,
@@ -3409,7 +3410,7 @@ select.client-wallet-input option {
   margin: 14px 0 0;
   font-size: 11px;
   line-height: 1.45;
-  color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
 }
 
 .hnc-dot-amarillo { background: #f5c518; }
@@ -3440,5 +3441,20 @@ select.client-wallet-input option {
     grid-column: 2;
     justify-self: start;
   }
+}
+
+/* Texto blanco — overrides tema compartido (solo panel cliente) */
+:host ::ng-deep .card-desc,
+:host ::ng-deep .stat-label,
+:host ::ng-deep .empty,
+:host ::ng-deep .panel-welcome,
+:host ::ng-deep .user-meta,
+:host ::ng-deep .kanban-meta,
+:host ::ng-deep .kanban-days,
+:host ::ng-deep .kanban-contact,
+:host ::ng-deep .inbox-info p,
+:host ::ng-deep .section-sub,
+:host ::ng-deep .inquiry-msg {
+  color: #ffffff !important;
 }
 
