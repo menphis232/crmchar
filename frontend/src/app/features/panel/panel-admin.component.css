@@ -1659,3 +1659,32 @@ app-crm-team {
   color: rgba(255, 255, 255, 0.55) !important;
   opacity: 1 !important;
 }
+
+/* Recuadros OAuth/GA en fondo blanco */
+.ga-admin-card .ga-admin-msg,
+.ga-admin-card .ga-admin-status,
+.ga-admin-card .ga-admin-status.connected,
+.ga-admin-card .ga-setup-box {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.ga-admin-card .ga-setup-box a,
+.ga-admin-card .ga-setup-box strong,
+.ga-admin-card .ga-setup-box code,
+.ga-admin-card .ga-section-title {
+  color: #111111 !important;
+}
+
+.ga-admin-card .ga-oauth-form input,
+.ga-admin-card .ga-oauth-form select {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border: 1px solid rgba(0, 0, 0, 0.24) !important;
+  -webkit-text-fill-color: #111111 !important;
+}
+
+.ga-admin-card .ga-oauth-form input::placeholder {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
