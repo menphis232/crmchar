@@ -509,16 +509,51 @@ import { formatMoney } from '../../shared/format-amount.util';
     .fin-sub { margin: 4px 0 0 0; font-size: 15px; color: rgba(255,255,255,0.45); font-family: var(--f-display); }
     .fin-header-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
-    .btn-new { background: #fff; color: #000; border: 2px solid #fff; padding: 10px 18px; border-radius: 8px; font-weight: 800; cursor: pointer; font-size: 12px; font-family: var(--f-display); letter-spacing: 0.10em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; }
-    .btn-new:hover { background: transparent; color: #fff; }
+    .btn-new {
+      font-family: var(--f-display);
+      font-size: var(--btn-font-size, 12px);
+      font-weight: var(--btn-weight, 700);
+      letter-spacing: var(--btn-tracking, 0.12em);
+      text-transform: uppercase;
+      color: var(--btn-primary-color, #fff);
+      background: var(--btn-primary-bg, transparent);
+      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #fff);
+      border-radius: var(--btn-radius, 4px);
+      padding: var(--btn-py, 12px) var(--btn-px, 28px);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .2s;
+    }
+    .btn-new:hover:not(:disabled) {
+      background: var(--btn-primary-hover-bg, #fff);
+      color: var(--btn-primary-hover-color, #000);
+      border-color: var(--btn-primary-hover-border, #fff);
+    }
     .btn-new:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-new.small { padding: 6px 14px; font-size: 11px; }
+    .btn-new.small { padding: 8px 16px; font-size: 11px; }
 
-    .btn-export { padding: 10px 16px; border-radius: 8px; font-size: 11px; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .2s; border: 1px solid; background: transparent; }
-    .btn-export.csv { border-color: rgba(34,197,94,.35); color: #4ade80; }
-    .btn-export.csv:hover { background: rgba(34,197,94,.10); }
-    .btn-export.pdf { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.75); }
-    .btn-export.pdf:hover { background: rgba(255,255,255,.08); }
+    .btn-export {
+      font-family: var(--f-display);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: var(--btn-tracking, 0.12em);
+      text-transform: uppercase;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all .2s;
+      padding: var(--btn-py, 12px) 16px;
+      border-radius: var(--btn-radius, 4px);
+      background: var(--btn-outline-bg, transparent);
+      border: var(--btn-border-w, 1px) solid;
+    }
+    .btn-export.csv { border-color: rgba(34,197,94,.45); color: #4ade80; }
+    .btn-export.csv:hover { background: rgba(34,197,94,.12); color: #4ade80; border-color: rgba(34,197,94,.65); }
+    .btn-export.pdf { border-color: var(--btn-outline-border, #fff); color: var(--btn-outline-color, #fff); }
+    .btn-export.pdf:hover { background: var(--btn-outline-hover-bg, #fff); color: var(--btn-outline-hover-color, #000); }
 
     /* ── FILTER BAR ── */
     .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
@@ -624,8 +659,24 @@ import { formatMoney } from '../../shared/format-amount.util';
 
     /* ── PAGINATION ── */
     .pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 4px; flex-wrap: wrap; }
-    .page-btn { background: transparent; border: 1px solid rgba(255,255,255,0.20); color: rgba(255,255,255,0.70); padding: 8px 16px; border-radius: 8px; font-family: var(--f-display); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; transition: all .2s; }
-    .page-btn:hover:not(:disabled) { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.40); }
+    .page-btn {
+      background: var(--btn-outline-bg, transparent);
+      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #fff);
+      color: var(--btn-outline-color, #fff);
+      padding: 8px 16px;
+      border-radius: var(--btn-radius, 4px);
+      font-family: var(--f-display);
+      font-size: 11px;
+      letter-spacing: var(--btn-tracking, 0.12em);
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: var(--btn-outline-hover-bg, #fff);
+      color: var(--btn-outline-hover-color, #000);
+      border-color: var(--btn-outline-hover-border, #fff);
+    }
     .page-btn:disabled { opacity: 0.30; cursor: not-allowed; }
     .page-info { font-size: 12px; color: rgba(255,255,255,0.40); font-family: var(--f-display); }
 
@@ -694,8 +745,23 @@ import { formatMoney } from '../../shared/format-amount.util';
     .no-methods-hint strong { color: #fff; }
 
     .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 0 24px 20px; }
-    .btn-ghost { background: transparent; border: 1px solid rgba(255,255,255,0.20); color: rgba(255,255,255,0.70); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 12px; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; }
-    .btn-ghost:hover { background: rgba(255,255,255,.06); color: #fff; }
+    .btn-ghost {
+      background: var(--btn-outline-bg, transparent);
+      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #fff);
+      color: var(--btn-outline-color, #fff);
+      padding: var(--btn-py, 12px) 20px;
+      border-radius: var(--btn-radius, 4px);
+      cursor: pointer;
+      font-size: var(--btn-font-size, 12px);
+      font-family: var(--f-display);
+      letter-spacing: var(--btn-tracking, 0.12em);
+      text-transform: uppercase;
+    }
+    .btn-ghost:hover {
+      background: var(--btn-outline-hover-bg, #fff);
+      color: var(--btn-outline-hover-color, #000);
+      border-color: var(--btn-outline-hover-border, #fff);
+    }
   `]
 })
 export class FinancesComponent implements OnInit, OnDestroy {

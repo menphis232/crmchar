@@ -11,6 +11,19 @@
   --bg: #000000;
   --surface: #000000;
   --border: rgba(255, 255, 255, 0.12);
+  /* Botones — superficie negra: outline blanco */
+  --btn-primary-bg: transparent;
+  --btn-primary-color: #ffffff;
+  --btn-primary-border: #ffffff;
+  --btn-primary-hover-bg: #ffffff;
+  --btn-primary-hover-color: #000000;
+  --btn-primary-hover-border: #ffffff;
+  --btn-outline-bg: transparent;
+  --btn-outline-color: #ffffff;
+  --btn-outline-border: #ffffff;
+  --btn-outline-hover-bg: #ffffff;
+  --btn-outline-hover-color: #000000;
+  --btn-outline-hover-border: #ffffff;
 }
 
 .dash-container,
@@ -130,31 +143,11 @@
   padding: 0;
 }
 
-/* ??????????????????????????????????????????
-   BOT�N + NUEVO LEAD (sutil)
-?????????????????????????????????????????? */
+/* Botón + Nuevo lead — hereda sistema global */
 .btn-nuevo-lead {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.25);
-  color: rgba(255,255,255,0.65);
-  font-family: var(--f-display);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  padding: 6px 14px;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 0.2s, color 0.2s, background 0.2s;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-.btn-nuevo-lead:hover {
-  border-color: rgba(255,255,255,0.60);
-  color: #ffffff;
-  background: rgba(255,255,255,0.06);
+  font-size: 11px;
+  padding: 8px 16px;
+  border-radius: var(--btn-radius, 4px);
 }
 
 .gestor-banner-preview {
@@ -168,38 +161,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
-/* ??????????????????????????????????????????
-   BOTONES PRINCIPALES
-?????????????????????????????????????????? */
-.btn-copy {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #ffffff !important;
-  border-radius: 8px !important;
-}
-.btn-copy:hover {
-  background: transparent !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-}
-.btn-copy:disabled {
-  opacity: 0.4 !important;
-  cursor: not-allowed !important;
-}
-
-.btn-ghost {
-  color: rgba(255,255,255,0.65) !important;
-  border: 1px solid rgba(255,255,255,0.22) !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-}
-.btn-ghost:hover {
-  background: rgba(255,255,255,0.08) !important;
-  color: #ffffff !important;
-  border-color: rgba(255,255,255,0.45) !important;
-}
-
-.btn-delete { border-radius: 8px !important; }
+/* Botones heredan variables CSS del :host */
 
 /* ??????????????????????????????????????????
    INPUTS / SELECTS

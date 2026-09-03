@@ -320,68 +320,16 @@ body {
 }
 
 /* ══════════════════════════════════════════════
-   BUTTONS
+   BUTTONS — heredan style-shared.css (variables)
 ══════════════════════════════════════════════ */
-.btn-copy {
-  background: var(--brand-black);
-  color: #ffffff;
-  border: 2px solid var(--brand-black);
-  padding: 10px 22px;
-  border-radius: 0;
-  font-weight: 700;
-  font-family: var(--f-display);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-.btn-copy:hover { background: transparent; color: var(--brand-black); }
-.btn-copy.full { width: 100%; justify-content: center; padding: 12px; margin-top: 10px; }
-.btn-copy.small { padding: 7px 14px; font-size: 11px; }
-
-.btn-ghost {
-  font-family: var(--f-display);
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--brand-black);
-  background: transparent;
-  border: 2px solid var(--brand-black);
-  padding: 10px 20px;
-  border-radius: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: var(--transition);
-  text-decoration: none;
-}
-.btn-ghost:hover { border-color: var(--brand-black); color: #ffffff; background: var(--brand-black); }
-.btn-ghost.small { padding: 6px 12px; font-size: 11px; }
-.btn-ghost.warn { border-color: #ff4444; color: #ff4444; }
-.btn-ghost.warn:hover { background: #ff4444; color: #ffffff; border-color: #ff4444; }
-
+.btn-copy,
+.btn-ghost,
 .btn-delete {
-  background: transparent;
-  border: 2px solid #ff4444;
-  color: #ff4444;
-  padding: 7px 14px;
-  cursor: pointer;
-  font-size: 12px;
-  border-radius: 0;
   font-family: var(--f-display);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  transition: var(--transition);
+  font-size: var(--btn-font-size, 12px);
+  letter-spacing: var(--btn-tracking, 0.12em);
+  font-weight: var(--btn-weight, 700);
 }
-.btn-delete:hover { background: #ff4444; color: #ffffff; }
-.btn-delete.small { padding: 4px 10px; font-size: 11px; }
 
 /* ── CRM Stages editor ── */
 .crm-stages-list {

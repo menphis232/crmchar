@@ -46,6 +46,29 @@
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --shadow-card: 0 2px 12px rgba(0,0,0,0.06);
   --card-radius: 0px;
+
+  /* Botones — superficie clara (fondo blanco/crema) */
+  --btn-radius: 4px;
+  --btn-border-w: 1px;
+  --btn-py: 12px;
+  --btn-px: 28px;
+  --btn-font-size: 12px;
+  --btn-weight: 700;
+  --btn-tracking: 0.12em;
+  /* Primario: relleno negro, texto blanco */
+  --btn-primary-bg: var(--brand-black);
+  --btn-primary-color: #ffffff;
+  --btn-primary-border: var(--brand-black);
+  --btn-primary-hover-bg: transparent;
+  --btn-primary-hover-color: var(--brand-black);
+  --btn-primary-hover-border: var(--brand-black);
+  /* Secundario / outline: fondo blanco, borde y texto negro */
+  --btn-outline-bg: var(--brand-white);
+  --btn-outline-color: var(--brand-black);
+  --btn-outline-border: var(--brand-black);
+  --btn-outline-hover-bg: var(--brand-black);
+  --btn-outline-hover-color: #ffffff;
+  --btn-outline-hover-border: var(--brand-black);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -90,66 +113,149 @@ img { max-width: 100%; display: block; }
 .nav-actions { display: flex; gap: 12px; align-items: center; margin-left: auto; }
 
 /* =====================================================
-   BUTTONS — Spartan · Uppercase · Square · Black
-   (Mirrors the CTA buttons on tramitesvehicularesdemexico.com)
+   BUTTONS — Spartan · Uppercase · 4px radius
+   Claro: primario negro sólido · outline blanco+borde negro
+   Oscuro (.surface-dark / paneles): outline blanco transparente
 ===================================================== */
-.btn-primary {
+.btn-primary,
+.btn-copy,
+.btn-new,
+.btn-nuevo-lead,
+.pipeline-filter-btn,
+.btn-add-col-confirm {
   font-family: var(--f-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-weight);
+  letter-spacing: var(--btn-tracking);
   text-transform: uppercase;
-  color: #ffffff;
-  background: var(--brand-black);
-  padding: 13px 32px;
-  border-radius: 0;
-  border: 2px solid var(--brand-black);
+  color: var(--btn-primary-color);
+  background: var(--btn-primary-bg);
+  padding: var(--btn-py) var(--btn-px);
+  border-radius: var(--btn-radius);
+  border: var(--btn-border-w) solid var(--btn-primary-border);
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1.2;
 }
-.btn-primary:hover {
-  background: transparent;
-  color: var(--brand-black);
+.btn-primary:hover,
+.btn-copy:hover:not(:disabled),
+.btn-new:hover:not(:disabled),
+.btn-nuevo-lead:hover,
+.pipeline-filter-btn:hover,
+.btn-add-col-confirm:hover:not(:disabled) {
+  background: var(--btn-primary-hover-bg);
+  color: var(--btn-primary-hover-color);
+  border-color: var(--btn-primary-hover-border);
+}
+.btn-primary:disabled,
+.btn-copy:disabled,
+.btn-new:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary.small,
+.btn-copy.small,
+.btn-new.small,
+.btn-nuevo-lead.small {
+  padding: 8px 16px;
+  font-size: 11px;
+}
+.btn-copy.full { width: 100%; justify-content: center; padding: 12px; margin-top: 10px; }
+
+.btn-outline,
+.btn-ghost,
+.btn-text,
+.btn-add-col-cancel,
+.btn-add-method,
+.page-btn,
+.btn-ghost-modal {
+  font-family: var(--f-display);
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-weight);
+  letter-spacing: var(--btn-tracking);
+  text-transform: uppercase;
+  color: var(--btn-outline-color);
+  background: var(--btn-outline-bg);
+  padding: var(--btn-py) var(--btn-px);
+  border-radius: var(--btn-radius);
+  border: var(--btn-border-w) solid var(--btn-outline-border);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1.2;
+}
+.btn-outline:hover,
+.btn-ghost:hover,
+.btn-text:hover,
+.btn-add-col-cancel:hover,
+.btn-add-method:hover:not(:disabled),
+.page-btn:hover:not(:disabled),
+.btn-ghost-modal:hover {
+  background: var(--btn-outline-hover-bg);
+  color: var(--btn-outline-hover-color);
+  border-color: var(--btn-outline-hover-border);
+}
+.btn-outline.small,
+.btn-ghost.small,
+.btn-text.small,
+.page-btn.small {
+  padding: 8px 16px;
+  font-size: 11px;
 }
 
-.btn-outline {
-  font-family: var(--f-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--brand-black);
-  background: transparent;
-  padding: 13px 32px;
-  border-radius: 0;
-  border: 2px solid var(--brand-black);
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
-}
-.btn-outline:hover {
-  background: var(--brand-black);
-  color: #ffffff;
+/* Superficie oscura — navbar, paneles CRM */
+.surface-dark,
+#main-nav {
+  --btn-primary-bg: transparent;
+  --btn-primary-color: #ffffff;
+  --btn-primary-border: #ffffff;
+  --btn-primary-hover-bg: #ffffff;
+  --btn-primary-hover-color: #000000;
+  --btn-primary-hover-border: #ffffff;
+  --btn-outline-bg: transparent;
+  --btn-outline-color: #ffffff;
+  --btn-outline-border: #ffffff;
+  --btn-outline-hover-bg: #ffffff;
+  --btn-outline-hover-color: #000000;
+  --btn-outline-hover-border: #ffffff;
 }
 
-/* On dark navbar — white outline version */
-.btn-text {
+.btn-delete {
   font-family: var(--f-display);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-weight);
+  letter-spacing: var(--btn-tracking);
   text-transform: uppercase;
-  color: #ffffff;
   background: transparent;
-  padding: 13px 28px;
-  border-radius: 0;
-  border: 2px solid rgba(255,255,255,0.5);
+  border: var(--btn-border-w) solid #e63d2f;
+  color: #e63d2f;
+  padding: 8px 16px;
+  border-radius: var(--btn-radius);
   cursor: pointer;
   transition: var(--transition);
-  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.btn-text:hover { border-color: #ffffff; }
+.btn-delete:hover {
+  background: #e63d2f;
+  color: #ffffff;
+  border-color: #e63d2f;
+}
+.btn-delete.small { padding: 6px 12px; font-size: 11px; }
+.btn-ghost.warn { border-color: #ff4444; color: #ff4444; background: transparent; }
+.btn-ghost.warn:hover { background: #ff4444; color: #ffffff; border-color: #ff4444; }
 
 .btn-icon {
   background: transparent;

@@ -229,46 +229,52 @@ const CONCESIONARIA_MODULES = [
     }
 
     .btn-copy {
-      background: var(--brand-black, #000);
-      color: #fff;
-      border: 2px solid var(--brand-black, #000);
-      padding: 10px 22px;
-      font-weight: 700;
+      background: var(--btn-primary-bg, #000);
+      color: var(--btn-primary-color, #fff);
+      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #000);
+      border-radius: var(--btn-radius, 4px);
+      padding: var(--btn-py, 12px) var(--btn-px, 28px);
+      font-weight: var(--btn-weight, 700);
       font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 12px;
-      letter-spacing: 0.12em;
+      font-size: var(--btn-font-size, 12px);
+      letter-spacing: var(--btn-tracking, 0.12em);
       text-transform: uppercase;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: var(--transition, all 0.2s ease);
     }
 
-    .btn-copy.small { padding: 7px 14px; font-size: 11px; }
+    .btn-copy.small { padding: 8px 16px; font-size: 11px; }
 
     .btn-copy:hover {
-      background: transparent;
-      color: var(--brand-black, #000);
+      background: var(--btn-primary-hover-bg, transparent);
+      color: var(--btn-primary-hover-color, #000);
+      border-color: var(--btn-primary-hover-border, #000);
     }
 
     .btn-ghost {
       font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 12px;
-      letter-spacing: 0.12em;
+      font-size: var(--btn-font-size, 12px);
+      letter-spacing: var(--btn-tracking, 0.12em);
       text-transform: uppercase;
-      color: var(--brand-black, #000);
-      background: transparent;
-      border: 2px solid var(--brand-black, #000);
-      padding: 10px 20px;
+      color: var(--btn-outline-color, #000);
+      background: var(--btn-outline-bg, #fff);
+      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #000);
+      border-radius: var(--btn-radius, 4px);
+      padding: var(--btn-py, 12px) var(--btn-px, 28px);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      transition: var(--transition, all 0.2s ease);
     }
 
     .btn-ghost:hover {
-      background: var(--brand-black, #000);
-      color: #fff;
+      background: var(--btn-outline-hover-bg, #000);
+      color: var(--btn-outline-hover-color, #fff);
+      border-color: var(--btn-outline-hover-border, #000);
     }
 
     /* ── Inputs tema claro (gestor) ── */
@@ -317,31 +323,6 @@ const CONCESIONARIA_MODULES = [
 
     :host.theme-dark .card-title { color: #ffffff; font-size: 20px; }
     :host.theme-dark .card-desc { color: rgba(255, 255, 255, 0.45); font-size: 14px; }
-
-    :host.theme-dark .btn-copy {
-      background: #ffffff;
-      color: #000000;
-      border: 2px solid #ffffff;
-      border-radius: 8px;
-    }
-
-    :host.theme-dark .btn-copy:hover {
-      background: transparent;
-      color: #ffffff;
-      border-color: #ffffff;
-    }
-
-    :host.theme-dark .btn-ghost {
-      color: rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      border-radius: 8px;
-    }
-
-    :host.theme-dark .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.45);
-    }
 
     :host.theme-dark .team-form-card {
       background: #0d0d0d;

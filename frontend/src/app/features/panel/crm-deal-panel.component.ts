@@ -255,24 +255,31 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       background: #161616 !important;
     }
 
-    /* Botones */
-    .btn-copy {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border: 2px solid #ffffff !important;
-      border-radius: 8px !important;
-      font-family: var(--f-display) !important;
-    }
-    .btn-copy:hover { background: transparent !important; color: #ffffff !important; }
+    /* Botones — heredan variables del panel padre */
+    .btn-copy,
     .btn-ghost {
-      color: rgba(255,255,255,0.65) !important;
-      border: 1px solid rgba(255,255,255,0.20) !important;
-      background: transparent !important;
-      border-radius: 8px !important;
       font-family: var(--f-display) !important;
+      border-radius: var(--btn-radius, 4px) !important;
+      background: var(--btn-primary-bg, transparent) !important;
+      color: var(--btn-primary-color, #fff) !important;
+      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #fff) !important;
     }
-    .btn-ghost:hover { background: rgba(255,255,255,0.08) !important; color: #fff !important; }
-    .btn-delete { border-radius: 8px !important; font-family: var(--f-display) !important; }
+    .btn-copy:hover {
+      background: var(--btn-primary-hover-bg, #fff) !important;
+      color: var(--btn-primary-hover-color, #000) !important;
+      border-color: var(--btn-primary-hover-border, #fff) !important;
+    }
+    .btn-ghost {
+      background: var(--btn-outline-bg, transparent) !important;
+      color: var(--btn-outline-color, #fff) !important;
+      border-color: var(--btn-outline-border, #fff) !important;
+    }
+    .btn-ghost:hover {
+      background: var(--btn-outline-hover-bg, #fff) !important;
+      color: var(--btn-outline-hover-color, #000) !important;
+      border-color: var(--btn-outline-hover-border, #fff) !important;
+    }
+    .btn-delete { border-radius: var(--btn-radius, 4px) !important; font-family: var(--f-display) !important; }
 
     /* Card desc + general */
     .card-desc { color: rgba(255,255,255,0.45) !important; font-family: var(--f-display) !important; font-size: 13px !important; }

@@ -10,8 +10,20 @@
   --muted: rgba(255, 255, 255, 0.45);
   --brand-grey: rgba(255, 255, 255, 0.35);
   --bg: #000000;
-  --surface: #141414;
+  --surface: #000000;
   --border: rgba(255, 255, 255, 0.12);
+  --btn-primary-bg: transparent;
+  --btn-primary-color: #ffffff;
+  --btn-primary-border: #ffffff;
+  --btn-primary-hover-bg: #ffffff;
+  --btn-primary-hover-color: #000000;
+  --btn-primary-hover-border: #ffffff;
+  --btn-outline-bg: transparent;
+  --btn-outline-color: #ffffff;
+  --btn-outline-border: #ffffff;
+  --btn-outline-hover-bg: #ffffff;
+  --btn-outline-hover-color: #000000;
+  --btn-outline-hover-border: #ffffff;
 }
 
 :host .dash-nav {

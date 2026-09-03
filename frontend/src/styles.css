@@ -33,18 +33,22 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .swal2-confirm {
-  background: var(--gold) !important;
-  color: #000 !important;
-  font-weight: 800 !important;
+  background: #000 !important;
+  color: #fff !important;
+  font-weight: 700 !important;
   border-radius: 4px !important;
+  border: 1px solid #000 !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
 }
 
 .swal2-cancel {
-  background: #222 !important;
+  background: transparent !important;
   color: #fff !important;
+  border: 1px solid #fff !important;
   border-radius: 4px !important;
   text-transform: uppercase !important;
+  letter-spacing: 0.12em !important;
 }
 
 /* Toast styles */
@@ -121,18 +125,26 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .swal-dark-modal .swal2-styled.swal2-cancel {
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  color: rgba(255, 255, 255, 0.85) !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
+  border: 1px solid #ffffff !important;
+  color: #ffffff !important;
+  background: transparent !important;
+  font-weight: 700 !important;
+  border-radius: 4px !important;
   padding: 10px 20px !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
 }
 
 .swal-dark-modal .swal2-styled.swal2-confirm {
   font-weight: 700 !important;
-  border-radius: 8px !important;
+  border-radius: 4px !important;
   padding: 10px 20px !important;
-  box-shadow: 0 4px 14px rgba(230, 61, 47, 0.35);
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  border: 1px solid #ffffff !important;
+  background: transparent !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
 }
 
 .amount-tip-portal {

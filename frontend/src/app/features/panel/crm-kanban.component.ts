@@ -134,35 +134,43 @@ export interface KanbanStage extends CrmStageConfig {}
       justify-content: flex-end;
     }
     .btn-add-col-cancel {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.18);
-      color: rgba(255,255,255,0.60);
+      background: var(--btn-outline-bg, transparent);
+      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #fff);
+      color: var(--btn-outline-color, #fff);
       font-family: var(--f-display);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.10em;
       text-transform: uppercase;
       padding: 9px 18px;
-      border-radius: 8px;
+      border-radius: var(--btn-radius, 4px);
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
-    .btn-add-col-cancel:hover { border-color: rgba(255,255,255,0.45); color: #fff; }
+    .btn-add-col-cancel:hover {
+      background: var(--btn-outline-hover-bg, #fff);
+      color: var(--btn-outline-hover-color, #000);
+      border-color: var(--btn-outline-hover-border, #fff);
+    }
     .btn-add-col-confirm {
-      background: #ffffff;
-      border: 2px solid #ffffff;
-      color: #000000;
+      background: var(--btn-primary-bg, transparent);
+      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #fff);
+      color: var(--btn-primary-color, #fff);
       font-family: var(--f-display);
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.10em;
       text-transform: uppercase;
       padding: 9px 20px;
-      border-radius: 8px;
+      border-radius: var(--btn-radius, 4px);
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
-    .btn-add-col-confirm:hover { background: transparent; color: #fff; }
+    .btn-add-col-confirm:hover {
+      background: var(--btn-primary-hover-bg, #fff);
+      color: var(--btn-primary-hover-color, #000);
+      border-color: var(--btn-primary-hover-border, #fff);
+    }
     .btn-add-col-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
 
     /* ── Add column button ── */
