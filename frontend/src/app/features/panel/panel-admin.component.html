@@ -553,141 +553,139 @@
     }
 
     @if (tab() === 'push') {
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideBell [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Notificaciones push (OneSignal)
-        </h2>
-        <p class="card-desc">
-          Envía alertas al celular de tus usuarios aunque no tengan la app abierta.
-          En este teléfono, primero activa push con el botón de abajo y toca <strong>Permitir</strong> en Android.
-        </p>
-
-        <div class="form-row" style="margin-top:12px;align-items:center;gap:12px;flex-wrap:wrap;">
-          <button type="button" class="btn-copy btn-with-icon" [disabled]="pushActivating()" (click)="activatePushOnDevice()">
-            @if (pushActivating()) { Activando... } @else { Activar push en este dispositivo }
-          </button>
-          <span class="card-desc" style="margin:0;font-size:12px;">
-            {{ oneSignal.deviceHint() }} · {{ oneSignal.statusLabel() }}
-          </span>
-        </div>
-
-        @if (pushConfigured()) {
-          <p class="card-desc" style="margin-top:8px;">
-            Dispositivos en OneSignal: <strong>{{ pushValidCount() }} válido(s)</strong> de {{ pushSubscriptions().length }} registrado(s).
-            @if (pushValidCount() === 0) {
-              <span style="color:#fbbf24;"> Ningún teléfono con token push activo.</span>
-            }
-          </p>
-          @if (pushSubscriptions().length) {
-            <ul class="card-desc" style="margin-top:8px;font-size:12px;">
-              @for (s of pushSubscriptions(); track s.id) {
-                <li>
-                  {{ s.deviceModel || '?' }}
-                  — {{ s.hasToken && !s.invalid && s.subscribed ? 'Suscrito' : (s.hasToken ? 'token sin suscripción' : 'sin token') }}
-                  @if (s.externalUserId) { (user {{ s.externalUserId.slice(0, 8) }}…) } @else { (anónimo) }
-                </li>
-              }
-            </ul>
-          }
-        }
+      <div class="push-admin">
+        <section class="dash-card push-hero">
+          <div class="push-hero-copy">
+            <h2 class="card-title card-title-with-icon">
+              <svg lucideBell [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+              Push / Notificaciones
+            </h2>
+            <p class="card-desc">Envía avisos al celular aunque la app esté cerrada. El encabezado siempre es Trámites Vehiculares de México.</p>
+          </div>
+          <div class="push-hero-stats">
+            <div class="push-stat">
+              <span class="push-stat-num">{{ pushValidCount() }}</span>
+              <span class="push-stat-label">Activos</span>
+            </div>
+            <div class="push-stat">
+              <span class="push-stat-num">{{ pushSubscriptions().length }}</span>
+              <span class="push-stat-label">Registrados</span>
+            </div>
+            <div class="push-stat">
+              <span class="push-stat-num">{{ pushHistory().length }}</span>
+              <span class="push-stat-label">Envíos</span>
+            </div>
+          </div>
+        </section>
 
         @if (!pushConfigured()) {
-          <p class="banner-msg" style="color:#fbbf24;">OneSignal no está configurado en el servidor (falta REST API Key en .env).</p>
+          <div class="push-alert">OneSignal no está configurado en el servidor. Falta la REST API Key en .env.</div>
         }
 
-        <p class="card-desc" style="margin-top:8px;font-size:12px;opacity:.85;">
-          Encabezado fijo: <strong>Trámites Vehiculares de México</strong> con logo oficial. El título y mensaje van en el cuerpo del aviso.
-          Si ves «sitio actualizado en segundo plano», toca <strong>Activar push en este dispositivo</strong> de nuevo (cambio de service worker).
-        </p>
+        <div class="push-grid">
+          <section class="dash-card push-panel">
+            <h3 class="push-panel-title">Este dispositivo</h3>
+            <p class="push-panel-sub">{{ oneSignal.deviceHint() }} · {{ oneSignal.statusLabel() }}</p>
+            <button type="button" class="btn-copy btn-with-icon" [disabled]="pushActivating()" (click)="activatePushOnDevice()">
+              @if (pushActivating()) { Activando… } @else { Activar push aquí }
+            </button>
+            <p class="push-hint">En Android, toca Permitir. Si ves “sitio actualizado en segundo plano”, vuelve a activar.</p>
 
-        <div class="form-row" style="margin-top:16px;">
-          <div class="form-group">
-            <label>Título del aviso</label>
-            <input [(ngModel)]="pushForm.title" maxlength="200" placeholder="Ej: Tu trámite fue actualizado">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Mensaje</label>
-          <textarea [(ngModel)]="pushForm.body" rows="3" maxlength="1000" placeholder="Texto de la notificación"></textarea>
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Enlace al tocar (opcional)</label>
-            <input [(ngModel)]="pushForm.url" placeholder="/panel/cliente">
-          </div>
-          <div class="form-group">
-            <label>Audiencia</label>
-            <select [(ngModel)]="pushForm.audience">
-              <option value="all">Todos los suscritos</option>
-              <option value="cliente">Solo clientes</option>
-              <option value="gestor">Solo gestores</option>
-              <option value="concesionaria">Solo concesionarias</option>
-              <option value="perito">Solo peritos</option>
-              <option value="admin">Solo administradores</option>
-              <option value="user">Usuario específico</option>
-            </select>
-          </div>
-        </div>
-        @if (pushForm.audience === 'user') {
-          <div class="form-group">
-            <label>Usuario destino</label>
-            <select [(ngModel)]="pushForm.audienceUserId">
-              <option value="">— Seleccionar —</option>
-              @for (u of pushUsers(); track u.id) {
-                <option [value]="u.id">{{ u.name || u.email }} ({{ u.role }})</option>
-              }
-            </select>
-          </div>
-        }
-
-        @if (pushMsg()) {
-          <p class="success-msg banner-msg" style="margin-top:12px;">{{ pushMsg() }}</p>
-        }
-
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;">
-          <button type="button" class="btn-ghost btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(true)">
-            Enviarme prueba
-          </button>
-          <button type="button" class="btn-copy btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(false)">
-            @if (pushSending()) { Enviando... } @else { Enviar notificación }
-          </button>
-        </div>
-      </div>
-
-      <div class="dash-card" style="margin-top:16px;">
-        <h3 class="card-title">Historial de envíos</h3>
-        @if (pushLoading()) {
-          <p>Cargando...</p>
-        } @else if (!pushHistory().length) {
-          <p class="card-desc">Aún no hay envíos registrados.</p>
-        } @else {
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Fecha</th>
-                  <th>Título</th>
-                  <th>Audiencia</th>
-                  <th>Entregados</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (c of pushHistory(); track c.id) {
-                  <tr>
-                    <td>{{ c.createdAt | date:'dd/MM/yy HH:mm' }}</td>
-                    <td>
-                      <strong>{{ c.title }}</strong>
-                      <div class="muted-sm">{{ c.body }}</div>
-                    </td>
-                    <td>{{ pushAudienceLabel(c.audienceType, c.audienceValue) }}</td>
-                    <td>{{ c.recipients }}</td>
-                  </tr>
+            @if (pushConfigured() && pushSubscriptions().length) {
+              <div class="push-device-list">
+                @for (s of pushSubscriptions(); track s.id) {
+                  <div class="push-device-row">
+                    <strong>{{ s.deviceModel || 'Dispositivo' }}</strong>
+                    <span>{{ s.hasToken && !s.invalid && s.subscribed ? 'Suscrito' : (s.hasToken ? 'Sin suscripción' : 'Sin token') }}</span>
+                    <em>{{ s.externalUserId ? ('User ' + s.externalUserId.slice(0, 8)) : 'Anónimo' }}</em>
+                  </div>
                 }
-              </tbody>
-            </table>
+              </div>
+            } @else if (pushConfigured() && pushValidCount() === 0) {
+              <p class="push-hint">Aún no hay teléfonos con token activo.</p>
+            }
+          </section>
+
+          <section class="dash-card push-panel">
+            <h3 class="push-panel-title">Nuevo aviso</h3>
+            <div class="form-group">
+              <label>Título</label>
+              <input [(ngModel)]="pushForm.title" maxlength="200" placeholder="Tu trámite fue actualizado">
+            </div>
+            <div class="form-group">
+              <label>Mensaje</label>
+              <textarea [(ngModel)]="pushForm.body" rows="4" maxlength="1000" placeholder="Texto que verá el usuario"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Enlace al tocar</label>
+                <input [(ngModel)]="pushForm.url" placeholder="/panel/cliente">
+              </div>
+              <div class="form-group">
+                <label>Audiencia</label>
+                <select [(ngModel)]="pushForm.audience">
+                  <option value="all">Todos los suscritos</option>
+                  <option value="cliente">Solo clientes</option>
+                  <option value="gestor">Solo gestores</option>
+                  <option value="concesionaria">Solo concesionarias</option>
+                  <option value="perito">Solo peritos</option>
+                  <option value="admin">Solo administradores</option>
+                  <option value="user">Usuario específico</option>
+                </select>
+              </div>
+            </div>
+            @if (pushForm.audience === 'user') {
+              <div class="form-group">
+                <label>Usuario destino</label>
+                <select [(ngModel)]="pushForm.audienceUserId">
+                  <option value="">— Seleccionar —</option>
+                  @for (u of pushUsers(); track u.id) {
+                    <option [value]="u.id">{{ u.name || u.email }} ({{ u.role }})</option>
+                  }
+                </select>
+              </div>
+            }
+            @if (pushMsg()) {
+              <p class="success-msg banner-msg">{{ pushMsg() }}</p>
+            }
+            <div class="push-actions">
+              <button type="button" class="btn-ghost btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(true)">
+                Enviarme prueba
+              </button>
+              <button type="button" class="btn-copy btn-with-icon" [disabled]="pushSending() || !pushConfigured()" (click)="sendPushNotification(false)">
+                @if (pushSending()) { Enviando… } @else { Enviar notificación }
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <section class="dash-card push-panel">
+          <div class="push-history-head">
+            <h3 class="push-panel-title">Historial de envíos</h3>
+            <span class="push-history-count">{{ pushHistory().length }}</span>
           </div>
-        }
+          @if (pushLoading()) {
+            <p class="push-hint">Cargando historial…</p>
+          } @else if (!pushHistory().length) {
+            <p class="push-hint">Aún no hay envíos registrados.</p>
+          } @else {
+            <div class="push-history-list">
+              @for (c of pushHistory(); track c.id) {
+                <article class="push-history-item">
+                  <div class="push-history-main">
+                    <strong>{{ c.title }}</strong>
+                    <p>{{ c.body }}</p>
+                  </div>
+                  <div class="push-history-meta">
+                    <span>{{ c.createdAt | date:'dd MMM yyyy · HH:mm' }}</span>
+                    <span>{{ pushAudienceLabel(c.audienceType, c.audienceValue) }}</span>
+                    <span>{{ c.recipients }} entregados</span>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        </section>
       </div>
     }
 
