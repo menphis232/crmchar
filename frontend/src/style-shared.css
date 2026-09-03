@@ -121,7 +121,6 @@ img { max-width: 100%; display: block; }
 .btn-copy,
 .btn-new,
 .btn-nuevo-lead,
-.pipeline-filter-btn,
 .btn-add-col-confirm {
   font-family: var(--f-display);
   font-size: var(--btn-font-size);
@@ -147,7 +146,6 @@ img { max-width: 100%; display: block; }
 .btn-copy:hover:not(:disabled),
 .btn-new:hover:not(:disabled),
 .btn-nuevo-lead:hover,
-.pipeline-filter-btn:hover,
 .btn-add-col-confirm:hover:not(:disabled) {
   background: var(--btn-primary-hover-bg);
   color: var(--btn-primary-hover-color);
@@ -174,7 +172,8 @@ img { max-width: 100%; display: block; }
 .btn-add-col-cancel,
 .btn-add-method,
 .page-btn,
-.btn-ghost-modal {
+.btn-ghost-modal,
+.pipeline-filter-btn {
   font-family: var(--f-display);
   font-size: var(--btn-font-size);
   font-weight: var(--btn-weight);
@@ -201,7 +200,8 @@ img { max-width: 100%; display: block; }
 .btn-add-col-cancel:hover,
 .btn-add-method:hover:not(:disabled),
 .page-btn:hover:not(:disabled),
-.btn-ghost-modal:hover {
+.btn-ghost-modal:hover,
+.pipeline-filter-btn:hover {
   background: var(--btn-outline-hover-bg);
   color: var(--btn-outline-hover-color);
   border-color: var(--btn-outline-hover-border);

@@ -1177,17 +1177,6 @@
   color: rgba(255, 255, 255, 0.85);
 }
 
-.client-search-bar .btn-copy {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.25) !important;
-  color: #fff !important;
-}
-
-.client-search-bar .btn-copy:hover {
-  background: rgba(255, 255, 255, 0.18) !important;
-  color: #fff !important;
-}
-
 .client-pagination {
   display: flex;
   align-items: center;

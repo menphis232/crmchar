@@ -680,17 +680,6 @@ select option { background: #111111; color: #ffffff; }
 :host ::ng-deep app-crm-clients-directory .clients-search-field {
   border: 1px solid rgba(255,255,255,0.22) !important;
 }
-:host ::ng-deep app-crm-clients-directory .btn-copy {
-  background: #111111 !important;
-  color: #ffffff !important;
-  border: 1px solid rgba(255,255,255,0.35) !important;
-  border-radius: 8px !important;
-}
-:host ::ng-deep app-crm-clients-directory .btn-copy:hover {
-  background: rgba(255,255,255,0.08) !important;
-  color: #ffffff !important;
-  border-color: rgba(255,255,255,0.6) !important;
-}
 
 .share-og-preview {
   margin: 0 0 16px;
@@ -743,18 +732,6 @@ select option { background: #111111; color: #ffffff; }
   margin-bottom: 0;
 }
 
-:host ::ng-deep .btn-copy {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #ffffff !important;
-  border-radius: 8px !important;
-}
-:host ::ng-deep .btn-ghost {
-  color: rgba(255,255,255,0.65) !important;
-  border: 1px solid rgba(255,255,255,0.22) !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-}
 :host ::ng-deep .form-group label { color: rgba(255,255,255,0.50) !important; }
 :host ::ng-deep input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
 :host ::ng-deep textarea,
@@ -951,39 +928,8 @@ app-crm-team {
   color: rgba(255, 255, 255, 0.45) !important;
 }
 
-:host ::ng-deep app-crm-team .btn-copy {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border: 2px solid #ffffff !important;
-  border-radius: 8px !important;
-  font-family: var(--f-display) !important;
-  font-size: 11px !important;
-  letter-spacing: 0.12em !important;
-  text-transform: uppercase !important;
-  padding: 7px 14px !important;
-}
-
-:host ::ng-deep app-crm-team .btn-copy:hover {
-  background: transparent !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-}
-
-:host ::ng-deep app-crm-team .btn-ghost {
-  color: rgba(255, 255, 255, 0.65) !important;
-  border: 1px solid rgba(255, 255, 255, 0.22) !important;
-  background: transparent !important;
-  border-radius: 8px !important;
-}
-
-:host ::ng-deep app-crm-team .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.45) !important;
-}
-
 :host ::ng-deep app-crm-team .dash-card {
-  background: #141414 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 14px !important;

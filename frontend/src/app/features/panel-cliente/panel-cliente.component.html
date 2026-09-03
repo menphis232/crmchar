@@ -324,7 +324,7 @@
             <svg lucideSearch [size]="16" aria-hidden="true"></svg>
             <input type="text" class="client-search-input" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, gestoría o código..."
                    (keyup.enter)="searchTramites()">
-            <button type="button" class="btn-copy small" (click)="searchTramites()">Buscar</button>
+            <button type="button" class="btn-ghost small" (click)="searchTramites()">Buscar</button>
           </div>
 
           @if (tramitesLoading()) {
@@ -398,7 +398,7 @@
           <svg lucideSearch [size]="16" aria-hidden="true"></svg>
           <input type="text" class="client-search-input" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, gestoría o código..."
                  (keyup.enter)="searchHistorial()">
-          <button type="button" class="btn-copy small" (click)="searchHistorial()">Buscar</button>
+          <button type="button" class="btn-ghost small" (click)="searchHistorial()">Buscar</button>
         </div>
 
         @if (historialLoading()) {
