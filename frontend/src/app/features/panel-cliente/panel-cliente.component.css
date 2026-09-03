@@ -102,7 +102,7 @@
 }
 
 .dash-card {
-  background: #141414 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
   border-radius: 14px !important;
@@ -116,7 +116,7 @@
 }
 
 .stat-box {
-  background: #141414 !important;
+  background: #000 !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-top: 2px solid rgba(255, 255, 255, 0.30) !important;
   border-radius: 12px !important;
@@ -151,7 +151,7 @@
 }
 
 .client-deal-card {
-  background: #0f0f0f;
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-top: 2px solid rgba(255, 255, 255, 0.22);
   border-radius: 12px;
@@ -183,7 +183,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.85);
@@ -292,7 +292,7 @@
   text-align: center;
   padding: 48px 24px;
   border: 1px dashed rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.03);
+  background: #000;
   border-radius: 12px;
   color: rgba(255, 255, 255, 0.45);
   font-size: 14px;
@@ -396,7 +396,7 @@
 }
 
 .client-code {
-  background: rgba(255, 255, 255, 0.06);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 2px 8px;
   font-size: 12px;
@@ -410,7 +410,7 @@
   align-items: center;
   gap: 0;
   padding: 18px 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   overflow-x: auto;
@@ -428,7 +428,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #141414;
+  background: #000;
   border: 2px solid rgba(255, 255, 255, 0.18);
   display: flex;
   align-items: center;
@@ -532,7 +532,7 @@
 
 .client-chat {
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #0f0f0f;
+  background: #000;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -544,7 +544,7 @@
   gap: 12px;
   padding: 14px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  background: #000;
 }
 
 .client-chat-toolbar strong {
@@ -665,7 +665,7 @@
   max-width: 100%;
   padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #141414;
+  background: #000;
   color: #fff;
   border-radius: 10px;
 }
@@ -678,7 +678,7 @@
 }
 
 .client-chat-row.mine .client-chat-bubble {
-  background: #1a1a1a;
+  background: #000;
   border-color: rgba(255, 255, 255, 0.28);
   color: #fff;
 }
@@ -699,7 +699,7 @@
   gap: 10px;
   padding: 14px 16px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0f0f0f;
+  background: #000;
 }
 
 .client-chat-attach {
@@ -709,7 +709,7 @@
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.04);
+  background: #000;
   color: #fff;
   cursor: pointer;
   border-radius: 8px;
@@ -727,7 +727,7 @@
   height: 40px;
   padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #111;
+  background: #000;
   color: #fff;
   font-family: var(--f-ui);
   font-size: 14px;
@@ -780,7 +780,7 @@
   flex-direction: column;
   gap: 10px;
   padding: 14px 16px;
-  background: #0f0f0f;
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
 }
@@ -814,7 +814,7 @@
   flex-direction: column;
   gap: 8px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 8px;
 }
@@ -833,7 +833,7 @@
   width: 100%;
   text-align: left;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.05);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   color: inherit;
@@ -869,7 +869,7 @@
   gap: 14px;
   padding: 16px 18px;
   margin-top: 8px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   color: rgba(255, 255, 255, 0.55);
@@ -1091,7 +1091,7 @@
 }
 
 .client-invoice-row:hover {
-  background: rgba(255, 255, 255, 0.04);
+  background: #000;
   border-color: rgba(200, 169, 74, 0.45);
 }
 
@@ -1275,7 +1275,7 @@
 .client-wallet-upload {
   margin: 20px 0;
   padding: 20px;
-  background: rgba(255, 255, 255, 0.03);
+  background: #000;
   border: 1px dashed rgba(255, 255, 255, 0.15);
   border-radius: 12px;
 }
@@ -1295,7 +1295,7 @@
 }
 
 .client-wallet-input {
-  background: rgba(255, 255, 255, 0.06);
+  background: #000;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 10px 12px;
@@ -1315,7 +1315,7 @@ select.client-wallet-input {
 }
 
 select.client-wallet-input option {
-  background-color: #1a1a1a;
+  background-color: #000;
   color: #fff;
 }
 
@@ -1378,7 +1378,7 @@ select.client-wallet-input option {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #111;
+  background: #000;
 }
 
 .wdoc-pdf-frame {
@@ -1386,7 +1386,7 @@ select.client-wallet-input option {
   height: 100%;
   border: none;
   pointer-events: none;
-  background: #0d0d0d;
+  background: #000;
 }
 
 .wdoc-pdf-badge {
@@ -1650,7 +1650,7 @@ select.client-wallet-input option {
   min-height: 420px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
-  background: #111;
+  background: #000;
 }
 
 .client-delivery-image {
@@ -1659,7 +1659,7 @@ select.client-wallet-input option {
   object-fit: contain;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #111;
+  background: #000;
 }
 
 .client-shipping-preview {
@@ -1681,7 +1681,7 @@ select.client-wallet-input option {
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 12px;
-  background: rgba(255,255,255,0.02);
+  background: #000;
 }
 
 .client-vehicle-add {
@@ -1758,7 +1758,7 @@ select.client-wallet-input option {
 .client-vehicle-form select,
 .client-vehicle-form input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.06);
+  background: #000;
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 9px 12px;
@@ -1778,7 +1778,7 @@ select.client-wallet-input option {
 }
 
 .client-vehicle-form select option {
-  background-color: #1a1a1a;
+  background-color: #000;
   color: #fff;
 }
 
@@ -1800,7 +1800,7 @@ select.client-wallet-input option {
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   color: rgba(255, 255, 255, 0.8);
   border: 1px solid var(--border);
   text-transform: capitalize;
@@ -2008,7 +2008,7 @@ select.client-wallet-input option {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: #000;
   cursor: pointer;
   text-align: left;
   display: flex;
@@ -2039,7 +2039,7 @@ select.client-wallet-input option {
   position: relative;
   aspect-ratio: 4 / 5;
   width: 100%;
-  background: #0d0d0d;
+  background: #000;
   overflow: hidden;
 }
 
@@ -2049,7 +2049,7 @@ select.client-wallet-input option {
   object-fit: cover;
   object-position: center;
   display: block;
-  background: #0d0d0d;
+  background: #000;
 }
 
 .knowledge-slide-placeholder {
@@ -2060,7 +2060,7 @@ select.client-wallet-input option {
   align-items: center;
   justify-content: center;
   color: rgba(255, 255, 255, 0.3);
-  background: linear-gradient(135deg, #161616, #0c0c0c);
+  background: #000;
 }
 
 .knowledge-reel-body {
@@ -2150,18 +2150,20 @@ select.client-wallet-input option {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 999px;
+  border: 1px solid var(--btn-outline-border, #ffffff);
+  background: var(--btn-outline-bg, transparent);
+  color: var(--btn-outline-color, #ffffff);
+  border-radius: 4px;
   padding: 5px 10px;
   font-size: 11px;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .knowledge-action:hover {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.22);
+  background: var(--btn-outline-hover-bg, #ffffff);
+  color: var(--btn-outline-hover-color, #000000);
+  border-color: var(--btn-outline-hover-border, #ffffff);
 }
 
 .knowledge-action.liked {
@@ -2229,10 +2231,10 @@ select.client-wallet-input option {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 5px 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  background: transparent;
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 .hnc-empty {
@@ -2256,12 +2258,12 @@ select.client-wallet-input option {
   padding: 12px 14px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  background: #000;
 }
 
 .hnc-item-blocked {
   border-color: rgba(239, 68, 68, 0.4);
-  background: rgba(239, 68, 68, 0.08);
+  background: #000;
 }
 
 .hnc-item-color {
@@ -2373,7 +2375,7 @@ select.client-wallet-input option {
 .hnc-pill-azul { background: rgba(59, 130, 246, 0.18); color: #3b82f6; border-color: rgba(59, 130, 246, 0.4); }
 
 .hnc-dot-none { background: rgba(255, 255, 255, 0.25); }
-.hnc-pill-none { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.55); border-color: rgba(255, 255, 255, 0.15); }
+.hnc-pill-none { background: transparent; color: rgba(255, 255, 255, 0.55); border-color: rgba(255, 255, 255, 0.15); }
 
 @media (max-width: 640px) {
   .hnc-item {
