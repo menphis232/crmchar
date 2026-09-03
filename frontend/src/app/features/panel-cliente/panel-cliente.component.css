@@ -279,48 +279,51 @@
 .client-stat-card {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: stretch;
+  gap: 8px;
   min-width: 118px;
-  padding: 14px 16px;
+  flex: 1 1 0;
+  padding: 16px 18px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: #000;
-  backdrop-filter: none;
   cursor: pointer;
   text-align: left;
   color: inherit;
   font-family: inherit;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s, border-color 0.2s;
 }
 
 .client-stat-card:hover {
   transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.45);
-  box-shadow: none;
+}
+
+.client-stat-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
 }
 
 .client-stat-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 0;
-  margin-bottom: 2px;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.35);
+  margin-top: 2px;
+  transition: color 0.2s;
 }
 
-.client-stat-icon--total,
-.client-stat-icon--progress,
-.client-stat-icon--done {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+.client-stat-card:hover .client-stat-icon {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .client-stat-num {
   font-family: var(--f-display);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 900;
   color: #fff;
   line-height: 1;
@@ -328,19 +331,17 @@
 }
 
 .client-stat-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.3;
 }
 
-.client-stat-card--active:hover {
-  border-color: rgba(196, 181, 253, 0.45);
-}
-
+.client-stat-card--active:hover,
 .client-stat-card--done:hover {
-  border-color: rgba(134, 239, 172, 0.4);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 /* Quick actions */
@@ -794,11 +795,16 @@
   .client-stat-card {
     flex: 1 1 calc(33% - 8px);
     min-width: 0;
-    padding: 12px;
+    padding: 14px 12px;
   }
 
   .client-stat-num {
-    font-size: 22px;
+    font-size: 24px;
+  }
+
+  .client-stat-icon svg {
+    width: 18px;
+    height: 18px;
   }
 
   .client-quick-actions {

@@ -121,24 +121,30 @@
             </div>
             <div class="client-hero-stats">
               <button type="button" class="client-stat-card" (click)="setTab('tramites'); closeDeal()">
-                <span class="client-stat-icon client-stat-icon--total">
-                  <svg lucideClipboardList [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
-                </span>
-                <span class="client-stat-num">{{ totalDeals() }}</span>
+                <div class="client-stat-top">
+                  <span class="client-stat-num">{{ totalDeals() }}</span>
+                  <span class="client-stat-icon" aria-hidden="true">
+                    <svg lucideClipboardList [size]="20" [strokeWidth]="1.75"></svg>
+                  </span>
+                </div>
                 <span class="client-stat-label">Total trámites</span>
               </button>
               <button type="button" class="client-stat-card client-stat-card--active" (click)="setTab('tramites'); closeDeal()">
-                <span class="client-stat-icon client-stat-icon--progress">
-                  <svg lucideClock [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
-                </span>
-                <span class="client-stat-num">{{ activeDeals() }}</span>
+                <div class="client-stat-top">
+                  <span class="client-stat-num">{{ activeDeals() }}</span>
+                  <span class="client-stat-icon" aria-hidden="true">
+                    <svg lucideClock [size]="20" [strokeWidth]="1.75"></svg>
+                  </span>
+                </div>
                 <span class="client-stat-label">En proceso</span>
               </button>
               <button type="button" class="client-stat-card client-stat-card--done" (click)="setTab('historial')">
-                <span class="client-stat-icon client-stat-icon--done">
-                  <svg lucideCheck [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
-                </span>
-                <span class="client-stat-num">{{ completedDeals() }}</span>
+                <div class="client-stat-top">
+                  <span class="client-stat-num">{{ completedDeals() }}</span>
+                  <span class="client-stat-icon" aria-hidden="true">
+                    <svg lucideCheck [size]="20" [strokeWidth]="1.75"></svg>
+                  </span>
+                </div>
                 <span class="client-stat-label">Completados</span>
               </button>
             </div>
