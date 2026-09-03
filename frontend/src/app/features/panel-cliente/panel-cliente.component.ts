@@ -146,13 +146,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   dashboardLoading = signal(true);
   knowledgePosts = signal<KnowledgePost[]>([]);
   knowledgeLoading = signal(false);
-  knowledgeFeedLoadingMore = signal(false);
-  knowledgeFeedHasMore = signal(false);
-  private knowledgeFeedPage = 1;
-  readonly knowledgeFeedPageSize = 5;
-  @ViewChild('knowledgeReelsBox') knowledgeReelsBox?: ElementRef<HTMLDivElement>;
-  @ViewChild('knowledgeFeedSentinel') knowledgeFeedSentinel?: ElementRef<HTMLDivElement>;
-  private knowledgeFeedObserver?: IntersectionObserver;
+  knowledgeMeta = signal({ page: 1, total: 0, totalPages: 1, limit: 10 });
+  readonly knowledgePageSize = 10;
+
+  knowledgePreviewPosts = signal<KnowledgePost[]>([]);
+  knowledgePreviewLoading = signal(false);
+  readonly knowledgePreviewSize = 3;
 
   selectedDeal = signal<any>(null);
   documents = signal<any[]>([]);
@@ -250,7 +249,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadInvoices();
     this.loadWallet();
     this.loadVehicles();
-    this.loadKnowledgeFeed(true);
+    this.loadKnowledgePreview();
     void this.oneSignal.refreshPermissionState();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
@@ -289,7 +288,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.socket) this.socket.disconnect();
-    this.knowledgeFeedObserver?.disconnect();
   }
 
   setTab(tab: ClientTab) {
@@ -302,68 +300,46 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (!this.vehicles().length) this.loadVehicles();
     }
     if (tab === 'vehiculos') this.loadVehicles();
-    if (tab === 'conocimiento' || tab === 'dashboard') {
-      this.loadKnowledgeFeed(true);
-      if (tab === 'conocimiento') {
-        setTimeout(() => this.setupKnowledgeFeedObserver(), 0);
-      }
+    if (tab === 'conocimiento') {
+      this.loadKnowledgePage(1);
+    }
+    if (tab === 'dashboard') {
+      this.loadKnowledgePreview();
     }
   }
 
-  loadKnowledgeFeed(reset = false) {
-    if (reset) {
-      this.knowledgeFeedPage = 1;
-      this.knowledgeFeedHasMore.set(false);
-      if (!this.knowledgePosts().length) this.knowledgeLoading.set(true);
-    } else {
-      if (this.knowledgeFeedLoadingMore() || !this.knowledgeFeedHasMore()) return;
-      this.knowledgeFeedLoadingMore.set(true);
-    }
-
-    const page = reset ? 1 : this.knowledgeFeedPage + 1;
-    this.knowledgeService.feed(page, this.knowledgeFeedPageSize).subscribe({
+  loadKnowledgePreview() {
+    this.knowledgePreviewLoading.set(true);
+    this.knowledgeService.feed(1, this.knowledgePreviewSize).subscribe({
       next: res => {
-        if (reset) {
-          this.knowledgePosts.set(res.items);
-        } else {
-          const existing = new Set(this.knowledgePosts().map(p => p.id));
-          const merged = [...this.knowledgePosts(), ...res.items.filter(p => !existing.has(p.id))];
-          this.knowledgePosts.set(merged);
-        }
-        this.knowledgeFeedPage = res.page;
-        this.knowledgeFeedHasMore.set(res.hasMore);
-        this.knowledgeLoading.set(false);
-        this.knowledgeFeedLoadingMore.set(false);
-        if (this.activeTab() === 'conocimiento') {
-          setTimeout(() => this.setupKnowledgeFeedObserver(), 0);
-        }
+        this.knowledgePreviewPosts.set(res.items);
+        this.knowledgePreviewLoading.set(false);
       },
       error: () => {
-        if (reset) this.knowledgePosts.set([]);
-        this.knowledgeLoading.set(false);
-        this.knowledgeFeedLoadingMore.set(false);
+        this.knowledgePreviewPosts.set([]);
+        this.knowledgePreviewLoading.set(false);
       },
     });
   }
 
-  onKnowledgeReelsScroll(event: Event) {
-    const el = event.target as HTMLElement;
-    if (el.scrollTop + el.clientHeight >= el.scrollHeight - 80) {
-      this.loadKnowledgeFeed(false);
-    }
-  }
-
-  setupKnowledgeFeedObserver() {
-    if (typeof IntersectionObserver === 'undefined') return;
-    const sentinel = this.knowledgeFeedSentinel?.nativeElement;
-    if (!sentinel) return;
-    this.knowledgeFeedObserver?.disconnect();
-    this.knowledgeFeedObserver = new IntersectionObserver(entries => {
-      if (entries.some(e => e.isIntersecting)) {
-        this.loadKnowledgeFeed(false);
-      }
-    }, { root: null, rootMargin: '120px', threshold: 0 });
-    this.knowledgeFeedObserver.observe(sentinel);
+  loadKnowledgePage(page: number) {
+    this.knowledgeLoading.set(true);
+    this.knowledgeService.feed(page, this.knowledgePageSize).subscribe({
+      next: res => {
+        this.knowledgePosts.set(res.items);
+        this.knowledgeMeta.set({
+          page: res.page,
+          total: res.total,
+          totalPages: Math.max(1, Math.ceil(res.total / res.limit)),
+          limit: res.limit,
+        });
+        this.knowledgeLoading.set(false);
+      },
+      error: () => {
+        this.knowledgePosts.set([]);
+        this.knowledgeLoading.set(false);
+      },
+    });
   }
 
   coverFor(post: KnowledgePost): string {
@@ -402,11 +378,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     event?.stopPropagation();
     this.knowledgeService.toggleLike(post.id).subscribe({
       next: res => {
-        this.knowledgePosts.update(list =>
+        const patch = (list: KnowledgePost[]) =>
           list.map(p => p.id === post.id
             ? { ...p, likedByMe: res.likedByMe, likesCount: res.likesCount }
-            : p)
-        );
+            : p);
+        this.knowledgePosts.update(patch);
+        this.knowledgePreviewPosts.update(patch);
       },
       error: () => this.toast.error('No se pudo guardar el me gusta', 'Error'),
     });
@@ -676,7 +653,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   loadDashboard() {
     this.dashboardLoading.set(true);
-    this.loadKnowledgeFeed(true);
+    this.loadKnowledgePreview();
     this.http.get<{ total: number; active: number; closed: number }>(`${environment.apiUrl}/client/deals/stats`).subscribe({
       next: stats => {
         this.stats.set(stats);

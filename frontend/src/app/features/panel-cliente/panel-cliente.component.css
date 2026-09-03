@@ -2581,7 +2581,114 @@ select.client-wallet-input option {
 }
 
 
-/* Knowledge feed / reels */
+/* Knowledge — grid 3 columnas */
+.knowledge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.knowledge-grid--preview {
+  margin-top: 0;
+}
+
+.knowledge-grid-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.knowledge-grid-card:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.knowledge-grid-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: #000;
+  overflow: hidden;
+}
+
+.knowledge-grid-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.knowledge-grid-media .knowledge-type-chip {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+}
+
+.knowledge-grid-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 12px 14px;
+  flex: 1;
+}
+
+.knowledge-grid-body h3 {
+  margin: 0;
+  font-family: var(--f-display);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #fff;
+  letter-spacing: 0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.knowledge-grid-body p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.45);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.knowledge-grid-date {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+}
+
+.knowledge-grid-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+@media (max-width: 960px) {
+  .knowledge-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .knowledge-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Knowledge feed / reels (legacy) */
 .knowledge-feed-title {
   margin: 0;
   display: inline-flex;
