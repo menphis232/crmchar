@@ -818,11 +818,6 @@
           </div>
         </div>
 
-        <div class="stripe-settings-note deal-meta-with-icon">
-          <svg lucideZap [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
-          <strong>Cómo funciona:</strong> Al registrarse, cada rol usa su propio Price ID. El consultor paga de inmediato (sin trial). La concesionaria mantiene prueba de 7 días. La cuenta queda pendiente hasta confirmar el checkout.
-        </div>
-
         @if (stripeMsg()) {
           <p class="success-msg banner-msg" style="margin-top: 16px;">{{ stripeMsg() }}</p>
         }

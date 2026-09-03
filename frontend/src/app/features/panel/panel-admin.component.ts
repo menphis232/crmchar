@@ -37,7 +37,6 @@ import {
   LucideUsers,
   LucideWrench,
   LucideX,
-  LucideZap,
   LucideBookOpen,
   LucidePlus,
   LucideTrash2,
@@ -53,7 +52,7 @@ type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell, LucideChevronLeft, LucideChevronRight],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell, LucideChevronLeft, LucideChevronRight],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
