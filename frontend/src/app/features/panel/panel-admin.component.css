@@ -1777,44 +1777,6 @@ app-crm-team {
   line-height: 1.45;
 }
 
-.push-device-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.push-device-row {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 12px;
-  padding: 10px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.push-device-row strong,
-.push-device-row span,
-.push-device-row em {
-  color: #fff;
-  font-style: normal;
-}
-
-.push-device-row strong {
-  font-size: 13px;
-}
-
-.push-device-row span,
-.push-device-row em {
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.push-device-row em {
-  grid-column: 1 / -1;
-  opacity: 0.85;
-}
-
 .push-actions {
   display: flex;
   gap: 10px;

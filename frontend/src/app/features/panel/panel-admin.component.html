@@ -560,7 +560,7 @@
               <svg lucideBell [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
               Push / Notificaciones
             </h2>
-            <p class="card-desc">Envía avisos al celular aunque la app esté cerrada. El encabezado siempre es Trámites Vehiculares de México.</p>
+            <p class="card-desc">Envía avisos al celular aunque la app esté cerrada.</p>
           </div>
           <div class="push-hero-stats">
             <div class="push-stat">
@@ -589,21 +589,6 @@
             <button type="button" class="btn-copy btn-with-icon" [disabled]="pushActivating()" (click)="activatePushOnDevice()">
               @if (pushActivating()) { Activando… } @else { Activar push aquí }
             </button>
-            <p class="push-hint">En Android, toca Permitir. Si ves “sitio actualizado en segundo plano”, vuelve a activar.</p>
-
-            @if (pushConfigured() && pushSubscriptions().length) {
-              <div class="push-device-list">
-                @for (s of pushSubscriptions(); track s.id) {
-                  <div class="push-device-row">
-                    <strong>{{ s.deviceModel || 'Dispositivo' }}</strong>
-                    <span>{{ s.hasToken && !s.invalid && s.subscribed ? 'Suscrito' : (s.hasToken ? 'Sin suscripción' : 'Sin token') }}</span>
-                    <em>{{ s.externalUserId ? ('User ' + s.externalUserId.slice(0, 8)) : 'Anónimo' }}</em>
-                  </div>
-                }
-              </div>
-            } @else if (pushConfigured() && pushValidCount() === 0) {
-              <p class="push-hint">Aún no hay teléfonos con token activo.</p>
-            }
           </section>
 
           <section class="dash-card push-panel">
