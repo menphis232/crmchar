@@ -22,8 +22,8 @@ import {
     <div class="ka-page">
       <header class="ka-top">
           <a routerLink="/panel/cliente" [queryParams]="{ tab: 'conocimiento' }" class="ka-back">
-            <svg lucideArrowLeft [size]="16" aria-hidden="true"></svg>
-            Volver al panel
+            <svg lucideArrowLeft [size]="18" aria-hidden="true"></svg>
+            <span>Volver</span>
           </a>
         <a [href]="tvmMainSite" class="ka-brand" target="_blank" rel="noopener">
           <img [src]="tvmLogo" alt="Trámites Vehiculares de México" />
@@ -111,7 +111,9 @@ import {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      color: rgba(255,255,255,0.85);
+      min-height: 40px;
+      padding: 8px 4px 8px 0;
+      color: #fff;
       text-decoration: none;
       font-family: var(--f-display);
       font-size: 12px;
@@ -121,6 +123,11 @@ import {
     }
 
     .ka-back:hover { color: #fff; }
+
+    @media (max-width: 720px) {
+      .ka-back span { font-size: 11px; }
+      .ka-top { padding: 10px 14px; }
+    }
 
     .ka-brand img {
       height: 28px;

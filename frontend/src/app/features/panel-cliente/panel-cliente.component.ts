@@ -3,7 +3,7 @@ import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { RouterLink, Router, ActivatedRoute } from '@angular/router';
+import { RouterLink, Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { OneSignalService } from '../../core/onesignal.service';
@@ -72,6 +72,10 @@ interface PaginatedDeals {
 
 type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'ajustes' | 'conocimiento';
 
+const CLIENT_TABS: ClientTab[] = [
+  'dashboard', 'tramites', 'historial', 'billetera', 'facturas', 'vehiculos', 'ajustes', 'conocimiento',
+];
+
 @Component({
   selector: 'app-panel-cliente',
   standalone: true,
@@ -132,6 +136,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   activeTab = signal<ClientTab>('dashboard');
   isMobileMenuOpen = signal(false);
   dealTab = signal<'chat' | 'docs' | 'factura'>('chat');
+  /** Evita bucles al sincronizar tab/deal con la URL */
+  private syncingFromUrl = false;
+  /** Historial interno de pestañas para el botón «atrás» en móvil */
+  private tabHistory: ClientTab[] = [];
+  /** True si hay algo a lo que volver dentro del panel (móvil) */
+  canGoBack = computed(() => !!this.selectedDeal() || this.activeTab() !== 'dashboard');
 
   stats = signal({ total: 0, active: 0, closed: 0 });
   recentDeals = signal<any[]>([]);
@@ -248,8 +258,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     document.documentElement.style.setProperty('--bg', '#000000');
     document.documentElement.style.setProperty('--panel-bg', '#000000');
     document.body.style.backgroundColor = '#000000';
-    const tab = this.route.snapshot.queryParamMap.get('tab');
-    if (tab === 'conocimiento') this.setTab('conocimiento');
+    this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
     this.auth.getMe().subscribe({ error: () => {} });
     this.loadDashboard();
     this.loadInvoices();
@@ -296,7 +305,63 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (this.socket) this.socket.disconnect();
   }
 
+  /** Aplica la pestaña y deja rastro en el historial del navegador. */
   setTab(tab: ClientTab) {
+    this.applyTab(tab);
+    if (!this.selectedDeal()) {
+      this.syncUrl({ tab, deal: null });
+    } else {
+      this.syncUrl({ tab });
+    }
+  }
+
+  /**
+   * Volver dentro del panel (móvil): cierra el trámite abierto
+   * o regresa a la pestaña anterior. No sale al sitio público.
+   */
+  goBack() {
+    if (this.selectedDeal()) {
+      this.closeDeal();
+      const previous = this.tabHistory.pop();
+      if (previous && previous !== this.activeTab()) {
+        this.applyTab(previous, { recordHistory: false });
+        this.syncUrl({ tab: previous, deal: null });
+      }
+      return;
+    }
+    const previous = this.tabHistory.pop();
+    if (previous && previous !== this.activeTab()) {
+      this.applyTab(previous, { recordHistory: false });
+      this.syncUrl({ tab: previous, deal: null });
+      return;
+    }
+    if (this.activeTab() !== 'dashboard') {
+      this.applyTab('dashboard', { recordHistory: false });
+      this.syncUrl({ tab: 'dashboard', deal: null });
+    }
+  }
+
+  /** Logo / home: siempre dentro del panel. */
+  goHome() {
+    if (this.selectedDeal()) {
+      const deal = this.selectedDeal();
+      if (deal) this.socket?.emit('leave_deal', deal.id);
+      this.selectedDeal.set(null);
+      this.messages.set([]);
+      this.documents.set([]);
+      this.dealInvoice.set(null);
+    }
+    this.tabHistory = [];
+    this.applyTab('dashboard', { recordHistory: false });
+    this.syncUrl({ tab: 'dashboard', deal: null });
+  }
+
+  private applyTab(tab: ClientTab, opts: { recordHistory?: boolean } = {}) {
+    const prev = this.activeTab();
+    if (opts.recordHistory !== false && !this.syncingFromUrl && prev !== tab) {
+      this.tabHistory.push(prev);
+      if (this.tabHistory.length > 30) this.tabHistory.shift();
+    }
     this.activeTab.set(tab);
     this.isMobileMenuOpen.set(false);
     if (tab === 'tramites' && !this.selectedDeal()) this.loadTramites(1);
@@ -312,6 +377,73 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (tab === 'dashboard' && !this.knowledgeFeedPosts().length) {
       this.loadKnowledgeFeed(true);
     }
+  }
+
+  private parseTab(value: string | null): ClientTab {
+    if (value && CLIENT_TABS.includes(value as ClientTab)) return value as ClientTab;
+    return 'dashboard';
+  }
+
+  private applyRouteState(params: ParamMap) {
+    const tab = this.parseTab(params.get('tab'));
+    const dealId = params.get('deal');
+
+    this.syncingFromUrl = true;
+    try {
+      if (dealId) {
+        if (this.selectedDeal()?.id !== dealId) {
+          this.loadDealById(dealId);
+        } else {
+          this.applyTab(tab === 'dashboard' ? 'tramites' : tab);
+        }
+        return;
+      }
+
+      if (this.selectedDeal()) {
+        const deal = this.selectedDeal();
+        if (deal) this.socket?.emit('leave_deal', deal.id);
+        this.selectedDeal.set(null);
+        this.messages.set([]);
+        this.documents.set([]);
+        this.dealInvoice.set(null);
+      }
+      this.applyTab(tab);
+    } finally {
+      this.syncingFromUrl = false;
+    }
+  }
+
+  private syncUrl(opts: { tab?: ClientTab; deal?: string | null }) {
+    if (this.syncingFromUrl) return;
+    const tab = opts.tab ?? this.activeTab();
+    const deal = opts.deal !== undefined
+      ? opts.deal
+      : (this.selectedDeal()?.id as string | undefined) ?? null;
+
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        tab: tab !== 'dashboard' ? tab : null,
+        deal: deal || null,
+      },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  private loadDealById(dealId: string) {
+    this.http.get<PaginatedDeals>(`${environment.apiUrl}/client/deals`, {
+      params: { status: 'all', page: '1', limit: '100' },
+    }).subscribe({
+      next: res => {
+        const deal = res.items.find(x => x.id === dealId);
+        if (deal) {
+          this.openDeal(deal, { skipUrlSync: true });
+        } else {
+          this.applyTab(this.parseTab(this.route.snapshot.queryParamMap.get('tab')));
+        }
+      },
+      error: () => this.applyTab('tramites'),
+    });
   }
 
   loadKnowledgeFeed(reset = false) {
@@ -910,9 +1042,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
-  openDeal(deal: any) {
+  openDeal(deal: any, opts: { skipUrlSync?: boolean } = {}) {
+    if (!opts.skipUrlSync && !this.syncingFromUrl) {
+      const prev = this.activeTab();
+      if (prev !== 'tramites') {
+        this.tabHistory.push(prev);
+        if (this.tabHistory.length > 30) this.tabHistory.shift();
+      }
+    }
     this.selectedDeal.set(deal);
     this.activeTab.set('tramites');
+    this.isMobileMenuOpen.set(false);
     this.dealTab.set(deal.payment_status === 'paid' && deal.invoice_id ? 'factura' : 'chat');
     this.dealInvoice.set(deal.invoice_id ? {
       id: deal.invoice_id,
@@ -948,6 +1088,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         error: () => this.dealInvoice.set(null),
       });
     }
+    if (!opts.skipUrlSync) {
+      this.syncUrl({ tab: 'tramites', deal: deal.id });
+    }
   }
 
   closeDeal() {
@@ -957,6 +1100,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.messages.set([]);
     this.documents.set([]);
     this.dealInvoice.set(null);
+    this.syncUrl({ tab: this.activeTab(), deal: null });
   }
 
   downloadInvoice(invoiceId: string, invoiceNumber?: string) {

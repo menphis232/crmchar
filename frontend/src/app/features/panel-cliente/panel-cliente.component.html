@@ -1,7 +1,19 @@
 <nav class="dash-nav">
-  <a [href]="tvmMainSite" class="dash-logo">
-    <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
-  </a>
+  <div class="dash-nav-brand">
+    @if (canGoBack()) {
+      <button
+        type="button"
+        class="mobile-only client-nav-back"
+        (click)="goBack()"
+        aria-label="Volver atrás"
+      >
+        <svg lucideArrowLeft [size]="22" [strokeWidth]="2.25" aria-hidden="true"></svg>
+      </button>
+    }
+    <button type="button" class="dash-logo client-home-logo" (click)="goHome()" aria-label="Ir al dashboard">
+      <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
+    </button>
+  </div>
   <div class="dash-user">
     <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
       @if (!isMobileMenuOpen()) {
