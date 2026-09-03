@@ -25,7 +25,7 @@
 </nav>
 
 <div class="dash-container">
-  <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+  <aside class="dash-sidebar client-sidebar" [class.mobile-open]="isMobileMenuOpen()">
     <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="auth.user()?.name || ''"
@@ -101,184 +101,248 @@
   <main class="dash-main">
 
     @if (activeTab() === 'dashboard') {
-      <div class="dash-card knowledge-feed-card">
-        <div class="knowledge-feed-header">
-          <div>
-            <h2 class="knowledge-feed-title">
-              <svg lucideBookOpen [size]="15" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-              Para ti
-            </h2>
-            <p class="knowledge-feed-sub">Videos y tips del equipo</p>
-          </div>
-          <button type="button" class="knowledge-see-all" (click)="setTab('conocimiento')">Ver todos →</button>
-        </div>
+      <div class="client-dashboard">
 
-        @if (knowledgeLoading()) {
-          <div class="client-empty knowledge-empty-sm">Cargando contenido…</div>
-        } @else if (!knowledgePosts().length) {
-          <div class="client-empty knowledge-empty-sm">
-            <strong>Pronto habrá contenido aquí</strong>
+        <section class="client-hero">
+          <div class="client-hero-glow" aria-hidden="true"></div>
+          <div class="client-hero-inner">
+            <div class="client-hero-intro">
+              <div class="client-hero-avatar" aria-hidden="true">
+                @if (auth.user()?.avatar_url) {
+                  <img [src]="auth.user()?.avatar_url" [alt]="auth.user()?.name || 'Avatar'" />
+                } @else {
+                  <span>{{ initials(auth.user()?.name) }}</span>
+                }
+              </div>
+              <div class="client-hero-copy">
+                <span class="client-hero-eyebrow">Panel de cliente · {{ todayMexicoLabel() }}</span>
+                <h1 class="client-hero-title">¡Hola, {{ auth.user()?.name }}!</h1>
+                <p class="client-hero-sub">Gestiona tus trámites, vehículos y documentos desde un solo lugar.</p>
+              </div>
+            </div>
+            <div class="client-hero-stats">
+              <button type="button" class="client-stat-card" (click)="setTab('tramites'); closeDeal()">
+                <span class="client-stat-icon client-stat-icon--total">
+                  <svg lucideClipboardList [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                </span>
+                <span class="client-stat-num">{{ totalDeals() }}</span>
+                <span class="client-stat-label">Total trámites</span>
+              </button>
+              <button type="button" class="client-stat-card client-stat-card--active" (click)="setTab('tramites'); closeDeal()">
+                <span class="client-stat-icon client-stat-icon--progress">
+                  <svg lucideClock [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                </span>
+                <span class="client-stat-num">{{ activeDeals() }}</span>
+                <span class="client-stat-label">En proceso</span>
+              </button>
+              <button type="button" class="client-stat-card client-stat-card--done" (click)="setTab('historial')">
+                <span class="client-stat-icon client-stat-icon--done">
+                  <svg lucideCheck [size]="18" [strokeWidth]="2" aria-hidden="true"></svg>
+                </span>
+                <span class="client-stat-num">{{ completedDeals() }}</span>
+                <span class="client-stat-label">Completados</span>
+              </button>
+            </div>
           </div>
-        } @else {
-          <div
-            class="knowledge-reels knowledge-reels--boxed"
-            #knowledgeReelsBox
-            (scroll)="onKnowledgeReelsScroll($event)"
-          >
-            @for (post of knowledgePosts(); track post.id) {
-              <ng-container *ngTemplateOutlet="knowledgeReelCard; context: { post }" />
+        </section>
+
+        <nav class="client-quick-actions" aria-label="Accesos rápidos">
+          <button type="button" class="client-quick-btn" (click)="setTab('tramites'); closeDeal()">
+            <span class="client-quick-icon"><svg lucideClipboardList [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
+            <span class="client-quick-text">
+              <strong>Mis Trámites</strong>
+              <small>Seguimiento en vivo</small>
+            </span>
+            @if (activeDeals() > 0) {
+              <span class="client-quick-badge">{{ activeDeals() }}</span>
             }
-            @if (knowledgeFeedLoadingMore()) {
-              <div class="knowledge-reels-status">Cargando más…</div>
-            } @else if (knowledgeFeedHasMore()) {
-              <div class="knowledge-reels-status knowledge-reels-hint">Desliza para ver más</div>
+          </button>
+          <button type="button" class="client-quick-btn" (click)="setTab('vehiculos'); closeDeal()">
+            <span class="client-quick-icon"><svg lucideCar [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
+            <span class="client-quick-text">
+              <strong>Mis Vehículos</strong>
+              <small>Placas y engomado</small>
+            </span>
+            @if (vehicles().length > 0) {
+              <span class="client-quick-badge client-quick-badge--muted">{{ vehicles().length }}</span>
+            }
+          </button>
+          <button type="button" class="client-quick-btn" (click)="setTab('billetera'); closeDeal()">
+            <span class="client-quick-icon"><svg lucideWallet [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
+            <span class="client-quick-text">
+              <strong>Billetera</strong>
+              <small>Documentos personales</small>
+            </span>
+          </button>
+          <button type="button" class="client-quick-btn" (click)="setTab('facturas'); closeDeal()">
+            <span class="client-quick-icon"><svg lucideReceipt [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
+            <span class="client-quick-text">
+              <strong>Comprobantes</strong>
+              <small>Facturas de pago</small>
+            </span>
+          </button>
+        </nav>
+
+        @if (blockedVehiclesToday().length) {
+          <div class="dash-card hnc-alert-card">
+            @for (item of blockedVehiclesToday(); track item.vehicle.id) {
+              <div class="hnc-alert" [attr.data-color]="item.color || 'none'">
+                <span class="hnc-alert-dot" [class]="'hnc-dot-' + (item.color || 'none')"></span>
+                <div>
+                  <strong>Tu auto {{ item.displayName }} no puede circular hoy</strong>
+                  <p>{{ item.reason }} · Hoy es {{ todayMexicoLabel() }} (hora CDMX)</p>
+                </div>
+              </div>
             }
           </div>
         }
-      </div>
 
-      @if (blockedVehiclesToday().length) {
-        <div class="dash-card hnc-alert-card">
-          @for (item of blockedVehiclesToday(); track item.vehicle.id) {
-            <div class="hnc-alert" [attr.data-color]="item.color || 'none'">
-              <span class="hnc-alert-dot" [class]="'hnc-dot-' + (item.color || 'none')"></span>
+        <div class="client-dash-grid">
+          <div class="dash-card hnc-card client-dash-panel">
+            <div class="client-dash-panel-head">
               <div>
-                <strong>Mira: tu auto {{ item.displayName }} no puede circular el día de hoy</strong>
-                <p>{{ item.reason }} · Hoy es {{ todayMexicoLabel() }} (hora CDMX)</p>
+                <h2 class="card-title card-title-with-icon">
+                  <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                  Hoy No Circula
+                </h2>
+                <p class="card-desc">CDMX y Zona Metropolitana según último dígito de placa.</p>
               </div>
+              <span class="hnc-today-chip">Hoy: {{ todayMexicoLabel() }}</span>
+            </div>
+
+            @if (vehiclesLoading() && !vehicles().length) {
+              <div class="client-empty client-empty--compact">Cargando tus vehículos…</div>
+            } @else if (!vehicleCirculation().length) {
+              <div class="client-empty client-empty--compact hnc-empty">
+                <strong>Aún no tienes autos registrados</strong>
+                <p>Registra un vehículo para ver engomado y días de parada.</p>
+                <button type="button" class="btn-copy small" (click)="setTab('vehiculos')">Ir a Mis Vehículos</button>
+              </div>
+            } @else {
+              <div class="hnc-list">
+                @for (item of vehicleCirculation(); track item.vehicle.id) {
+                  <article class="hnc-item" [class.hnc-item-blocked]="item.blockedToday" [attr.data-color]="item.color || 'none'">
+                    <div class="hnc-item-color" [class]="'hnc-dot-' + (item.color || 'none')" [title]="item.colorLabel"></div>
+                    <div class="hnc-item-main">
+                      <div class="hnc-item-title">
+                        <strong>{{ item.vehicle.plate }}</strong>
+                        @if (item.vehicle.make || item.vehicle.model) {
+                          <span>{{ item.vehicle.make }} {{ item.vehicle.model }}@if (item.vehicle.year) { · {{ item.vehicle.year }} }</span>
+                        }
+                      </div>
+                      <div class="hnc-item-meta">
+                        <span class="hnc-pill" [class]="'hnc-pill-' + (item.color || 'none')">{{ item.colorLabel }}</span>
+                        <span>Parada: <strong>{{ item.weekdayLabel }}</strong></span>
+                        @if (item.rule) {
+                          <span class="hnc-digit">Placa …{{ item.rule.digit }}</span>
+                        }
+                      </div>
+                      @if (item.rule) {
+                        <div class="hnc-verif">
+                          <span>1er sem: {{ item.verification1 }}</span>
+                          <span>2do sem: {{ item.verification2 }}</span>
+                        </div>
+                      }
+                    </div>
+                    @if (item.blockedToday) {
+                      <span class="hnc-badge-stop">Hoy no circula</span>
+                    } @else {
+                      <span class="hnc-badge-ok">Hoy sí puede</span>
+                    }
+                  </article>
+                }
+              </div>
+              <p class="hnc-footnote">Sábados: holograma 2 no circula; holograma 1 según placa non/par. Domingo sin restricción de engomado.</p>
+            }
+          </div>
+
+          <div class="dash-card client-dash-panel">
+            <div class="client-dash-panel-head">
+              <div>
+                <h2 class="card-title card-title-with-icon">
+                  <svg lucideClipboardList [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                  Trámites Recientes
+                </h2>
+                <p class="card-desc">Tus últimos trámites activos con seguimiento.</p>
+              </div>
+              @if (recentDeals().length > 0) {
+                <button type="button" class="client-section-link" (click)="setTab('tramites'); closeDeal()">
+                  Ver todos
+                  <svg lucideArrowRight [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+                </button>
+              }
+            </div>
+
+            @if (dashboardLoading()) {
+              <div class="client-empty client-empty--compact">Cargando tus trámites…</div>
+            } @else if (recentDeals().length === 0) {
+              <div class="client-empty client-empty--compact">
+                <div class="client-empty-icon"><svg lucideInbox [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
+                <strong>No tienes trámites aún</strong>
+                <p>Cuando solicites un servicio con una gestoría, aparecerá aquí.</p>
+              </div>
+            } @else {
+              <div class="client-recent-list">
+                @for (deal of recentDeals(); track deal.id) {
+                  <button type="button" class="client-recent-row" (click)="openDeal(deal)">
+                    <span class="client-recent-icon"><svg lucideCar [size]="18" aria-hidden="true"></svg></span>
+                    <span class="client-recent-main">
+                      <strong>{{ deal.title }}</strong>
+                      <span>{{ deal.gestor_name || 'Agencia' }} · {{ deal.created_at | date:'dd MMM yyyy' }}</span>
+                      <span class="client-progress client-progress--inline">
+                        <span class="client-progress-fill" [style.width.%]="stageProgress(deal)"></span>
+                      </span>
+                    </span>
+                    <span class="client-recent-side">
+                      <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
+                      <span class="client-deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                    </span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="dash-card knowledge-feed-card">
+          <div class="knowledge-feed-header">
+            <div>
+              <h2 class="knowledge-feed-title">
+                <svg lucideBookOpen [size]="15" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                Para ti
+              </h2>
+              <p class="knowledge-feed-sub">Videos y tips del equipo</p>
+            </div>
+            <button type="button" class="client-section-link" (click)="setTab('conocimiento')">
+              Ver todos
+              <svg lucideArrowRight [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+            </button>
+          </div>
+
+          @if (knowledgeLoading()) {
+            <div class="client-empty knowledge-empty-sm">Cargando contenido…</div>
+          } @else if (!knowledgePosts().length) {
+            <div class="client-empty knowledge-empty-sm">
+              <strong>Pronto habrá contenido aquí</strong>
+            </div>
+          } @else {
+            <div
+              class="knowledge-reels knowledge-reels--carousel"
+              #knowledgeReelsBox
+              (scroll)="onKnowledgeReelsScroll($event)"
+            >
+              @for (post of knowledgePosts(); track post.id) {
+                <ng-container *ngTemplateOutlet="knowledgeReelCard; context: { post }" />
+              }
+              @if (knowledgeFeedLoadingMore()) {
+                <div class="knowledge-reels-status knowledge-reels-status--inline">Cargando más…</div>
+              } @else if (knowledgeFeedHasMore()) {
+                <div class="knowledge-reels-status knowledge-reels-hint knowledge-reels-status--inline">Desliza →</div>
+              }
             </div>
           }
         </div>
-      }
 
-      <div class="dash-card hnc-card">
-        <div class="hnc-card-head">
-          <h2 class="card-title card-title-with-icon">
-            <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-            Hoy No Circula
-          </h2>
-          <span class="hnc-today-chip">Hoy: {{ todayMexicoLabel() }}</span>
-        </div>
-        <p class="card-desc">Según el último dígito de tu placa (CDMX y Zona Metropolitana).</p>
-
-        @if (vehiclesLoading() && !vehicles().length) {
-          <div class="client-empty">Cargando tus vehículos…</div>
-        } @else if (!vehicleCirculation().length) {
-          <div class="client-empty hnc-empty">
-            <strong>Aún no tienes autos registrados</strong>
-            <p>Registra un vehículo para ver qué día y color de engomado te toca.</p>
-            <button type="button" class="btn-copy small" (click)="setTab('vehiculos')">Ir a Mis Vehículos</button>
-          </div>
-        } @else {
-          <div class="hnc-list">
-            @for (item of vehicleCirculation(); track item.vehicle.id) {
-              <article class="hnc-item" [class.hnc-item-blocked]="item.blockedToday" [attr.data-color]="item.color || 'none'">
-                <div class="hnc-item-color" [class]="'hnc-dot-' + (item.color || 'none')" [title]="item.colorLabel"></div>
-                <div class="hnc-item-main">
-                  <div class="hnc-item-title">
-                    <strong>{{ item.vehicle.plate }}</strong>
-                    @if (item.vehicle.make || item.vehicle.model) {
-                      <span>{{ item.vehicle.make }} {{ item.vehicle.model }}@if (item.vehicle.year) { · {{ item.vehicle.year }} }</span>
-                    }
-                  </div>
-                  <div class="hnc-item-meta">
-                    <span class="hnc-pill" [class]="'hnc-pill-' + (item.color || 'none')">{{ item.colorLabel }}</span>
-                    <span>Parada: <strong>{{ item.weekdayLabel }}</strong></span>
-                    @if (item.rule) {
-                      <span class="hnc-digit">Placa …{{ item.rule.digit }}</span>
-                    }
-                  </div>
-                  @if (item.rule) {
-                    <div class="hnc-verif">
-                      <span>1er sem: {{ item.verification1 }}</span>
-                      <span>2do sem: {{ item.verification2 }}</span>
-                    </div>
-                  }
-                </div>
-                @if (item.blockedToday) {
-                  <span class="hnc-badge-stop">Hoy no circula</span>
-                } @else {
-                  <span class="hnc-badge-ok">Hoy sí puede</span>
-                }
-              </article>
-            }
-          </div>
-          <p class="hnc-footnote">Sábados: holograma 2 no circula; holograma 1 según placa non/par. Domingo sin restricción de engomado.</p>
-        }
-      </div>
-
-      <div class="dash-card client-hello-card">
-        <div class="client-hello">
-          <div class="client-hello-avatar" aria-hidden="true">
-            @if (auth.user()?.avatar_url) {
-              <img [src]="auth.user()?.avatar_url" [alt]="auth.user()?.name || 'Avatar'" />
-            } @else {
-              <span>{{ initials(auth.user()?.name) }}</span>
-            }
-          </div>
-          <div class="client-hello-text">
-            <h2 class="card-title client-hello-title">¡Hola, {{ auth.user()?.name }}!</h2>
-            <p class="card-desc client-hello-sub">Este es tu panel de trámites y vehículos.</p>
-          </div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
-            <div class="stat-num">{{ totalDeals() }}</div>
-            <div class="stat-label">Total de Trámites</div>
-          </div>
-          <div class="stat-box client-stat-click" (click)="setTab('tramites'); closeDeal()">
-            <div class="stat-num">{{ activeDeals() }}</div>
-            <div class="stat-label">En Proceso</div>
-          </div>
-          <div class="stat-box client-stat-click" (click)="setTab('historial')">
-            <div class="stat-num">{{ completedDeals() }}</div>
-            <div class="stat-label">Completados</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="dash-card">
-        <h3 class="card-title card-title-with-icon">
-          <svg lucideClipboardList [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Trámites Recientes
-        </h3>
-        @if (dashboardLoading()) {
-          <div class="client-empty">Cargando tus trámites...</div>
-        } @else if (recentDeals().length === 0) {
-          <div class="client-empty">
-            <div class="client-empty-icon"><svg lucideInbox [size]="40" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
-            <strong>No tienes trámites aún</strong>
-            <p>Cuando solicites un servicio con una gestoría, aparecerá aquí.</p>
-          </div>
-        } @else {
-          <div class="client-deals-grid">
-            @for (deal of recentDeals(); track deal.id) {
-              <button type="button" class="client-deal-card" (click)="openDeal(deal)">
-                <div class="client-deal-top">
-                  <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
-                  <div class="client-deal-badges">
-                    @if (isPaid(deal)) {
-                      <span class="client-badge badge-paid">Pagado</span>
-                    }
-                    <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
-                  </div>
-                </div>
-                <strong class="client-deal-title">{{ deal.title }}</strong>
-                <p class="client-deal-meta">
-                  <svg lucideMapPin [size]="12" aria-hidden="true"></svg>
-                  {{ deal.gestor_name || 'Agencia' }}
-                </p>
-                <div class="client-progress">
-                  <div class="client-progress-fill" [style.width.%]="stageProgress(deal)"></div>
-                </div>
-                <div class="client-deal-footer">
-                  <span>{{ deal.created_at | date:'dd MMM yyyy' }}</span>
-                  <span class="client-deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-                </div>
-              </button>
-            }
-          </div>
-        }
       </div>
     }
 
