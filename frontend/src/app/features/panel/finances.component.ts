@@ -493,7 +493,7 @@ import { formatMoney } from '../../shared/format-amount.util';
       display: block;
       --text: #ffffff;
       --muted: rgba(255,255,255,0.45);
-      --surface: #141414;
+      --surface: #000;
       --border: rgba(255,255,255,0.10);
       --gold: rgba(255,255,255,0.75);
       --bg: #000;
@@ -521,10 +521,10 @@ import { formatMoney } from '../../shared/format-amount.util';
     .btn-export.pdf:hover { background: rgba(255,255,255,.08); }
 
     /* ── FILTER BAR ── */
-    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
     .date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
     .date-inputs label { font-size: 10px; color: rgba(255,255,255,0.40); font-family: var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; }
-    .date-inputs input { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; color-scheme: dark; }
+    .date-inputs input { background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; color-scheme: dark; }
     .date-inputs input:focus { border-color: rgba(255,255,255,0.40); }
     .quick-btns { display: flex; gap: 6px; flex-wrap: wrap; }
     .quick-btns button { background: transparent; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.45); padding: 6px 12px; border-radius: 999px; font-size: 11px; font-family: var(--f-display); letter-spacing: 0.06em; cursor: pointer; transition: all .2s; }
@@ -535,7 +535,7 @@ import { formatMoney } from '../../shared/format-amount.util';
     .tx-filter-field label { font-size: 10px; color: rgba(255,255,255,0.40); font-family: var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; }
     .fin-select {
       color-scheme: dark;
-      background-color: #1a1a1a !important;
+      background-color: #000 !important;
       border: 1px solid rgba(255,255,255,0.18) !important;
       color: rgba(255,255,255,0.80) !important;
       border-radius: 6px !important;
@@ -545,13 +545,13 @@ import { formatMoney } from '../../shared/format-amount.util';
       cursor: pointer !important;
       width: 100% !important;
     }
-    .fin-select option { background: #1a1a1a; color: #fff; }
+    .fin-select option { background: #000; color: #fff; }
 
     /* ── STATS GRID ── */
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
     .stat-card {
       display: flex; align-items: center; gap: 14px; padding: 16px 18px;
-      border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #141414;
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.10); background: #000;
       min-width: 0; container-type: inline-size;
     }
     .income-card { border-top: 2px solid rgba(34,197,94,0.50); }
@@ -575,9 +575,9 @@ import { formatMoney } from '../../shared/format-amount.util';
 
     /* ── METHOD BREAKDOWN ── */
     .section-title { margin: 0 0 12px 0; font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.70); font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; }
-    .method-breakdown { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
+    .method-breakdown { background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 16px 20px; }
     .method-pills { display: flex; flex-wrap: wrap; gap: 10px; }
-    .method-pill { display: flex; align-items: center; gap: 8px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 14px; }
+    .method-pill { display: flex; align-items: center; gap: 8px; background: #000; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px 14px; }
     .method-icon { font-size: 18px; }
     .method-name { font-size: 13px; color: rgba(255,255,255,0.50); font-family: var(--f-display); }
     .method-amount { font-size: 15px; font-weight: 800; font-family: var(--f-display); max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; }
@@ -589,10 +589,10 @@ import { formatMoney } from '../../shared/format-amount.util';
     .tab-active { color: #fff !important; border-bottom-color: rgba(255,255,255,0.60) !important; }
 
     /* ── TABLE ── */
-    .table-wrap { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; overflow-x: auto; }
-    .fin-table { width: 100%; border-collapse: collapse; min-width: 640px; }
-    .fin-table th { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.35); font-size: 10px; font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; text-align: left; }
-    .fin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 15px; color: rgba(255,255,255,0.80); font-family: var(--f-display); }
+    .table-wrap { background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; overflow-x: auto; }
+    .fin-table { width: 100%; border-collapse: collapse; min-width: 640px; background: #000; }
+    .fin-table th { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.55); font-size: 10px; font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; text-align: left; background: #000; }
+    .fin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 15px; color: rgba(255,255,255,0.80); font-family: var(--f-display); background: #000; }
     .fin-table tr:last-child td { border-bottom: none; }
     .tx-row:hover { background: rgba(255,255,255,0.03); }
     .col-right { text-align: right; }
@@ -630,14 +630,14 @@ import { formatMoney } from '../../shared/format-amount.util';
     .page-info { font-size: 12px; color: rgba(255,255,255,0.40); font-family: var(--f-display); }
 
     /* ── CONFIG ── */
-    .config-card { background: #141414; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+    .config-card { background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 14px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
     .config-desc { color: rgba(255,255,255,0.45); font-size: 13px; margin: 0; line-height: 1.6; font-family: var(--f-display); }
     .config-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: rgba(255,255,255,0.35); font-family: var(--f-display); }
     .methods-list { display: flex; flex-direction: column; gap: 8px; }
     .method-toggle { display: block; cursor: pointer; margin-bottom: 0; }
     .method-toggle.disabled { cursor: default; opacity: .6; }
     .method-toggle input { display: none; }
-    .method-toggle-body { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; transition: all .2s; }
+    .method-toggle-body { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: #000; border: 1px solid rgba(255,255,255,0.10); border-radius: 10px; transition: all .2s; }
     .mt-icon { font-size: 22px; flex-shrink: 0; }
     .method-toggle-body strong { display: block; font-size: 14px; color: #fff; font-family: var(--f-display); }
     .method-toggle-body small { display: block; font-size: 11px; color: rgba(255,255,255,0.40); margin-top: 2px; font-family: var(--f-display); }
@@ -651,12 +651,12 @@ import { formatMoney } from '../../shared/format-amount.util';
     .add-custom-method { background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.15); border-radius: 12px; padding: 16px; }
     .custom-method-form { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     .emoji-picker-wrap { position: relative; flex-shrink: 0; }
-    .emoji-btn { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: #1a1a1a; font-size: 22px; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; }
+    .emoji-btn { width: 44px; height: 44px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.14); background: #000; font-size: 22px; cursor: pointer; transition: all .2s; display: flex; align-items: center; justify-content: center; }
     .emoji-btn:hover { border-color: rgba(255,255,255,0.35); }
-    .emoji-grid { position: absolute; top: calc(100% + 6px); left: 0; background: #141414; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,.6); min-width: 200px; }
+    .emoji-grid { position: absolute; top: calc(100% + 6px); left: 0; background: #000; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 8px; display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; z-index: 100; box-shadow: 0 8px 32px rgba(0,0,0,.6); min-width: 200px; }
     .emoji-opt { background: transparent; border: none; font-size: 20px; width: 32px; height: 32px; cursor: pointer; border-radius: 6px; transition: background .15s; }
     .emoji-opt:hover { background: rgba(255,255,255,.08); }
-    .custom-name-input { flex: 1; min-width: 160px; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; }
+    .custom-name-input { flex: 1; min-width: 160px; background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; }
     .custom-name-input:focus { border-color: rgba(255,255,255,0.40); }
     .btn-add-method { background: transparent; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.75); padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 11px; font-family: var(--f-display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: all .2s; }
     .btn-add-method:hover { background: rgba(255,255,255,0.08); color: #fff; }
@@ -664,7 +664,7 @@ import { formatMoney } from '../../shared/format-amount.util';
 
     /* ── MODAL ── */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
-    .modal-box { background: #0d0d0d; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; width: 480px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.6); animation: slideUp .2s ease; }
+    .modal-box { background: #000; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; width: 480px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.6); animation: slideUp .2s ease; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 0; }
     .modal-header h3 { margin: 0; font-size: 16px; color: #fff; font-family: var(--f-display); letter-spacing: 0.06em; text-transform: uppercase; }
@@ -679,16 +679,16 @@ import { formatMoney } from '../../shared/format-amount.util';
     .modal-fields { display: flex; flex-direction: column; gap: 14px; padding: 16px 24px; }
     .field-row { display: flex; flex-direction: column; gap: 6px; }
     .field-row label { font-size: 10px; color: rgba(255,255,255,0.40); font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; }
-    .field-row input, .field-row select { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: dark; }
+    .field-row input, .field-row select { background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: dark; }
     .field-row input:focus, .field-row select:focus { border-color: rgba(255,255,255,0.40); }
-    .input-money { display: flex; align-items: center; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; overflow: hidden; }
-    .input-money span { padding: 0 12px; color: rgba(255,255,255,0.60); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(255,255,255,0.10); background: #141414; font-family: var(--f-display); }
+    .input-money { display: flex; align-items: center; background: #000; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; overflow: hidden; }
+    .input-money span { padding: 0 12px; color: rgba(255,255,255,0.60); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(255,255,255,0.10); background: #000; font-family: var(--f-display); }
     .input-money input { border: none; background: transparent; flex: 1; color: #fff; }
 
     .select-wrap { position: relative; }
-    .method-select { appearance: none; -webkit-appearance: none; background: #1a1a1a; border: 1px solid rgba(255,255,255,0.14); padding: 11px 40px 11px 14px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; cursor: pointer; color-scheme: dark; }
+    .method-select { appearance: none; -webkit-appearance: none; background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 11px 40px 11px 14px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; cursor: pointer; color-scheme: dark; }
     .method-select:focus { border-color: rgba(255,255,255,0.40); }
-    .method-select option { background: #1a1a1a; color: #fff; }
+    .method-select option { background: #000; color: #fff; }
     .select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.35); pointer-events: none; font-size: 14px; }
     .no-methods-hint { background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 10px 14px; font-size: 12px; color: rgba(255,255,255,0.45); display: flex; align-items: center; gap: 8px; font-family: var(--f-display); }
     .no-methods-hint strong { color: #fff; }
