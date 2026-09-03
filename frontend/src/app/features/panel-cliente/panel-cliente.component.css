@@ -429,8 +429,8 @@
 
 .client-step.done .client-step-dot,
 .client-step.current .client-step-dot {
-  background: #fff;
-  border-color: #fff;
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.92);
   color: #000;
 }
 
@@ -620,8 +620,8 @@
 }
 
 .client-chat-row.mine .client-chat-avatar {
-  background: #fff;
-  color: #000;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 .client-chat-content {
@@ -666,9 +666,9 @@
 }
 
 .client-chat-row.mine .client-chat-bubble {
-  background: #fff;
-  border-color: #fff;
-  color: #000;
+  background: #1a1a1a;
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
 }
 
 .client-file-link {
@@ -954,8 +954,8 @@
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: #fff;
-  color: #111;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -992,8 +992,8 @@
   width: 84px;
   height: 84px;
   border-radius: 50%;
-  background: #fff;
-  color: #000;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1377,7 +1377,7 @@ select.client-wallet-input option {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: #f2f2f2;
+  background: #111;
 }
 
 .wdoc-pdf-frame {
@@ -1385,7 +1385,7 @@ select.client-wallet-input option {
   height: 100%;
   border: none;
   pointer-events: none;
-  background: #fff;
+  background: #0d0d0d;
 }
 
 .wdoc-pdf-badge {

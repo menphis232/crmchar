@@ -84,7 +84,7 @@ type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'factura
     LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideBell,
   ],
   templateUrl: './panel-cliente.component.html',
-  styleUrls: ['../panel/panel-dashboard.css', './panel-cliente.component.css'],
+  styleUrls: ['../panel/panel-dashboard.css', '../panel/panel-dark-theme.css', './panel-cliente.component.css'],
 })
 export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
