@@ -2404,7 +2404,7 @@ select option {
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--brand-black);
+  color: #ffffff;
   margin: 20px 0 10px;
 }
 .ga-device-grid {

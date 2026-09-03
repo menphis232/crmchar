@@ -1672,9 +1672,13 @@ app-crm-team {
 
 .ga-admin-card .ga-setup-box a,
 .ga-admin-card .ga-setup-box strong,
-.ga-admin-card .ga-setup-box code,
-.ga-admin-card .ga-section-title {
+.ga-admin-card .ga-setup-box code {
   color: #111111 !important;
+}
+
+.ga-admin-card .ga-section-title,
+.ga-admin-card h4.ga-section-title {
+  color: #ffffff !important;
 }
 
 .ga-admin-card .ga-oauth-form input,
