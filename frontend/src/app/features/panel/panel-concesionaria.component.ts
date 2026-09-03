@@ -392,6 +392,24 @@ export class PanelConcesionariaComponent implements OnInit {
     this.loadDashboard();
   }
 
+  onDealDelete(deal: CrmDeal) {
+    this.crmService.deleteDeal(deal.id).subscribe({
+      next: () => {
+        if (this.selectedDealId() === deal.id) this.selectedDealId.set(null);
+        this.loadCrm();
+        this.loadDashboard();
+        this.toast.success('Eliminado del embudo');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar'),
+    });
+  }
+
+  onDealDeleted() {
+    this.selectedDealId.set(null);
+    this.loadCrm();
+    this.loadDashboard();
+  }
+
   openManualLeadForm() {
     this.manualLead = {
       clientName: '',

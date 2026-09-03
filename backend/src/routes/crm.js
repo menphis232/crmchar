@@ -49,6 +49,27 @@ async function loadDealForRequest(req, dealId, { dealType = null, select = '*' }
   return get(sql, params);
 }
 
+async function deleteDealCascade(dealId) {
+  const linkedTables = [
+    'chat_messages',
+    'deal_documents',
+    'deal_invoices',
+    'crm_activities',
+    'crm_tasks',
+    'crm_documents',
+    'automation_executions',
+    'perito_uploads',
+    'perito_notes',
+  ];
+  for (const table of linkedTables) {
+    await run(`DELETE FROM ${table} WHERE deal_id = ?`, [dealId]).catch(() => {});
+  }
+  await run('UPDATE gestor_reviews SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
+  await run('UPDATE solicitudes SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
+  await run('DELETE FROM notifications WHERE ref_id = ?', [dealId]).catch(() => {});
+  await run('DELETE FROM crm_deals WHERE id = ?', [dealId]);
+}
+
 function crmRoles(req, res, next) {
   if (!['gestor', 'concesionaria'].includes(req.user?.role)) {
     return res.status(403).json({ error: 'No autorizado' });
@@ -809,6 +830,24 @@ router.patch('/deals/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al actualizar deal' });
+  }
+});
+
+router.delete('/deals/:id', async (req, res) => {
+  try {
+    const deal = await loadDealForRequest(req, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
+
+    const expectedDealType = dealTypeForRole(req.user.role);
+    if (deal.deal_type !== expectedDealType) {
+      return res.status(404).json({ error: 'Deal no encontrado' });
+    }
+
+    await deleteDealCascade(req.params.id);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar deal' });
   }
 });
 

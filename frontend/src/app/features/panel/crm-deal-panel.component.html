@@ -15,9 +15,14 @@
             }
           </div>
         </div>
-        <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">
-          <svg lucideX [size]="18" aria-hidden="true"></svg>
-        </button>
+        <div class="deal-panel-header-actions">
+          <button type="button" class="deal-panel-delete" title="Eliminar del embudo" (click)="deleteDeal()">
+            <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
+          </button>
+          <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
+        </div>
       </div>
 
       <!-- ── BODY ── -->

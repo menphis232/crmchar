@@ -233,6 +233,35 @@ export interface KanbanStage extends CrmStageConfig {}
     .col-action-btn.active:hover { color: #fcd34d; background: rgba(251,191,36,0.12); }
     .col-action-btn.danger:hover { color: #f87171; background: rgba(248,113,113,0.12); }
     .kanban-col-header { display: flex; align-items: center; gap: 4px; }
+
+    .kanban-card-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .kanban-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .kanban-card-delete {
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,0.28);
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s, background 0.15s;
+    }
+    .kanban-card-delete:hover {
+      color: #f87171;
+      background: rgba(248,113,113,0.12);
+    }
   `],
 })
 export class CrmKanbanComponent {
@@ -247,6 +276,7 @@ export class CrmKanbanComponent {
   dealSelect   = output<CrmDeal>();
   stageChange  = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
   stagesChange = output<KanbanStage[]>();
+  dealDelete   = output<CrmDeal>();
 
   // ── local editable stage list ──
   localStages = signal<KanbanStage[]>([]);
@@ -602,6 +632,13 @@ export class CrmKanbanComponent {
     if (idx >= 0 && idx < stages.length - 1) {
       this.stageChange.emit({ deal, stage: stages[idx + 1].id });
     }
+  }
+
+  requestDeleteDeal(deal: CrmDeal, event: Event) {
+    event.stopPropagation();
+    const label = deal.contact?.name ? `${deal.title} (${deal.contact.name})` : deal.title;
+    if (!confirm(`¿Eliminar "${label}" del embudo? Esta acción no se puede deshacer.`)) return;
+    this.dealDelete.emit(deal);
   }
 
   stopClick(event: Event) { event.stopPropagation(); }

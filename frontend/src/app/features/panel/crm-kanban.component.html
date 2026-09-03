@@ -103,9 +103,19 @@
           >
             <div class="kanban-card-top">
               <strong>{{ deal.title }}</strong>
-              @if (canAdvance(deal)) {
-                <button type="button" class="kanban-next" title="Avanzar etapa" (click)="moveDeal(deal, $event)">→</button>
-              }
+              <div class="kanban-card-actions">
+                <button
+                  type="button"
+                  class="kanban-card-delete"
+                  title="Eliminar del embudo"
+                  (click)="requestDeleteDeal(deal, $event)"
+                >
+                  <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                </button>
+                @if (canAdvance(deal)) {
+                  <button type="button" class="kanban-next" title="Avanzar etapa" (click)="moveDeal(deal, $event)">→</button>
+                }
+              </div>
             </div>
 
             <span class="kanban-contact">{{ deal.contact?.name }}</span>

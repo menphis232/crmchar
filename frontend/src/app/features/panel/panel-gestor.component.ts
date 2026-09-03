@@ -789,6 +789,24 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.loadDeals();
   }
 
+  onDealDelete(deal: CrmDeal) {
+    this.crmService.deleteDeal(deal.id).subscribe({
+      next: () => {
+        if (this.selectedDealId() === deal.id) this.selectedDealId.set(null);
+        this.loadDeals();
+        this.loadCrmSummary();
+        this.toast.success('Eliminado del embudo');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar'),
+    });
+  }
+
+  onDealDeleted() {
+    this.selectedDealId.set(null);
+    this.loadDeals();
+    this.loadCrmSummary();
+  }
+
   copyLink() {
     if (!this.publicShareUrl) {
       this.toast.warning('Guarda tu perfil con un slug público para compartir tu página.');

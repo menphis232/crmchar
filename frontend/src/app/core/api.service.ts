@@ -115,6 +115,9 @@ export class CrmService {
   updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null; peritoId?: string | null }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
+  deleteDeal(id: string) {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/deals/${id}`);
+  }
   getPeritos() { return this.http.get<PeritoAccount[]>(`${this.base}/peritos`); }
   createPerito(data: { name: string; email: string; password: string }) {
     return this.http.post<{ id: string }>(`${this.base}/peritos`, data);

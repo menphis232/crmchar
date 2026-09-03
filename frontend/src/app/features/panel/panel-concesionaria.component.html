@@ -261,6 +261,7 @@
           (dealSelect)="selectedDealId.set($event.id)"
           (stageChange)="onStageChange($event)"
           (stagesChange)="onStagesChange($event)"
+          (dealDelete)="onDealDelete($event)"
         />
       </div>
 
@@ -277,6 +278,7 @@
           [promptShippingUpload]="promptShippingUploadDealId() === selectedDealId()"
           (closed)="selectedDealId.set(null)"
           (updated)="onDealUpdated()"
+          (deleted)="onDealDeleted()"
           (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
           (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
           (openContact)="selectedContactId.set($event); selectedDealId.set(null)"

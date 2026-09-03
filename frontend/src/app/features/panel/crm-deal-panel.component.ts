@@ -16,6 +16,7 @@ import {
   LucideTimer,
   LucideUser,
   LucideX,
+  LucideTrash2,
   LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
@@ -40,7 +41,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideBanknote],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideTrash2, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideBanknote],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
@@ -98,11 +99,29 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       font-size: 18px !important;
       font-weight: 800 !important;
     }
+    .deal-panel-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .deal-panel-delete,
     .deal-panel-close {
       background: transparent !important;
       border: 1px solid rgba(255,255,255,0.15) !important;
       color: rgba(255,255,255,0.50) !important;
       border-radius: 8px !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      cursor: pointer;
+    }
+    .deal-panel-delete:hover {
+      background: rgba(230,61,47,0.15) !important;
+      border-color: #e63d2f !important;
+      color: #e63d2f !important;
     }
     .deal-panel-close:hover { background: rgba(230,61,47,0.15) !important; border-color: #e63d2f !important; color: #e63d2f !important; }
 
@@ -935,6 +954,7 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   closed = output<void>();
   updated = output<void>();
+  deleted = output<void>();
   openContact = output<string>();
   deliveryUploadDismissed = output<void>();
   shippingUploadDismissed = output<void>();
@@ -2014,6 +2034,20 @@ export class CrmDealPanelComponent implements OnDestroy {
     a.rel = 'noopener';
     a.download = name;
     a.click();
+  }
+
+  deleteDeal() {
+    const d = this.deal();
+    if (!d) return;
+    const label = d.contact?.name ? `${d.title} (${d.contact.name})` : d.title;
+    if (!confirm(`¿Eliminar "${label}" del embudo? Esta acción no se puede deshacer.`)) return;
+    this.crmService.deleteDeal(d.id).subscribe({
+      next: () => {
+        this.toast.success('Eliminado del embudo');
+        this.deleted.emit();
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar'),
+    });
   }
 
   deleteDocument(docId: string) {
