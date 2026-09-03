@@ -198,72 +198,57 @@
 
         <div class="client-dash-grid">
           <div class="dash-card hnc-card client-dash-panel">
-            <div class="client-dash-panel-head">
-              <div>
-                <h2 class="card-title card-title-with-icon">
-                  <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-                  Hoy No Circula
-                </h2>
-                <p class="card-desc">CDMX y Zona Metropolitana según último dígito de placa.</p>
-              </div>
-              <span class="hnc-today-chip">Hoy: {{ todayMexicoLabel() }}</span>
+            <div class="client-dash-panel-head client-dash-panel-head--compact">
+              <h2 class="card-title card-title-with-icon">
+                <svg lucideCar [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                Hoy No Circula
+              </h2>
+              <span class="hnc-today-chip">{{ todayMexicoLabel() }}</span>
             </div>
 
             @if (vehiclesLoading() && !vehicles().length) {
               <div class="client-empty client-empty--compact">Cargando tus vehículos…</div>
             } @else if (!vehicleCirculation().length) {
               <div class="client-empty client-empty--compact hnc-empty">
-                <strong>Aún no tienes autos registrados</strong>
-                <p>Registra un vehículo para ver engomado y días de parada.</p>
-                <button type="button" class="btn-copy small" (click)="setTab('vehiculos')">Ir a Mis Vehículos</button>
+                <strong>Sin vehículos registrados</strong>
+                <p>Agrégalos en Mis Vehículos para ver si circulan hoy.</p>
+                <button type="button" class="btn-copy small" (click)="setTab('vehiculos')">Mis Vehículos</button>
               </div>
             } @else {
-              <div class="hnc-list">
+              <div class="hnc-simple-list">
                 @for (item of vehicleCirculation(); track item.vehicle.id) {
-                  <article class="hnc-item" [class.hnc-item-blocked]="item.blockedToday" [attr.data-color]="item.color || 'none'">
-                    <div class="hnc-item-color" [class]="'hnc-dot-' + (item.color || 'none')" [title]="item.colorLabel"></div>
-                    <div class="hnc-item-main">
-                      <div class="hnc-item-title">
-                        <strong>{{ item.vehicle.plate }}</strong>
+                  <article class="hnc-simple-card" [class.hnc-simple-card--blocked]="item.blockedToday">
+                    <div class="hnc-simple-top">
+                      <div class="hnc-simple-ident">
+                        <span class="hnc-simple-plate">{{ item.vehicle.plate }}</span>
                         @if (item.vehicle.make || item.vehicle.model) {
-                          <span>{{ item.vehicle.make }} {{ item.vehicle.model }}@if (item.vehicle.year) { · {{ item.vehicle.year }} }</span>
+                          <span class="hnc-simple-car">{{ item.vehicle.make }} {{ item.vehicle.model }}@if (item.vehicle.year) { · {{ item.vehicle.year }} }</span>
                         }
                       </div>
-                      <div class="hnc-item-meta">
-                        <span class="hnc-pill" [class]="'hnc-pill-' + (item.color || 'none')">{{ item.colorLabel }}</span>
-                        <span>Parada: <strong>{{ item.weekdayLabel }}</strong></span>
-                        @if (item.rule) {
-                          <span class="hnc-digit">Placa …{{ item.rule.digit }}</span>
-                        }
-                      </div>
-                      @if (item.rule) {
-                        <div class="hnc-verif">
-                          <span>1er sem: {{ item.verification1 }}</span>
-                          <span>2do sem: {{ item.verification2 }}</span>
-                        </div>
-                      }
+                      <span class="hnc-simple-status" [class.is-blocked]="item.blockedToday">
+                        {{ item.blockedToday ? 'No circula hoy' : 'Sí circula hoy' }}
+                      </span>
                     </div>
-                    @if (item.blockedToday) {
-                      <span class="hnc-badge-stop">Hoy no circula</span>
-                    } @else {
-                      <span class="hnc-badge-ok">Hoy sí puede</span>
-                    }
+                    <p class="hnc-simple-rule">
+                      <span class="hnc-simple-dot" [class]="'hnc-dot-' + (item.color || 'none')" aria-hidden="true"></span>
+                      Engomado {{ item.colorLabel }} · parada los {{ item.weekdayLabel }}
+                    </p>
                   </article>
                 }
               </div>
-              <p class="hnc-footnote">Sábados: holograma 2 no circula; holograma 1 según placa non/par. Domingo sin restricción de engomado.</p>
+              <details class="hnc-details">
+                <summary>Reglas de fin de semana</summary>
+                <p>Sábados: holograma 2 no circula; holograma 1 según placa par/non. Domingo sin restricción de engomado.</p>
+              </details>
             }
           </div>
 
           <div class="dash-card client-dash-panel">
-            <div class="client-dash-panel-head">
-              <div>
-                <h2 class="card-title card-title-with-icon">
-                  <svg lucideClipboardList [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-                  Trámites Recientes
-                </h2>
-                <p class="card-desc">Tus últimos trámites activos con seguimiento.</p>
-              </div>
+            <div class="client-dash-panel-head client-dash-panel-head--compact">
+              <h2 class="card-title card-title-with-icon">
+                <svg lucideClipboardList [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+                Trámites Recientes
+              </h2>
               @if (recentDeals().length > 0) {
                 <button type="button" class="client-section-link" (click)="setTab('tramites'); closeDeal()">
                   Ver todos
@@ -276,26 +261,22 @@
               <div class="client-empty client-empty--compact">Cargando tus trámites…</div>
             } @else if (recentDeals().length === 0) {
               <div class="client-empty client-empty--compact">
-                <div class="client-empty-icon"><svg lucideInbox [size]="36" [strokeWidth]="1.5" aria-hidden="true"></svg></div>
-                <strong>No tienes trámites aún</strong>
-                <p>Cuando solicites un servicio con una gestoría, aparecerá aquí.</p>
+                <strong>Sin trámites activos</strong>
+                <p>Cuando solicites un servicio, lo verás aquí.</p>
               </div>
             } @else {
-              <div class="client-recent-list">
+              <div class="deal-simple-list">
                 @for (deal of recentDeals(); track deal.id) {
-                  <button type="button" class="client-recent-row" (click)="openDeal(deal)">
-                    <span class="client-recent-icon"><svg lucideCar [size]="18" aria-hidden="true"></svg></span>
-                    <span class="client-recent-main">
-                      <strong>{{ deal.title }}</strong>
-                      <span>{{ deal.gestor_name || 'Agencia' }} · {{ deal.created_at | date:'dd MMM yyyy' }}</span>
-                      <span class="client-progress client-progress--inline">
-                        <span class="client-progress-fill" [style.width.%]="stageProgress(deal)"></span>
-                      </span>
-                    </span>
-                    <span class="client-recent-side">
-                      <span class="client-badge" [ngClass]="stageClass(deal)">{{ stageLabel(deal) }}</span>
-                      <span class="client-deal-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-                    </span>
+                  <button type="button" class="deal-simple-row" (click)="openDeal(deal)">
+                    <div class="deal-simple-head">
+                      <strong class="deal-simple-title">{{ deal.title }}</strong>
+                      <span class="deal-simple-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                    </div>
+                    <p class="deal-simple-meta">{{ deal.gestor_name || 'Agencia' }} · {{ deal.created_at | date:'dd MMM yyyy' }}</p>
+                    <div class="deal-simple-progress">
+                      <div class="deal-simple-progress-fill" [style.width.%]="stageProgress(deal)"></div>
+                    </div>
+                    <p class="deal-simple-stage">{{ stageLabel(deal) }} · {{ stageProgress(deal) }}% avance</p>
                   </button>
                 }
               </div>

@@ -1203,7 +1203,26 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   stageLabel(deal: any): string {
     const match = this.pipelineStages(deal).find(s => s.id === deal?.stage);
-    return match?.label || deal?.stage || '—';
+    if (match?.label) return match.label;
+
+    const raw = String(deal?.stage || '').trim();
+    if (!raw) return '—';
+
+    const defaults: Record<string, string> = {
+      nuevo: 'Nuevo',
+      contactado: 'Contactado',
+      en_tramite: 'En trámite',
+      documentacion: 'Documentación',
+      completado: 'Completado',
+      perdido: 'Cancelado',
+      lead_nuevo: 'Nuevo',
+    };
+    if (defaults[raw]) return defaults[raw];
+    if (/^etapa_/i.test(raw)) return 'En proceso';
+
+    return raw
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
 
   stageClass(deal: any): string {
