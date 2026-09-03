@@ -220,6 +220,9 @@ export class PanelAdminComponent implements OnInit {
   }
 
   ngOnInit() {
+    document.documentElement.style.setProperty('--bg', '#000000');
+    document.documentElement.style.setProperty('--panel-bg', '#000000');
+    document.body.style.backgroundColor = '#000000';
     this.auth.getMe().subscribe(res => {
       this.auth.user.set(res.user);
     });
