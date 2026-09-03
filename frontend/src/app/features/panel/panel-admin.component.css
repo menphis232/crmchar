@@ -1851,6 +1851,23 @@ app-crm-team {
   white-space: nowrap;
 }
 
+.push-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  flex-wrap: wrap;
+  color: #fff;
+  font-size: 13px;
+}
+
+.push-pagination span {
+  color: #fff;
+}
+
 @media (max-width: 900px) {
   .push-grid {
     grid-template-columns: 1fr;

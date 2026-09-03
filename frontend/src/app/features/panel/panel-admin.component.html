@@ -655,7 +655,7 @@
             <p class="push-hint">Aún no hay envíos registrados.</p>
           } @else {
             <div class="push-history-list">
-              @for (c of pushHistory(); track c.id) {
+              @for (c of pushHistoryPageItems(); track c.id) {
                 <article class="push-history-item">
                   <div class="push-history-main">
                     <strong>{{ c.title }}</strong>
@@ -669,6 +669,19 @@
                 </article>
               }
             </div>
+            @if (pushHistoryTotalPages() > 1) {
+              <div class="push-pagination">
+                <button type="button" class="btn-ghost small" [disabled]="pushHistoryPage() <= 1"
+                        (click)="setPushHistoryPage(pushHistoryPage() - 1)">
+                  <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg> Anterior
+                </button>
+                <span>Página {{ pushHistoryPage() }} de {{ pushHistoryTotalPages() }} ({{ pushHistory().length }} envíos)</span>
+                <button type="button" class="btn-ghost small" [disabled]="pushHistoryPage() >= pushHistoryTotalPages()"
+                        (click)="setPushHistoryPage(pushHistoryPage() + 1)">
+                  Siguiente <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
+            }
           }
         </section>
       </div>

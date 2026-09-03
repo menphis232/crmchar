@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, NgZone } from '@angular/core';
+import { Component, OnInit, signal, computed, effect, NgZone } from '@angular/core';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
@@ -44,6 +44,8 @@ import {
   LucideImage,
   LucideVideo,
   LucideBell,
+  LucideChevronLeft,
+  LucideChevronRight,
 } from '@lucide/angular';
 
 type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'push' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
@@ -51,7 +53,7 @@ type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 
 @Component({
   selector: 'app-panel-admin',
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideZap, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell, LucideChevronLeft, LucideChevronRight],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css'],
 })
@@ -109,6 +111,16 @@ export class PanelAdminComponent implements OnInit {
   pushSubscriptions = signal<Array<{ id: string; deviceModel: string; invalid: boolean; hasToken: boolean; subscribed?: boolean; externalUserId: string }>>([]);
   pushValidCount = signal(0);
   pushActivating = signal(false);
+  readonly pushHistoryPageSize = 10;
+  pushHistoryPage = signal(1);
+  pushHistoryTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.pushHistory().length / this.pushHistoryPageSize)),
+  );
+  pushHistoryPageItems = computed(() => {
+    const page = this.pushHistoryPage();
+    const start = (page - 1) * this.pushHistoryPageSize;
+    return this.pushHistory().slice(start, start + this.pushHistoryPageSize);
+  });
 
   // Audit State
   auditingOrg = signal<ManagedUser | null>(null);
@@ -697,6 +709,7 @@ export class PanelAdminComponent implements OnInit {
     this.adminService.getPushHistory().subscribe({
       next: rows => {
         this.pushHistory.set(rows);
+        this.pushHistoryPage.set(1);
         this.pushLoading.set(false);
       },
       error: () => this.pushLoading.set(false),
@@ -716,6 +729,12 @@ export class PanelAdminComponent implements OnInit {
         this.pushUsers.set(users as { id: string; email: string; name: string; role: string }[]);
       });
     }
+  }
+
+  setPushHistoryPage(page: number) {
+    const total = this.pushHistoryTotalPages();
+    const next = Math.min(Math.max(1, page), total);
+    this.pushHistoryPage.set(next);
   }
 
   activatePushOnDevice(): void {
