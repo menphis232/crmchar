@@ -4,19 +4,16 @@
   display: block;
   min-height: 100vh;
   width: 100%;
-  background: #050505 !important;
-  --client-gold: #c8a94a;
-  --client-gold-dim: rgba(200, 169, 74, 0.14);
-  --client-gold-glow: rgba(200, 169, 74, 0.35);
-  --client-surface: #0c0c0c;
-  --client-surface-2: #111111;
+  background: #000 !important;
+  --client-surface: #000;
+  --client-surface-2: #000;
   --text: #ffffff;
   --mx-white: #ffffff;
-  --muted: rgba(255, 255, 255, 0.5);
+  --muted: rgba(255, 255, 255, 0.45);
   --brand-grey: rgba(255, 255, 255, 0.35);
-  --bg: #050505;
-  --surface: var(--client-surface);
-  --border: rgba(255, 255, 255, 0.1);
+  --bg: #000;
+  --surface: #000;
+  --border: rgba(255, 255, 255, 0.12);
   --btn-primary-bg: transparent;
   --btn-primary-color: #ffffff;
   --btn-primary-border: #ffffff;
@@ -25,28 +22,15 @@
   --btn-primary-hover-border: #ffffff;
   --btn-outline-bg: transparent;
   --btn-outline-color: #ffffff;
-  --btn-outline-border: rgba(255, 255, 255, 0.35);
-  --btn-outline-hover-bg: rgba(255, 255, 255, 0.08);
-  --btn-outline-hover-color: #ffffff;
-  --btn-outline-hover-border: rgba(255, 255, 255, 0.55);
-}
-
-:host::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(200, 169, 74, 0.07), transparent 55%),
-    radial-gradient(ellipse 60% 40% at 95% 5%, rgba(186, 201, 207, 0.05), transparent 50%),
-    radial-gradient(ellipse 50% 30% at 50% 100%, rgba(255, 255, 255, 0.02), transparent 60%);
+  --btn-outline-border: #ffffff;
+  --btn-outline-hover-bg: #ffffff;
+  --btn-outline-hover-color: #000000;
+  --btn-outline-hover-border: #ffffff;
 }
 
 :host .dash-nav {
-  background: rgba(0, 0, 0, 0.92) !important;
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: #000 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
   position: relative;
   z-index: 10;
 }
@@ -65,27 +49,26 @@
 
 /* Sidebar cliente */
 .client-sidebar {
-  background: rgba(8, 8, 8, 0.85) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-radius: 16px !important;
+  background: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 0 !important;
   padding: 14px 10px !important;
-  backdrop-filter: blur(8px);
 }
 
 .client-sidebar .dash-link.active {
-  background: var(--client-gold-dim) !important;
-  border-left-color: var(--client-gold) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-left-color: #ffffff !important;
   color: #fff !important;
 }
 
 .client-sidebar .dash-link:hover {
-  border-left-color: rgba(200, 169, 74, 0.5) !important;
+  border-left-color: rgba(255, 255, 255, 0.55) !important;
 }
 
 .client-sidebar .kanban-count {
-  background: var(--client-gold-dim);
-  color: var(--client-gold);
-  border: 1px solid rgba(200, 169, 74, 0.3);
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 999px;
   font-size: 10px;
   padding: 1px 7px;
@@ -153,11 +136,11 @@
 }
 
 .dash-card {
-  background: var(--client-surface) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  border-top: 2px solid rgba(200, 169, 74, 0.35) !important;
-  border-radius: 16px !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+  background: #000 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
 }
 
 .dash-container,
@@ -205,21 +188,15 @@
   position: relative;
   overflow: hidden;
   padding: 24px 26px;
-  border-radius: 18px;
-  border: 1px solid rgba(200, 169, 74, 0.22);
-  background: linear-gradient(135deg, rgba(200, 169, 74, 0.1) 0%, rgba(12, 12, 12, 0.95) 45%, #0a0a0a 100%);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 2px solid rgba(255, 255, 255, 0.28);
+  background: #000;
+  box-shadow: none;
 }
 
 .client-hero-glow {
-  position: absolute;
-  top: -40%;
-  right: -10%;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(200, 169, 74, 0.12), transparent 70%);
-  pointer-events: none;
+  display: none;
 }
 
 .client-hero-inner {
@@ -253,8 +230,8 @@
   font-weight: 800;
   font-size: 22px;
   letter-spacing: 0.04em;
-  border: 2px solid rgba(200, 169, 74, 0.45);
-  box-shadow: 0 0 0 4px rgba(200, 169, 74, 0.08), 0 12px 28px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
 
 .client-hero-avatar img {
@@ -270,7 +247,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--client-gold);
+  color: rgba(255, 255, 255, 0.45);
   margin-bottom: 6px;
 }
 
@@ -307,9 +284,9 @@
   min-width: 118px;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
+  backdrop-filter: none;
   cursor: pointer;
   text-align: left;
   color: inherit;
@@ -319,8 +296,8 @@
 
 .client-stat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(200, 169, 74, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.45);
+  box-shadow: none;
 }
 
 .client-stat-icon {
@@ -329,23 +306,16 @@
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: 0;
   margin-bottom: 2px;
 }
 
-.client-stat-icon--total {
-  background: rgba(186, 201, 207, 0.12);
-  color: #bac9cf;
-}
-
-.client-stat-icon--progress {
-  background: rgba(124, 58, 237, 0.15);
-  color: #c4b5fd;
-}
-
+.client-stat-icon--total,
+.client-stat-icon--progress,
 .client-stat-icon--done {
-  background: rgba(34, 197, 94, 0.12);
-  color: #86efac;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .client-stat-num {
@@ -386,20 +356,19 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--client-surface-2);
+  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
   cursor: pointer;
   text-align: left;
   color: inherit;
   font-family: inherit;
-  transition: transform 0.2s, border-color 0.2s, background 0.2s;
+  transition: border-color 0.2s, background 0.2s;
 }
 
 .client-quick-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(200, 169, 74, 0.35);
-  background: rgba(200, 169, 74, 0.06);
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .client-quick-icon {
@@ -408,9 +377,10 @@
   justify-content: center;
   width: 42px;
   height: 42px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--client-gold);
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
 }
 
@@ -440,9 +410,10 @@
   min-width: 20px;
   height: 20px;
   padding: 0 6px;
-  border-radius: 999px;
-  background: var(--client-gold);
-  color: #000;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   font-size: 10px;
   font-weight: 800;
   display: flex;
@@ -491,7 +462,7 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: var(--client-gold);
+  color: #ffffff;
   font-family: var(--f-display);
   font-size: 11px;
   font-weight: 700;
@@ -499,13 +470,12 @@
   text-transform: uppercase;
   cursor: pointer;
   padding: 6px 0;
-  opacity: 0.9;
-  transition: opacity 0.2s, gap 0.2s;
+  opacity: 0.75;
+  transition: opacity 0.2s;
 }
 
 .client-section-link:hover {
   opacity: 1;
-  gap: 8px;
 }
 
 .client-empty--compact {
@@ -527,8 +497,8 @@
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: #000;
   cursor: pointer;
   text-align: left;
   color: inherit;
@@ -537,9 +507,9 @@
 }
 
 .client-recent-row:hover {
-  border-color: rgba(200, 169, 74, 0.35);
-  background: rgba(200, 169, 74, 0.05);
-  transform: translateX(2px);
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.05);
+  transform: none;
 }
 
 .client-recent-icon {
@@ -740,7 +710,7 @@
 
 .client-deal-price {
   font-weight: 800;
-  color: #4ade80;
+  color: #fff;
 }
 
 .client-badge {
@@ -1089,7 +1059,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: #080808;
+  background: #000;
 }
 
 .client-chat-placeholder {
@@ -1584,7 +1554,7 @@
   gap: 16px;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  border-left: 3px solid var(--gold, #c8a94a);
+  border-left: 3px solid rgba(255, 255, 255, 0.35);
   border-radius: 12px;
   background: var(--surface);
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -1592,7 +1562,7 @@
 
 .client-invoice-row:hover {
   background: #000;
-  border-color: rgba(200, 169, 74, 0.45);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .client-invoice-row-main {
@@ -1603,7 +1573,7 @@
 }
 
 .client-invoice-row-main strong {
-  color: var(--gold, #c8a94a);
+  color: #fff;
   font-size: 15px;
   letter-spacing: 0.02em;
 }
@@ -1808,7 +1778,7 @@ select.client-wallet-input {
   -moz-appearance: none;
   appearance: none;
   padding-right: 34px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c8a94a' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   cursor: pointer;
@@ -1850,13 +1820,13 @@ select.client-wallet-input option {
   aspect-ratio: 3 / 4;
   border-radius: 14px;
   overflow: hidden;
-  background: #0e0e0e;
+  background: #000;
   border: 1px solid rgba(255, 255, 255, 0.08);
   transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
 .wdoc-card:hover .wdoc-preview {
-  border-color: rgba(200, 169, 74, 0.5);
+  border-color: rgba(255, 255, 255, 0.45);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
 }
 
@@ -1918,8 +1888,8 @@ select.client-wallet-input option {
 }
 
 .wdoc-placeholder--file {
-  background: linear-gradient(145deg, #101520, #1a2030);
-  color: rgba(130, 160, 220, 0.8);
+  background: #000;
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .wdoc-placeholder-label {
@@ -1970,12 +1940,12 @@ select.client-wallet-input option {
 }
 
 .wdoc-action--primary {
-  background: rgba(200, 169, 74, 0.85);
+  background: rgba(255, 255, 255, 0.92);
   color: #000;
 }
 
 .wdoc-action--primary:hover {
-  background: rgba(220, 190, 90, 1);
+  background: #fff;
 }
 
 .wdoc-action--danger {
@@ -2026,9 +1996,9 @@ select.client-wallet-input option {
   padding: 5px 9px;
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(200, 169, 74, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(6px);
-  color: rgba(200, 169, 74, 0.95);
+  color: rgba(255, 255, 255, 0.85);
   pointer-events: none;
 }
 
@@ -2066,7 +2036,7 @@ select.client-wallet-input option {
 }
 
 .wdoc-card--vehicle .wdoc-preview {
-  border-color: rgba(200, 169, 74, 0.22);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .wdoc-associate-panel {
@@ -2081,7 +2051,7 @@ select.client-wallet-input option {
   padding: 10px;
   border-radius: 10px;
   background: rgba(10, 10, 10, 0.94);
-  border: 1px solid rgba(200, 169, 74, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
@@ -2663,7 +2633,7 @@ select.client-wallet-input option {
   padding-bottom: 8px;
   scroll-snap-type: x mandatory;
   scrollbar-width: thin;
-  scrollbar-color: rgba(200, 169, 74, 0.35) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 .knowledge-reels--carousel::-webkit-scrollbar {
@@ -2671,7 +2641,7 @@ select.client-wallet-input option {
 }
 
 .knowledge-reels--carousel::-webkit-scrollbar-thumb {
-  background: rgba(200, 169, 74, 0.3);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 999px;
 }
 
@@ -2683,7 +2653,7 @@ select.client-wallet-input option {
 
 .knowledge-reels--carousel .knowledge-reel:hover {
   transform: translateY(-3px);
-  border-color: rgba(200, 169, 74, 0.35);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .knowledge-reels-status--inline {
