@@ -28,11 +28,18 @@
   --btn-outline-hover-border: #ffffff;
 }
 
-.dash-nav-brand {
+.dash-nav-side {
   display: flex;
   align-items: center;
-  gap: 4px;
   min-width: 0;
+}
+
+.dash-nav-side--left {
+  justify-content: flex-start;
+}
+
+.dash-nav-side--right {
+  justify-content: flex-end;
 }
 
 .client-home-logo {
@@ -66,8 +73,48 @@
 }
 
 @media (max-width: 900px) {
+  :host .client-dash-nav.dash-nav {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+
+  :host .client-dash-nav .dash-nav-side--left {
+    justify-self: start;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  :host .client-dash-nav .client-home-logo {
+    justify-self: center;
+    grid-column: 2;
+  }
+
+  :host .client-dash-nav .dash-nav-side--right {
+    justify-self: end;
+  }
+
   .client-nav-back.mobile-only {
     display: inline-flex !important;
+  }
+}
+
+@media (min-width: 901px) {
+  :host .client-dash-nav.dash-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  :host .client-dash-nav .client-home-logo {
+    order: 0;
+    margin-right: auto;
+  }
+
+  :host .client-dash-nav .dash-nav-side--left {
+    display: none;
   }
 }
 
