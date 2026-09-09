@@ -502,4 +502,70 @@ router.patch('/change-password', authRequired, async (req, res) => {
   }
 });
 
+router.patch('/change-email', authRequired, async (req, res) => {
+  try {
+    const rawEmail = String(req.body?.email || '').trim().toLowerCase();
+    const currentPassword = req.body?.currentPassword;
+
+    if (!rawEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rawEmail)) {
+      return res.status(400).json({ error: 'Ingresa un correo válido.' });
+    }
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Confirma tu contraseña actual para cambiar el correo.' });
+    }
+
+    const row = await get(
+      'SELECT id, email, role, name, password_hash, parent_id, permissions, status, payment_failed_count FROM users WHERE id = ?',
+      [req.user.id],
+    );
+    if (!row) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const valid = bcrypt.compareSync(currentPassword, row.password_hash);
+    if (!valid) return res.status(401).json({ error: 'Contraseña actual incorrecta.' });
+
+    if (rawEmail === String(row.email || '').toLowerCase()) {
+      return res.status(400).json({ error: 'El nuevo correo es igual al actual.' });
+    }
+
+    const taken = await get('SELECT id FROM users WHERE email = ? AND id <> ?', [rawEmail, row.id]);
+    if (taken) {
+      return res.status(409).json({ error: 'Ese correo ya está registrado.' });
+    }
+
+    const oldEmail = row.email;
+    await run('UPDATE users SET email = ? WHERE id = ?', [rawEmail, row.id]);
+
+    // Los trámites del cliente se resuelven por contacts.email: hay que sincronizar.
+    if (row.role === 'cliente' && oldEmail) {
+      await run(
+        'UPDATE contacts SET email = ? WHERE LOWER(email) = LOWER(?)',
+        [rawEmail, oldEmail],
+      );
+    }
+
+    if (row.permissions && typeof row.permissions === 'string') {
+      try { row.permissions = JSON.parse(row.permissions); } catch { /* ignore */ }
+    }
+
+    const subscriptionStatus = await getOrgSubscriptionStatus(row.id, row.parent_id);
+    const { password_hash, status: _s, ...safe } = row;
+    safe.email = rawEmail;
+    safe.status = subscriptionStatus;
+    if (row.parent_id) {
+      const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [row.parent_id]);
+      safe.payment_failed_count = org?.payment_failed_count || 0;
+    } else {
+      safe.payment_failed_count = row.payment_failed_count || 0;
+    }
+
+    res.json({ token: signToken(safe), user: safe });
+  } catch (err) {
+    console.error(err);
+    if (err?.code === 'ER_DUP_ENTRY') {
+      return res.status(409).json({ error: 'Ese correo ya está registrado.' });
+    }
+    res.status(500).json({ error: 'Error al cambiar el correo.' });
+  }
+});
+
 export default router;

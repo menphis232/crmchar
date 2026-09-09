@@ -120,6 +120,15 @@ export class AuthService {
     );
   }
 
+  changeEmail(email: string, currentPassword: string) {
+    return this.http.patch<{ token: string; user: User }>(`${environment.apiUrl}/auth/change-email`, {
+      email,
+      currentPassword,
+    }).pipe(
+      tap(res => this.setSession(res.token, res.user)),
+    );
+  }
+
   getMe() {
     return this.http.get<{ user: User }>(`${environment.apiUrl}/auth/me`).pipe(
       tap(res => {

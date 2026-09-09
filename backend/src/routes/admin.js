@@ -122,8 +122,23 @@ router.put('/users/:id', authRequired, requireRole('admin'), async (req, res) =>
       return res.status(403).json({ error: 'Usuario no administrable' });
     }
     const { name, email } = req.body;
+    const nextEmail = email ? String(email).trim().toLowerCase() : null;
+    if (nextEmail) {
+      const taken = await get('SELECT id FROM users WHERE email = ? AND id <> ?', [nextEmail, req.params.id]);
+      if (taken) return res.status(409).json({ error: 'Ese correo ya está registrado' });
+    }
+
+    const oldRow = await get('SELECT email, role FROM users WHERE id = ?', [req.params.id]);
     await run('UPDATE users SET name = COALESCE(?, name), email = COALESCE(?, email) WHERE id = ?',
-      [name, email?.toLowerCase(), req.params.id]);
+      [name, nextEmail, req.params.id]);
+
+    // Si el admin cambia el correo de un cliente, sincronizar contacts.
+    if (oldRow?.role === 'cliente' && nextEmail && oldRow.email && nextEmail !== String(oldRow.email).toLowerCase()) {
+      await run(
+        'UPDATE contacts SET email = ? WHERE LOWER(email) = LOWER(?)',
+        [nextEmail, oldRow.email],
+      );
+    }
 
     if (user.role === 'gestor' && req.body.gestorProfile) {
       const { location, state, bio, whatsapp, schedule } = req.body.gestorProfile;

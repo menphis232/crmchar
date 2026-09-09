@@ -72,6 +72,10 @@ type Tab = 'password' | 'email';
             <input class="cc-input" type="email" [(ngModel)]="newEmail" name="newEmail"
                    placeholder="nuevo@correo.com" autocomplete="email" required />
 
+            <label class="cc-label">Contraseña actual</label>
+            <input class="cc-input" type="password" [(ngModel)]="emailPw" name="emailPw"
+                   placeholder="Confirma tu contraseña" autocomplete="current-password" required />
+
             @if (error()) {
               <p class="cc-error">{{ error() }}</p>
             }
@@ -191,10 +195,18 @@ export class ChangeCredentialsComponent {
 
   changeEmail() {
     this.error.set('');
-    if (!this.newEmail.includes('@')) { this.error.set('Ingresa un correo válido.'); return; }
+    const email = this.newEmail.trim().toLowerCase();
+    if (!email.includes('@') || !email.includes('.')) {
+      this.error.set('Ingresa un correo válido.');
+      return;
+    }
+    if (!this.emailPw) {
+      this.error.set('Confirma tu contraseña actual.');
+      return;
+    }
 
     this.loading.set(true);
-    this.auth.updateMe({ email: this.newEmail } as any).subscribe({
+    this.auth.changeEmail(email, this.emailPw).subscribe({
       next: () => {
         this.loading.set(false);
         this.toast.success('Correo actualizado correctamente', '¡Listo!');
