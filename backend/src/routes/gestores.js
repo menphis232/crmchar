@@ -183,14 +183,24 @@ function gestorRow(row) {
   };
 }
 
+/** Solo gestores con al menos 1 servicio publicado en el catálogo. */
+const HAS_SERVICES_SQL = `EXISTS (
+  SELECT 1 FROM gestor_services gs WHERE gs.gestor_id = g.id
+)`;
+
 router.get('/', async (req, res) => {
   try {
     const { state, minRating } = req.query;
-    let sql = `SELECT g.*, u.logo_url FROM gestores g JOIN users u ON g.user_id = u.id WHERE 1=1`;
+    let sql = `
+      SELECT g.*, u.logo_url
+      FROM gestores g
+      JOIN users u ON g.user_id = u.id
+      WHERE ${HAS_SERVICES_SQL}
+    `;
     const params = [];
-    if (state) { sql += ' AND state = ?'; params.push(state); }
-    if (minRating) { sql += ' AND rating >= ?'; params.push(Number(minRating)); }
-    sql += ' ORDER BY rating DESC, tramites_count DESC';
+    if (state) { sql += ' AND g.state = ?'; params.push(state); }
+    if (minRating) { sql += ' AND g.rating >= ?'; params.push(Number(minRating)); }
+    sql += ' ORDER BY g.rating DESC, g.tramites_count DESC';
     const rows = await query(sql, params);
     res.json(rows.map(gestorRow));
   } catch (err) {
@@ -201,7 +211,13 @@ router.get('/', async (req, res) => {
 
 router.get('/filters/states', async (_req, res) => {
   try {
-    const rows = await query('SELECT state, COUNT(*) as count FROM gestores GROUP BY state ORDER BY count DESC');
+    const rows = await query(`
+      SELECT g.state, COUNT(*) as count
+      FROM gestores g
+      WHERE ${HAS_SERVICES_SQL}
+      GROUP BY g.state
+      ORDER BY count DESC
+    `);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: 'Error al obtener filtros' });
@@ -526,6 +542,10 @@ router.get('/:slugOrId', async (req, res) => {
     if (!row) return res.status(404).json({ error: 'Gestor no encontrado' });
 
     const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
+    // Sin servicios no debe aparecer en catálogo ni por URL directa
+    if (!services.length) {
+      return res.status(404).json({ error: 'Gestor no encontrado' });
+    }
     const reviews = await query(
       'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC LIMIT 20',
       [row.id]);
