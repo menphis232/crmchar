@@ -43,13 +43,11 @@ export class DrivePage {
   }
 
   onReady(): void {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const video = this.reel()?.nativeElement;
-    if (reduced) {
-      void video?.play();
+    this.scrub();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
-    this.scrub();
+    void this.reel()?.nativeElement.play();
   }
 
   replay(): void {
@@ -57,12 +55,9 @@ export class DrivePage {
     if (!video) {
       return;
     }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      video.currentTime = 0;
-      void video.play();
-      return;
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    video.pause();
+    video.currentTime = 0;
+    void video.play();
   }
 
   active() {
@@ -76,7 +71,6 @@ export class DrivePage {
 
   private scrub(): void {
     const track = this.track()?.nativeElement;
-    const video = this.reel()?.nativeElement;
     if (!track) {
       return;
     }
@@ -84,16 +78,5 @@ export class DrivePage {
     const scrolled = Math.min(Math.max(-track.getBoundingClientRect().top, 0), Math.max(total, 0));
     const next = total > 0 ? scrolled / total : 0;
     this.progress.set(Number(next.toFixed(3)));
-
-    if (!video || !Number.isFinite(video.duration) || video.duration === 0) {
-      return;
-    }
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    const target = next * (video.duration - 0.05);
-    if (Math.abs(video.currentTime - target) > 0.04) {
-      video.currentTime = target;
-    }
   }
 }

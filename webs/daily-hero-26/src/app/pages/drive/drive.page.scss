@@ -45,8 +45,8 @@
 
 .shade-left {
   inset: 0 auto 0 0;
-  width: 44%;
-  background: linear-gradient(90deg, #010101 82%, transparent);
+  width: 36%;
+  background: linear-gradient(90deg, #010101 68%, transparent);
 }
 
 .shade-nav {
@@ -113,16 +113,22 @@ nav a:nth-child(4) { margin-left: 64px; }
 
 .burger {
   position: absolute;
-  top: 28px;
+  top: 30px;
   right: 28px;
-  width: 42px;
-  height: 28px;
+  width: 28px;
+  height: 16px;
+  padding: 0;
   border: 0;
   background: transparent;
   cursor: pointer;
 }
 
-.burger img { width: 28px; height: 14px; display: block; }
+.burger img {
+  width: 28px;
+  height: 16px;
+  display: block;
+  object-fit: contain;
+}
 
 h1 {
   position: absolute;
@@ -196,7 +202,10 @@ h1 em {
   border: 0;
   background: transparent;
   cursor: pointer;
+  animation: pulse 2.4s ease-in-out infinite;
 }
+
+.play:hover { animation: none; transform: scale(1.06); }
 
 .play img { width: 222px; height: 222px; display: block; }
 
@@ -360,6 +369,10 @@ h1 em {
   height: 25px;
 }
 
+@keyframes pulse {
+  50% { transform: scale(1.05); }
+}
+
 @media (max-width: 800px) {
   nav { display: none; }
   nav.is-open {
@@ -377,4 +390,5 @@ h1 em {
 @media (prefers-reduced-motion: reduce) {
   .track { height: auto; }
   .sticky { position: relative; }
+  .play { animation: none; }
 }
