@@ -1,12 +1,9 @@
-<section class="hero">
-  <div class="stage" aria-hidden="true">
-    <img class="covered" src="drive/covered-car.jpg" alt="" />
-    <span class="glow"></span>
-  </div>
+<section class="hero" data-node-id="32001:348">
+  <img class="bg" src="drive/hero-clean.jpg" alt="" />
 
   <header class="bar">
     <a class="mark" routerLink="/drive" aria-label="Velocity home">
-      <img src="drive/ferrari.svg" alt="" width="28" height="40" />
+      <img src="drive/mark.png" alt="" />
     </a>
     <nav [class.is-open]="menu()">
       <a routerLink="/performance" (click)="menu.set(false)">Performance</a>
@@ -15,7 +12,7 @@
       <a routerLink="/experience" (click)="menu.set(false)">Experience</a>
     </nav>
     <button type="button" class="burger" aria-label="Open menu" (click)="menu.set(!menu())">
-      <span></span><span></span><span></span>
+      <img src="drive/menu.svg" alt="" width="28" height="16" />
     </button>
   </header>
 
@@ -25,27 +22,26 @@
       <em>Beyond</em>
       <span>Limits</span>
     </h1>
-    <p>
-      Precision engineered performance designed to redefine modern luxury driving experiences.
-    </p>
+    <p>{{ active().blurb }}</p>
     <button type="button" class="cta" (click)="goPink()">
-      Explore More
-      <img src="drive/arrow.svg" alt="" width="56" height="12" />
+      <span>Explore More</span>
+      <img src="drive/arrow.svg" alt="" width="69" height="15" />
     </button>
   </div>
 
   <button type="button" class="play" (click)="goPink()" aria-label="Reveal the car">
-    <img src="drive/play.svg" alt="" width="160" height="160" />
+    <img src="drive/play.svg" alt="" width="222" height="222" />
   </button>
 
   <aside class="panel">
     <p class="model">
-      <img [src]="'drive/' + active().id + '.svg'" alt="" width="24" height="32" />
-      {{ active().brand }} <strong>{{ active().model }}</strong>
+      <img src="drive/ferrari-word.svg" alt="" width="28" height="40" />
+      <span>{{ active().brand }} <strong>{{ active().model }}</strong></span>
     </p>
     <div class="grid">
       <div class="thumb">
         <img src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+        <img class="sync" src="drive/sync.svg" alt="" width="24" height="24" />
       </div>
       <div class="stat">
         <p><b>{{ active().battery }}</b><small>h</small></p>
@@ -71,18 +67,19 @@
         [attr.aria-label]="item.brand"
         (click)="pick(item.id)"
       >
-        <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" width="28" height="32" />
+        <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" width="36" height="40" />
       </button>
     }
   </div>
 
   <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to reveal">
-    Explore
+    <span>Explore</span>
+    <i></i>
   </button>
 </section>
 
-<section #pink class="pink" [class.is-in]="playing()">
-  <img class="bg" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+<section #pink class="pink" data-node-id="32001:799">
+  <img class="pink-bg" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
   <div class="pink-copy">
     <p>Reveal</p>
     <h2>

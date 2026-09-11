@@ -2,7 +2,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  afterNextRender,
   signal,
   viewChild,
 } from '@angular/core';
@@ -21,21 +20,12 @@ export class DrivePage {
   readonly cars = CARS;
   readonly brand = signal(CARS[0].id);
   readonly menu = signal(false);
-  readonly playing = signal(false);
-
-  constructor() {
-    afterNextRender(() => {
-      // keep page scroll at top on enter
-      window.scrollTo({ top: 0 });
-    });
-  }
 
   pick(id: string): void {
     this.brand.set(id);
   }
 
   goPink(): void {
-    this.playing.set(true);
     this.pink()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
