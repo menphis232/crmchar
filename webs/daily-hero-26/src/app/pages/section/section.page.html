@@ -1,0 +1,11 @@
+<section class="page">
+  <a routerLink="/drive">← Velocity</a>
+  <p class="kicker">{{ page().kicker }}</p>
+  <h1>{{ page().title }}</h1>
+  <p class="lead">{{ page().lead }}</p>
+  <ul>
+    @for (point of page().points; track point; let i = $index) {
+      <li [style.animation-delay]="i * 90 + 'ms'">{{ point }}</li>
+    }
+  </ul>
+</section>

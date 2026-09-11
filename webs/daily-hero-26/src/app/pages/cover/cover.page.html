@@ -1,0 +1,39 @@
+<main class="cover" (pointermove)="onPointer($event)" [style.--px]="px()" [style.--py]="py()">
+  <div class="frame" [style.width.px]="1920 * scale()" [style.height.px]="1080 * scale()">
+    <div class="stage" [style.transform]="'scale(' + scale() + ')'" data-node-id="22001:27" data-name="Cover">
+      <img
+        class="monitor"
+        data-node-id="32001:28"
+        src="cover/monitor.png"
+        alt=""
+        [style.transform]="'translate(calc(var(--px) * -8px), calc(var(--py) * -6px))'"
+      />
+      <a
+        class="screen"
+        routerLink="/drive"
+        data-node-id="32001:29"
+        aria-label="Open the Velocity website"
+        [style.transform]="'translate(calc(var(--px) * -6px), calc(var(--py) * -4px))'"
+      >
+        <img src="cover/screen.png" alt="Velocity website preview on the monitor" />
+      </a>
+
+      <p class="edition" data-node-id="22001:31">
+        <span data-node-id="22001:32">{{ day() }}</span>
+        <span data-node-id="22001:33">/30</span>
+      </p>
+
+      <h1 data-node-id="22001:30">
+        <span>Daily </span>
+        <span>   Hero</span>
+      </h1>
+    </div>
+  </div>
+
+  <a class="enter" routerLink="/drive">
+    <span>Open the website</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+</main>

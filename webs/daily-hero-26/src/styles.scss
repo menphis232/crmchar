@@ -1,0 +1,35 @@
+:root {
+  --ink: #f4f4f5;
+  --muted: rgb(255 255 255 / 62%);
+  --stage: #434549;
+  --night: #0b0c0f;
+  --panel: rgb(255 255 255 / 6%);
+  --line: rgb(255 255 255 / 14%);
+  --font: "Manrope", sans-serif;
+  --display: "Syne", sans-serif;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body { margin: 0; min-height: 100%; }
+
+body {
+  font-family: var(--font);
+  color: var(--ink);
+  background: var(--night);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input { font: inherit; }
+a { color: inherit; }
+img { max-width: 100%; }
+
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 0.5s; }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) { animation: none; }
+}

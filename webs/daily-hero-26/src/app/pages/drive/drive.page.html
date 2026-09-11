@@ -1,0 +1,93 @@
+<section class="hero" [style.--accent]="car().accent">
+  <header class="bar">
+    <a class="mark" routerLink="/drive" aria-label="Velocity home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22 16 6l12 16h-5l-7-9-7 9z" fill="currentColor"/></svg>
+    </a>
+    <nav [class.is-open]="menu()">
+      <a routerLink="/performance" (click)="menu.set(false)">Performance</a>
+      <a routerLink="/technology" (click)="menu.set(false)">Technology</a>
+      <a routerLink="/interior" (click)="menu.set(false)">Interior</a>
+      <a routerLink="/experience" (click)="menu.set(false)">Experience</a>
+    </nav>
+    <button type="button" class="menu" aria-label="Open menu" (click)="menu.set(!menu())">
+      <span></span><span></span><span></span>
+    </button>
+  </header>
+
+  <div class="copy" [attr.data-car]="car().id">
+    <h1>
+      <span>Velocity</span>
+      <span>Beyond</span>
+      <span>Limits</span>
+    </h1>
+    <p>{{ car().blurb }}</p>
+    <a class="explore" routerLink="/performance">
+      Explore more
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
+    </a>
+  </div>
+
+  <button type="button" class="play" (click)="film.set(true)" aria-label="Play film">
+    <span></span>
+  </button>
+
+  <aside class="specs">
+    <p class="model">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16 12 4l8 12h-4l-4-6-4 6z" fill="currentColor"/></svg>
+      {{ car().brand }} {{ car().model }}
+    </p>
+    <div class="tiles">
+      <div class="portrait" aria-hidden="true">
+        <span class="car"></span>
+        <i></i>
+      </div>
+      <div class="stat">
+        <strong>{{ car().battery }}<small>h</small></strong>
+        <span>Battery life</span>
+      </div>
+      <div class="stat wide">
+        <strong>{{ car().range }}<small>mi</small></strong>
+        <span>Range</span>
+      </div>
+      <div class="stat">
+        <strong>{{ car().speed }}<small>mph</small></strong>
+        <span>Speed</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="brands" role="tablist" aria-label="Choose a marque">
+    @for (item of cars; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [class.is-on]="item.id === car().id"
+        [attr.aria-selected]="item.id === car().id"
+        [attr.aria-label]="item.brand"
+        (click)="pick(item.id)"
+      >
+        <span>{{ item.brand.slice(0, 1) }}</span>
+      </button>
+    }
+  </div>
+  <p class="scroll">Scroll to explore</p>
+</section>
+
+<section class="strip">
+  <article>
+    <h2>Built for the long corner.</h2>
+    <p>Four disciplines. One chassis. Switch marques and the numbers follow.</p>
+  </article>
+  <a routerLink="/experience">Book a drive</a>
+</section>
+
+@if (film()) {
+  <div class="film" (click)="film.set(false)">
+    <div (click)="$event.stopPropagation()">
+      <p>Film</p>
+      <h2>{{ car().brand }} {{ car().model }}</h2>
+      <p>Night pass. The limit moves with you.</p>
+      <button type="button" (click)="film.set(false)">Close</button>
+    </div>
+  </div>
+}

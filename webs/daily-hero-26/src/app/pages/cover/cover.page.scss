@@ -1,0 +1,134 @@
+:host { display: block; }
+
+.cover {
+  --px: 0;
+  --py: 0;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #434549;
+}
+
+.frame { position: relative; }
+
+.stage {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 1920px;
+  height: 1080px;
+  transform-origin: top left;
+  background: #434549;
+  overflow: hidden;
+}
+
+.monitor {
+  position: absolute;
+  left: 77.29px;
+  top: 5.58px;
+  width: 2359.413px;
+  height: 1188.554px;
+  object-fit: cover;
+  pointer-events: none;
+  animation: drift 10s ease-in-out infinite;
+}
+
+.screen {
+  position: absolute;
+  left: 741.32px;
+  top: 32.26px;
+  width: 1011.283px;
+  height: 659.782px;
+  display: block;
+  animation: drift 10s ease-in-out infinite;
+}
+
+.screen img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: fill;
+}
+
+.edition {
+  position: absolute;
+  left: 131.5px;
+  top: 89px;
+  display: flex;
+  align-items: flex-end;
+  margin: 0;
+  color: #fff;
+  font-family: Syne, sans-serif;
+  font-weight: 600;
+  line-height: 0.7;
+  white-space: nowrap;
+  animation: rise 0.9s 0.08s both;
+}
+
+.edition span:first-child {
+  margin-right: -5px;
+  font-size: 113.801px;
+}
+
+.edition span:last-child {
+  font-size: 41.133px;
+  opacity: 0.5;
+}
+
+h1 {
+  position: absolute;
+  left: 119px;
+  top: 342.86px;
+  margin: 0;
+  color: #fff;
+  font-family: Syne, sans-serif;
+  font-size: 143.452px;
+  font-weight: 600;
+  line-height: 0.97;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+h1 span {
+  display: block;
+  animation: rise 1s both;
+}
+
+h1 span:last-child { animation-delay: 0.16s; }
+
+.enter {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  height: 52px;
+  padding: 0 18px 0 22px;
+  border-radius: 999px;
+  background: #fff;
+  color: #1b1c1f;
+  font-weight: 700;
+  text-decoration: none;
+  animation: rise 1s 0.4s both;
+  transition: transform 0.3s ease;
+}
+
+.enter svg { width: 20px; height: 20px; transition: transform 0.3s ease; }
+.enter:hover { transform: translateY(-3px); }
+.enter:hover svg { transform: translateX(4px); }
+
+@keyframes drift {
+  0%, 100% { margin-top: 0; }
+  50% { margin-top: -8px; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .monitor, .screen, .edition, h1 span, .enter { animation: none; }
+}
