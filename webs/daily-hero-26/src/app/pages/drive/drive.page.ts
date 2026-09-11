@@ -16,7 +16,8 @@ import { CARS } from '../../core/cars';
   styleUrl: './drive.page.scss',
 })
 export class DrivePage {
-  private readonly pink = viewChild<ElementRef<HTMLElement>>('pink');
+  private readonly mid = viewChild<ElementRef<HTMLElement>>('mid');
+  private readonly full = viewChild<ElementRef<HTMLElement>>('full');
   readonly cars = CARS;
   readonly brand = signal(CARS[0].id);
   readonly menu = signal(false);
@@ -25,8 +26,12 @@ export class DrivePage {
     this.brand.set(id);
   }
 
-  goPink(): void {
-    this.pink()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  goReveal(): void {
+    this.mid()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  goFull(): void {
+    this.full()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   active() {

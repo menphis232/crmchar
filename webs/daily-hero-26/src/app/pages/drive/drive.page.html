@@ -25,13 +25,13 @@
       <span>Limits</span>
     </h1>
     <p>{{ active().blurb }}</p>
-    <button type="button" class="cta" (click)="goPink()">
+    <button type="button" class="cta" (click)="goReveal()">
       <span>Explore More</span>
       <img src="drive/arrow.svg" alt="" width="69" height="15" />
     </button>
   </div>
 
-  <button type="button" class="play" (click)="goPink()" aria-label="Reveal the car">
+  <button type="button" class="play" (click)="goReveal()" aria-label="Reveal the car">
     <img src="drive/play.svg" alt="" width="222" height="222" />
   </button>
 
@@ -74,16 +74,94 @@
     }
   </div>
 
-  <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to reveal">
+  <button type="button" class="hint" (click)="goReveal()" aria-label="Scroll to reveal">
     <span>Explore</span>
     <i></i>
   </button>
 </section>
 
-<section #pink class="hero revealed" data-node-id="32001:431">
-  <img class="bg pink-bg" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+<section #mid class="hero mid" data-node-id="32001:431">
+  <img class="bg mid-bg" src="drive/reveal-mid.jpg" alt="" />
   <div class="veil veil-left"></div>
   <div class="veil veil-bottom"></div>
+
+  <header class="bar">
+    <a class="mark" routerLink="/drive" aria-label="Velocity home">
+      <img src="drive/mark.png" alt="" />
+    </a>
+    <nav>
+      <a routerLink="/performance">Performance</a>
+      <a routerLink="/technology">Technology</a>
+      <a routerLink="/interior">Interior</a>
+      <a routerLink="/experience">Experience</a>
+    </nav>
+    <button type="button" class="burger" aria-label="Menu">
+      <img src="drive/menu.svg" alt="" width="28" height="16" />
+    </button>
+  </header>
+
+  <div class="copy">
+    <h1>
+      <span>Velocity</span>
+      <em class="outline">Beyond</em>
+      <span>Limits</span>
+    </h1>
+    <p>{{ active().blurb }}</p>
+    <button type="button" class="cta" (click)="goFull()">
+      <span>Explore More</span>
+      <img src="drive/arrow.svg" alt="" width="69" height="15" />
+    </button>
+  </div>
+
+  <aside class="panel">
+    <p class="model">
+      <img src="drive/ferrari-word.svg" alt="" width="28" height="40" />
+      <span>{{ active().brand }} <strong>{{ active().model }}</strong></span>
+    </p>
+    <div class="grid">
+      <div class="thumb">
+        <img src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+        <img class="sync" src="drive/sync.svg" alt="" width="24" height="24" />
+      </div>
+      <div class="stat">
+        <p><b>{{ active().battery }}</b><small>h</small></p>
+        <span>Battery Life</span>
+      </div>
+      <div class="stat">
+        <p><b>{{ active().range }}</b><small>mi</small></p>
+        <span>Range</span>
+      </div>
+      <div class="stat">
+        <p><b>{{ active().speed }}</b><small>mph</small></p>
+        <span>Speed</span>
+      </div>
+    </div>
+  </aside>
+
+  <div class="brands" role="tablist" aria-label="Choose a marque">
+    @for (item of cars; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [class.is-on]="brand() === item.id"
+        [attr.aria-label]="item.brand"
+        (click)="pick(item.id)"
+      >
+        <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" width="36" height="40" />
+      </button>
+    }
+  </div>
+
+  <button type="button" class="hint" (click)="goFull()" aria-label="Scroll to full reveal">
+    <span>Explore</span>
+    <i></i>
+  </button>
+</section>
+
+<section #full class="hero full" data-node-id="32001:432">
+  <img class="bg full-bg" src="drive/reveal-full.jpg" [alt]="active().brand + ' ' + active().model" />
+  <div class="veil veil-left veil-pink"></div>
+  <div class="veil veil-bottom veil-pink"></div>
 
   <header class="bar">
     <a class="mark" routerLink="/drive" aria-label="Velocity home">

@@ -26,9 +26,14 @@
   pointer-events: none;
 }
 
-.pink-bg {
-  object-position: 55% 60%;
-  transform: scale(1.08);
+.mid-bg {
+  object-position: 55% 48%;
+  transform: scale(1.04);
+}
+
+.full-bg {
+  object-position: 55% 62%;
+  transform: scale(1.06);
 }
 
 .veil {
@@ -49,12 +54,26 @@
   background: linear-gradient(transparent, #010101 78%);
 }
 
-.revealed .veil-left {
-  background: linear-gradient(90deg, rgb(1 1 1 / 88%) 42%, transparent);
+.mid .veil-left {
+  background: linear-gradient(90deg, rgb(1 1 1 / 90%) 46%, transparent);
 }
 
-.revealed .veil-bottom {
-  background: linear-gradient(transparent, rgb(1 1 1 / 82%) 80%);
+.mid .veil-bottom {
+  background: linear-gradient(transparent, rgb(1 1 1 / 86%) 80%);
+}
+
+.veil-pink.veil-left {
+  background: linear-gradient(90deg, rgb(40 8 24 / 82%) 48%, transparent);
+}
+
+.veil-pink.veil-bottom {
+  background: linear-gradient(transparent, rgb(40 8 24 / 78%) 82%);
+}
+
+h1 em.outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px #fff;
+  text-stroke: 1.5px #fff;
 }
 
 .bar,
@@ -432,7 +451,8 @@ h1 em {
     display: none;
   }
 
-  .revealed .play {
+  .mid .play,
+  .full .play {
     display: none;
   }
 }
