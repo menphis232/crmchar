@@ -16,6 +16,7 @@
         <div class="shade shade-left"></div>
         <div class="shade shade-nav"></div>
         <div class="shade shade-name"></div>
+        <div class="shade shade-explore"></div>
 
         <a class="mark" routerLink="/drive" aria-label="Velocity home">
           <img src="drive/ferrari.svg" alt="" width="28" height="40" />
@@ -89,8 +90,7 @@
 
         <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to the pink reveal">
           <span>Explore</span>
-          <i class="rail"></i>
-          <img class="dot" src="drive/explore-dot.svg" alt="" width="25" height="25" />
+          <span class="stem" aria-hidden="true"><i></i><b></b></span>
         </button>
 
         <section class="pink" [class.is-in]="reveal() > 0.96" aria-label="Pink reveal">
