@@ -22,22 +22,17 @@ export class DrivePage {
   private readonly track = viewChild<ElementRef<HTMLElement>>('track');
   readonly cars = CARS;
   readonly brand = signal(CARS[0].id);
-  readonly scale = signal(1);
   readonly menu = signal(false);
   readonly progress = signal(0);
   readonly reveal = computed(() => {
-    const start = 0.32;
+    const start = 0.18;
     return Math.min(1, Math.max(0, (this.progress() - start) / (1 - start)));
   });
 
   constructor() {
     afterNextRender(() => {
-      this.fit();
       const onScroll = () => this.scrub();
-      window.addEventListener('resize', () => {
-        this.fit();
-        this.scrub();
-      });
+      window.addEventListener('resize', onScroll, { passive: true });
       window.addEventListener('scroll', onScroll, { passive: true });
       this.scrub();
     });
@@ -48,7 +43,6 @@ export class DrivePage {
   }
 
   onReady(): void {
-    this.scrub();
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
@@ -76,11 +70,6 @@ export class DrivePage {
 
   active() {
     return this.cars.find((car) => car.id === this.brand()) ?? CARS[0];
-  }
-
-  private fit(): void {
-    const next = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    this.scale.set(Number(Math.max(next, 0.28).toFixed(4)));
   }
 
   private scrub(): void {

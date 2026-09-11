@@ -1,122 +1,127 @@
-<div class="track" #track>
+<div class="track" #track [style.--p]="progress()" [style.--reveal]="reveal()">
   <div class="sticky">
-    <div class="frame" [style.width.px]="1920 * scale()" [style.height.px]="1080 * scale()">
-      <div class="stage" [style.transform]="'scale(' + scale() + ')'" [style.--p]="progress()" [style.--reveal]="reveal()">
-        <video
-          #reel
-          class="film"
-          autoplay
-          muted
-          loop
-          playsinline
-          preload="auto"
-          src="drive/hero.mp4"
-          (loadedmetadata)="onReady()"
-        ></video>
-        <div class="shade shade-left"></div>
-        <div class="shade shade-nav"></div>
-        <div class="shade shade-name"></div>
-        <div class="shade shade-explore"></div>
+    <section class="hero" data-node-id="32001:348">
+      <video
+        #reel
+        class="film"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        src="drive/hero.mp4"
+        (loadedmetadata)="onReady()"
+      ></video>
+      <div class="shade shade-left"></div>
+      <div class="shade shade-top"></div>
+      <div class="shade shade-bottom"></div>
 
+      <header class="bar">
         <a class="mark" routerLink="/drive" aria-label="Velocity home">
           <img src="drive/ferrari.svg" alt="" width="28" height="40" />
         </a>
-
         <nav [class.is-open]="menu()">
-          <a routerLink="/performance">Performance</a>
-          <a routerLink="/technology">Technology</a>
-          <a routerLink="/interior">Interior</a>
-          <a routerLink="/experience">Experience</a>
+          <a routerLink="/performance" (click)="menu.set(false)">Performance</a>
+          <a routerLink="/technology" (click)="menu.set(false)">Technology</a>
+          <a routerLink="/interior" (click)="menu.set(false)">Interior</a>
+          <a routerLink="/experience" (click)="menu.set(false)">Experience</a>
         </nav>
         <button type="button" class="burger" aria-label="Open menu" (click)="menu.set(!menu())">
-          <img src="drive/menu.svg" alt="" width="28" height="14" />
+          <img src="drive/menu.svg" alt="" width="28" height="16" />
         </button>
+      </header>
 
+      <div class="copy">
         <h1>
           <span>Velocity</span>
           <em>Beyond</em>
           <span>Limits</span>
         </h1>
-
         <p class="lead">
           Precision engineered performance designed to redefine modern luxury driving experiences.
         </p>
-
         <button type="button" class="explore" (click)="goPink()">
           <span>Explore More</span>
           <img src="drive/arrow.svg" alt="" width="69" height="15" />
         </button>
+      </div>
 
-        <button type="button" class="play" (click)="replay()" aria-label="Replay film">
-          <img src="drive/play.svg" alt="" width="222" height="222" />
-        </button>
+      <button type="button" class="play" (click)="replay()" aria-label="Replay film">
+        <img src="drive/play.svg" alt="" width="222" height="222" />
+      </button>
 
+      <aside class="panel">
         <p class="model">
-          <img [src]="'drive/' + active().id + '.svg'" alt="" width="32" height="40" />
+          <img [src]="'drive/' + active().id + '.svg'" alt="" width="28" height="36" />
           <span>{{ active().brand }} <strong>{{ active().model }}</strong></span>
         </p>
-
-        <div class="thumb">
-          <img class="car" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" width="297" height="159" />
-          <img class="halo" src="drive/ring.svg" alt="" width="234" height="39" />
-          <img class="sync" src="drive/sync.svg" alt="" width="24" height="24" />
-        </div>
-        <div class="stat battery">
-          <p><b>{{ active().battery }}</b><small>h</small></p>
-          <span>Battery Life</span>
-        </div>
-        <div class="stat range">
-          <p><b>{{ active().range }}</b><small>mi</small></p>
-          <span>Range</span>
-        </div>
-        <div class="stat speed">
-          <p><b>{{ active().speed }}</b><small>mph</small></p>
-          <span>Speed</span>
-        </div>
-
-        <div class="brands" role="tablist" aria-label="Choose a marque">
-          @for (item of cars; track item.id) {
-            <button
-              type="button"
-              role="tab"
-              [class.is-on]="brand() === item.id"
-              [attr.aria-label]="item.brand"
-              (click)="pick(item.id)"
-            >
-              <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" width="36" height="40" />
-            </button>
-          }
-        </div>
-
-        <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to the pink reveal">
-          <span>Explore</span>
-          <span class="stem" aria-hidden="true"><i></i><b></b></span>
-        </button>
-
-        <section class="pink" [class.is-in]="reveal() > 0.96" aria-label="Pink reveal">
-          <img class="pink-car" src="drive/car-thumb.png" alt="" />
-          <div class="pink-copy">
-            <p>The reveal</p>
-            <h2>{{ active().brand }}<br /><strong>{{ active().model }}</strong></h2>
-            <p class="pink-lead">The cover comes off. Same chassis, now in the color of the limit.</p>
+        <div class="grid">
+          <div class="thumb">
+            <img class="car" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+            <span class="sync" aria-hidden="true"></span>
           </div>
-          <div class="pink-card">
-            <img src="drive/car-thumb.png" alt="{{ active().brand }} {{ active().model }}" width="220" height="120" />
-            <div>
-              <strong>{{ active().battery }}h</strong>
-              <span>Battery</span>
-            </div>
-            <div>
-              <strong>{{ active().range }} mi</strong>
-              <span>Range</span>
-            </div>
-            <div>
-              <strong>{{ active().speed }} mph</strong>
-              <span>Speed</span>
-            </div>
+          <div class="stat">
+            <p><b>{{ active().battery }}</b><small>h</small></p>
+            <span>Battery Life</span>
           </div>
-        </section>
+          <div class="stat">
+            <p><b>{{ active().range }}</b><small>mi</small></p>
+            <span>Range</span>
+          </div>
+          <div class="stat">
+            <p><b>{{ active().speed }}</b><small>mph</small></p>
+            <span>Speed</span>
+          </div>
+        </div>
+      </aside>
+
+      <div class="brands" role="tablist" aria-label="Choose a marque">
+        @for (item of cars; track item.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.is-on]="brand() === item.id"
+            [attr.aria-label]="item.brand"
+            (click)="pick(item.id)"
+          >
+            <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" width="32" height="36" />
+          </button>
+        }
       </div>
-    </div>
+
+      <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to the pink reveal">
+        <span>Explore</span>
+        <span class="stem" aria-hidden="true"><i></i><b></b></span>
+      </button>
+    </section>
+
+    <section class="pink" [class.is-in]="reveal() > 0.92" aria-label="Pink reveal" data-node-id="32001:799">
+      <div class="pink-stage">
+        <img class="pink-car" src="drive/car-thumb.png" [alt]="active().brand + ' ' + active().model" />
+        <div class="pink-copy">
+          <p class="kicker">Reveal</p>
+          <h2>
+            <span>{{ active().brand }}</span>
+            <strong>{{ active().model }}</strong>
+          </h2>
+          <p class="pink-lead">The cover comes off. Same chassis, now in the color of the limit.</p>
+          <a routerLink="/experience">Book a drive</a>
+        </div>
+        <div class="pink-stats">
+          <div>
+            <strong>{{ active().battery }}h</strong>
+            <span>Battery</span>
+          </div>
+          <div>
+            <strong>{{ active().range }}mi</strong>
+            <span>Range</span>
+          </div>
+          <div>
+            <strong>{{ active().speed }}mph</strong>
+            <span>Speed</span>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 </div>
