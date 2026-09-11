@@ -1,7 +1,7 @@
 <div class="track" #track>
   <div class="sticky">
     <div class="frame" [style.width.px]="1920 * scale()" [style.height.px]="1080 * scale()">
-      <div class="stage" [style.transform]="'scale(' + scale() + ')'" [style.--p]="progress()">
+      <div class="stage" [style.transform]="'scale(' + scale() + ')'" [style.--p]="progress()" [style.--reveal]="reveal()">
         <video
           #reel
           class="film"
@@ -41,10 +41,10 @@
           Precision engineered performance designed to redefine modern luxury driving experiences.
         </p>
 
-        <a class="explore" routerLink="/performance">
+        <button type="button" class="explore" (click)="goPink()">
           <span>Explore More</span>
           <img src="drive/arrow.svg" alt="" width="69" height="15" />
-        </a>
+        </button>
 
         <button type="button" class="play" (click)="replay()" aria-label="Replay film">
           <img src="drive/play.svg" alt="" width="222" height="222" />
@@ -87,11 +87,35 @@
           }
         </div>
 
-        <div class="hint" aria-hidden="true">
+        <button type="button" class="hint" (click)="goPink()" aria-label="Scroll to the pink reveal">
           <span>Explore</span>
           <i class="rail"></i>
           <img class="dot" src="drive/explore-dot.svg" alt="" width="25" height="25" />
-        </div>
+        </button>
+
+        <section class="pink" [class.is-in]="reveal() > 0.96" aria-label="Pink reveal">
+          <img class="pink-car" src="drive/car-thumb.png" alt="" />
+          <div class="pink-copy">
+            <p>The reveal</p>
+            <h2>{{ active().brand }}<br /><strong>{{ active().model }}</strong></h2>
+            <p class="pink-lead">The cover comes off. Same chassis, now in the color of the limit.</p>
+          </div>
+          <div class="pink-card">
+            <img src="drive/car-thumb.png" alt="{{ active().brand }} {{ active().model }}" width="220" height="120" />
+            <div>
+              <strong>{{ active().battery }}h</strong>
+              <span>Battery</span>
+            </div>
+            <div>
+              <strong>{{ active().range }} mi</strong>
+              <span>Range</span>
+            </div>
+            <div>
+              <strong>{{ active().speed }} mph</strong>
+              <span>Speed</span>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   </div>

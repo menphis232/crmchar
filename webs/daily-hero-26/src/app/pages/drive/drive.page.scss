@@ -1,6 +1,6 @@
 :host { display: block; background: #010101; }
 
-.track { height: 320vh; }
+.track { height: 280vh; }
 
 .sticky {
   position: sticky;
@@ -176,10 +176,13 @@ h1 em {
   gap: 16px;
   width: 249px;
   padding: 26px 24px 26px 32px;
+  border: 0;
   background: #fff;
   color: #000;
-  text-decoration: none;
+  font: inherit;
+  text-align: left;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .explore span {
@@ -320,35 +323,37 @@ h1 em {
 
 .hint {
   position: absolute;
-  left: 956px;
-  top: 848px;
-  width: 26px;
-  height: 160px;
+  left: 947px;
+  bottom: 36px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #fff;
-  opacity: 0.45;
+  cursor: pointer;
+  opacity: calc(1 - var(--reveal) * 1.6);
+  pointer-events: auto;
 }
 
 .hint span {
-  position: absolute;
-  top: 0;
-  left: 18px;
   font-family: Urbanist, sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.42em;
+  letter-spacing: 0.28em;
   text-transform: uppercase;
-  white-space: nowrap;
-  transform: rotate(90deg);
-  transform-origin: left top;
+  writing-mode: vertical-rl;
 }
 
 .rail {
-  position: absolute;
-  left: 12px;
-  top: 78px;
+  position: relative;
   width: 1px;
-  height: 72px;
-  background: rgb(255 255 255 / 25%);
+  height: 64px;
+  background: rgb(255 255 255 / 28%);
 }
 
 .rail::after {
@@ -357,16 +362,106 @@ h1 em {
   left: 0;
   top: 0;
   width: 1px;
-  height: calc(var(--p) * 100%);
+  height: calc(min(var(--p) / 0.32, 1) * 100%);
   background: #fff;
 }
 
 .dot {
-  position: absolute;
-  left: 0;
-  top: calc(66px + var(--p) * 58px);
   width: 25px;
   height: 25px;
+  transform: translateY(calc((1 - min(var(--p) / 0.32, 1)) * -8px));
+}
+
+.pink {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  overflow: hidden;
+  background: #f04d88;
+  transform: translateY(calc((1 - var(--reveal)) * 100%));
+  pointer-events: none;
+}
+
+.pink.is-in { pointer-events: auto; }
+
+.pink-car {
+  position: absolute;
+  right: -80px;
+  top: 80px;
+  width: 1280px;
+  height: 860px;
+  object-fit: cover;
+  object-position: 62% 58%;
+}
+
+.pink-copy {
+  position: absolute;
+  left: 96px;
+  top: 220px;
+  z-index: 1;
+  max-width: 560px;
+  color: #fff;
+}
+
+.pink-copy p {
+  margin: 0;
+  font-family: Urbanist, sans-serif;
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.pink-copy h2 {
+  margin: 16px 0;
+  font-family: Syne, sans-serif;
+  font-size: 92px;
+  font-weight: 500;
+  letter-spacing: -3px;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.pink-copy strong { font-weight: 700; }
+
+.pink-lead {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-size: 20px !important;
+  max-width: 28ch;
+  line-height: 1.4;
+}
+
+.pink-card {
+  position: absolute;
+  left: 96px;
+  bottom: 72px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 16px 28px 16px 16px;
+  background: rgb(255 255 255 / 16%);
+  backdrop-filter: blur(16px);
+}
+
+.pink-card img {
+  width: 180px;
+  height: 96px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.pink-card div { display: grid; gap: 4px; }
+.pink-card strong {
+  font-family: Syne, sans-serif;
+  font-size: 28px;
+  font-weight: 500;
+}
+.pink-card span {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.75;
 }
 
 @keyframes pulse {

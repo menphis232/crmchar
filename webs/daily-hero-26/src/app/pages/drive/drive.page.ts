@@ -3,6 +3,7 @@ import {
   Component,
   ElementRef,
   afterNextRender,
+  computed,
   signal,
   viewChild,
 } from '@angular/core';
@@ -24,6 +25,10 @@ export class DrivePage {
   readonly scale = signal(1);
   readonly menu = signal(false);
   readonly progress = signal(0);
+  readonly reveal = computed(() => {
+    const start = 0.32;
+    return Math.min(1, Math.max(0, (this.progress() - start) / (1 - start)));
+  });
 
   constructor() {
     afterNextRender(() => {
@@ -48,6 +53,15 @@ export class DrivePage {
       return;
     }
     void this.reel()?.nativeElement.play();
+  }
+
+  goPink(): void {
+    const track = this.track()?.nativeElement;
+    if (!track) {
+      return;
+    }
+    const top = track.offsetTop + track.offsetHeight - window.innerHeight;
+    window.scrollTo({ top, behavior: 'smooth' });
   }
 
   replay(): void {
