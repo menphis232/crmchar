@@ -1,0 +1,78 @@
+<div class="site">
+  <app-site-header />
+  <router-outlet />
+  <footer class="foot">
+    <a routerLink="/">Daily Hero 13/30</a>
+    <p>Real fruit. Cold cream. Shaken every day.</p>
+    <a routerLink="/contact">Franchise Program</a>
+  </footer>
+</div>
+
+@if (ui.searchOpen()) {
+  <div class="overlay" (click)="ui.searchOpen.set(false)">
+    <form class="sheet" (click)="$event.stopPropagation()" (submit)="$event.preventDefault()">
+      <label>
+        Search shakes
+        <input
+          [value]="ui.query()"
+          (input)="ui.query.set($any($event.target).value)"
+          placeholder="Strawberry, rose, cloud…"
+          autofocus
+        />
+      </label>
+      <ul>
+        @for (shake of matches(); track shake.id) {
+          <li>
+            <a [routerLink]="['/shakes']" [fragment]="shake.id" (click)="ui.searchOpen.set(false)">
+              <strong>{{ shake.name }}</strong>
+              <span>{{ shake.blurb }}</span>
+            </a>
+          </li>
+        } @empty {
+          <li class="empty">No shakes match that search.</li>
+        }
+      </ul>
+    </form>
+  </div>
+}
+
+@if (ui.cartOpen()) {
+  <div class="overlay" (click)="ui.cartOpen.set(false)">
+    <aside class="drawer" (click)="$event.stopPropagation()" aria-label="Cart">
+      <header>
+        <h2>Your cart</h2>
+        <button type="button" (click)="ui.cartOpen.set(false)" aria-label="Close cart">Close</button>
+      </header>
+      @if (cart.lines().length === 0) {
+        <p class="empty">The cart is empty. Pick a shake.</p>
+      } @else {
+        <ul>
+          @for (line of cart.lines(); track line.shake.id) {
+            <li>
+              <div>
+                <strong>{{ line.shake.name }}</strong>
+                <span>{{ money(line.shake.price) }}</span>
+              </div>
+              <div class="qty">
+                <button type="button" (click)="cart.setQty(line.shake.id, line.qty - 1)" aria-label="Decrease">−</button>
+                <span>{{ line.qty }}</span>
+                <button type="button" (click)="cart.setQty(line.shake.id, line.qty + 1)" aria-label="Increase">+</button>
+              </div>
+            </li>
+          }
+        </ul>
+        <footer>
+          <span>Total</span>
+          <strong>{{ money(cart.total()) }}</strong>
+        </footer>
+        <a routerLink="/contact" fragment="order" (click)="ui.cartOpen.set(false)">Checkout note</a>
+      }
+    </aside>
+  </div>
+}
+
+<div class="toasts" aria-live="polite">
+  @for (toast of cart.toasts(); track toast.id) {
+    <p>{{ toast.message }}</p>
+  }
+</div>

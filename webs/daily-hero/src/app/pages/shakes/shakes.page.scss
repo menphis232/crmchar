@@ -1,0 +1,79 @@
+.page { padding: 48px 4vw 72px; }
+
+.kicker {
+  margin: 0;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+h1 {
+  margin: 8px 0 0;
+  font-size: clamp(48px, 7vw, 88px);
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+}
+
+.filters { display: flex; gap: 8px; margin: 28px 0; flex-wrap: wrap; }
+
+.filters button,
+article button {
+  border: 0;
+  cursor: pointer;
+}
+
+.filters button {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgb(255 248 245 / 60%);
+}
+
+.filters button.is-on { background: var(--ink); color: #fff; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+article {
+  padding: 16px;
+  border-radius: 28px;
+  background: #fff8f5;
+  box-shadow: 0 16px 40px rgb(96 20 21 / 6%);
+}
+
+article img {
+  width: 120px;
+  display: block;
+  margin: 8px auto 0;
+  animation: bob 4.5s ease-in-out infinite;
+}
+
+.tagline { margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; }
+h2 { margin: 4px 0; }
+article p { margin: 0; color: var(--ink-soft); }
+
+ul {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+}
+
+article button {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+}
+
+@keyframes bob { 50% { transform: translateY(-8px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  article img { animation: none; }
+}

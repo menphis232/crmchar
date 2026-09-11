@@ -1,0 +1,17 @@
+<section class="page">
+  <p class="kicker" appReveal>About us</p>
+  <h1 appReveal="80">A daily ritual, not a dessert.</h1>
+  <p class="lead" appReveal="140">
+    Shakky started as a single strawberry pour. Daily Hero 13/30 is the cover of that idea:
+    a laptop, a splash, and fruit that refuses to sit still.
+  </p>
+  <div class="steps">
+    @for (step of steps; track step.n; let i = $index) {
+      <article [appReveal]="i * 90">
+        <span>{{ step.n }}</span>
+        <h2>{{ step.title }}</h2>
+        <p>{{ step.text }}</p>
+      </article>
+    }
+  </div>
+</section>

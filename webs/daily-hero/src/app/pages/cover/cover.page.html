@@ -1,0 +1,72 @@
+<main
+  class="cover"
+  (pointermove)="onPointer($event)"
+  [style.--px]="px()"
+  [style.--py]="py()"
+>
+  <div class="frame" [style.width.px]="1920 * scale()" [style.height.px]="1080 * scale()">
+    <div class="stage" [style.transform]="'scale(' + scale() + ')'" data-node-id="2001:60" data-name="Cover">
+      <div
+        class="laptop"
+        data-node-id="10001:2257"
+        [style.transform]="'translate(calc(-50% + var(--px) * -10px), calc(-50% + var(--py) * -8px))'"
+      >
+        <img src="cover/laptop.jpg" alt="" />
+        <span class="laptop__wash" aria-hidden="true"></span>
+      </div>
+
+      <a
+        class="screen"
+        routerLink="/home"
+        data-node-id="10001:2258"
+        aria-label="Open the Shakky website"
+        [style.transform]="'translate(calc(var(--px) * -8px), calc(var(--py) * -6px))'"
+      >
+        <img src="cover/screen.png" alt="Shakky website preview on the laptop screen" />
+      </a>
+
+      @for (berry of berries; track berry.id) {
+        <div
+          class="berry"
+          [attr.data-node-id]="berry.id"
+          [style.left.px]="berry.left"
+          [style.top.px]="berry.top"
+          [style.width.px]="berry.box"
+          [style.height.px]="berry.box"
+          [style.--dur]="berry.dur + 's'"
+          [style.--delay]="berry.delay + 's'"
+          [style.--amp]="berry.amp + 'px'"
+          [style.transform]="'translate(calc(var(--px) * ' + (berry.amp * 0.6) + 'px), calc(var(--py) * ' + (berry.amp * 0.45) + 'px))'"
+        >
+          <div class="berry__motion">
+            <img
+              src="cover/strawberry.png"
+              alt=""
+              [style.width.px]="berry.leaf"
+              [style.height.px]="berry.leaf"
+              [style.transform]="'rotate(' + berry.rot + 'deg)'"
+              [style.filter]="berry.blur ? 'blur(' + berry.blur + 'px)' : 'none'"
+            />
+          </div>
+        </div>
+      }
+
+      <p class="edition" data-node-id="2001:66">
+        <span data-node-id="2001:67">{{ day() }}</span>
+        <span data-node-id="2001:68">/30</span>
+      </p>
+
+      <h1>
+        <span class="daily" data-node-id="2001:65">Daily</span>
+        <span class="hero-word" data-node-id="10001:2270">Hero</span>
+      </h1>
+
+    </div>
+  </div>
+  <a class="enter" routerLink="/home">
+    <span>Open the website</span>
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+</main>

@@ -1,0 +1,38 @@
+<section class="page">
+  <div>
+    <p class="kicker">Contact</p>
+    <h1>Write to the bar.</h1>
+    <p>Orders, franchise notes, and the 13/30 cover — we read all of it.</p>
+  </div>
+
+  @if (sent()) {
+    <p class="ok" role="status">Received. We’ll pour a reply soon.</p>
+  }
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label id="order">
+      Name
+      <input formControlName="name" autocomplete="name" />
+      @if (invalid('name')) { <small>Tell us who is writing.</small> }
+    </label>
+    <label>
+      Email
+      <input formControlName="email" type="email" autocomplete="email" />
+      @if (invalid('email')) { <small>A valid email is required.</small> }
+    </label>
+    <label id="franchise">
+      Topic
+      <select formControlName="topic">
+        <option value="order">Order</option>
+        <option value="franchise">Franchise Program</option>
+        <option value="hello">Hello</option>
+      </select>
+    </label>
+    <label>
+      Message
+      <textarea formControlName="message" rows="5"></textarea>
+      @if (invalid('message')) { <small>A little more detail, please.</small> }
+    </label>
+    <button type="submit">Send</button>
+  </form>
+</section>

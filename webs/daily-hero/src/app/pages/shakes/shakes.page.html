@@ -1,0 +1,27 @@
+<section class="page">
+  <header appReveal>
+    <p class="kicker">Our shakes</p>
+    <h1>Six pours. One fruit.</h1>
+  </header>
+  <div class="filters" role="tablist" aria-label="Filter by taste">
+    @for (tag of filters; track tag) {
+      <button type="button" [class.is-on]="filter() === tag" (click)="filter.set(tag)">{{ tag }}</button>
+    }
+  </div>
+  <div class="grid">
+    @for (shake of visible(); track shake.id; let i = $index) {
+      <article [id]="shake.id" [appReveal]="i * 70" [style.--accent]="shake.accent">
+        <img src="cover/strawberry.png" alt="" />
+        <p class="tagline">{{ shake.tagline }}</p>
+        <h2>{{ shake.name }}</h2>
+        <p>{{ shake.blurb }}</p>
+        <ul>
+          <li>{{ shake.kcal }} kcal</li>
+          <li>{{ shake.ml }} ml</li>
+          <li>{{ money(shake.price) }}</li>
+        </ul>
+        <button type="button" (click)="add(shake.id)">Add to Cart</button>
+      </article>
+    }
+  </div>
+</section>

@@ -1,0 +1,72 @@
+<section class="hero">
+  <ul class="tags">
+    @for (tag of shake().tags; track tag) {
+      <li>{{ tag }}</li>
+    }
+  </ul>
+
+  <h1 class="word" aria-label="Stralicious">
+    <span class="word__a">Stra</span>
+    <span class="word__b">cious</span>
+  </h1>
+
+  <div class="splash" [style.--accent]="shake().accent" aria-hidden="true">
+    <svg class="glass" viewBox="0 0 280 520">
+      <defs>
+        <linearGradient id="liq" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffd0d4"/>
+          <stop offset="1" stop-color="#e15b6b"/>
+        </linearGradient>
+      </defs>
+      <path class="pour" d="M128 20c18 40 8 70 22 96 16 30-6 48-2 78" fill="none" stroke="#f7b7bf" stroke-width="18" stroke-linecap="round"/>
+      <path d="M92 168h96l18 250a48 48 0 0 1-47 52h-38a48 48 0 0 1-47-52z" fill="url(#liq)" opacity="0.92"/>
+      <path d="M104 190h18l6 180h-16z" fill="#fff" opacity="0.28"/>
+      <ellipse cx="140" cy="455" rx="58" ry="10" fill="#c44855" opacity="0.35"/>
+    </svg>
+    <img class="float a" src="cover/strawberry.png" alt="" />
+    <img class="float b" src="cover/strawberry.png" alt="" />
+    <img class="float c" src="cover/strawberry.png" alt="" />
+    <img class="float d" src="cover/strawberry.png" alt="" />
+  </div>
+
+  <div class="macros">
+    <p><strong>{{ shake().kcal }}</strong><span>kcal</span></p>
+    <p><strong>{{ shake().ml }}</strong><span>ml</span></p>
+  </div>
+
+  <article class="card">
+    <div class="mini" aria-hidden="true">
+      <img src="cover/strawberry.png" alt="" />
+    </div>
+    <div>
+      <h2>{{ shake().name }}</h2>
+      <p>{{ shake().blurb }}</p>
+      <div class="actions">
+        <button type="button" class="add" (click)="add()">Add to Cart</button>
+        <button type="button" class="heart" [class.is-on]="saved()[shake().id]" (click)="toggleSave()" [attr.aria-pressed]="!!saved()[shake().id]" aria-label="Save shake">
+          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+  </article>
+
+  <div class="seal">
+    <span>Real fruit</span>
+    <strong>100%</strong>
+    <span>Real fruit</span>
+  </div>
+
+  <div class="pager">
+    <button type="button" (click)="step(-1)" aria-label="Previous shake">‹</button>
+    <button type="button" (click)="step(1)" aria-label="Next shake">›</button>
+  </div>
+</section>
+
+<section class="story">
+  <div appReveal>
+    <p class="kicker">{{ shake().tagline }}</p>
+    <h2>Cold cream, real berries, no shortcut.</h2>
+  </div>
+  <p appReveal="120">Each pour is blended to order. Pick a flavor, watch the splash, and take it with you.</p>
+  <a appReveal="180" routerLink="/shakes">See every shake</a>
+</section>

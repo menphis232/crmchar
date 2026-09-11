@@ -1,0 +1,154 @@
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 4vw;
+  background: rgb(243 212 204 / 78%);
+  backdrop-filter: blur(16px);
+  animation: drop 0.7s ease both;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.logo svg {
+  width: 22px;
+  height: 22px;
+}
+
+.nav {
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgb(255 248 245 / 55%);
+}
+
+.nav a {
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.nav a.is-active,
+.nav a:hover {
+  background: #fff;
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgb(255 248 245 / 40%);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e15b63;
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  animation: pop 0.4s ease;
+}
+
+.franchise {
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgb(96 20 21 / 8%);
+}
+
+.burger {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.burger span {
+  display: block;
+  height: 2px;
+  margin: 6px 8px;
+  background: var(--ink);
+}
+
+@keyframes drop {
+  from { transform: translateY(-16px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes pop {
+  from { transform: scale(0.4); }
+  to { transform: scale(1); }
+}
+
+@media (max-width: 860px) {
+  .franchise { display: none; }
+
+  .burger { display: block; }
+
+  .nav {
+    display: none;
+    position: absolute;
+    top: 74px;
+    left: 16px;
+    right: 16px;
+    flex-direction: column;
+    padding: 12px;
+  }
+
+  .nav.is-open { display: flex; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bar, .badge { animation: none; }
+}
