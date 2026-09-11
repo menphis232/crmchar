@@ -1,11 +1,13 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  computed,
+  ElementRef,
+  afterNextRender,
   signal,
+  viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CARS, type Car } from '../../core/cars';
+import { CARS } from '../../core/cars';
 
 @Component({
   selector: 'app-drive',
@@ -15,16 +17,38 @@ import { CARS, type Car } from '../../core/cars';
   styleUrl: './drive.page.scss',
 })
 export class DrivePage {
+  private readonly reel = viewChild<ElementRef<HTMLVideoElement>>('reel');
   readonly cars = CARS;
-  readonly index = signal(0);
-  readonly film = signal(false);
+  readonly brand = signal(CARS[0].id);
+  readonly scale = signal(1);
   readonly menu = signal(false);
-  readonly car = computed<Car>(() => this.cars[this.index()] ?? CARS[0]);
+
+  constructor() {
+    afterNextRender(() => {
+      this.fit();
+      window.addEventListener('resize', () => this.fit());
+    });
+  }
 
   pick(id: string): void {
-    const next = this.cars.findIndex((item) => item.id === id);
-    if (next >= 0) {
-      this.index.set(next);
+    this.brand.set(id);
+  }
+
+  replay(): void {
+    const video = this.reel()?.nativeElement;
+    if (!video) {
+      return;
     }
+    video.currentTime = 0;
+    void video.play();
+  }
+
+  active() {
+    return this.cars.find((car) => car.id === this.brand()) ?? CARS[0];
+  }
+
+  private fit(): void {
+    const next = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    this.scale.set(Number(Math.max(next, 0.28).toFixed(4)));
   }
 }

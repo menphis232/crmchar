@@ -1,93 +1,96 @@
-<section class="hero" [style.--accent]="car().accent">
-  <header class="bar">
-    <a class="mark" routerLink="/drive" aria-label="Velocity home">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 22 16 6l12 16h-5l-7-9-7 9z" fill="currentColor"/></svg>
-    </a>
-    <nav [class.is-open]="menu()">
-      <a routerLink="/performance" (click)="menu.set(false)">Performance</a>
-      <a routerLink="/technology" (click)="menu.set(false)">Technology</a>
-      <a routerLink="/interior" (click)="menu.set(false)">Interior</a>
-      <a routerLink="/experience" (click)="menu.set(false)">Experience</a>
-    </nav>
-    <button type="button" class="menu" aria-label="Open menu" (click)="menu.set(!menu())">
-      <span></span><span></span><span></span>
-    </button>
-  </header>
+<main class="wrap">
+  <div class="frame" [style.width.px]="1920 * scale()" [style.height.px]="1080 * scale()">
+    <div class="stage" [style.transform]="'scale(' + scale() + ')'" data-node-id="32001:348">
+      <video
+        #reel
+        class="film"
+        autoplay
+        muted
+        loop
+        playsinline
+        src="drive/hero.mp4"
+        data-node-id="32001:350"
+      ></video>
 
-  <div class="copy" [attr.data-car]="car().id">
-    <h1>
-      <span>Velocity</span>
-      <span>Beyond</span>
-      <span>Limits</span>
-    </h1>
-    <p>{{ car().blurb }}</p>
-    <a class="explore" routerLink="/performance">
-      Explore more
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
-    </a>
-  </div>
+      <header>
+        <a class="mark" routerLink="/drive" aria-label="Velocity home" data-node-id="32001:421">
+          <img src="drive/mark.png" alt="" />
+        </a>
+        <nav [class.is-open]="menu()" data-node-id="32001:426">
+          <a routerLink="/performance">Performance</a>
+          <a routerLink="/technology">Technology</a>
+          <a routerLink="/interior">Interior</a>
+          <a routerLink="/experience">Experience</a>
+        </nav>
+        <button type="button" class="menu" aria-label="Open menu" (click)="menu.set(!menu())">
+          <img src="drive/menu.svg" alt="" width="28" height="14" />
+        </button>
+      </header>
 
-  <button type="button" class="play" (click)="film.set(true)" aria-label="Play film">
-    <span></span>
-  </button>
+      <h1 data-node-id="32001:385">
+        <span>Velocity</span>
+        <em>Beyond</em>
+        <span>Limits</span>
+      </h1>
 
-  <aside class="specs">
-    <p class="model">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16 12 4l8 12h-4l-4-6-4 6z" fill="currentColor"/></svg>
-      {{ car().brand }} {{ car().model }}
-    </p>
-    <div class="tiles">
-      <div class="portrait" aria-hidden="true">
-        <span class="car"></span>
-        <i></i>
-      </div>
-      <div class="stat">
-        <strong>{{ car().battery }}<small>h</small></strong>
-        <span>Battery life</span>
-      </div>
-      <div class="stat wide">
-        <strong>{{ car().range }}<small>mi</small></strong>
-        <span>Range</span>
-      </div>
-      <div class="stat">
-        <strong>{{ car().speed }}<small>mph</small></strong>
-        <span>Speed</span>
-      </div>
-    </div>
-  </aside>
+      <p class="lead" data-node-id="32001:381">
+        Precision engineered performance designed to redefine modern luxury driving experiences.
+      </p>
 
-  <div class="brands" role="tablist" aria-label="Choose a marque">
-    @for (item of cars; track item.id) {
-      <button
-        type="button"
-        role="tab"
-        [class.is-on]="item.id === car().id"
-        [attr.aria-selected]="item.id === car().id"
-        [attr.aria-label]="item.brand"
-        (click)="pick(item.id)"
-      >
-        <span>{{ item.brand.slice(0, 1) }}</span>
+      <a class="explore" routerLink="/performance" data-node-id="32001:382">
+        <span>Explore More</span>
+        <img src="drive/arrow.svg" alt="" width="69" height="15" />
+      </a>
+
+      <button type="button" class="play" data-node-id="32001:352" (click)="replay()" aria-label="Replay film">
+        <img src="drive/play.svg" alt="" width="222" height="222" />
       </button>
-    }
-  </div>
-  <p class="scroll">Scroll to explore</p>
-</section>
 
-<section class="strip">
-  <article>
-    <h2>Built for the long corner.</h2>
-    <p>Four disciplines. One chassis. Switch marques and the numbers follow.</p>
-  </article>
-  <a routerLink="/experience">Book a drive</a>
-</section>
+      <p class="model" data-node-id="32001:414">
+        <img src="drive/ferrari-word.svg" alt="" width="32" height="44" />
+        <span>{{ active().brand }} <strong>{{ active().model }}</strong></span>
+      </p>
 
-@if (film()) {
-  <div class="film" (click)="film.set(false)">
-    <div (click)="$event.stopPropagation()">
-      <p>Film</p>
-      <h2>{{ car().brand }} {{ car().model }}</h2>
-      <p>Night pass. The limit moves with you.</p>
-      <button type="button" (click)="film.set(false)">Close</button>
+      <div class="specs">
+        <div class="thumb" data-node-id="32001:394">
+          <img class="car" src="drive/car-thumb.png" alt="{{ active().brand }} {{ active().model }}" width="297" height="159" />
+          <img class="halo" src="drive/ring.svg" alt="" width="234" height="39" />
+          <img class="sync" src="drive/sync.svg" alt="" width="24" height="24" />
+        </div>
+        <div class="stat battery" data-node-id="32001:389">
+          <p><b>{{ active().battery }}</b><small>h</small></p>
+          <span>Battery Life</span>
+        </div>
+        <div class="stat range" data-node-id="32001:400">
+          <p><b>{{ active().range }}</b><small>mi</small></p>
+          <span>Range</span>
+        </div>
+        <div class="stat speed" data-node-id="32001:405">
+          <p><b>{{ active().speed }}</b><small>mph</small></p>
+          <span>Speed</span>
+        </div>
+      </div>
+
+      <div class="brands" data-node-id="32001:355" role="tablist" aria-label="Choose a marque">
+        @for (item of cars; track item.id) {
+          <button
+            type="button"
+            role="tab"
+            [class.is-on]="brand() === item.id"
+            [attr.aria-label]="item.brand"
+            [attr.aria-selected]="brand() === item.id"
+            (click)="pick(item.id)"
+          >
+            <img [src]="'drive/' + item.id + '.svg'" [alt]="item.brand" />
+          </button>
+        }
+      </div>
+
+      <div class="hint" data-node-id="32001:410" aria-hidden="true">
+        <span>Explore</span>
+        <img src="drive/explore-dot.svg" alt="" width="25" height="25" />
+        <img class="hint-line" src="drive/explore-line.svg" alt="" width="20" height="2" />
+      </div>
     </div>
   </div>
-}
+</main>
