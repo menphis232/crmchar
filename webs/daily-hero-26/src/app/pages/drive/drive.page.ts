@@ -18,15 +18,23 @@ import { CARS } from '../../core/cars';
 })
 export class DrivePage {
   private readonly reel = viewChild<ElementRef<HTMLVideoElement>>('reel');
+  private readonly track = viewChild<ElementRef<HTMLElement>>('track');
   readonly cars = CARS;
   readonly brand = signal(CARS[0].id);
   readonly scale = signal(1);
   readonly menu = signal(false);
+  readonly progress = signal(0);
 
   constructor() {
     afterNextRender(() => {
       this.fit();
-      window.addEventListener('resize', () => this.fit());
+      const onScroll = () => this.scrub();
+      window.addEventListener('resize', () => {
+        this.fit();
+        this.scrub();
+      });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      this.scrub();
     });
   }
 
@@ -34,13 +42,27 @@ export class DrivePage {
     this.brand.set(id);
   }
 
+  onReady(): void {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const video = this.reel()?.nativeElement;
+    if (reduced) {
+      void video?.play();
+      return;
+    }
+    this.scrub();
+  }
+
   replay(): void {
     const video = this.reel()?.nativeElement;
     if (!video) {
       return;
     }
-    video.currentTime = 0;
-    void video.play();
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      video.currentTime = 0;
+      void video.play();
+      return;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   active() {
@@ -50,5 +72,28 @@ export class DrivePage {
   private fit(): void {
     const next = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
     this.scale.set(Number(Math.max(next, 0.28).toFixed(4)));
+  }
+
+  private scrub(): void {
+    const track = this.track()?.nativeElement;
+    const video = this.reel()?.nativeElement;
+    if (!track) {
+      return;
+    }
+    const total = track.offsetHeight - window.innerHeight;
+    const scrolled = Math.min(Math.max(-track.getBoundingClientRect().top, 0), Math.max(total, 0));
+    const next = total > 0 ? scrolled / total : 0;
+    this.progress.set(Number(next.toFixed(3)));
+
+    if (!video || !Number.isFinite(video.duration) || video.duration === 0) {
+      return;
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const target = next * (video.duration - 0.05);
+    if (Math.abs(video.currentTime - target) > 0.04) {
+      video.currentTime = target;
+    }
   }
 }

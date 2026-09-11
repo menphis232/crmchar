@@ -1,7 +1,11 @@
-:host { display: block; }
+:host { display: block; background: #010101; }
 
-.wrap {
-  min-height: 100dvh;
+.track { height: 320vh; }
+
+.sticky {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -11,6 +15,7 @@
 .frame { position: relative; }
 
 .stage {
+  --p: 0;
   position: absolute;
   top: 0;
   left: 0;
@@ -31,42 +36,82 @@
   pointer-events: none;
 }
 
+.shade {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  background: #010101;
+}
+
+.shade-left {
+  inset: 0 auto 0 0;
+  width: 44%;
+  background: linear-gradient(90deg, #010101 82%, transparent);
+}
+
+.shade-nav {
+  top: 0;
+  left: 24%;
+  right: 6%;
+  height: 72px;
+  background: linear-gradient(#010101 70%, transparent);
+}
+
+.shade-name {
+  right: 18px;
+  top: 640px;
+  width: 560px;
+  height: 72px;
+}
+
+.mark,
+nav,
+.burger,
+h1,
+.lead,
+.explore,
+.play,
+.model,
+.thumb,
+.stat,
+.brands,
+.hint {
+  z-index: 2;
+}
+
 .mark {
   position: absolute;
   left: 24px;
-  top: 16px;
-  width: 70px;
-  height: 21px;
-  overflow: hidden;
+  top: 18px;
+  display: block;
+  width: 28px;
+  height: 40px;
 }
 
-.mark img {
-  position: absolute;
-  width: 134.78%;
-  height: 445.22%;
-  left: -17.39%;
-  top: -172.61%;
-  max-width: none;
-}
+.mark img { width: 28px; height: 40px; display: block; }
 
 nav {
   position: absolute;
   top: 32px;
-  left: 0;
-  right: 0;
+  left: 665px;
   display: flex;
-  justify-content: center;
-  gap: 72px;
+  gap: 0;
 }
 
 nav a {
   color: #fff;
   font-family: Urbanist, sans-serif;
   font-size: 17px;
+  line-height: 1;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-.menu {
+nav a:nth-child(2) { margin-left: 78px; }
+nav a:nth-child(3) { margin-left: 78px; }
+nav a:nth-child(4) { margin-left: 64px; }
+
+.burger {
   position: absolute;
   top: 28px;
   right: 28px;
@@ -77,7 +122,7 @@ nav a {
   cursor: pointer;
 }
 
-.menu img { width: 28px; height: 14px; display: block; }
+.burger img { width: 28px; height: 14px; display: block; }
 
 h1 {
   position: absolute;
@@ -92,19 +137,17 @@ h1 {
   text-transform: uppercase;
 }
 
-h1 span, h1 em {
+h1 span,
+h1 em {
   display: block;
   font-style: normal;
-  animation: rise 0.9s both;
+  white-space: nowrap;
 }
 
 h1 em {
   margin-left: 68px;
   font-style: italic;
-  animation-delay: 0.14s;
 }
-
-h1 span:last-child { animation-delay: 0.28s; }
 
 .lead {
   position: absolute;
@@ -116,7 +159,6 @@ h1 span:last-child { animation-delay: 0.28s; }
   font-family: Urbanist, sans-serif;
   font-size: 20px;
   line-height: 1.4;
-  animation: rise 0.8s 0.35s both;
 }
 
 .explore {
@@ -125,20 +167,20 @@ h1 span:last-child { animation-delay: 0.28s; }
   top: 677px;
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 16px;
   width: 249px;
-  padding: 28px 28px 28px 36px;
+  padding: 26px 24px 26px 32px;
   background: #fff;
   color: #000;
   text-decoration: none;
-  animation: rise 0.8s 0.48s both;
+  white-space: nowrap;
 }
 
 .explore span {
   font-family: Hind, sans-serif;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 
@@ -154,7 +196,6 @@ h1 span:last-child { animation-delay: 0.28s; }
   border: 0;
   background: transparent;
   cursor: pointer;
-  animation: pulse 2.6s ease-in-out infinite;
 }
 
 .play img { width: 222px; height: 222px; display: block; }
@@ -162,22 +203,20 @@ h1 span:last-child { animation-delay: 0.28s; }
 .model {
   position: absolute;
   left: 1414px;
-  top: 676px;
+  top: 656px;
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   margin: 0;
   color: #d1d1d1;
   font-family: Syne, sans-serif;
-  font-size: 40px;
+  font-size: 36px;
   letter-spacing: -0.4px;
-  animation: rise 0.8s 0.4s both;
+  white-space: nowrap;
 }
 
-.model img { width: 32px; height: 44px; }
+.model img { width: 32px; height: 40px; object-fit: contain; }
 .model strong { font-weight: 700; }
-
-.specs { position: absolute; inset: 0; pointer-events: none; }
 
 .thumb {
   position: absolute;
@@ -186,7 +225,6 @@ h1 span:last-child { animation-delay: 0.28s; }
   width: 243px;
   height: 151px;
   overflow: hidden;
-  animation: rise 0.8s 0.5s both;
 }
 
 .thumb .car {
@@ -213,30 +251,29 @@ h1 span:last-child { animation-delay: 0.28s; }
   top: 116px;
   width: 24px;
   height: 24px;
-  animation: spin 8s linear infinite;
+  transform: rotate(calc(var(--p) * 220deg));
 }
 
 .stat {
   position: absolute;
   height: 151px;
-  padding: 36px 28px 0;
-  background: rgb(255 255 255 / 5%);
-  backdrop-filter: blur(20px);
-  animation: rise 0.8s 0.55s both;
+  padding: 32px 28px 0;
+  background: rgb(18 18 20 / 72%);
+  backdrop-filter: blur(16px);
 }
 
 .stat p { margin: 0; display: flex; align-items: flex-end; }
 .stat b {
   font-family: Syne, sans-serif;
-  font-size: 60px;
+  font-size: 56px;
   font-weight: 400;
   letter-spacing: -0.6px;
   line-height: 0.8;
 }
-.stat small { font-size: 36px; opacity: 0.3; }
+.stat small { font-size: 32px; opacity: 0.3; }
 .stat span {
   display: block;
-  margin-top: 16px;
+  margin-top: 14px;
   color: #d1d1d1;
   font-family: Urbanist, sans-serif;
   font-size: 12px;
@@ -264,85 +301,80 @@ h1 span:last-child { animation-delay: 0.28s; }
   padding: 0;
   border: 1px solid rgb(255 255 255 / 28%);
   border-radius: 50%;
-  background: rgb(255 255 255 / 4%);
-  backdrop-filter: blur(20px);
+  background: rgb(8 8 10 / 55%);
   cursor: pointer;
   opacity: 0.5;
-  animation: lift 0.7s both;
 }
 
-.brands button:nth-child(1) { animation-delay: 0.45s; }
-.brands button:nth-child(2) { animation-delay: 0.52s; }
-.brands button:nth-child(3) { animation-delay: 0.59s; }
-.brands button:nth-child(4) { animation-delay: 0.66s; }
-.brands button:nth-child(5) { animation-delay: 0.73s; }
-
 .brands button.is-on { opacity: 1; }
-.brands img { width: 36px; height: 40px; display: block; margin: 0 auto; }
+.brands img { width: 36px; height: 40px; display: block; margin: 0 auto; object-fit: contain; }
 
 .hint {
   position: absolute;
-  left: 948px;
-  top: 870px;
+  left: 956px;
+  top: 848px;
   width: 26px;
+  height: 160px;
   color: #fff;
-  opacity: 0.3;
-  font-family: Urbanist, sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
+  opacity: 0.45;
 }
 
 .hint span {
   position: absolute;
-  top: 40px;
-  left: 8px;
+  top: 0;
+  left: 18px;
+  font-family: Urbanist, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  white-space: nowrap;
   transform: rotate(90deg);
   transform-origin: left top;
-  white-space: nowrap;
 }
 
-.hint img { width: 25px; height: 25px; display: block; }
-.hint-line {
-  width: 20px;
-  height: 2px;
-  margin: 8px auto 0;
-  transform: rotate(90deg);
+.rail {
+  position: absolute;
+  left: 12px;
+  top: 78px;
+  width: 1px;
+  height: 72px;
+  background: rgb(255 255 255 / 25%);
 }
 
-@keyframes rise {
-  from { opacity: 0; transform: translateY(22px); }
-  to { opacity: 1; transform: none; }
+.rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: calc(var(--p) * 100%);
+  background: #fff;
 }
 
-@keyframes lift {
-  from { transform: translateY(16px); }
-  to { transform: none; }
+.dot {
+  position: absolute;
+  left: 0;
+  top: calc(66px + var(--p) * 58px);
+  width: 25px;
+  height: 25px;
 }
-
-@keyframes pulse {
-  50% { transform: scale(1.06); }
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 800px) {
   nav { display: none; }
   nav.is-open {
     display: flex;
-    top: 64px;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 12px;
-    right: 24px;
+    top: 72px;
     left: auto;
-    z-index: 2;
+    right: 24px;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 3;
   }
+  nav a:nth-child(n) { margin-left: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  h1 span, h1 em, .lead, .explore, .play, .model, .thumb, .stat, .brands button, .sync {
-    animation: none;
-  }
+  .track { height: auto; }
+  .sticky { position: relative; }
 }
