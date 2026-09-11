@@ -1,0 +1,8 @@
+# Contenedor aislado — no usa ni modifica tramites-frontend / tramites-backend.
+services:
+  daily-hero:
+    build: .
+    container_name: daily-hero-web
+    restart: always
+    ports:
+      - "8082:80"
