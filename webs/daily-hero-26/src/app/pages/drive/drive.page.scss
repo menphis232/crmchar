@@ -26,6 +26,37 @@
   pointer-events: none;
 }
 
+.pink-bg {
+  object-position: 55% 60%;
+  transform: scale(1.08);
+}
+
+.veil {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.veil-left {
+  inset: 0 auto 0 0;
+  width: min(46vw, 720px);
+  background: linear-gradient(90deg, #010101 58%, transparent);
+}
+
+.veil-bottom {
+  inset: auto 0 0;
+  height: 220px;
+  background: linear-gradient(transparent, #010101 78%);
+}
+
+.revealed .veil-left {
+  background: linear-gradient(90deg, rgb(1 1 1 / 88%) 42%, transparent);
+}
+
+.revealed .veil-bottom {
+  background: linear-gradient(transparent, rgb(1 1 1 / 82%) 80%);
+}
+
 .bar,
 .copy,
 .play,
@@ -132,6 +163,7 @@ h1 em {
   border: 0;
   background: #fff;
   color: #000;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -323,94 +355,6 @@ h1 em {
   background: rgb(255 255 255 / 35%);
 }
 
-.pink {
-  display: grid;
-  align-content: space-between;
-  padding: clamp(28px, 5vw, 72px);
-  background: #ef4d87;
-}
-
-.pink-bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: 58% 55%;
-}
-
-.pink-copy,
-.pink-stats {
-  position: relative;
-  z-index: 1;
-  max-width: min(560px, 90vw);
-}
-
-.pink-copy > p:first-child {
-  margin: 0;
-  font-family: Urbanist, sans-serif;
-  font-size: 13px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-.pink-copy h2 {
-  margin: 12px 0;
-  font-family: Syne, sans-serif;
-  font-size: clamp(48px, 8vw, 96px);
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  line-height: 0.9;
-  text-transform: uppercase;
-}
-
-.pink-copy h2 span,
-.pink-copy h2 strong {
-  display: block;
-}
-
-.pink-copy .lead {
-  max-width: 28ch;
-  margin: 0 0 22px;
-  font-family: Urbanist, sans-serif;
-  font-size: clamp(16px, 1.3vw, 20px);
-  line-height: 1.4;
-}
-
-.pink-copy a {
-  display: inline-flex;
-  align-items: center;
-  height: 48px;
-  padding: 0 18px;
-  background: #fff;
-  color: #111;
-  font-family: Hind, sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  text-transform: uppercase;
-}
-
-.pink-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(18px, 4vw, 42px);
-}
-
-.pink-stats strong {
-  display: block;
-  font-family: Syne, sans-serif;
-  font-size: clamp(24px, 3vw, 36px);
-  font-weight: 500;
-}
-
-.pink-stats span {
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  opacity: 0.85;
-}
-
 @media (max-width: 980px) {
   .hero {
     display: flex;
@@ -435,7 +379,12 @@ h1 em {
   }
 
   .bg {
-    opacity: 0.55;
+    opacity: 0.7;
+  }
+
+  .veil-left,
+  .veil-bottom {
+    display: none;
   }
 
   nav {
@@ -480,6 +429,10 @@ h1 em {
   }
 
   .hint {
+    display: none;
+  }
+
+  .revealed .play {
     display: none;
   }
 }
