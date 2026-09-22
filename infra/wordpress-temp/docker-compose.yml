@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: wordpress-temp-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: WpTemp_2026_Camila
+      MYSQL_ROOT_PASSWORD: WpRoot_2026_Camila
+    volumes:
+      - wp_temp_db_data:/var/lib/mysql
+    networks:
+      - wp_temp_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  wordpress:
+    image: wordpress:6.7-php8.2-apache
+    container_name: wordpress-temp
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: WpTemp_2026_Camila
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('FS_METHOD', 'direct');
+        if (!empty($$_SERVER['HTTP_X_FORWARDED_PROTO']) && $$_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') {
+          $$_SERVER['HTTPS'] = 'on';
+        }
+    volumes:
+      - wp_temp_data:/var/www/html
+      - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
+    networks:
+      - wp_temp_net
+
+  wpcli:
+    image: wordpress:cli-php8.2
+    container_name: wordpress-temp-cli
+    depends_on:
+      - wordpress
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: WpTemp_2026_Camila
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wp_temp_data:/var/www/html
+    networks:
+      - wp_temp_net
+    entrypoint: ["sleep", "infinity"]
+
+volumes:
+  wp_temp_db_data:
+  wp_temp_data:
+
+networks:
+  wp_temp_net:
+    name: wordpress-temp-net
