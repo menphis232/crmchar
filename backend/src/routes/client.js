@@ -16,6 +16,7 @@ import { isDealClosed } from '../crm/deal-status.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { maybeAutoReplyClientChat } from '../services/chat-auto-reply.js';
 import { vehicleRowWithVerification } from '../crm/verification-utils.js';
+import { ensureClientVehicleContacts } from '../crm/helpers.js';
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
@@ -512,13 +513,6 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
   }
 });
 
-async function clientContacts(email) {
-  return query(
-    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
-    [email],
-  );
-}
-
 async function clientOwnsVehicle(email, vehicleId) {
   const row = await get(
     `SELECT cv.id FROM contact_vehicles cv
@@ -599,10 +593,10 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
     const tenencia = ['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null;
     const tenenciaYear = tenencia ? new Date().getFullYear() : null;
 
-    const contacts = await clientContacts(req.user.email);
+    const contacts = await ensureClientVehicleContacts(req.user);
     if (!contacts.length) {
       return res.status(400).json({
-        error: 'Aún no tienes trámites con una gestoría. Solicita un servicio para registrar tus vehículos.',
+        error: 'No se pudo preparar tu perfil para registrar el vehículo.',
       });
     }
 

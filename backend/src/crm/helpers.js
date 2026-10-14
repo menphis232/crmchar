@@ -21,6 +21,80 @@ const DEFAULT_TEMPLATES = {
   ],
 };
 
+async function copyVehiclesFromSameEmail(contact) {
+  if (!contact?.id || !contact.email || !contact.user_id) return;
+  try {
+    const rows = await query(
+      `SELECT cv.plate, cv.make, cv.model, cv.year, cv.state, cv.engomado_color,
+              cv.vehicle_notes, cv.insurance_expiry, cv.tenencia_2026, cv.tenencia_year
+       FROM contact_vehicles cv
+       JOIN contacts c ON c.id = cv.contact_id
+       WHERE LOWER(c.email) = LOWER(?) AND c.id <> ?`,
+      [contact.email, contact.id],
+    );
+    if (!rows.length) return;
+
+    const existing = await query(
+      'SELECT plate FROM contact_vehicles WHERE contact_id = ?',
+      [contact.id],
+    );
+    const plates = new Set(existing.map((row) => String(row.plate || '').toUpperCase()));
+
+    for (const vehicle of rows) {
+      const plate = String(vehicle.plate || '').toUpperCase();
+      if (!plate || plates.has(plate)) continue;
+      plates.add(plate);
+      await run(
+        `INSERT INTO contact_vehicles (
+           id, contact_id, user_id, plate, make, model, year, state, engomado_color,
+           vehicle_notes, insurance_expiry, tenencia_2026, tenencia_year
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuid(), contact.id, contact.user_id, plate,
+          vehicle.make, vehicle.model, vehicle.year, vehicle.state, vehicle.engomado_color,
+          vehicle.vehicle_notes, vehicle.insurance_expiry, vehicle.tenencia_2026, vehicle.tenencia_year,
+        ],
+      );
+    }
+  } catch (err) {
+    console.error('copyVehiclesFromSameEmail:', err);
+  }
+}
+
+export async function ensureClientVehicleContacts(user) {
+  const email = String(user?.email || '').trim().toLowerCase();
+  if (!email) return [];
+
+  const contacts = await query(
+    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
+    [email],
+  );
+  if (contacts.length) return contacts;
+
+  const userRow = user?.id
+    ? await get('SELECT id, name, phone FROM users WHERE id = ?', [user.id])
+    : await get(
+      'SELECT id, name, phone FROM users WHERE LOWER(email) = LOWER(?) AND role = ? LIMIT 1',
+      [email, 'cliente'],
+    );
+  const ownerId = userRow?.id || user?.id;
+  if (!ownerId) return [];
+
+  const id = uuid();
+  const name = String(userRow?.name || user?.name || 'Cliente').trim() || 'Cliente';
+  await run(
+    `INSERT INTO contacts (id, user_id, pipeline, name, email, phone, source)
+     VALUES (?, ?, 'tramite', ?, ?, ?, 'perfil_cliente')`,
+    [id, ownerId, name, email, userRow?.phone || null],
+  );
+
+  const again = await query(
+    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
+    [email],
+  );
+  return again.length ? again : [{ id, user_id: ownerId }];
+}
+
 export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio', pipeline = 'tramite' }) {
   const pipe = pipeline === 'venta' ? 'venta' : 'tramite';
   let existing = null;
@@ -74,7 +148,9 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [id, userId, pipe, name, email?.toLowerCase() || null, phone || null, whatsapp || phone || null, source],
   );
-  return get('SELECT * FROM contacts WHERE id = ?', [id]);
+  const created = await get('SELECT * FROM contacts WHERE id = ?', [id]);
+  await copyVehiclesFromSameEmail(created);
+  return created;
 }
 
 export async function ensureDefaultTemplates(userId, role) {

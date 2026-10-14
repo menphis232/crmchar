@@ -1,7 +1,7 @@
 import { get, query, run } from '../db.js';
 import { v4 as uuid } from 'uuid';
 import { sendEmail } from '../utils/mailer.js';
-import { createManualVentaDeal } from '../crm/helpers.js';
+import { createManualVentaDeal, ensureClientVehicleContacts } from '../crm/helpers.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { maybeAutoReplyClientChat } from './chat-auto-reply.js';
 
@@ -50,19 +50,15 @@ async function clientOwnsVehicle(email, vehicleId) {
   );
 }
 
-async function clientContacts(email) {
-  return query('SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)', [email]);
-}
-
-async function createClientVehicle(email, data) {
+async function createClientVehicle(user, data) {
   const { plate, make, model, year, state, engomadoColor, vehicleNotes, insuranceExpiry, tenenciaStatus } = data;
   if (!plate?.trim()) throw new Error('Falta la placa');
   if (!make?.trim() || !model?.trim() || year == null || year === '') {
     throw new Error('Faltan marca, submarca o año');
   }
-  const contacts = await clientContacts(email);
+  const contacts = await ensureClientVehicleContacts(user);
   if (!contacts.length) {
-    throw new Error('Aún no tienes trámites con una gestoría. Solicita un servicio primero.');
+    throw new Error('No se pudo preparar tu perfil para registrar el vehículo.');
   }
   const insExpiry = insuranceExpiry && String(insuranceExpiry).trim()
     ? String(insuranceExpiry).slice(0, 10) : null;
@@ -480,7 +476,7 @@ export async function processAiActions(reply, ctx) {
 
   out = await processBlock(out, 'CREATE_VEHICLE', async (data) => {
     if (role !== 'cliente') throw new Error('Solo clientes');
-    const vehicleId = await createClientVehicle(user.email, data);
+    const vehicleId = await createClientVehicle(user, data);
     return `\n\n✅ *Vehículo registrado* — placa ${String(data.plate).toUpperCase()} (ID: \`${vehicleId}\`)`;
   });
 
