@@ -275,7 +275,8 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
       history: this.chatHistory.slice(0, -1)
     }).subscribe({
       next: (res) => {
-        this.chatHistory.push({ role: 'model', content: res.reply });
+        const reply = (res.reply || '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/^\s*[-*]\s+/gm, '• ');
+        this.chatHistory.push({ role: 'model', content: reply });
         if (res.leadCreated) {
           this.leadCreated = true;
         }

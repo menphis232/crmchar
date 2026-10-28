@@ -808,6 +808,7 @@ aside {
   line-height: 1.5;
   max-width: 85%;
   font-family: var(--f-ui);
+  white-space: pre-line;
 }
 .chat-msg.model {
   background: #ffffff;
