@@ -75,7 +75,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   background-color: #fff !important;
   color: #3a3a3a !important;
   border-color: #c5c5c5 !important;
-  -webkit-text-fill-color: currentColor;
+  -webkit-text-fill-color: currentColor !important;
   text-shadow: none !important;
 }
 
@@ -90,15 +90,16 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, a
 /* Inputs */
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(input, select, textarea, option) {
   background-color: #fff !important;
-  color: #5c5c5c !important;
+  color: #3a3a3a !important;
+  -webkit-text-fill-color: #3a3a3a !important;
   border-color: #c5c5c5 !important;
   color-scheme: light !important;
 }
 
-html[data-theme='light'] input::placeholder,
-html[data-theme='light'] textarea::placeholder {
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) input::placeholder,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) textarea::placeholder {
   color: #6b6b6b !important;
-  -webkit-text-fill-color: #6b6b6b;
+  -webkit-text-fill-color: #6b6b6b !important;
 }
 
 /* Logo TVM del sitio (wordmark claro): oscurecerlo sobre blanco.
