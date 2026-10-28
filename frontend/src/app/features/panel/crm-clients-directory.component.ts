@@ -351,16 +351,24 @@ function emptyForm(): ClientForm {
     @container (max-width: 760px) {
       .client-row--head { display: none; }
       .client-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas: 'who actions' 'contact contact' 'vehicles vehicles' 'tramites tramites';
-        gap: 8px 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+        grid-template-areas: 'who who who actions' 'contact vehicles tramites tramites';
+        gap: 10px 16px;
         padding: 14px 4px;
       }
       .client-who { grid-area: who; }
       .client-actions { grid-area: actions; align-self: start; }
       .client-contact { grid-area: contact; }
-      .client-vehicles { grid-area: vehicles; }
+      .client-vehicles { grid-area: vehicles; align-content: flex-start; }
       .client-tramites { grid-area: tramites; }
+      .is-empty { display: none; }
+    }
+    @container (max-width: 520px) {
+      .client-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'who actions' 'contact contact' 'vehicles vehicles' 'tramites tramites';
+        gap: 6px 12px;
+      }
     }
   `],
 })

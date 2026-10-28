@@ -131,7 +131,7 @@
         <div class="client-row" (click)="openContact.emit(c.id)">
           <div class="client-cell client-who">
             <button type="button" class="client-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
-            <span class="client-sub">{{ c.residenceState || 'Sin estado' }}</span>
+            <span class="client-sub" [class.is-empty]="!c.residenceState">{{ c.residenceState || 'Sin estado' }}</span>
           </div>
 
           <div class="client-cell client-contact">
@@ -152,7 +152,7 @@
                 <span class="client-sub">+{{ c.vehicles!.length - 3 }}</span>
               }
             } @else {
-              <span class="client-sub">Sin vehículos</span>
+              <span class="client-sub is-empty">Sin vehículos</span>
             }
           </div>
 
@@ -163,7 +163,7 @@
                 <span class="client-sub">+{{ (c.dealCount || 0) - 1 }} más</span>
               }
             } @else {
-              <span class="client-sub">Sin trámites</span>
+              <span class="client-sub is-empty">Sin trámites</span>
             }
           </div>
 
