@@ -111,8 +111,8 @@ function emptyForm(): ClientForm {
     }
     .clients-search:focus-within { border-color: rgba(255, 255, 255, 0.5); }
     .clients-search svg { color: rgba(255, 255, 255, 0.5); flex-shrink: 0; }
-    .clients-card .clients-search input,
-    .clients-card .clients-search input:focus {
+    .clients-card .clients-search input#clients-search-input,
+    .clients-card .clients-search input#clients-search-input:focus {
       flex: 1;
       min-width: 0;
       background: transparent !important;
