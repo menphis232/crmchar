@@ -1220,18 +1220,21 @@ router.delete('/contacts/:id', async (req, res) => {
     );
     if (!contact) return res.status(404).json({ error: 'Cliente no encontrado' });
 
-    // crm_deals borra en cascada con el contacto: borrar aquí se llevaría trámites, pagos y chat.
-    const deals = await get('SELECT COUNT(*) AS n FROM crm_deals WHERE contact_id = ?', [contact.id]);
-    const dealCount = Number(deals?.n || 0);
-    if (dealCount > 0) {
+    // crm_deals cae en cascada con el contacto, así que borrar trámites exige confirmación explícita (?withDeals=1).
+    const deals = await query('SELECT id FROM crm_deals WHERE contact_id = ? AND user_id = ?', [contact.id, uid]);
+    const withDeals = req.query.withDeals === '1';
+    if (deals.length > 0 && !withDeals) {
       return res.status(409).json({
-        error: `Este cliente tiene ${dealCount} trámite(s). Elimínalos del embudo antes de borrar al cliente.`,
-        dealCount,
+        error: `Este cliente tiene ${deals.length} trámite(s). Confirma que también quieres borrarlos.`,
+        dealCount: deals.length,
       });
     }
 
+    for (const d of deals) {
+      await deleteDealCascade(d.id);
+    }
     await run('DELETE FROM contacts WHERE id = ? AND user_id = ?', [contact.id, uid]);
-    res.json({ ok: true });
+    res.json({ ok: true, deletedDeals: deals.length });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar cliente' });

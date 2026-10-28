@@ -173,8 +173,9 @@ export class CrmService {
   updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string }) {
     return this.http.patch<CrmContact>(`${this.base}/contacts/${id}`, data);
   }
-  deleteContact(id: string) {
-    return this.http.delete<{ ok: boolean }>(`${this.base}/contacts/${id}`);
+  deleteContact(id: string, withDeals = false) {
+    const params = withDeals ? new HttpParams().set('withDeals', '1') : undefined;
+    return this.http.delete<{ ok: boolean; deletedDeals: number }>(`${this.base}/contacts/${id}`, { params });
   }
   addContactVehicle(contactId: string, data: {
     plate: string;

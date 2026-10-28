@@ -545,27 +545,26 @@ export class CrmClientsDirectoryComponent implements OnInit {
 
   async deleteClient(c: CrmContact) {
     const deals = c.dealCount || 0;
-    if (deals > 0) {
-      this.toast.warning(
-        `${c.name} tiene ${deals} trámite(s). Elimínalos del embudo antes de borrar al cliente.`,
-        'No se puede eliminar',
-      );
-      return;
-    }
-    const ok = await this.toast.confirmDelete(c.name, {
-      title: '¿Eliminar cliente?',
-      subtitle: 'También se borran sus vehículos y documentos. No se puede deshacer.',
-    });
+    const ok = deals > 0
+      ? await this.toast.confirmDelete(c.name, {
+        title: '¿Eliminar cliente y sus trámites?',
+        subtitle: `También se borran sus ${deals} trámite(s) con chat, documentos y cotizaciones, y sus vehículos. Los ingresos de Finanzas se conservan. No se puede deshacer.`,
+        confirmText: 'Sí, eliminar todo',
+      })
+      : await this.toast.confirmDelete(c.name, {
+        title: '¿Eliminar cliente?',
+        subtitle: 'También se borran sus vehículos y documentos. No se puede deshacer.',
+      });
     if (!ok) return;
 
     this.deletingId.set(c.id);
-    this.crmService.deleteContact(c.id).subscribe({
-      next: () => {
+    this.crmService.deleteContact(c.id, deals > 0).subscribe({
+      next: (res) => {
         this.deletingId.set(null);
         if (this.editingId() === c.id) this.closeForm();
         const lastOnPage = this.clients().length === 1 && this.currentPage() > 1;
         this.load(lastOnPage ? this.currentPage() - 1 : this.currentPage());
-        this.toast.success('Cliente eliminado');
+        this.toast.success(res.deletedDeals ? `Cliente y ${res.deletedDeals} trámite(s) eliminados` : 'Cliente eliminado');
       },
       error: (err) => {
         this.deletingId.set(null);
