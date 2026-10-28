@@ -20,7 +20,7 @@ import {
   LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
-import { CrmDeal, LOST_REASONS, MessageTemplate, CrmContactVehicle, CrmTeamMember, PeritoAssignOption } from '../../models';
+import { CrmDeal, LOST_REASONS, MessageTemplate, CrmTeamMember, PeritoAssignOption } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -77,6 +77,21 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }
     .deal-panel-body { background: #000 !important; }
+
+    /* Pantalla completa; el contenido se centra a 960px para que no se estire en monitores anchos */
+    .deal-panel-overlay { align-items: stretch !important; }
+    .deal-panel {
+      width: 100vw !important;
+      max-width: 100vw !important;
+      height: 100dvh !important;
+      border-radius: 0 !important;
+      border-left: none !important;
+    }
+    .deal-panel-header,
+    .deal-panel-body {
+      padding-left: max(16px, calc((100vw - 960px) / 2)) !important;
+      padding-right: max(16px, calc((100vw - 960px) / 2)) !important;
+    }
     .deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
     .deal-subsection { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; margin-bottom: 8px !important; }
     .deal-subsection--ocr { background: #0d0d0d !important; border-color: rgba(255,255,255,0.10) !important; }
@@ -991,7 +1006,6 @@ export class CrmDealPanelComponent implements OnDestroy {
   quoteIncludes: QuoteCheckItem[] = [];
   quoteRequirements: QuoteCheckItem[] = [];
   quoteBonus: QuoteCheckItem[] = [];
-  contactVehicles: CrmContactVehicle[] = [];
   isSavingQuote = signal(false);
   isLoadingQuote = signal(false);
   isDownloadingQuote = signal(false);
@@ -1137,8 +1151,6 @@ export class CrmDealPanelComponent implements OnDestroy {
       if (!this.isConcesionaria()) {
         this.loadQuote(id);
         if (d.contact?.id) this.loadContactProfile(d.contact.id);
-      } else {
-        this.contactVehicles = [];
       }
     });
   }
@@ -1150,9 +1162,8 @@ export class CrmDealPanelComponent implements OnDestroy {
         this.quoteClientName = c.name || '';
         this.quoteClientEmail = c.email || '';
         this.quoteClientPhone = c.phone || c.whatsapp || '';
-        this.contactVehicles = c360.vehicles || [];
       },
-      error: () => { this.contactVehicles = []; },
+      error: () => {},
     });
   }
 

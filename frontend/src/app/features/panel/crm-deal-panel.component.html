@@ -384,20 +384,6 @@
                 Ver / editar ficha del cliente
               </button>
             }
-            @if (contactVehicles.length > 0) {
-              <div class="deal-contact-card" style="margin-bottom:12px;">
-                <p class="card-desc" style="margin:0 0 8px;">Vehículos en su directorio ({{ contactVehicles.length }}):</p>
-                @for (v of contactVehicles; track v.id) {
-                  <p class="card-desc" style="margin:4px 0;">
-                    <strong style="color:var(--gold);">{{ v.plate }}</strong>
-                    @if (v.state) { · {{ v.state }} }
-                    @if (v.engomadoColor) { · Engomado {{ v.engomadoColor }} }
-                    @if (v.verificationLabel) { · {{ v.verificationLabel }} }
-                  </p>
-                }
-              </div>
-            }
-
             @if (isLoadingQuote()) {
               <p class="card-desc">Cargando cotización...</p>
             } @else {
