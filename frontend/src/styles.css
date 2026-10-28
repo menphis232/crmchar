@@ -1,4 +1,5 @@
 @import url('./style-shared.css');
+@import url('./color-mode.css');
 @import 'sweetalert2/dist/sweetalert2.min.css';
 
 /* ── Global Headings ── */

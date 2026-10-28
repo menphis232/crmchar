@@ -1,4 +1,4 @@
-import { Component, input, output, signal, computed, effect, inject, NgZone, OnDestroy } from '@angular/core';
+import { Component, input, output, signal, computed, effect, inject, NgZone, OnDestroy, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
 import {
@@ -1013,6 +1013,7 @@ export class CrmDealPanelComponent implements OnDestroy {
 
   private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
   private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
+  private paymentWatchDealId: string | null = null;
   private onDealPaymentPaid = (payload: unknown) => {
     const data = payload as { dealId?: string; paymentStatus?: string; stage?: string };
     this.zone.run(() => {
@@ -1060,8 +1061,13 @@ export class CrmDealPanelComponent implements OnDestroy {
   constructor(private crmService: CrmService, private mpService: MpService, private http: HttpClient, private zone: NgZone) {
     effect(() => {
       const id = this.dealId();
-      if (id) this.loadDeal(id);
-      else this.deal.set(null);
+      untracked(() => {
+        if (id) this.loadDeal(id);
+        else {
+          this.deal.set(null);
+          this.stopPaymentWatch();
+        }
+      });
     });
     effect(() => {
       if (!this.promptDeliveryUpload()) return;
@@ -1125,14 +1131,12 @@ export class CrmDealPanelComponent implements OnDestroy {
 
       this.loadDocuments(id);
       this.loadMessages(id);
+      if (d.paymentStatus === 'paid' || this.paymentWatchDealId !== id) {
+        this.stopPaymentWatch();
+      }
       if (!this.isConcesionaria()) {
         this.loadQuote(id);
         if (d.contact?.id) this.loadContactProfile(d.contact.id);
-        if (d.paymentStatus !== 'paid') {
-          this.startPaymentWatch();
-        } else {
-          this.stopPaymentWatch();
-        }
       } else {
         this.contactVehicles = [];
       }
@@ -1899,16 +1903,18 @@ export class CrmDealPanelComponent implements OnDestroy {
   }
 
   private startPaymentWatch() {
-    if (this.deal()?.paymentStatus === 'paid') return;
+    const id = this.dealId();
+    if (!id || this.deal()?.paymentStatus === 'paid') return;
+    this.paymentWatchDealId = id;
     this.isWatchingPayment.set(true);
     this.stopPaymentWatch(false);
     this.paymentWatchInterval = setInterval(() => {
-      const id = this.dealId();
-      if (!id || this.deal()?.paymentStatus === 'paid') {
+      const currentId = this.dealId();
+      if (!currentId || this.deal()?.paymentStatus === 'paid') {
         this.stopPaymentWatch();
         return;
       }
-      this.crmService.getDeal(id, { silent: true }).subscribe({
+      this.crmService.getDeal(currentId, { silent: true }).subscribe({
         next: (d) => {
           if (d.paymentStatus === 'paid' && this.deal()?.paymentStatus !== 'paid') {
             this.deal.set(d);
@@ -1918,7 +1924,7 @@ export class CrmDealPanelComponent implements OnDestroy {
           }
         },
       });
-    }, 5000);
+    }, 15000);
   }
 
   private stopPaymentWatch(clearWatching = true) {
@@ -1926,7 +1932,10 @@ export class CrmDealPanelComponent implements OnDestroy {
       clearInterval(this.paymentWatchInterval);
       this.paymentWatchInterval = null;
     }
-    if (clearWatching) this.isWatchingPayment.set(false);
+    if (clearWatching) {
+      this.isWatchingPayment.set(false);
+      this.paymentWatchDealId = null;
+    }
   }
 
   loadDocuments(dealId: string) {

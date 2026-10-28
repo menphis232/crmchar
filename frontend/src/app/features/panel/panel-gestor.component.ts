@@ -1,4 +1,6 @@
-import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { distinctUntilChanged, map } from 'rxjs';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,6 +18,7 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { CrmClientsDirectoryComponent } from './crm-clients-directory.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { ThemeSwitchComponent } from '../../shared/theme-switch.component';
 import { CrmTeamComponent } from './crm-team.component';
 import { CrmPeritosComponent } from './crm-peritos.component';
 import { FinancesComponent } from './finances.component';
@@ -113,7 +116,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
-    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
+    CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
     LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
   ],
   templateUrl: './panel-gestor.component.html',
@@ -130,6 +133,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
   readonly gestorGalleryOutput = GESTOR_GALLERY_OUTPUT;
   private sanitizer = inject(DomSanitizer);
+  private destroyRef = inject(DestroyRef);
   private socketService = inject(SocketService);
   private zone = inject(NgZone);
   private onCrmNotification = (payload: unknown) => {
@@ -288,11 +292,17 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.loadVerificationAlerts();
     this.scheduleAiInsights();
 
-    this.route.queryParams.subscribe(params => {
-      if (params['deal']) {
-        this.loadCrm();
-        this.openDeal(params['deal']);
+    this.route.queryParams.pipe(
+      map(params => String(params['deal'] || '')),
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(dealId => {
+      if (!dealId) return;
+      this.loadDeals();
+      if (!this.templates().length) {
+        this.crmService.getTemplates().subscribe(t => this.templates.set(t));
       }
+      this.openDeal(dealId);
     });
 
     const user = this.auth.user();
@@ -330,10 +340,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.loadCrmSummary();
       this.loadVerificationAlerts();
     }
-    if (t === 'pipeline') {
-      this.loadCrm();
-      if (!this.deals().length) this.loadDeals();
-    }
+    if (t === 'pipeline') this.loadCrm();
     if (t === 'clientes') this.loadVerificationAlerts();
     if (t === 'plantillas') this.loadTemplates();
     if (t === 'automatizaciones') {

@@ -4,11 +4,12 @@ import { DatePipe, NgTemplateOutlet } from '@angular/common';
 import { AuthService } from '../core/auth.service';
 import { CrmService } from '../core/api.service';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
+import { ThemeSwitchComponent } from './theme-switch.component';
 
 @Component({
   selector: 'app-nav',
   standalone: true,
-  imports: [RouterLink, DatePipe, NgTemplateOutlet],
+  imports: [RouterLink, DatePipe, NgTemplateOutlet, ThemeSwitchComponent],
   template: `
     <nav id="main-nav">
       <a [href]="tvmMainSite" class="nav-logo">
@@ -16,6 +17,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
       </a>
 
       <div class="header-mobile-actions">
+        <app-theme-switch class="theme-switch-mobile" />
         @if (auth.isLoggedIn()) {
           <div class="mobile-bell">
             <ng-container *ngTemplateOutlet="bellTpl"></ng-container>
@@ -34,6 +36,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from './brand.constants';
       <!-- Main Navigation Wrapper -->
       <div class="nav-wrapper" [class.mobile-open]="isMobileMenuOpen()">
         <div class="nav-actions">
+          <app-theme-switch class="theme-switch-desktop" />
           @if (auth.isLoggedIn()) {
             <div class="desktop-bell">
               <ng-container *ngTemplateOutlet="bellTpl"></ng-container>

@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { AnalyticsTrackerService } from './core/analytics-tracker.service';
 import { OneSignalService } from './core/onesignal.service';
 import { AuthService } from './core/auth.service';
+import { ColorModeService } from './core/color-mode.service';
 import { PwaInstallPromptComponent } from './shared/pwa-install-prompt.component';
 import { PushPermissionPromptComponent } from './shared/push-permission-prompt.component';
 
@@ -21,12 +22,14 @@ export class AppComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private oneSignal = inject(OneSignalService);
   private auth = inject(AuthService);
+  private colorMode = inject(ColorModeService);
 
   constructor(tracker: AnalyticsTrackerService) {
     tracker.init();
   }
 
   ngOnInit() {
+    this.colorMode.mode();
     if (!isPlatformBrowser(this.platformId)) return;
     this.oneSignal.init();
     const user = this.auth.user();

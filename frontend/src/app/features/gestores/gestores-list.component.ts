@@ -8,6 +8,8 @@ import { PreviewThemeService } from '../../core/preview-theme.service';
 import { Gestor, StateFilter, SiteSettings } from '../../models';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
+let gestoresListCache: Gestor[] | null = null;
+
 @Component({
   selector: 'app-gestores-list',
   standalone: true,
@@ -16,9 +18,9 @@ import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
   styleUrl: './gestores-list.component.css',
 })
 export class GestoresListComponent implements OnInit, OnDestroy {
-  gestores = signal<Gestor[]>([]);
+  gestores = signal<Gestor[]>(gestoresListCache ?? []);
   states = signal<StateFilter[]>([]);
-  loading = signal(true);
+  loading = signal(!gestoresListCache);
   theme = signal<SiteSettings>({});
   isPreview = signal(false);
 
@@ -143,9 +145,13 @@ export class GestoresListComponent implements OnInit, OnDestroy {
   }
 
   loadGestores() {
-    this.loading.set(true);
+    if (!this.gestores().length) this.loading.set(true);
     this.gestoresService.list().subscribe({
-      next: data => { this.gestores.set(data); this.loading.set(false); },
+      next: data => {
+        gestoresListCache = data;
+        this.gestores.set(data);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

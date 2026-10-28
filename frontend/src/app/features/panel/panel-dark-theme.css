@@ -919,3 +919,28 @@ app-crm-team {
 :host ::ng-deep app-page-builder .props-secondary-btn:hover {
   background: rgba(255, 255, 255, 0.06) !important;
 }
+
+:host-context(html[data-theme='light']) {
+  background: #fff !important;
+  color: #5c5c5c !important;
+  color-scheme: light !important;
+  --text: #5c5c5c;
+  --mx-white: #5c5c5c;
+  --muted: #6b6b6b;
+  --brand-grey: #8a8a8a;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --border: #c5c5c5;
+  --client-surface: #ffffff;
+  --client-surface-2: #ffffff;
+}
+
+:host-context(html[data-theme='light']) ::ng-deep *:not(img):not(svg):not(path):not(video):not(canvas):not(.deal-panel-overlay):not(.card-banner-overlay):not(.theme-switch-thumb):not([class*='badge']):not([class*='alert']) {
+  background-color: #fff !important;
+  color: #5c5c5c !important;
+  border-color: #c5c5c5 !important;
+}
+
+:host-context(html[data-theme='light']) ::ng-deep .deal-panel-overlay {
+  background: rgba(92, 92, 92, 0.28) !important;
+}

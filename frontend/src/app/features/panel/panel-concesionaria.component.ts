@@ -18,6 +18,7 @@ import { ToastService } from '../../core/toast.service';
 import { isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage } from '../../shared/payment-stage.utils';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
+import { ThemeSwitchComponent } from '../../shared/theme-switch.component';
 import { PanelColorPaletteComponent } from '../../shared/panel-color-palette.component';
 import { ColorPaletteFieldDef } from '../../shared/theme-colors';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
@@ -87,7 +88,7 @@ const AUTO_DOC_LABELS = [
 @Component({
   selector: 'app-panel-concesionaria',
   standalone: true,
-  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
+  imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, ThemeSwitchComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
   templateUrl: './panel-concesionaria.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-concesionaria.component.css'],
 })

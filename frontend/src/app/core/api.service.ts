@@ -550,7 +550,9 @@ export class ThemeService {
     const root = document.documentElement;
     if (settings.primaryColor) root.style.setProperty('--gold', settings.primaryColor);
     if (settings.accentColor) root.style.setProperty('--mx-green', settings.accentColor);
-    if (settings.backgroundColor) root.style.setProperty('--bg', settings.backgroundColor);
+    if (settings.backgroundColor && root.dataset['theme'] !== 'light') {
+      root.style.setProperty('--bg', settings.backgroundColor);
+    }
     const bodyFont = resolveThemeFont(settings.fontFamily);
     const displayFont = resolveThemeFont(settings.displayFont);
     root.style.setProperty('--f-body', bodyFont);
@@ -574,7 +576,9 @@ export class ThemeService {
   private applyToElementBase(el: HTMLElement, settings: SiteSettings) {
     if (settings.primaryColor) el.style.setProperty('--gold', settings.primaryColor);
     if (settings.accentColor) el.style.setProperty('--mx-green', settings.accentColor);
-    if (settings.backgroundColor) el.style.setProperty('--bg', settings.backgroundColor);
+    if (settings.backgroundColor && document.documentElement.dataset['theme'] !== 'light') {
+      el.style.setProperty('--bg', settings.backgroundColor);
+    }
     const bodyFont = resolveThemeFont(settings.fontFamily);
     const displayFont = resolveThemeFont(settings.displayFont);
     el.style.setProperty('--f-body', bodyFont);
@@ -586,10 +590,17 @@ export class ThemeService {
   }
 
   private applyPanelToElement(el: HTMLElement, settings: SiteSettings) {
-    if (settings.sidebarBg) el.style.setProperty('--panel-sidebar-bg', settings.sidebarBg);
-    if (settings.cardBg) el.style.setProperty('--panel-card-bg', settings.cardBg);
+    if (document.documentElement.dataset['theme'] === 'light') {
+      el.style.setProperty('--panel-sidebar-bg', '#ffffff');
+      el.style.setProperty('--panel-card-bg', '#ffffff');
+      el.style.setProperty('--panel-bg', '#ffffff');
+      el.style.setProperty('--bg', '#ffffff');
+    } else {
+      if (settings.sidebarBg) el.style.setProperty('--panel-sidebar-bg', settings.sidebarBg);
+      if (settings.cardBg) el.style.setProperty('--panel-card-bg', settings.cardBg);
+      if (settings.backgroundColor) el.style.setProperty('--panel-bg', settings.backgroundColor);
+    }
     if (settings.primaryColor) el.style.setProperty('--panel-accent', settings.primaryColor);
-    if (settings.backgroundColor) el.style.setProperty('--panel-bg', settings.backgroundColor);
   }
 }
 

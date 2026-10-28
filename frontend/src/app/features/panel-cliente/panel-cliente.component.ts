@@ -1,4 +1,5 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed, effect, NgZone, ViewChild, ElementRef } from '@angular/core';
+import { ColorModeService } from '../../core/color-mode.service';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +10,7 @@ import { ToastService } from '../../core/toast.service';
 import { OneSignalService } from '../../core/onesignal.service';
 import { UploadService, CHAT_ATTACHMENT_ACCEPT, KnowledgeService } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
+import { ThemeSwitchComponent } from '../../shared/theme-switch.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../../environments/environment';
@@ -81,7 +83,7 @@ const CLIENT_TABS: ClientTab[] = [
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
-    PanelUserMenuComponent, AiAssistantComponent, VehicleMmySelectComponent,
+    PanelUserMenuComponent, ThemeSwitchComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck, LucideClock,
     LucideMessageCircle, LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
@@ -95,6 +97,13 @@ const CLIENT_TABS: ClientTab[] = [
 export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  private colorMode = inject(ColorModeService);
+  private darkBackgroundEffect = effect(() => {
+    if (this.colorMode.mode() === 'light') return;
+    document.documentElement.style.setProperty('--bg', '#000000');
+    document.documentElement.style.setProperty('--panel-bg', '#000000');
+    document.body.style.backgroundColor = '#000000';
+  });
   readonly walletCategories = [
     'INE / Identificación',
     'Licencia de conducir',
@@ -255,9 +264,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   todayMexicoLabel = computed(() => getMexicoCityCalendar().weekdayLabel);
 
   ngOnInit() {
-    document.documentElement.style.setProperty('--bg', '#000000');
-    document.documentElement.style.setProperty('--panel-bg', '#000000');
-    document.body.style.backgroundColor = '#000000';
     this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
     this.auth.getMe().subscribe({ error: () => {} });
     this.loadDashboard();
