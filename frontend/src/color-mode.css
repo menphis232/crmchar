@@ -30,10 +30,10 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-push-permission-prompt,
   app-pwa-install-prompt
 ) {
-  --text: #5c5c5c;
-  --mx-white: #5c5c5c;
-  --muted: #6b6b6b;
-  --brand-grey: #6b6b6b;
+  --text: #3a3a3a;
+  --mx-white: #3a3a3a;
+  --muted: #4a4a4a;
+  --brand-grey: #5c5c5c;
   --brand-black: #ffffff;
   --brand-white: #ffffff;
   --bg: #ffffff;
@@ -54,7 +54,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   --btn-outline-hover-color: #3a3a3a;
   --btn-outline-hover-border: #a3a3a3;
   background: #fff !important;
-  color: #5c5c5c !important;
+  color: #3a3a3a !important;
   color-scheme: light !important;
 }
 
@@ -71,9 +71,9 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-dealer-profile,
   app-push-permission-prompt,
   app-pwa-install-prompt
-) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *) {
+) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *, .panel-avatar, .panel-avatar *, .dash-logo-frame, .dash-logo-dealer .dash-brand-logo) {
   background-color: #fff !important;
-  color: #5c5c5c !important;
+  color: #3a3a3a !important;
   border-color: #c5c5c5 !important;
   -webkit-text-fill-color: currentColor;
   text-shadow: none !important;
@@ -101,9 +101,50 @@ html[data-theme='light'] textarea::placeholder {
   -webkit-text-fill-color: #6b6b6b;
 }
 
-/* Logos blancos: oscurecerlos para que se lean sobre blanco */
-html[data-theme='light']:not(#tvm-light) :is(.brand-logo, .dash-brand-logo) {
-  filter: brightness(0.35);
+/* Logo TVM del sitio (wordmark claro): oscurecerlo sobre blanco.
+   El logo circular de gestoría/concesionaria se deja natural. */
+html[data-theme='light']:not(#tvm-light) .brand-logo,
+html[data-theme='light']:not(#tvm-light) .dash-logo:not(.dash-logo-dealer) .dash-brand-logo {
+  filter: brightness(0.28);
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-concesionaria, app-panel-cliente) .dash-logo-frame {
+  background: #f3f3f3 !important;
+  border: 2px solid #c5c5c5 !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-concesionaria, app-panel-cliente) .dash-logo-dealer .dash-brand-logo {
+  filter: none !important;
+  object-fit: contain !important;
+  background: #fff !important;
+}
+
+/* Avatar: círculo gris oscuro e iniciales blancas (en negro era al revés) */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-avatar {
+  background: #3a3a3a !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  border: 1px solid #3a3a3a !important;
+  box-shadow: none !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-avatar:hover {
+  box-shadow: 0 0 0 2px rgba(58, 58, 58, 0.25) !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-user-name,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .panel-welcome,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .stat-label,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .dash-link {
+  color: #4a4a4a !important;
+  -webkit-text-fill-color: #4a4a4a !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .dash-link.active {
+  color: #1f1f1f !important;
+  -webkit-text-fill-color: #1f1f1f !important;
+  background-color: #f0f0f0 !important;
 }
 
 /* Huecos de imagen y esqueletos de carga */
