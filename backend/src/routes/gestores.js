@@ -9,6 +9,7 @@ import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { getFrontendBase } from '../utils/frontend-url.js';
 import { callAIProvider } from '../utils/ai_helper.js';
+import { aiTrainingPrompt } from '../utils/ai-training.js';
 import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
 
@@ -847,6 +848,9 @@ router.post('/:slugOrId/chat', async (req, res) => {
     );
     if (!gestor) return res.status(404).json({ error: 'Gestor no encontrado' });
 
+    const owner = await get('SELECT ai_training FROM users WHERE id = ?', [gestor.user_id]);
+    const trainingText = aiTrainingPrompt(owner?.ai_training);
+
     let user = await get('SELECT ai_provider, ai_api_key FROM users WHERE id = ?', [gestor.user_id]);
     if (!user || !user.ai_provider || !user.ai_api_key) {
       user = await get("SELECT ai_provider, ai_api_key FROM users WHERE role = 'admin' LIMIT 1");
@@ -868,7 +872,7 @@ router.post('/:slugOrId/chat', async (req, res) => {
 Aquí está su biografía: "${gestor.bio || 'Gestor profesional.'}"
 Y aquí están sus servicios y precios actuales:
 ${servicesText || 'No hay servicios listados.'}
-
+${trainingText ? `\n${trainingText}\n` : ''}
 Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas. 
 1. Si el cliente quiere iniciar un trámite o contratar un servicio, DEBES pedirle que te proporcione sus datos para registrar su solicitud.
 2. Los datos que necesitas obligatoriamente son: Su Nombre completo, su Correo electrónico, su Teléfono o WhatsApp, su Ubicación (Ciudad/Estado), y el Servicio que desea contratar.

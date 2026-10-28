@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
-import { User } from '../models';
+import { AiTraining, User } from '../models';
 import { OneSignalService } from './onesignal.service';
 
 const TOKEN_KEY = 'tramites_token';
@@ -111,7 +111,7 @@ export class AuthService {
     this.router.navigate([path || '/']);
   }
 
-  updateMe(data: { name?: string; avatar_url?: string | null; logo_url?: string; pdf_settings?: any; google_analytics_id?: string; stripe_secret_key?: string; stripe_public_key?: string; stripe_price_id?: string; stripe_price_id_gestor?: string; mp_access_token?: string; mp_public_key?: string; ai_provider?: string; ai_api_key?: string; page_builder_config?: any; chatbot_bg_color?: string; chatbot_btn_color?: string; chatbot_text_color?: string; panel_assistant_enabled?: boolean; panel_assistant_name?: string; panel_assistant_position?: string; panel_assistant_bg_color?: string; panel_assistant_btn_color?: string; panel_assistant_text_color?: string; panel_assistant_font?: string; panel_assistant_prompt?: string | null; chat_ai_auto_reply_enabled?: boolean; chat_ai_inactivity_minutes?: number; description?: string | null; phone?: string | null; address?: string | null; map_embed_url?: string | null; crm_stages?: any[]; }) {
+  updateMe(data: { name?: string; avatar_url?: string | null; logo_url?: string; pdf_settings?: any; google_analytics_id?: string; stripe_secret_key?: string; stripe_public_key?: string; stripe_price_id?: string; stripe_price_id_gestor?: string; mp_access_token?: string; mp_public_key?: string; ai_provider?: string; ai_api_key?: string; page_builder_config?: any; chatbot_bg_color?: string; chatbot_btn_color?: string; chatbot_text_color?: string; panel_assistant_enabled?: boolean; panel_assistant_name?: string; panel_assistant_position?: string; panel_assistant_bg_color?: string; panel_assistant_btn_color?: string; panel_assistant_text_color?: string; panel_assistant_font?: string; panel_assistant_prompt?: string | null; ai_training?: AiTraining | null; chat_ai_auto_reply_enabled?: boolean; chat_ai_inactivity_minutes?: number; description?: string | null; phone?: string | null; address?: string | null; map_embed_url?: string | null; crm_stages?: any[]; }) {
     return this.http.patch<{ user: User }>(`${environment.apiUrl}/auth/me`, data).pipe(
       tap(res => {
         const token = this.getToken();

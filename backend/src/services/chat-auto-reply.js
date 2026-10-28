@@ -1,6 +1,7 @@
 import { get, query, run } from '../db.js';
 import { v4 as uuid } from 'uuid';
 import { callAIProvider } from '../utils/ai_helper.js';
+import { aiTrainingPrompt } from '../utils/ai-training.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 
 async function getGestorAiConfig(gestorUserId) {
@@ -98,12 +99,15 @@ export async function maybeAutoReplyClientChat(dealId, gestorUserId, clientUserI
     if (!lastClientText) return;
 
     const customPrompt = aiUser.panel_assistant_prompt?.trim();
+    const owner = await get('SELECT ai_training FROM users WHERE id = ?', [gestorUserId]);
+    const trainingText = aiTrainingPrompt(owner?.ai_training);
     const systemPrompt = `Eres el asistente virtual de ${deal.gestor_name || 'la gestoría'}, respondiendo en el chat de un trámite vehicular en nombre del gestor.
 Responde SIEMPRE en español mexicano, con tono profesional, cálido y conciso (máximo 3 párrafos cortos).
 NO inventes datos del trámite. Si no sabes algo, indica que el gestor confirmará pronto.
 NO uses bloques de acción ni JSON. Solo el texto de la respuesta al cliente.
 Trámite: ${deal.title || 'Sin título'} | Etapa: ${deal.stage || 'N/A'} | Cliente: ${deal.contact_name || 'Cliente'}
-${customPrompt ? `\nInstrucciones del negocio:\n${customPrompt}` : ''}`;
+${customPrompt ? `\nInstrucciones del negocio:\n${customPrompt}` : ''}
+${trainingText ? `\n${trainingText}` : ''}`;
 
     const replyText = await callAIProvider(aiUser, systemPrompt, history.slice(0, -1), lastClientText);
     const cleanReply = (replyText || '').trim();

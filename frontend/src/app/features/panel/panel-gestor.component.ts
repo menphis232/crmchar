@@ -9,7 +9,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
-import { CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, GestorService, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
+import { AiTraining, CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, GestorService, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
@@ -68,6 +68,7 @@ import {
   LucideCar,
   LucideZap,
   LucideWallet,
+  LucideGraduationCap,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -85,7 +86,7 @@ import {
   GESTOR_LOGO_SIZE_LABEL,
 } from '../../shared/gestor-media.constants';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'entrenar_ia' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
 
 /** Constructor Web oculto hasta v2 */
 const SHOW_PAGE_BUILDER = false;
@@ -102,6 +103,10 @@ const AUTOMATION_VARIABLES = [
   { key: 'gestor', label: 'Tu nombre', example: 'Gestoría Pérez' },
 ] as const;
 
+function emptyAiTraining(): AiTraining {
+  return { about: '', coverage: '', hours: '', payments: '', rules: '', faqs: [] };
+}
+
 const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   { id: 'nuevo', label: 'Nuevo' },
   { id: 'contactado', label: 'Contactado' },
@@ -117,7 +122,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css'],
@@ -219,6 +224,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   panelAssistantTextColor = '#FFFFFF';
   panelAssistantFont = 'Spartan';
   panelAssistantPrompt = '';
+  aiTraining: AiTraining = emptyAiTraining();
+  savingAiTraining = signal(false);
+  aiTestInput = '';
+  aiTestHistory = signal<{ role: 'user' | 'model'; content: string }[]>([]);
+  aiTesting = signal(false);
   chatAiAutoReplyEnabled = false;
   chatAiInactivityMinutes = 30;
   gestorPhone = '';
@@ -539,6 +549,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.panelAssistantTextColor = res.user.panel_assistant_text_color || '#FFFFFF';
       this.panelAssistantFont = res.user.panel_assistant_font || 'Spartan';
       this.panelAssistantPrompt = res.user.panel_assistant_prompt || '';
+      const training = res.user.ai_training;
+      this.aiTraining = {
+        ...emptyAiTraining(),
+        ...(training || {}),
+        faqs: (training?.faqs || []).map(f => ({ ...f })),
+      };
       this.chatAiAutoReplyEnabled = res.user.chat_ai_auto_reply_enabled === 1 || res.user.chat_ai_auto_reply_enabled === true;
       this.chatAiInactivityMinutes = Number(res.user.chat_ai_inactivity_minutes) || 30;
       this.crmStages = Array.isArray(res.user.crm_stages) && res.user.crm_stages.length > 0
@@ -1087,6 +1103,63 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       next: () => this.toast.success('Configuración del asistente guardada', 'Asistente IA'),
       error: () => this.toast.error('No se pudo guardar el asistente'),
     });
+  }
+
+  get aiTrainingProgress(): { done: number; total: number } {
+    const t = this.aiTraining;
+    const checks = [t.about, t.coverage, t.hours, t.payments, t.rules].map(v => !!v.trim());
+    checks.push(t.faqs.some(f => f.q.trim() && f.a.trim()));
+    return { done: checks.filter(Boolean).length, total: checks.length };
+  }
+
+  addAiFaq() {
+    if (this.aiTraining.faqs.length >= 25) return;
+    this.aiTraining.faqs = [...this.aiTraining.faqs, { q: '', a: '' }];
+  }
+
+  removeAiFaq(index: number) {
+    this.aiTraining.faqs = this.aiTraining.faqs.filter((_, i) => i !== index);
+  }
+
+  saveAiTraining() {
+    this.savingAiTraining.set(true);
+    this.auth.updateMe({ ai_training: this.aiTraining }).subscribe({
+      next: () => {
+        this.savingAiTraining.set(false);
+        this.toast.success('Tu IA ya usa este conocimiento.', 'Entrenamiento guardado');
+      },
+      error: () => {
+        this.savingAiTraining.set(false);
+        this.toast.error('No se pudo guardar el entrenamiento. Intenta de nuevo.');
+      },
+    });
+  }
+
+  sendAiTest() {
+    const text = this.aiTestInput.trim();
+    if (!text || this.aiTesting() || !this.publicSlug) return;
+    const history = this.aiTestHistory();
+    this.aiTestInput = '';
+    this.aiTestHistory.set([...history, { role: 'user', content: text }]);
+    this.aiTesting.set(true);
+    this.http.post<{ reply: string }>(`${environment.apiUrl}/gestores/${this.publicSlug}/chat`, {
+      message: text,
+      history,
+    }).subscribe({
+      next: (res) => {
+        this.aiTestHistory.update(h => [...h, { role: 'model', content: res.reply }]);
+        this.aiTesting.set(false);
+      },
+      error: (err) => {
+        this.aiTestHistory.update(h => [...h, { role: 'model', content: err.error?.error || 'El asistente no respondió. Revisa que la IA esté configurada.' }]);
+        this.aiTesting.set(false);
+      },
+    });
+  }
+
+  resetAiTest() {
+    this.aiTestHistory.set([]);
+    this.aiTestInput = '';
   }
 
   private applyGoogleMapsEmbed(address: string) {

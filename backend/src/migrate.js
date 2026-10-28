@@ -1243,6 +1243,25 @@ async function migrate() {
       console.log('Migración v59 (stripe price gestor) aplicada.');
     }
 
+    const v60Path = path.join(__dirname, '..', 'sql', 'migration-v60-ai-training.sql');
+    if (fs.existsSync(v60Path)) {
+      const v60 = fs.readFileSync(v60Path, 'utf8');
+      const conn60 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v60.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn60.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn60.end();
+      console.log('Migración v60 (ai training) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

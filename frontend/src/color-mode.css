@@ -121,6 +121,16 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, a
   background: #fff !important;
 }
 
+/* Prueba del asistente: el mensaje del usuario se invierte a gris sólido */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-panel-gestor .ai-test-msg {
+  background-color: #f0f0f0 !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-panel-gestor .ai-test-msg--user {
+  background-color: #4a4a4a !important;
+  color: #fff !important;
+}
+
 /* Avatar: círculo gris oscuro e iniciales blancas (en negro era al revés) */
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-avatar {
   background: #3a3a3a !important;

@@ -52,6 +52,7 @@ export interface User {
   panel_assistant_text_color?: string;
   panel_assistant_font?: string;
   panel_assistant_prompt?: string;
+  ai_training?: AiTraining | null;
   chat_ai_auto_reply_enabled?: boolean | number;
   chat_ai_inactivity_minutes?: number;
   slug?: string;
@@ -60,6 +61,16 @@ export interface User {
   address?: string;
   map_embed_url?: string;
   crm_stages?: { id: string; label: string; isPayment?: boolean }[];
+}
+
+/** Conocimiento que el gestor le enseña a su IA: lo usan el chatbot público y la IA del chat de trámites. */
+export interface AiTraining {
+  about: string;
+  coverage: string;
+  hours: string;
+  payments: string;
+  rules: string;
+  faqs: { q: string; a: string }[];
 }
 
 export type AutoStatus = 'draft' | 'published' | 'baja';

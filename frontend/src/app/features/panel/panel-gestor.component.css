@@ -1381,3 +1381,84 @@ app-crm-team {
 .deal-outline-btn:hover {
   background: rgba(255, 255, 255, 0.06);
 }
+
+/* Entrenar tu IA */
+.ai-train { max-width: 860px; }
+.ai-train + .ai-train { margin-top: 20px; }
+
+.ai-train-steps {
+  margin: 18px 0 8px;
+  padding-left: 20px;
+  display: grid;
+  gap: 10px;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.78);
+}
+.ai-train-steps strong { color: #fff; font-weight: 700; }
+
+.ai-train-progress {
+  margin: 14px 0 22px;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.ai-train-field { margin-bottom: 18px; }
+.ai-train-field small { display: block; margin: 2px 0 8px; font-size: 12px; }
+.ai-train-field textarea,
+.ai-train-field input { width: 100%; box-sizing: border-box; }
+.ai-train-field textarea { resize: vertical; line-height: 1.5; }
+
+.ai-train-faq {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-train-faq .form-group { margin: 0; }
+.ai-train-faq input,
+.ai-train-faq textarea { width: 100%; box-sizing: border-box; }
+.ai-train-add { margin: 14px 0 24px; }
+
+.ai-test-chat {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 140px;
+  max-height: 360px;
+  overflow-y: auto;
+  padding: 16px;
+  margin: 14px 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+}
+.ai-test-empty { margin: auto 0; text-align: center; }
+.ai-test-msg {
+  align-self: flex-start;
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-family: var(--f-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+.ai-test-msg--user {
+  align-self: flex-end;
+  background: #fff;
+  color: #000;
+}
+.ai-test-input { display: flex; gap: 10px; align-items: center; }
+.ai-test-input input { flex: 1; min-width: 0; }
+
+@media (max-width: 720px) {
+  .ai-train-faq { grid-template-columns: 1fr; }
+  .ai-test-msg { max-width: 92%; }
+}

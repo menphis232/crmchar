@@ -102,6 +102,10 @@
         <svg lucideBot [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
         Asistente IA
       </button>
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'entrenar_ia'" (click)="setTab('entrenar_ia'); isMobileMenuOpen.set(false)">
+        <svg lucideGraduationCap [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Entrenar tu IA
+      </button>
     }
     @if (hasPerm('plantillas')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'plantillas'" (click)="setTab('plantillas'); isMobileMenuOpen.set(false)">
@@ -963,6 +967,118 @@
         ></app-panel-color-palette>
 
         <button type="button" class="btn-copy" style="margin-top:16px;" (click)="saveAssistantConfig()">Guardar asistente</button>
+      </div>
+    }
+
+    <!-- ── ENTRENAR TU IA ── -->
+    @if (tab() === 'entrenar_ia' && hasPerm('asistente')) {
+      <div class="dash-card ai-train">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideGraduationCap [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Cómo entrenar a tu IA
+        </h2>
+        <p class="card-desc">
+          Lo que escribas aquí lo usan el asistente de tu página pública y la IA que contesta los chats de tus trámites.
+          La IA ya conoce tus servicios y precios; aquí le enseñas lo demás: dónde atiendes, cómo cobras y qué preguntan tus clientes.
+        </p>
+
+        <ol class="ai-train-steps">
+          <li><strong>Escribe como hablas con tus clientes.</strong> Frases cortas y concretas. La IA copia tu forma de responder.</li>
+          <li><strong>Agrega las preguntas que más te hacen.</strong> Si un cliente pregunta "¿atienden Veracruz?", escribe esa pregunta y tu respuesta exacta.</li>
+          <li><strong>Pruébala abajo y corrige.</strong> Si responde mal, agrega o mejora una pregunta frecuente y vuelve a probar.</li>
+        </ol>
+
+        <p class="ai-train-progress">
+          {{ aiTrainingProgress.done }} de {{ aiTrainingProgress.total }} secciones completas
+        </p>
+
+        <div class="form-group ai-train-field">
+          <label for="ai-about">Sobre tu gestoría</label>
+          <small class="card-desc">Qué haces, desde cuándo, qué te distingue y con qué tono quieres que hable la IA.</small>
+          <textarea id="ai-about" [(ngModel)]="aiTraining.about" rows="4" maxlength="2000"
+            placeholder="Ej: Somos una gestoría con 8 años tramitando placas. Todo es en línea, sin que el cliente salga de casa. Trata al cliente de usted y con calidez."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group ai-train-field">
+            <label for="ai-coverage">Estados y zonas que atiendes</label>
+            <input id="ai-coverage" [(ngModel)]="aiTraining.coverage" maxlength="600"
+              placeholder="Ej: Todo México en línea. Entregas presenciales solo en CDMX y Edomex.">
+          </div>
+          <div class="form-group ai-train-field">
+            <label for="ai-hours">Horario de atención</label>
+            <input id="ai-hours" [(ngModel)]="aiTraining.hours" maxlength="400"
+              placeholder="Ej: Lunes a viernes de 9:00 a 18:00, sábados de 9:00 a 14:00.">
+          </div>
+        </div>
+
+        <div class="form-group ai-train-field">
+          <label for="ai-payments">Formas de pago</label>
+          <input id="ai-payments" [(ngModel)]="aiTraining.payments" maxlength="400"
+            placeholder="Ej: Transferencia, tarjeta con link de pago o depósito en OXXO. Se paga 50% al iniciar.">
+        </div>
+
+        <h3 class="section-sub">Preguntas frecuentes</h3>
+        <p class="card-desc">La IA responde con tu texto cuando el cliente pregunta algo parecido.</p>
+        @for (faq of aiTraining.faqs; track $index; let i = $index) {
+          <div class="ai-train-faq">
+            <div class="form-group">
+              <label [for]="'ai-faq-q-' + i">Pregunta</label>
+              <input [id]="'ai-faq-q-' + i" [(ngModel)]="faq.q" maxlength="300" placeholder="Ej: ¿Atienden en Veracruz?">
+            </div>
+            <div class="form-group">
+              <label [for]="'ai-faq-a-' + i">Respuesta</label>
+              <textarea [id]="'ai-faq-a-' + i" [(ngModel)]="faq.a" rows="2" maxlength="1200"
+                placeholder="Ej: Sí. Hacemos el trámite en línea para todo Veracruz y te enviamos las placas por paquetería."></textarea>
+            </div>
+            <button type="button" class="btn-delete small" (click)="removeAiFaq(i)">Quitar</button>
+          </div>
+        } @empty {
+          <p class="empty">Aún no hay preguntas. Empieza con las 3 que más te repiten.</p>
+        }
+        <button type="button" class="btn-copy btn-with-icon ai-train-add" [disabled]="aiTraining.faqs.length >= 25" (click)="addAiFaq()">
+          <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+          Agregar pregunta
+        </button>
+
+        <div class="form-group ai-train-field">
+          <label for="ai-rules">Lo que la IA nunca debe decir ni prometer</label>
+          <textarea id="ai-rules" [(ngModel)]="aiTraining.rules" rows="3" maxlength="1500"
+            placeholder="Ej: No prometer fechas de entrega exactas. No dar precios de servicios que no están en la lista. No hablar de trámites de licencias."></textarea>
+        </div>
+
+        <button type="button" class="btn-copy" [disabled]="savingAiTraining()" (click)="saveAiTraining()">
+          {{ savingAiTraining() ? 'Guardando...' : 'Guardar entrenamiento' }}
+        </button>
+      </div>
+
+      <div class="dash-card ai-train">
+        <h2 class="card-title">Prueba tu asistente</h2>
+        <p class="card-desc">
+          Escribe como si fueras un cliente. Responde con lo último que guardaste, igual que en tu página pública.
+          No escribas datos reales: si le das nombre, correo y teléfono, registra una solicitud nueva.
+        </p>
+        @if (!publicSlug) {
+          <p class="empty">Completa tu perfil público para poder probar el asistente.</p>
+        } @else {
+          <div class="ai-test-chat" aria-live="polite">
+            @for (m of aiTestHistory(); track $index) {
+              <div class="ai-test-msg" [class.ai-test-msg--user]="m.role === 'user'">{{ m.content }}</div>
+            } @empty {
+              <p class="card-desc ai-test-empty">Ej: "¿Atienden en Veracruz?" o "¿Cuánto cuesta dar de alta un auto nuevo?"</p>
+            }
+            @if (aiTesting()) {
+              <div class="ai-test-msg">Escribiendo...</div>
+            }
+          </div>
+          <div class="ai-test-input">
+            <input [(ngModel)]="aiTestInput" (keyup.enter)="sendAiTest()" placeholder="Escribe una pregunta de cliente..." aria-label="Pregunta de prueba">
+            <button type="button" class="btn-copy" [disabled]="aiTesting() || !aiTestInput.trim()" (click)="sendAiTest()">Enviar</button>
+            @if (aiTestHistory().length) {
+              <button type="button" class="btn-delete small" (click)="resetAiTest()">Reiniciar</button>
+            }
+          </div>
+        }
       </div>
     }
 
