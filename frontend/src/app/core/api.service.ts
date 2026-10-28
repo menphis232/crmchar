@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
+import { SKIP_ERROR_TOAST } from './error.interceptor';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
@@ -111,7 +112,10 @@ export class CrmService {
   }) {
     return this.http.post<CrmDeal>(`${this.base}/deals`, data);
   }
-  getDeal(id: string) { return this.http.get<CrmDeal>(`${this.base}/deals/${id}`); }
+  getDeal(id: string, options?: { silent?: boolean }) {
+    const context = options?.silent ? new HttpContext().set(SKIP_ERROR_TOAST, true) : undefined;
+    return this.http.get<CrmDeal>(`${this.base}/deals/${id}`, context ? { context } : {});
+  }
   updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null; peritoId?: string | null }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }

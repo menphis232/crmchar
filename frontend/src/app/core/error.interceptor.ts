@@ -1,9 +1,11 @@
-import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpErrorResponse, HttpContextToken } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
 import { ToastService } from './toast.service';
 import { AuthService } from './auth.service';
 import { Router } from '@angular/router';
+
+export const SKIP_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toast = inject(ToastService);
@@ -13,8 +15,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
       // Don't show toast for background polling requests
-      const silentPaths = ['/crm/dashboard', '/crm/notifications', '/crm/today-inbox'];
-      const isSilent = silentPaths.some(p => req.url.includes(p));
+      const silentPaths = ['/crm/dashboard', '/crm/notifications', '/crm/today-inbox', '/crm/ai/insights'];
+      const isSilent = req.context.get(SKIP_ERROR_TOAST) || silentPaths.some(p => req.url.includes(p));
 
       if (!isSilent) {
         let message = 'Ocurrió un error inesperado';

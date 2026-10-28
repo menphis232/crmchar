@@ -1908,7 +1908,7 @@ export class CrmDealPanelComponent implements OnDestroy {
         this.stopPaymentWatch();
         return;
       }
-      this.crmService.getDeal(id).subscribe({
+      this.crmService.getDeal(id, { silent: true }).subscribe({
         next: (d) => {
           if (d.paymentStatus === 'paid' && this.deal()?.paymentStatus !== 'paid') {
             this.deal.set(d);
