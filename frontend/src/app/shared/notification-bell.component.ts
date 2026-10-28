@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect, HostListener, ElementRef, NgZone } from '@angular/core';
+import { Component, signal, effect, HostListener, ElementRef, NgZone } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router } from '@angular/router';
 import { CrmService } from '../core/api.service';
@@ -115,7 +115,7 @@ import { SocketService } from '../core/socket.service';
     }
   `]
 })
-export class NotificationBellComponent implements OnInit {
+export class NotificationBellComponent {
   showDropdown = signal(false);
   notifications = signal<any[]>([]);
   unreadCount = signal(0);
@@ -178,12 +178,6 @@ export class NotificationBellComponent implements OnInit {
     const target = event.target as HTMLElement;
     if (this.showDropdown() && !target.closest('.notification-wrapper')) {
       this.showDropdown.set(false);
-    }
-  }
-
-  ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.loadNotifications();
     }
   }
 

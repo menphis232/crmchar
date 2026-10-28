@@ -1087,15 +1087,3 @@ a.dp-info-val:hover { color: rgb(120, 180, 255); }
     padding: 18px 0;
   }
 }
-
-:host-context(html[data-theme='light']) {
-  background: #fff !important;
-  color: #5c5c5c !important;
-  color-scheme: light !important;
-}
-
-:host-context(html[data-theme='light']) *:not(img):not(svg):not(path):not(video):not(app-nav):not(.theme-switch-thumb) {
-  background-color: #fff !important;
-  color: #5c5c5c !important;
-  border-color: #c5c5c5 !important;
-}

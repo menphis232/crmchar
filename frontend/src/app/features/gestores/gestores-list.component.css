@@ -663,24 +663,3 @@
     gap: 20px;
   }
 }
-
-:host-context(html[data-theme='light']) {
-  color: #5c5c5c;
-  color-scheme: light;
-}
-
-:host-context(html[data-theme='light']) *:not(img):not(svg):not(path):not(app-nav):not(.card-banner-overlay):not(.skeleton-card):not(.skeleton-banner):not(.skeleton-avatar):not(.skeleton-line):not(.agent-banner-empty):not(.agent-img-empty):not(.theme-switch-thumb) {
-  background-color: #fff !important;
-  color: #5c5c5c !important;
-  border-color: #c5c5c5 !important;
-}
-
-:host-context(html[data-theme='light']) .agent-banner-empty,
-:host-context(html[data-theme='light']) .agent-img-empty,
-:host-context(html[data-theme='light']) .skeleton-card,
-:host-context(html[data-theme='light']) .skeleton-banner,
-:host-context(html[data-theme='light']) .skeleton-avatar,
-:host-context(html[data-theme='light']) .skeleton-line {
-  background: #ececec !important;
-  border-color: #c5c5c5 !important;
-}

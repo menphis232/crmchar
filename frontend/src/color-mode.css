@@ -1,4 +1,5 @@
-/* Tema claro: fondo blanco, letras grises, bordes grises. El negro sigue igual. */
+/* Tema claro: solo con html[data-theme='light']. Fondo blanco, letras grises, bordes grises.
+   Los :not(#tvm-light) suben la especificidad por encima de los !important de cada componente. */
 
 html[data-theme='light'] {
   color-scheme: light;
@@ -16,48 +17,25 @@ html[data-theme='light'] ::selection {
   color: #3a3a3a;
 }
 
-html[data-theme='light'] #main-nav {
-  background: #fff !important;
-  color: #5c5c5c !important;
-  border-bottom: 1px solid #c5c5c5 !important;
-}
-
-html[data-theme='light'] .nav-links a,
-html[data-theme='light'] .mobile-menu-toggle,
-html[data-theme='light'] .btn-icon,
-html[data-theme='light'] .login-menu-item {
-  color: #5c5c5c !important;
-}
-
-html[data-theme='light'] .nav-links a:hover,
-html[data-theme='light'] .nav-links a.active,
-html[data-theme='light'] .btn-icon:hover {
-  color: #3a3a3a !important;
-}
-
-html[data-theme='light'] .login-menu-item {
-  border-bottom-color: #e0e0e0 !important;
-}
-
-html[data-theme='light'] .login-menu-dropdown {
-  background: #fff !important;
-  border: 1px solid #c5c5c5 !important;
-}
-
-html[data-theme='light'] app-panel-gestor,
-html[data-theme='light'] app-panel-cliente,
-html[data-theme='light'] app-panel-concesionaria,
-html[data-theme='light'] app-gestores-list,
-html[data-theme='light'] app-gestor-detail,
-html[data-theme='light'] app-autos-list,
-html[data-theme='light'] app-auto-detail,
-html[data-theme='light'] app-dealer-profile,
-html[data-theme='light'] app-crm-deal-panel,
-html[data-theme='light'] app-crm-contact-panel {
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
+  app-nav,
+  app-panel-gestor,
+  app-panel-cliente,
+  app-panel-concesionaria,
+  app-gestores-list,
+  app-gestor-detail,
+  app-autos-list,
+  app-auto-detail,
+  app-dealer-profile,
+  app-push-permission-prompt,
+  app-pwa-install-prompt
+) {
   --text: #5c5c5c;
   --mx-white: #5c5c5c;
-  --muted: #7a7a7a;
-  --brand-grey: #8a8a8a;
+  --muted: #6b6b6b;
+  --brand-grey: #6b6b6b;
+  --brand-black: #ffffff;
+  --brand-white: #ffffff;
   --bg: #ffffff;
   --surface: #ffffff;
   --border: #c5c5c5;
@@ -80,101 +58,38 @@ html[data-theme='light'] app-crm-contact-panel {
   color-scheme: light !important;
 }
 
-html[data-theme='light'] .dash-container,
-html[data-theme='light'] .dash-main,
-html[data-theme='light'] .dash-sidebar,
-html[data-theme='light'] .dash-nav,
-html[data-theme='light'] .dash-card,
-html[data-theme='light'] .gestores-page,
-html[data-theme='light'] .gestores-hero,
-html[data-theme='light'] .autos-page,
-html[data-theme='light'] .autos-hero,
-html[data-theme='light'] .dp-page,
-html[data-theme='light'] .dp-hero,
-html[data-theme='light'] .detail-page,
-html[data-theme='light'] .dynamic-page,
-html[data-theme='light'] .profile-header,
-html[data-theme='light'] .agent-card,
-html[data-theme='light'] .car-card,
-html[data-theme='light'] .dp-car-card,
-html[data-theme='light'] .filters-panel,
-html[data-theme='light'] .kanban-col,
-html[data-theme='light'] .kanban-card,
-html[data-theme='light'] .kanban-col-header,
-html[data-theme='light'] .deal-panel,
-html[data-theme='light'] .deal-panel-body,
-html[data-theme='light'] .deal-panel-header,
-html[data-theme='light'] .catalog-header {
-  background: #fff !important;
+/* Todo lo que pinta texto, fondo o borde dentro de las pantallas con tema */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
+  app-nav,
+  app-panel-gestor,
+  app-panel-cliente,
+  app-panel-concesionaria,
+  app-gestores-list,
+  app-gestor-detail,
+  app-autos-list,
+  app-auto-detail,
+  app-dealer-profile,
+  app-push-permission-prompt,
+  app-pwa-install-prompt
+) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty) {
+  background-color: #fff !important;
   color: #5c5c5c !important;
   border-color: #c5c5c5 !important;
-  box-shadow: none !important;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none !important;
 }
 
-html[data-theme='light'] .dash-nav,
-html[data-theme='light'] .deal-panel {
-  border-bottom-color: #c5c5c5 !important;
-  border-left-color: #c5c5c5 !important;
+/* Hover y estados activos: gris un poco más fuerte para que se note la selección */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-gestores-list, app-nav)
+  :is(.dash-link.active, .dash-link:hover, .filters-list-item.active, .filters-tab.active, .page-btn.active, button:hover, a:hover) {
+  background-color: #f3f3f3 !important;
+  color: #3a3a3a !important;
+  border-color: #a3a3a3 !important;
 }
 
-html[data-theme='light'] .dash-link,
-html[data-theme='light'] .card-title,
-html[data-theme='light'] .agent-name,
-html[data-theme='light'] .agent-location,
-html[data-theme='light'] .gestores-hero-title,
-html[data-theme='light'] .autos-hero-title,
-html[data-theme='light'] .gestores-results-count,
-html[data-theme='light'] .stat-val,
-html[data-theme='light'] .stat-sub,
-html[data-theme='light'] .btn-view,
-html[data-theme='light'] .filters-trigger,
-html[data-theme='light'] .filters-list-item,
-html[data-theme='light'] .filters-tab,
-html[data-theme='light'] .page-btn,
-html[data-theme='light'] .deal-panel-header h3,
-html[data-theme='light'] .deal-panel-eyebrow,
-html[data-theme='light'] .deal-panel h3,
-html[data-theme='light'] .deal-panel h4,
-html[data-theme='light'] .deal-panel p,
-html[data-theme='light'] .deal-panel label,
-html[data-theme='light'] .deal-panel-close,
-html[data-theme='light'] .kanban-select-label,
-html[data-theme='light'] .car-card,
-html[data-theme='light'] .dp-car-card {
-  color: #5c5c5c !important;
-  border-color: #c5c5c5 !important;
-}
-
-html[data-theme='light'] .stat-sub,
-html[data-theme='light'] .agent-location,
-html[data-theme='light'] .deal-panel-eyebrow,
-html[data-theme='light'] .kanban-select-label {
-  color: #6b6b6b !important;
-}
-
-html[data-theme='light'] .gestores-search-input,
-html[data-theme='light'] .filters-panel-search,
-html[data-theme='light'] .filters-trigger,
-html[data-theme='light'] .dash-main input,
-html[data-theme='light'] .dash-main select,
-html[data-theme='light'] .dash-main textarea,
-html[data-theme='light'] .dash-sidebar input,
-html[data-theme='light'] .dash-sidebar select,
-html[data-theme='light'] .dash-sidebar textarea,
-html[data-theme='light'] .deal-panel input,
-html[data-theme='light'] .deal-panel select,
-html[data-theme='light'] .deal-panel textarea,
-html[data-theme='light'] .kanban-stage-select,
-html[data-theme='light'] app-panel-gestor input,
-html[data-theme='light'] app-panel-gestor select,
-html[data-theme='light'] app-panel-gestor textarea,
-html[data-theme='light'] app-panel-cliente input,
-html[data-theme='light'] app-panel-cliente select,
-html[data-theme='light'] app-panel-cliente textarea,
-html[data-theme='light'] app-panel-concesionaria input,
-html[data-theme='light'] app-panel-concesionaria select,
-html[data-theme='light'] app-panel-concesionaria textarea {
-  background: #fff !important;
+/* Inputs */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(input, select, textarea, option) {
+  background-color: #fff !important;
   color: #5c5c5c !important;
   border-color: #c5c5c5 !important;
   color-scheme: light !important;
@@ -183,43 +98,39 @@ html[data-theme='light'] app-panel-concesionaria textarea {
 html[data-theme='light'] input::placeholder,
 html[data-theme='light'] textarea::placeholder {
   color: #6b6b6b !important;
+  -webkit-text-fill-color: #6b6b6b;
 }
 
-html[data-theme='light'] .kanban-stage-select option {
-  background: #fff !important;
-  color: #5c5c5c !important;
+/* Logos blancos: oscurecerlos para que se lean sobre blanco */
+html[data-theme='light']:not(#tvm-light) :is(.brand-logo, .dash-brand-logo) {
+  filter: brightness(0.35);
 }
 
-html[data-theme='light'] .agent-card:hover .btn-view,
-html[data-theme='light'] .filters-trigger:hover,
-html[data-theme='light'] .filters-trigger.is-open,
-html[data-theme='light'] .filters-list-item:hover,
-html[data-theme='light'] .filters-list-item.active {
-  background: #f3f3f3 !important;
-  color: #3a3a3a !important;
-  border-color: #a3a3a3 !important;
-}
-
-html[data-theme='light'] .agent-img,
-html[data-theme='light'] .agent-banner-empty,
-html[data-theme='light'] .agent-img-empty {
-  border-color: #e6e6e6 !important;
+/* Huecos de imagen y esqueletos de carga */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(.skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty) {
   background: #ececec !important;
+  border-color: #c5c5c5 !important;
 }
 
-html[data-theme='light'] .stat-sep {
-  background: #e6e6e6 !important;
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) .card-banner-overlay {
+  background: none !important;
 }
 
-html[data-theme='light'] .deal-section {
-  background: transparent !important;
-  border-bottom-color: #e6e6e6 !important;
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) .deal-panel-overlay {
+  background: rgba(92, 92, 92, 0.28) !important;
 }
 
-html[data-theme='light'] .deal-panel-overlay {
-  background: rgba(0, 0, 0, 0.35) !important;
+/* Barra fija del sitio y menú móvil */
+html[data-theme='light']:not(#tvm-light) #main-nav {
+  background: #fff !important;
+  border-bottom: 1px solid #c5c5c5 !important;
 }
 
+html[data-theme='light']:not(#tvm-light) .nav-wrapper.mobile-open {
+  background: #fff !important;
+}
+
+/* Modales SweetAlert */
 html[data-theme='light'] .swal2-popup {
   background: #fff !important;
   color: #5c5c5c !important;
@@ -232,9 +143,9 @@ html[data-theme='light'] .swal2-content {
   color: #5c5c5c !important;
 }
 
+app-theme-switch.theme-switch-mobile { display: none; }
+
 @media (max-width: 900px) {
   app-theme-switch.theme-switch-desktop { display: none !important; }
   app-theme-switch.theme-switch-mobile { display: inline-flex !important; }
 }
-
-app-theme-switch.theme-switch-mobile { display: none; }
