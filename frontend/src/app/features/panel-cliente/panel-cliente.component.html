@@ -99,10 +99,12 @@
         <span class="kanban-count">{{ allInvoices().length }}</span>
       }
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'conocimiento'" (click)="setTab('conocimiento')">
-      <svg lucideBookOpen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Área de Conocimiento
-    </button>
+    @if (showKnowledge) {
+      <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'conocimiento'" (click)="setTab('conocimiento')">
+        <svg lucideBookOpen [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Área de Conocimiento
+      </button>
+    }
     <a routerLink="/gestores" class="dash-link dash-link-with-icon" (click)="isMobileMenuOpen.set(false)">
       <svg lucideBriefcase [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Consultorias Vehiculares
@@ -305,6 +307,7 @@
           </div>
         </div>
 
+        @if (showKnowledge) {
         <div class="dash-card knowledge-feed-card">
           <div class="knowledge-feed-header">
             <div>
@@ -343,11 +346,12 @@
             </div>
           }
         </div>
+        }
 
       </div>
     }
 
-    @if (activeTab() === 'conocimiento') {
+    @if (showKnowledge && activeTab() === 'conocimiento') {
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideBookOpen [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>

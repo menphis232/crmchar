@@ -97,6 +97,8 @@ const CLIENT_TABS: ClientTab[] = [
 export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  /** Feed "Para ti" y Área de Conocimiento ocultos por ahora a pedido del negocio. */
+  readonly showKnowledge = false;
   private colorMode = inject(ColorModeService);
   private darkBackgroundEffect = effect(() => {
     if (this.colorMode.mode() === 'light') return;
@@ -270,7 +272,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadInvoices();
     this.loadWallet();
     this.loadVehicles();
-    this.loadKnowledgeFeed(true);
     void this.oneSignal.refreshPermissionState();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
@@ -377,6 +378,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (!this.vehicles().length) this.loadVehicles();
     }
     if (tab === 'vehiculos') this.loadVehicles();
+    if (!this.showKnowledge) return;
     if (tab === 'conocimiento') {
       this.loadKnowledgePage(1);
     }
@@ -386,6 +388,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   private parseTab(value: string | null): ClientTab {
+    if (value === 'conocimiento' && !this.showKnowledge) return 'dashboard';
     if (value && CLIENT_TABS.includes(value as ClientTab)) return value as ClientTab;
     return 'dashboard';
   }
@@ -823,7 +826,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   loadDashboard() {
     this.dashboardLoading.set(true);
-    this.loadKnowledgeFeed(true);
+    if (this.showKnowledge) this.loadKnowledgeFeed(true);
     this.http.get<{ total: number; active: number; closed: number }>(`${environment.apiUrl}/client/deals/stats`).subscribe({
       next: stats => {
         this.stats.set(stats);
