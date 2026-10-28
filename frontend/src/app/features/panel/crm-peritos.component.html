@@ -74,7 +74,10 @@
       </button>
     }
   </h2>
-  <p class="card-desc">Cuentas externas con acceso solo a su tablero de trámites. No reciben correos del flujo.</p>
+  <p class="card-desc">
+    Cuentas externas con acceso solo a su tablero de trámites. No reciben correos del flujo.
+    Entran en <strong>/login/perito</strong> con su teléfono y la contraseña que les pongas aquí.
+  </p>
 
   @if (message()) {
     <div class="team-alert" [class.error]="message().startsWith('Error') || message().startsWith('Faltan')">{{ message() }}</div>
@@ -83,20 +86,22 @@
   @if (showForm()) {
     <div class="team-form-card">
       <h3 class="team-form-title">{{ editingId() ? 'Editar perito' : 'Crear perito' }}</h3>
-      <div class="form-row">
+      <form class="form-row" autocomplete="off" (submit)="$event.preventDefault(); save()">
         <div class="form-group">
           <label for="perito-name">Nombre</label>
-          <input id="perito-name" [(ngModel)]="form.name" placeholder="Ej. Perito García" />
+          <input id="perito-name" name="perito-name" [(ngModel)]="form.name" placeholder="Ej. Perito García" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label for="perito-email">Email</label>
-          <input id="perito-email" type="email" [(ngModel)]="form.email" [disabled]="!!editingId()" placeholder="perito@ejemplo.com" />
+          <label for="perito-phone">Teléfono (con el que inicia sesión)</label>
+          <input id="perito-phone" name="perito-phone" type="tel" inputmode="numeric" maxlength="14"
+            [(ngModel)]="form.phone" placeholder="10 dígitos, ej. 5530162526" autocomplete="off" />
         </div>
         <div class="form-group">
-          <label for="perito-password">Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
-          <input id="perito-password" type="password" [(ngModel)]="form.password" placeholder="••••••••" />
+          <label for="perito-password">Contraseña {{ editingId() ? '(déjala vacía para no cambiarla)' : '' }}</label>
+          <input id="perito-password" name="perito-password" type="password" [(ngModel)]="form.password"
+            placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
         </div>
-      </div>
+      </form>
       <div class="team-form-actions">
         <button type="button" class="btn-ghost" (click)="closeForm()">Cancelar</button>
         <button type="button" class="btn-copy" (click)="save()">Guardar</button>
@@ -111,7 +116,7 @@
           <div class="member-avatar">{{ initials(p.name) }}</div>
           <div class="member-info">
             <h4>{{ p.name }}</h4>
-            <span>{{ p.email }}</span>
+            <span>{{ p.phone || p.email || 'Sin teléfono: edítalo para que pueda entrar' }}</span>
           </div>
         </div>
         <div class="member-actions">

@@ -19,6 +19,7 @@ import {
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
 import { normalizeAiTraining, parseAiTraining } from '../utils/ai-training.js';
+import { normalizeMxPhone } from '../utils/phone.js';
 import { crmStagesArrayForRole, mergeCrmStagesForSave } from '../crm/stages.js';
 import { slugify, uniqueUserSlug, uniqueGestorSlug } from '../utils/slug.js';
 
@@ -251,9 +252,16 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email y contraseña requeridos' });
+      return res.status(400).json({ error: 'Usuario y contraseña requeridos' });
     }
-    const user = await get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+    const identifier = String(email).trim();
+    let user;
+    if (identifier.includes('@')) {
+      user = await get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase()]);
+    } else {
+      const phone = normalizeMxPhone(identifier);
+      user = phone ? await get("SELECT * FROM users WHERE role = 'perito' AND phone = ? LIMIT 1", [phone]) : null;
+    }
     if (!user || !bcrypt.compareSync(password, user.password_hash)) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }

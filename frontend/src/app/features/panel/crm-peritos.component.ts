@@ -22,7 +22,7 @@ export class CrmPeritosComponent implements OnInit {
   showForm = signal(false);
   editingId = signal<string | null>(null);
   message = signal('');
-  form = { name: '', email: '', password: '' };
+  form = { name: '', phone: '', password: '' };
 
   ngOnInit() {
     this.reload();
@@ -49,10 +49,10 @@ export class CrmPeritosComponent implements OnInit {
     this.showForm.set(true);
     if (perito) {
       this.editingId.set(perito.id);
-      this.form = { name: perito.name, email: perito.email, password: '' };
+      this.form = { name: perito.name, phone: perito.phone || '', password: '' };
     } else {
       this.editingId.set(null);
-      this.form = { name: '', email: '', password: '' };
+      this.form = { name: '', phone: '', password: '' };
     }
     this.message.set('');
   }
@@ -67,9 +67,19 @@ export class CrmPeritosComponent implements OnInit {
       this.message.set('Faltan datos: nombre requerido');
       return;
     }
+    const phone = this.form.phone.replace(/\D/g, '');
+    if (phone && phone.length !== 10) {
+      this.message.set('Faltan datos: el teléfono debe tener 10 dígitos');
+      return;
+    }
+    if (this.form.password && this.form.password.length < 6) {
+      this.message.set('Faltan datos: la contraseña debe tener al menos 6 caracteres');
+      return;
+    }
     const id = this.editingId();
     if (id) {
-      const payload: { name?: string; password?: string } = { name: this.form.name.trim() };
+      const payload: { name?: string; phone?: string; password?: string } = { name: this.form.name.trim() };
+      if (phone) payload.phone = phone;
       if (this.form.password) payload.password = this.form.password;
       this.crmService.updatePerito(id, payload).subscribe({
         next: () => {
@@ -80,13 +90,13 @@ export class CrmPeritosComponent implements OnInit {
         error: (e) => this.message.set(e.error?.error || 'Error al actualizar'),
       });
     } else {
-      if (!this.form.email.trim() || !this.form.password) {
-        this.message.set('Faltan datos: email y contraseña requeridos');
+      if (!phone || !this.form.password) {
+        this.message.set('Faltan datos: teléfono y contraseña requeridos');
         return;
       }
       this.crmService.createPerito({
         name: this.form.name.trim(),
-        email: this.form.email.trim(),
+        phone,
         password: this.form.password,
       }).subscribe({
         next: () => {

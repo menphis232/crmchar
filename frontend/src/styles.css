@@ -1,5 +1,26 @@
 @import url('./style-shared.css');
 @import url('./color-mode.css');
+
+/* Autorrelleno del navegador: Chrome pinta los campos de azul claro; se iguala al tema. */
+html:not([data-theme='light']) :is(input, textarea, select):-webkit-autofill,
+html:not([data-theme='light']) :is(input, textarea, select):-webkit-autofill:hover,
+html:not([data-theme='light']) :is(input, textarea, select):-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #111 inset !important;
+  box-shadow: 0 0 0 1000px #111 inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+  transition: background-color 99999s ease-out 0s;
+}
+
+html[data-theme='light'] :is(input, textarea, select):-webkit-autofill,
+html[data-theme='light'] :is(input, textarea, select):-webkit-autofill:hover,
+html[data-theme='light'] :is(input, textarea, select):-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #fff inset !important;
+  box-shadow: 0 0 0 1000px #fff inset !important;
+  -webkit-text-fill-color: #3a3a3a !important;
+  caret-color: #3a3a3a;
+  transition: background-color 99999s ease-out 0s;
+}
 @import 'sweetalert2/dist/sweetalert2.min.css';
 
 /* ── Global Headings ── */

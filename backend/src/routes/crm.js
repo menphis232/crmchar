@@ -33,6 +33,7 @@ import {
   dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
 } from '../crm/deal-access.js';
 import { PERITO_STAGE_LABELS, PERITO_SUCCESS_STAGE } from '../crm/perito-stages.js';
+import { normalizeMxPhone, peritoInternalEmail } from '../utils/phone.js';
 
 const router = Router();
 
@@ -2126,11 +2127,14 @@ router.get('/peritos/overview', async (req, res) => {
 router.get('/peritos', gestorOwnerOnly, async (req, res) => {
   try {
     const rows = await query(
-      `SELECT id, email, name, created_at AS createdAt FROM users
+      `SELECT id, email, phone, name, created_at AS createdAt FROM users
        WHERE role = 'perito' AND parent_id = ? ORDER BY name ASC`,
       [req.user.id],
     );
-    res.json(rows);
+    res.json(rows.map(r => ({
+      ...r,
+      email: r.email?.endsWith('@peritos.tramitesmx.local') ? null : r.email,
+    })));
   } catch (err) {
     res.status(500).json({ error: 'Error al listar peritos' });
   }
@@ -2138,17 +2142,24 @@ router.get('/peritos', gestorOwnerOnly, async (req, res) => {
 
 router.post('/peritos', gestorOwnerOnly, async (req, res) => {
   try {
-    const { email, password, name } = req.body;
-    if (!email?.trim() || !password || !name?.trim()) {
-      return res.status(400).json({ error: 'Nombre, email y contraseña requeridos' });
+    const { phone, password, name } = req.body;
+    const cleanPhone = normalizeMxPhone(phone);
+    if (!name?.trim() || !password) {
+      return res.status(400).json({ error: 'Nombre, teléfono y contraseña requeridos' });
     }
-    const exists = await get('SELECT id FROM users WHERE email = ?', [email.toLowerCase().trim()]);
-    if (exists) return res.status(409).json({ error: 'El email ya está registrado' });
+    if (!cleanPhone) {
+      return res.status(400).json({ error: 'El teléfono debe tener 10 dígitos' });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+    const taken = await get("SELECT id FROM users WHERE role = 'perito' AND phone = ?", [cleanPhone]);
+    if (taken) return res.status(409).json({ error: 'Ese teléfono ya pertenece a otro perito' });
     const id = uuid();
     const bcrypt = (await import('bcryptjs')).default;
     await run(
-      `INSERT INTO users (id, email, password_hash, role, name, parent_id, status) VALUES (?, ?, ?, 'perito', ?, ?, 'active')`,
-      [id, email.toLowerCase().trim(), bcrypt.hashSync(password, 10), name.trim(), req.user.id],
+      `INSERT INTO users (id, email, phone, password_hash, role, name, parent_id, status) VALUES (?, ?, ?, ?, 'perito', ?, ?, 'active')`,
+      [id, peritoInternalEmail(cleanPhone), cleanPhone, bcrypt.hashSync(password, 10), name.trim(), req.user.id],
     );
     res.status(201).json({ id });
   } catch (err) {
@@ -2159,11 +2170,25 @@ router.post('/peritos', gestorOwnerOnly, async (req, res) => {
 
 router.put('/peritos/:id', gestorOwnerOnly, async (req, res) => {
   try {
-    const { name, password } = req.body;
+    const { name, password, phone } = req.body;
     const sets = [];
     const params = [];
     if (name?.trim()) { sets.push('name = ?'); params.push(name.trim()); }
+    if (phone !== undefined) {
+      const cleanPhone = normalizeMxPhone(phone);
+      if (!cleanPhone) return res.status(400).json({ error: 'El teléfono debe tener 10 dígitos' });
+      const taken = await get(
+        "SELECT id FROM users WHERE role = 'perito' AND phone = ? AND id != ?",
+        [cleanPhone, req.params.id],
+      );
+      if (taken) return res.status(409).json({ error: 'Ese teléfono ya pertenece a otro perito' });
+      sets.push('phone = ?');
+      params.push(cleanPhone);
+    }
     if (password) {
+      if (String(password).length < 6) {
+        return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+      }
       const bcrypt = (await import('bcryptjs')).default;
       sets.push('password_hash = ?');
       params.push(bcrypt.hashSync(password, 10));

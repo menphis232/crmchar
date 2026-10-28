@@ -462,7 +462,8 @@ export interface CrmDeal {
 
 export interface PeritoAccount {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   name: string;
   createdAt?: string;
 }

@@ -123,10 +123,10 @@ export class CrmService {
     return this.http.delete<{ ok: boolean }>(`${this.base}/deals/${id}`);
   }
   getPeritos() { return this.http.get<PeritoAccount[]>(`${this.base}/peritos`); }
-  createPerito(data: { name: string; email: string; password: string }) {
+  createPerito(data: { name: string; phone: string; password: string }) {
     return this.http.post<{ id: string }>(`${this.base}/peritos`, data);
   }
-  updatePerito(id: string, data: { name?: string; password?: string }) {
+  updatePerito(id: string, data: { name?: string; phone?: string; password?: string }) {
     return this.http.put<{ ok: boolean }>(`${this.base}/peritos/${id}`, data);
   }
   deletePerito(id: string) { return this.http.delete<{ ok: boolean }>(`${this.base}/peritos/${id}`); }
