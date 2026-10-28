@@ -18,7 +18,11 @@
                         [style.background-color]="g.bannerUrl ? 'transparent' : 'var(--p-theme)'"
                         style="background-size: cover; background-position: center; background-repeat: no-repeat;">
                   <div class="profile-info">
-                    <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
+                    @if (profileImage(g)) {
+                      <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
+                    } @else {
+                      <div class="profile-img profile-img-initial" aria-hidden="true">{{ g.name.charAt(0) }}</div>
+                    }
                     <h1 class="profile-name">{{ g.name }}</h1>
                     <div class="profile-hero-actions">
                       <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location || g.state }}</div>
@@ -236,9 +240,15 @@
       <!-- VISTA CLÁSICA (DEFAULT) FALLBACK -->
       <div class="detail-page">
       <header class="profile-header">
-        <img [src]="g.bannerUrl" class="profile-banner" alt="Banner">
+        @if (g.bannerUrl) {
+          <img [src]="g.bannerUrl" class="profile-banner" alt="">
+        }
         <div class="profile-info">
-          <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
+          @if (profileImage(g)) {
+            <img [src]="profileImage(g)" class="profile-img" [alt]="g.name">
+          } @else {
+            <div class="profile-img profile-img-initial" aria-hidden="true">{{ g.name.charAt(0) }}</div>
+          }
           <h1 class="profile-name">{{ g.name }}</h1>
           <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location }}</div>
 

@@ -71,7 +71,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-dealer-profile,
   app-push-permission-prompt,
   app-pwa-install-prompt
-) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty) {
+) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *) {
   background-color: #fff !important;
   color: #5c5c5c !important;
   border-color: #c5c5c5 !important;
@@ -118,6 +118,76 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) .card-banner-overlay {
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) .deal-panel-overlay {
   background: rgba(92, 92, 92, 0.28) !important;
+}
+
+/* Perfil público de gestoría: la portada se ve completa arriba, el logo monta el borde
+   y el nombre queda sobre blanco. --hero-cut es el centro vertical del logo. */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
+  --hero-cut: 260px;
+  padding-top: 150px !important;
+  background-color: #ececec !important;
+  background-size: cover !important;
+  background-position: center top !important;
+  border-bottom: 1px solid #e6e6e6 !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header::before {
+  background: linear-gradient(to bottom, transparent 0, transparent var(--hero-cut), #fff var(--hero-cut)) !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-banner {
+  height: var(--hero-cut) !important;
+  opacity: 1 !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header *:not(.profile-img) {
+  background-color: transparent !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-info {
+  padding-bottom: 32px !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img.profile-img-initial {
+  background-color: #f3f3f3 !important;
+  color: #6b6b6b !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
+  background-color: #fff !important;
+  border: 5px solid #fff !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-name {
+  color: #4a4a4a !important;
+  text-wrap: balance;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-location {
+  color: #6b6b6b !important;
+}
+
+/* Acción principal: en negro es blanco sólido; en claro se invierte a gris sólido */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail :is(.btn-submit, .btn-inquiry) {
+  background-color: #5c5c5c !important;
+  color: #fff !important;
+  border: 1px solid #5c5c5c !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail :is(.btn-submit, .btn-inquiry):hover:not(:disabled) {
+  background-color: #4a4a4a !important;
+  border-color: #4a4a4a !important;
+}
+
+@media (max-width: 768px) {
+  html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
+    --hero-cut: calc(var(--nav-h) + 129px);
+    padding-top: calc(var(--nav-h) + 64px) !important;
+  }
+  html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
+    border-width: 4px !important;
+  }
 }
 
 /* Barra fija del sitio y menú móvil */
