@@ -188,13 +188,57 @@ app-gestor-showcase-gallery {
 .service-item {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
+  border-radius: 10px;
   padding: 18px 20px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 12px 18px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.service-item:hover { border-color: rgba(255, 255, 255, 0.32); background: rgba(255, 255, 255, 0.06); }
+.service-item--photo { padding: 14px 18px 14px 14px; align-items: center; }
+.service-photo {
+  width: 120px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  background: #1c1c1c;
+}
+.service-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+  margin-left: auto;
+}
+.service-ask {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--f-ui);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.service-item:hover .service-ask,
+.service-ask:hover { background: #fff; color: #000; border-color: #fff; }
+.service-ask:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (max-width: 560px) {
+  .service-item--photo { align-items: flex-start; }
+  .service-photo { width: 100%; }
+  .service-side { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; margin-left: 0; }
 }
 .service-main {
   flex: 1;

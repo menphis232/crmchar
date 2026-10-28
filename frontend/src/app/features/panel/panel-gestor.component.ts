@@ -84,6 +84,9 @@ import {
   GESTOR_GALLERY_SIZE_LABEL,
   GESTOR_LOGO_ASPECT,
   GESTOR_LOGO_SIZE_LABEL,
+  GESTOR_SERVICE_IMAGE_ASPECT,
+  GESTOR_SERVICE_IMAGE_OUTPUT,
+  GESTOR_SERVICE_IMAGE_SIZE_LABEL,
 } from '../../shared/gestor-media.constants';
 
 type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'entrenar_ia' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
@@ -137,6 +140,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly gestorGallerySizeLabel = GESTOR_GALLERY_SIZE_LABEL;
   readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
   readonly gestorGalleryOutput = GESTOR_GALLERY_OUTPUT;
+  readonly serviceImageAspect = GESTOR_SERVICE_IMAGE_ASPECT;
+  readonly serviceImageOutput = GESTOR_SERVICE_IMAGE_OUTPUT;
+  readonly serviceImageSizeLabel = GESTOR_SERVICE_IMAGE_SIZE_LABEL;
+  serviceImageCropFile = signal<File | null>(null);
+  isUploadingServiceImage = signal(false);
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
   private socketService = inject(SocketService);
@@ -245,7 +253,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   isAiLoading = signal(false);
   message = signal('');
   editingServiceId: string | null = null;
-  serviceForm = { name: '', timeEstimate: '', price: null as number | null };
+  serviceForm = { name: '', timeEstimate: '', price: null as number | null, imageUrl: '' };
   serviceDocs: QuoteCheckItem[] = [];
   serviceIncludesList: QuoteCheckItem[] = [];
   serviceBonusList: QuoteCheckItem[] = [];
@@ -1343,7 +1351,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   private resetServiceForm() {
     resetChecklistSeq();
     this.editingServiceId = null;
-    this.serviceForm = { name: '', timeEstimate: '', price: null };
+    this.serviceForm = { name: '', timeEstimate: '', price: null, imageUrl: '' };
     this.serviceDocs = [];
     this.serviceIncludesList = [];
     this.serviceBonusList = [];
@@ -1356,6 +1364,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       name: s.name,
       timeEstimate: s.timeEstimate,
       price: s.price,
+      imageUrl: s.imageUrl || '',
     };
     this.serviceDocs = checklistFromTexts(serviceRequirements(s));
     this.serviceIncludesList = checklistFromTexts(serviceIncludes(s));
@@ -1377,6 +1386,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       name: string;
       timeEstimate: string;
       price: number | null;
+      imageUrl: string | null;
       required_documents?: string[];
       includes?: string[];
       bonus?: string[];
@@ -1384,6 +1394,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       name: this.serviceForm.name,
       timeEstimate: this.serviceForm.timeEstimate,
       price: this.serviceForm.price,
+      imageUrl: this.serviceForm.imageUrl || null,
     };
     if (docs.length > 0) payload.required_documents = docs;
     if (includes.length > 0) payload.includes = includes;
@@ -1408,6 +1419,42 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   addService() {
     this.saveService();
+  }
+
+  onServiceImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.toast.warning('Elige una imagen (JPG, PNG o WebP).');
+      return;
+    }
+    this.serviceImageCropFile.set(file);
+  }
+
+  onServiceImageCropConfirmed(result: CropResult) {
+    const file = new File([result.blob], 'servicio.jpg', { type: 'image/jpeg' });
+    this.serviceImageCropFile.set(null);
+    this.isUploadingServiceImage.set(true);
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res: { url: string }) => {
+        this.serviceForm.imageUrl = res.url;
+        this.isUploadingServiceImage.set(false);
+      },
+      error: () => {
+        this.isUploadingServiceImage.set(false);
+        this.toast.error('No se pudo subir la foto. Intenta de nuevo.');
+      },
+    });
+  }
+
+  onServiceImageCropCancelled() {
+    this.serviceImageCropFile.set(null);
+  }
+
+  removeServiceImage() {
+    this.serviceForm.imageUrl = '';
   }
 
   onServiceDragStart(event: DragEvent, idx: number) {

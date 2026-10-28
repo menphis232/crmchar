@@ -319,6 +319,7 @@ export interface GestorService {
   name: string;
   timeEstimate: string;
   price: number | null;
+  imageUrl?: string | null;
   required_documents?: string[];
   includes?: string[];
   bonus?: string[];

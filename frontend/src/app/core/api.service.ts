@@ -30,6 +30,7 @@ export class GestoresService {
     name: string;
     timeEstimate: string;
     price: number | null;
+    imageUrl?: string | null;
     required_documents?: string[];
     includes?: string[];
     bonus?: string[];
@@ -40,6 +41,7 @@ export class GestoresService {
     name: string;
     timeEstimate: string;
     price: number | null;
+    imageUrl?: string | null;
     required_documents?: string[];
     includes?: string[];
     bonus?: string[];

@@ -359,6 +359,9 @@
               <span class="service-sort-handle" title="Arrastra para mover">
                 <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
               </span>
+              @if (s.imageUrl) {
+                <img class="service-catalog-thumb" [src]="s.imageUrl" alt="" draggable="false">
+              }
               <div class="inbox-info">
               <h4>{{ s.name }}</h4>
               <p class="deal-meta-with-icon">
@@ -426,6 +429,41 @@
             <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas vacío, en tu ficha pública se mostrará «Precio por definir».</p>
           </div>
         </div>
+
+        <div class="service-photo-field">
+          <div class="service-photo-preview" [class.service-photo-preview--empty]="!serviceForm.imageUrl">
+            @if (serviceForm.imageUrl) {
+              <img [src]="serviceForm.imageUrl" alt="Foto del servicio">
+            } @else {
+              <svg lucideImage [size]="22" aria-hidden="true"></svg>
+            }
+          </div>
+          <div class="service-photo-info">
+            <label for="service-photo-input">Foto del servicio</label>
+            <p class="card-desc">Opcional. Se ve en tu ficha pública junto al trámite. Recomendado {{ serviceImageSizeLabel }}.</p>
+            <div class="service-photo-actions">
+              <label class="deal-outline-btn btn-with-icon service-photo-upload" [class.is-busy]="isUploadingServiceImage()">
+                <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                {{ isUploadingServiceImage() ? 'Subiendo...' : (serviceForm.imageUrl ? 'Cambiar foto' : 'Subir foto') }}
+                <input id="service-photo-input" type="file" accept="image/*" hidden [disabled]="isUploadingServiceImage()" (change)="onServiceImageSelected($event)">
+              </label>
+              @if (serviceForm.imageUrl) {
+                <button type="button" class="btn-delete small" (click)="removeServiceImage()">Quitar</button>
+              }
+            </div>
+          </div>
+        </div>
+
+        @if (serviceImageCropFile()) {
+          <app-image-cropper-modal
+            [imageFile]="serviceImageCropFile()!"
+            [aspect]="serviceImageAspect"
+            [outputMax]="serviceImageOutput"
+            mode="rect"
+            (cropped)="onServiceImageCropConfirmed($event)"
+            (cancelled)="onServiceImageCropCancelled()"
+          />
+        }
 
         <div class="quote-checklist-block">
           <h5>Documentos requeridos</h5>

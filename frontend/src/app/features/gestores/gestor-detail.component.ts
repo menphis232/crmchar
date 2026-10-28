@@ -6,7 +6,7 @@ import { NavComponent } from '../../shared/nav.component';
 import { WhatsappIconComponent } from '../../shared/whatsapp-icon.component';
 import { GestoresService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
-import { Gestor } from '../../models';
+import { Gestor, GestorService } from '../../models';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -251,6 +251,13 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
         });
       }
     }
+  }
+
+  askAboutService(s: GestorService) {
+    if (!this.chatOpen) this.toggleChat();
+    if (this.leadCreated || this.isChatLoading) return;
+    this.chatMessage = `Hola, me interesa el trámite "${s.name}". ¿Qué documentos necesito y cuánto cuesta?`;
+    this.sendChatMessage();
   }
 
   sendChatMessage() {

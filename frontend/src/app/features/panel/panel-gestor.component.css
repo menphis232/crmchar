@@ -1462,3 +1462,47 @@ app-crm-team {
   .ai-train-faq { grid-template-columns: 1fr; }
   .ai-test-msg { max-width: 92%; }
 }
+/* Foto del servicio */
+.service-photo-field {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  margin: 4px 0 20px;
+}
+.service-photo-preview {
+  width: 128px;
+  aspect-ratio: 4 / 3;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.service-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.service-photo-preview--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+  border-style: dashed;
+}
+.service-photo-info label[for='service-photo-input'] {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.service-photo-info .card-desc { margin: 0 0 10px; font-size: 12px; }
+.service-photo-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.service-photo-upload { cursor: pointer; }
+.service-photo-upload.is-busy { opacity: 0.6; cursor: wait; }
+.service-catalog-thumb {
+  width: 56px;
+  height: 42px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+@media (max-width: 560px) {
+  .service-photo-field { flex-direction: column; }
+}

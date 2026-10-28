@@ -14,7 +14,7 @@ import { slugify, uniqueGestorSlug } from '../utils/slug.js';
 const router = Router();
 
 const GESTOR_SERVICES_SELECT = `
-  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus
+  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus, image_url as imageUrl
   FROM gestor_services WHERE gestor_id = ?
   ORDER BY sort_order ASC, name ASC
 `;
@@ -59,9 +59,13 @@ function normalizeStringList(value, { allowObjects = false } = {}) {
 }
 
 function parseServicePayload(body) {
-  const { name, timeEstimate, price, required_documents, includes, bonus } = body;
+  const { name, timeEstimate, price, required_documents, includes, bonus, imageUrl } = body;
   if (!name || !timeEstimate) {
     return { error: 'Datos incompletos' };
+  }
+  const image = typeof imageUrl === 'string' ? imageUrl.trim().slice(0, 500) : '';
+  if (image && !/^(https?:\/\/|\/uploads\/)/i.test(image)) {
+    return { error: 'La foto del servicio no es válida' };
   }
   const priceValue = (price === null || price === undefined || price === '')
     ? null
@@ -73,7 +77,7 @@ function parseServicePayload(body) {
   if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
   const includesList = normalizeStringList(includes, { allowObjects: true });
   const bonusList = normalizeStringList(bonus, { allowObjects: true });
-  return { name, timeEstimate, priceValue, docs, includesList, bonusList };
+  return { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue: image || null };
 }
 
 function parseReviewDate(value) {
@@ -319,7 +323,7 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const parsed = parseServicePayload(req.body);
     if (parsed.error) return res.status(400).json({ error: parsed.error });
-    const { name, timeEstimate, priceValue, docs, includesList, bonusList } = parsed;
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue } = parsed;
 
     const id = uuid();
     const maxOrder = await get(
@@ -329,10 +333,10 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     const sortOrder = (maxOrder?.maxOrder ?? -1) + 1;
 
     await run(
-      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, includes, bonus, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), sortOrder],
+      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, includes, bonus, image_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, sortOrder],
     );
-    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs, includes: includesList, bonus: bonusList });
+    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs, includes: includesList, bonus: bonusList, imageUrl: imageValue });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
   }
@@ -349,13 +353,13 @@ router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiv
 
     const parsed = parseServicePayload(req.body);
     if (parsed.error) return res.status(400).json({ error: parsed.error });
-    const { name, timeEstimate, priceValue, docs, includesList, bonusList } = parsed;
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue } = parsed;
 
     await run(
       `UPDATE gestor_services
-       SET name = ?, time_estimate = ?, price = ?, required_documents = ?, includes = ?, bonus = ?
+       SET name = ?, time_estimate = ?, price = ?, required_documents = ?, includes = ?, bonus = ?, image_url = ?
        WHERE id = ? AND gestor_id = ?`,
-      [name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), req.params.id, row.id],
+      [name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, req.params.id, row.id],
     );
     res.json({
       id: req.params.id,
@@ -365,6 +369,7 @@ router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiv
       required_documents: docs,
       includes: includesList,
       bonus: bonusList,
+      imageUrl: imageValue,
     });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar servicio' });

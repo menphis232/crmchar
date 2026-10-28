@@ -12,3 +12,8 @@ export const GESTOR_GALLERY_SIZE_LABEL = '1080×1080 px';
 export const GESTOR_GALLERY_MAX = 9;
 export const GESTOR_GALLERY_COLUMNS = 3;
 export const GESTOR_GALLERY_OUTPUT = 1080;
+
+/** Foto de cada servicio en la ficha pública: 4:3. */
+export const GESTOR_SERVICE_IMAGE_ASPECT = 4 / 3;
+export const GESTOR_SERVICE_IMAGE_SIZE_LABEL = '960×720 px';
+export const GESTOR_SERVICE_IMAGE_OUTPUT = 960;
