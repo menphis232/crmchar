@@ -20,7 +20,7 @@ function emptyForm(): ClientForm {
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
     :host { display: block; }
-    .clients-card { padding: 24px 28px; box-sizing: border-box; }
+    .clients-card { padding: 24px 28px; box-sizing: border-box; container-type: inline-size; }
 
     .clients-head {
       display: flex;
@@ -111,11 +111,14 @@ function emptyForm(): ClientForm {
     }
     .clients-search:focus-within { border-color: rgba(255, 255, 255, 0.5); }
     .clients-search svg { color: rgba(255, 255, 255, 0.5); flex-shrink: 0; }
-    .clients-search input {
+    .clients-card .clients-search input,
+    .clients-card .clients-search input:focus {
       flex: 1;
       min-width: 0;
       background: transparent !important;
       border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
       outline: none;
       padding: 10px 0;
       color: #fff !important;
@@ -140,11 +143,11 @@ function emptyForm(): ClientForm {
       color-scheme: dark;
     }
     .clients-toolbar select:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
-    @media (max-width: 1100px) {
+    @container (max-width: 860px) {
       .clients-toolbar { grid-template-columns: 1fr 1fr 1fr; }
       .clients-search { grid-column: 1 / -1; }
     }
-    @media (max-width: 640px) {
+    @container (max-width: 520px) {
       .clients-head { flex-direction: column; }
       .clients-toolbar { grid-template-columns: 1fr; }
     }
@@ -153,7 +156,7 @@ function emptyForm(): ClientForm {
     .clients-list { display: flex; flex-direction: column; }
     .client-row {
       display: grid;
-      grid-template-columns: minmax(150px, 1.3fr) minmax(150px, 1.2fr) minmax(150px, 1.3fr) minmax(140px, 1.2fr) 84px;
+      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 1.3fr) minmax(0, 1.2fr) 80px;
       gap: 16px;
       align-items: center;
       padding: 14px 12px;
@@ -342,10 +345,10 @@ function emptyForm(): ClientForm {
     .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
     .client-field textarea { resize: vertical; line-height: 1.5; }
     .client-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
-    @media (max-width: 760px) { .client-form-grid { grid-template-columns: 1fr; } }
+    @container (max-width: 620px) { .client-form-grid { grid-template-columns: 1fr; } }
 
-    /* Tarjetas en pantallas angostas */
-    @media (max-width: 900px) {
+    /* Tarjetas cuando la tarjeta del directorio es angosta (panel con menú lateral o móvil) */
+    @container (max-width: 760px) {
       .client-row--head { display: none; }
       .client-row {
         grid-template-columns: minmax(0, 1fr) auto;
