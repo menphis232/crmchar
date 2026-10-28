@@ -71,7 +71,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-dealer-profile,
   app-push-permission-prompt,
   app-pwa-install-prompt
-) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *, .panel-avatar, .panel-avatar *, .dash-logo-frame, .dash-logo-dealer .dash-brand-logo) {
+) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *, .panel-avatar, .panel-avatar *, .dash-logo-frame, .dash-logo-dealer .dash-brand-logo, .engomado-dot, .sk) {
   background-color: #fff !important;
   color: #3a3a3a !important;
   border-color: #c5c5c5 !important;
@@ -119,6 +119,17 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, a
   filter: none !important;
   object-fit: contain !important;
   background: #fff !important;
+}
+
+/* Directorio de clientes: acción principal gris sólido y esqueleto de carga visible */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-panel-gestor .clients-btn--primary {
+  background-color: #4a4a4a !important;
+  border-color: #4a4a4a !important;
+  color: #fff !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-panel-gestor .sk {
+  background-color: #ececec !important;
 }
 
 /* Prueba del asistente: el mensaje del usuario se invierte a gris sólido */

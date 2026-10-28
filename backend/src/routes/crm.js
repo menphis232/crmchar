@@ -1060,6 +1060,7 @@ router.get('/contacts', async (req, res) => {
         COUNT(DISTINCT cv.id) as vehicleCount,
         GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates,
         GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
+        GROUP_CONCAT(DISTINCT CONCAT(cv.plate, '|', COALESCE(cv.engomado_color, '')) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
         GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
       LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?${dealJoinAccess.sql}
@@ -1082,6 +1083,12 @@ router.get('/contacts', async (req, res) => {
         ...contactRow(r),
         dealCount: Number(r.dealCount || 0),
         engomados: r.engomados ? r.engomados.split(',').filter(Boolean) : [],
+        vehicles: r.vehicleSummary
+          ? r.vehicleSummary.split(';;').filter(Boolean).map((v) => {
+            const [plate, engomado] = v.split('|');
+            return { plate, engomado: engomado || null };
+          })
+          : [],
         tramites: r.tramites || undefined,
       })),
       total,
@@ -1197,6 +1204,37 @@ router.patch('/contacts/:id', async (req, res) => {
     res.json(contactRow(row));
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar contacto' });
+  }
+});
+
+router.delete('/contacts/:id', async (req, res) => {
+  try {
+    if (isConcesionariaStaff(req.user)) {
+      return res.status(403).json({ error: 'No tienes permiso para eliminar clientes' });
+    }
+    const uid = req.orgId;
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, uid, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Cliente no encontrado' });
+
+    // crm_deals borra en cascada con el contacto: borrar aquí se llevaría trámites, pagos y chat.
+    const deals = await get('SELECT COUNT(*) AS n FROM crm_deals WHERE contact_id = ?', [contact.id]);
+    const dealCount = Number(deals?.n || 0);
+    if (dealCount > 0) {
+      return res.status(409).json({
+        error: `Este cliente tiene ${dealCount} trámite(s). Elimínalos del embudo antes de borrar al cliente.`,
+        dealCount,
+      });
+    }
+
+    await run('DELETE FROM contacts WHERE id = ? AND user_id = ?', [contact.id, uid]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar cliente' });
   }
 });
 

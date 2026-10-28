@@ -372,6 +372,7 @@ export interface CrmContact {
   vehicleCount?: number;
   plates?: string;
   engomados?: string[];
+  vehicles?: { plate: string; engomado: string | null }[];
   tramites?: string;
   dealCount?: number;
   createdAt?: string;

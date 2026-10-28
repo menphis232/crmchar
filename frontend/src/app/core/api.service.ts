@@ -173,6 +173,9 @@ export class CrmService {
   updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string }) {
     return this.http.patch<CrmContact>(`${this.base}/contacts/${id}`, data);
   }
+  deleteContact(id: string) {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/contacts/${id}`);
+  }
   addContactVehicle(contactId: string, data: {
     plate: string;
     make?: string;

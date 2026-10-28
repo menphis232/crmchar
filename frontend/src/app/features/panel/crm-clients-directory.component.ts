@@ -1,267 +1,364 @@
 import { Component, output, signal, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideCar, LucideChevronLeft, LucideChevronRight, LucidePlus, LucideSearch, LucideUser } from '@lucide/angular';
+import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucidePlus, LucideSearch, LucideTrash2 } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { ToastService } from '../../core/toast.service';
 import { CrmContact } from '../../models';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 
+type ClientForm = { name: string; email: string; phone: string; residenceState: string; notes: string };
+
+function emptyForm(): ClientForm {
+  return { name: '', email: '', phone: '', residenceState: '', notes: '' };
+}
+
 @Component({
   selector: 'app-crm-clients-directory',
   standalone: true,
-  imports: [FormsModule, LucideSearch, LucideUser, LucideCar, LucidePlus, LucideChevronLeft, LucideChevronRight],
+  imports: [FormsModule, LucideSearch, LucidePlus, LucidePencil, LucideTrash2, LucideChevronLeft, LucideChevronRight],
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
-    .dash-card {
-      padding: 24px 28px;
-      box-sizing: border-box;
-    }
-    .clients-toolbar {
+    :host { display: block; }
+    .clients-card { padding: 24px 28px; box-sizing: border-box; }
+
+    .clients-head {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 12px;
-      align-items: flex-end;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
     }
-    .clients-filters {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    @media (max-width: 900px) {
-      .clients-filters { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 560px) {
-      .clients-filters { grid-template-columns: 1fr; }
-    }
-    .clients-filter label,
-    .clients-search label {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
-    }
-    .clients-filter select,
-    .clients-filter input {
-      width: 100%;
-      box-sizing: border-box;
-      background: #000 !important;
-      border: 1px solid rgba(255,255,255,0.22) !important;
-      border-radius: 8px;
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
-      padding: 10px 12px;
-      font-family: var(--f-display);
+    .clients-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; }
+    .clients-total {
+      font-family: var(--f-ui);
       font-size: 13px;
-      outline: none;
-      min-height: 44px;
+      font-weight: 600;
+      letter-spacing: 0;
+      color: rgba(255, 255, 255, 0.5);
+      font-variant-numeric: tabular-nums;
     }
-    .clients-search { flex: 1; min-width: 220px; }
-    .clients-search .clients-search-field {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #000000 !important;
-      border: 1px solid rgba(255,255,255,0.22) !important;
-      border-radius: 8px;
-      padding: 0 12px;
-      min-height: 44px;
-      box-sizing: border-box;
+    .clients-desc {
+      margin: 0;
+      max-width: 62ch;
+      font-family: var(--f-ui);
+      font-size: 13px;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.55);
     }
-    .clients-search .clients-search-field svg {
-      color: rgba(255,255,255,0.45);
-      flex-shrink: 0;
-    }
-    .clients-search .clients-search-field input,
-    .clients-search input#clients-search-input {
-      flex: 1;
-      min-width: 0;
-      width: 100%;
-      box-sizing: border-box;
-      background: #000000 !important;
-      background-color: #000000 !important;
-      border: none !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      caret-color: #ffffff !important;
-      padding: 10px 0;
-      outline: none;
-      font-family: var(--f-display);
-      font-size: 14px;
-      color-scheme: dark;
-    }
-    .clients-search .clients-search-field input::placeholder,
-    .clients-search input#clients-search-input::placeholder {
-      color: rgba(255,255,255,0.35) !important;
-      opacity: 1;
-    }
-    .deal-outline-btn.clients-action-btn {
+
+    .clients-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 10px 20px;
-      min-height: 44px;
-      background: #111111 !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      border: 1px solid rgba(255,255,255,0.35) !important;
-      border-radius: 8px !important;
+      min-height: 40px;
+      padding: 0 16px;
+      flex-shrink: 0;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 8px;
+      background: transparent;
+      color: #fff;
       font-family: var(--f-display);
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .deal-outline-btn.clients-action-btn:hover:not(:disabled) {
-      background: rgba(255,255,255,0.08) !important;
-      border-color: rgba(255,255,255,0.6) !important;
+    .clients-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.55); }
+    .clients-btn:focus-visible, .icon-btn:focus-visible, .client-name:focus-visible, .clients-link:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
     }
-    .deal-outline-btn.clients-action-btn--primary {
-      background: #ffffff !important;
-      color: #000000 !important;
-      -webkit-text-fill-color: #000000 !important;
-      border-color: #ffffff !important;
+    .clients-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .clients-btn--primary { background: #fff; color: #000; border-color: #fff; }
+    .clients-btn--primary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.86); }
+
+    .clients-link {
+      background: none;
+      border: none;
+      padding: 0 4px;
+      color: rgba(255, 255, 255, 0.7);
+      font-family: var(--f-ui);
+      font-size: 13px;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      cursor: pointer;
+      white-space: nowrap;
     }
-    .client-add-form {
-      margin-bottom: 20px;
-      padding: 16px;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.03);
-    }
-    .client-add-title {
-      margin: 0 0 4px;
-      font-family: var(--f-display);
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-    .client-add-desc {
-      margin: 0 0 14px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-    }
-    .client-add-grid {
+    .clients-link:hover { color: #fff; }
+
+    /* Toolbar: búsqueda + filtros en una sola línea */
+    .clients-toolbar {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
       gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
     }
-    .client-add-grid .full { grid-column: 1 / -1; }
-    @media (max-width: 700px) {
-      .client-add-grid { grid-template-columns: 1fr; }
-    }
-    .client-add-field label {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
-    }
-    .client-add-field input,
-    .client-add-field select,
-    .client-add-field textarea {
-      width: 100%;
-      box-sizing: border-box;
-      background: #000 !important;
-      border: 1px solid rgba(255,255,255,0.22) !important;
-      border-radius: 8px;
-      color: #fff !important;
-      padding: 10px 12px;
-      font-family: var(--f-display);
-      font-size: 14px;
-      outline: none;
-    }
-    .client-add-actions {
+    .clients-search {
       display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: #000;
+      box-sizing: border-box;
     }
-    .clients-table { display: flex; flex-direction: column; gap: 8px; }
+    .clients-search:focus-within { border-color: rgba(255, 255, 255, 0.5); }
+    .clients-search svg { color: rgba(255, 255, 255, 0.5); flex-shrink: 0; }
+    .clients-search input {
+      flex: 1;
+      min-width: 0;
+      background: transparent !important;
+      border: none !important;
+      outline: none;
+      padding: 10px 0;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      font-family: var(--f-ui);
+      font-size: 14px;
+    }
+    .clients-search input::placeholder { color: rgba(255, 255, 255, 0.45) !important; -webkit-text-fill-color: rgba(255, 255, 255, 0.45) !important; }
+    .clients-toolbar select {
+      width: 100%;
+      min-height: 42px;
+      padding: 0 12px;
+      box-sizing: border-box;
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border-radius: 8px;
+      background: #000 !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      font-family: var(--f-ui);
+      font-size: 13px;
+      outline: none;
+      color-scheme: dark;
+    }
+    .clients-toolbar select:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
+    @media (max-width: 1100px) {
+      .clients-toolbar { grid-template-columns: 1fr 1fr 1fr; }
+      .clients-search { grid-column: 1 / -1; }
+    }
+    @media (max-width: 640px) {
+      .clients-head { flex-direction: column; }
+      .clients-toolbar { grid-template-columns: 1fr; }
+    }
+
+    /* Lista */
+    .clients-list { display: flex; flex-direction: column; }
     .client-row {
       display: grid;
-      grid-template-columns: 1.3fr 1fr 0.9fr 0.8fr 0.9fr 1fr 1fr;
-      gap: 10px;
+      grid-template-columns: minmax(150px, 1.3fr) minmax(150px, 1.2fr) minmax(150px, 1.3fr) minmax(140px, 1.2fr) 84px;
+      gap: 16px;
       align-items: center;
-      padding: 12px 14px;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-      background: rgba(255,255,255,0.03);
+      padding: 14px 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
       cursor: pointer;
-      text-align: left;
-      color: inherit;
-      font: inherit;
+      transition: background-color 0.15s ease;
     }
-    .client-row:hover { border-color: rgba(200,169,74,0.35); background: rgba(200,169,74,0.06); }
-    .client-row-head {
-      display: grid;
-      grid-template-columns: 1.3fr 1fr 0.9fr 0.8fr 0.9fr 1fr 1fr;
-      gap: 10px;
-      padding: 0 14px 6px;
-      font-size: 10px;
-      letter-spacing: 0.14em;
+    .client-row:hover { background: rgba(255, 255, 255, 0.04); }
+    .client-row--head {
+      padding-top: 0;
+      padding-bottom: 10px;
+      cursor: default;
+      font-family: var(--f-ui);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255, 255, 255, 0.5);
     }
-    @media (max-width: 1100px) {
-      .client-row, .client-row-head { grid-template-columns: 1fr; gap: 6px; }
-      .client-row-head { display: none; }
+    .client-row--head:hover { background: none; }
+
+    .client-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+    .client-name {
+      align-self: flex-start;
+      max-width: 100%;
+      padding: 0;
+      background: none;
+      border: none;
+      color: #fff;
+      font-family: var(--f-ui);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      line-height: 1.3;
+      cursor: pointer;
+      overflow-wrap: anywhere;
     }
-    .client-name { font-weight: 600; color: #fff; }
-    .client-meta { font-size: 12px; color: rgba(255,255,255,0.65); }
-    .client-count {
+    .client-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+    .client-sub {
+      font-family: var(--f-ui);
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.55);
+      line-height: 1.35;
+    }
+    .client-phone {
+      font-family: var(--f-ui);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.88);
+      font-variant-numeric: tabular-nums;
+    }
+    .client-email, .client-tramite {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .client-tramite {
+      font-family: var(--f-ui);
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .client-vehicles { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .plate-chip {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      padding: 3px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 6px;
+      font-family: var(--f-ui);
       font-size: 12px;
-      color: var(--gold);
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #fff;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
-    .engomado-tag {
-      display: inline-block;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.15);
-      margin-right: 4px;
-      margin-bottom: 2px;
+    .engomado-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: rgba(255, 255, 255, 0.25);
     }
-    .pagination {
+    .engomado-dot[data-color='amarillo'] { background: #f5c518; }
+    .engomado-dot[data-color='rosa'] { background: #f472b6; }
+    .engomado-dot[data-color='rojo'] { background: #ef4444; }
+    .engomado-dot[data-color='verde'] { background: #22c55e; }
+    .engomado-dot[data-color='azul'] { background: #3b82f6; }
+
+    .client-actions { flex-direction: row; justify-content: flex-end; gap: 6px; }
+    .icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+    .icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); color: #fff; }
+    .icon-btn--danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.6); color: #f87171; }
+    .icon-btn:disabled { opacity: 0.4; cursor: wait; }
+
+    /* Carga */
+    .client-row--skeleton { cursor: default; }
+    .client-row--skeleton:hover { background: none; }
+    .sk {
+      display: block;
+      height: 12px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.07);
+      animation: sk-pulse 1.2s ease-in-out infinite;
+    }
+    .sk-name { height: 14px; width: 70%; }
+    .sk-line { width: 80%; }
+    .sk-short { width: 45%; }
+    @keyframes sk-pulse { 50% { opacity: 0.45; } }
+    @media (prefers-reduced-motion: reduce) { .sk { animation: none; } }
+
+    .clients-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 28px 4px 8px;
+    }
+    .clients-empty-title { margin: 0; font-family: var(--f-ui); font-size: 15px; font-weight: 700; color: #fff; }
+    .clients-empty-text { margin: 0 0 10px; font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+
+    .clients-pagination {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 16px 4px 4px;
-      flex-wrap: wrap;
+      padding-top: 16px;
     }
-    .page-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 14px;
-      background: #111;
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 8px;
-      color: #fff;
-      font-family: var(--f-display);
-      font-size: 11px;
+    .clients-page-info { font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.6); font-variant-numeric: tabular-nums; }
+
+    /* Formulario alta / edición */
+    .client-form {
+      margin-bottom: 22px;
+      padding: 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+    }
+    .client-form-head { margin-bottom: 14px; }
+    .client-form-title {
+      margin: 0 0 4px;
+      font-family: var(--f-ui);
+      font-size: 15px;
       font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
+      color: #fff;
+      text-transform: none;
+      letter-spacing: 0;
     }
-    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .page-info { font-size: 12px; color: rgba(255,255,255,0.55); }
+    .client-form-desc { margin: 0; font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+    .client-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .client-field--full { grid-column: 1 / -1; }
+    .client-field label {
+      display: block;
+      margin-bottom: 5px;
+      font-family: var(--f-ui);
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .client-field input, .client-field select, .client-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border-radius: 8px;
+      background: #000 !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      font-family: var(--f-ui);
+      font-size: 14px;
+      outline: none;
+      color-scheme: dark;
+    }
+    .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
+    .client-field textarea { resize: vertical; line-height: 1.5; }
+    .client-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+    @media (max-width: 760px) { .client-form-grid { grid-template-columns: 1fr; } }
+
+    /* Tarjetas en pantallas angostas */
+    @media (max-width: 900px) {
+      .client-row--head { display: none; }
+      .client-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'who actions' 'contact contact' 'vehicles vehicles' 'tramites tramites';
+        gap: 8px 12px;
+        padding: 14px 4px;
+      }
+      .client-who { grid-area: who; }
+      .client-actions { grid-area: actions; align-self: start; }
+      .client-contact { grid-area: contact; }
+      .client-vehicles { grid-area: vehicles; }
+      .client-tramites { grid-area: tramites; }
+    }
   `],
 })
 export class CrmClientsDirectoryComponent implements OnInit {
@@ -281,19 +378,15 @@ export class CrmClientsDirectoryComponent implements OnInit {
   totalItems = signal(0);
   readonly pageSize = 20;
   isLoading = signal(true);
-  showAddForm = signal(false);
+  showForm = signal(false);
+  editingId = signal<string | null>(null);
+  deletingId = signal<string | null>(null);
   isSaving = signal(false);
   readonly engomadoLabel = engomadoLabel;
   readonly engomadoColors = ENGOMADO_COLORS;
   readonly mexicoStates = MEXICO_STATES;
 
-  newClient = {
-    name: '',
-    email: '',
-    phone: '',
-    residenceState: '',
-    notes: '',
-  };
+  form: ClientForm = emptyForm();
 
   constructor(private crmService: CrmService) {}
 
@@ -357,35 +450,77 @@ export class CrmClientsDirectoryComponent implements OnInit {
     return !!(this.search().trim() || this.filterTramite() || this.filterEngomado() || this.filterEstado());
   }
 
-  openAddForm() {
-    this.resetNewClient();
-    this.showAddForm.set(true);
+  firstTramite(c: CrmContact): string {
+    return (c.tramites || '').split(', ')[0] || '';
   }
 
-  cancelAddForm() {
-    this.showAddForm.set(false);
-    this.resetNewClient();
+  openAddForm() {
+    this.editingId.set(null);
+    this.form = emptyForm();
+    this.showForm.set(true);
+  }
+
+  openEditForm(c: CrmContact) {
+    this.editingId.set(c.id);
+    this.form = {
+      name: c.name || '',
+      email: c.email || '',
+      phone: c.phone || '',
+      residenceState: c.residenceState || '',
+      notes: c.notes || '',
+    };
+    this.showForm.set(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  closeForm() {
+    this.showForm.set(false);
+    this.editingId.set(null);
+    this.form = emptyForm();
   }
 
   saveClient() {
-    const name = this.newClient.name.trim();
+    const name = this.form.name.trim();
     if (!name) {
-      this.toast.warning('El nombre del cliente es obligatorio');
+      this.toast.warning('Escribe el nombre del cliente.');
+      return;
+    }
+    const data = {
+      name,
+      email: this.form.email.trim(),
+      phone: this.form.phone.trim(),
+      residenceState: this.form.residenceState.trim(),
+      notes: this.form.notes.trim(),
+    };
+
+    this.isSaving.set(true);
+    const id = this.editingId();
+    if (id) {
+      this.crmService.updateContact(id, { ...data, whatsapp: data.phone }).subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.closeForm();
+          this.load();
+          this.toast.success('Cliente actualizado');
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toast.error(err?.error?.error || 'No se pudo guardar el cliente');
+        },
+      });
       return;
     }
 
-    this.isSaving.set(true);
     this.crmService.createContact({
       name,
-      email: this.newClient.email.trim() || undefined,
-      phone: this.newClient.phone.trim() || undefined,
-      residenceState: this.newClient.residenceState.trim() || undefined,
-      notes: this.newClient.notes.trim() || undefined,
+      email: data.email || undefined,
+      phone: data.phone || undefined,
+      residenceState: data.residenceState || undefined,
+      notes: data.notes || undefined,
     }).subscribe({
       next: (contact) => {
         this.isSaving.set(false);
-        this.showAddForm.set(false);
-        this.resetNewClient();
+        this.closeForm();
         this.load(1);
         this.toast.success('Cliente agregado al directorio');
         this.openContact.emit(contact.id);
@@ -397,13 +532,34 @@ export class CrmClientsDirectoryComponent implements OnInit {
     });
   }
 
-  private resetNewClient() {
-    this.newClient = {
-      name: '',
-      email: '',
-      phone: '',
-      residenceState: '',
-      notes: '',
-    };
+  async deleteClient(c: CrmContact) {
+    const deals = c.dealCount || 0;
+    if (deals > 0) {
+      this.toast.warning(
+        `${c.name} tiene ${deals} trámite(s). Elimínalos del embudo antes de borrar al cliente.`,
+        'No se puede eliminar',
+      );
+      return;
+    }
+    const ok = await this.toast.confirmDelete(c.name, {
+      title: '¿Eliminar cliente?',
+      subtitle: 'También se borran sus vehículos y documentos. No se puede deshacer.',
+    });
+    if (!ok) return;
+
+    this.deletingId.set(c.id);
+    this.crmService.deleteContact(c.id).subscribe({
+      next: () => {
+        this.deletingId.set(null);
+        if (this.editingId() === c.id) this.closeForm();
+        const lastOnPage = this.clients().length === 1 && this.currentPage() > 1;
+        this.load(lastOnPage ? this.currentPage() - 1 : this.currentPage());
+        this.toast.success('Cliente eliminado');
+      },
+      error: (err) => {
+        this.deletingId.set(null);
+        this.toast.error(err?.error?.error || 'No se pudo eliminar el cliente');
+      },
+    });
   }
 }

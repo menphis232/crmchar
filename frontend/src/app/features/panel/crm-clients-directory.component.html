@@ -1,171 +1,197 @@
-<div class="dash-card">
-  <h2 class="card-title">Directorio de clientes</h2>
-  <p class="card-desc">
-    Base de datos de quienes han solicitado trámites. Filtra por trámite, engomado o estado y navega con paginación.
-  </p>
-
-  <div class="clients-toolbar">
-    <div class="clients-search">
-      <label for="clients-search-input">Buscar</label>
-      <div class="clients-search-field">
-        <svg lucideSearch [size]="14" aria-hidden="true"></svg>
-        <input id="clients-search-input" type="search" [ngModel]="search()" (ngModelChange)="onSearchChange($event)" placeholder="Nombre, teléfono, placa, email...">
-      </div>
+<div class="dash-card clients-card">
+  <header class="clients-head">
+    <div>
+      <h2 class="card-title clients-title">
+        Directorio de clientes
+        @if (!isLoading()) {
+          <span class="clients-total">{{ totalItems() }}</span>
+        }
+      </h2>
+      <p class="clients-desc">Quienes han solicitado trámites o diste de alta tú. Abre un cliente para ver sus vehículos y trámites.</p>
     </div>
-    <button type="button" class="deal-outline-btn clients-action-btn" (click)="openAddForm()">
-      <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-      Agregar cliente
-    </button>
-    @if (hasActiveFilters()) {
-      <button type="button" class="deal-outline-btn clients-action-btn" (click)="clearFilters()">Limpiar filtros</button>
+    @if (!showForm()) {
+      <button type="button" class="clients-btn clients-btn--primary" (click)="openAddForm()">
+        <svg lucidePlus [size]="15" aria-hidden="true"></svg>
+        Agregar cliente
+      </button>
     }
-    <button type="button" class="deal-outline-btn clients-action-btn" (click)="load()">Actualizar</button>
-  </div>
+  </header>
 
-  <div class="clients-filters">
-    <div class="clients-filter">
-      <label for="filter-tramite">Trámite</label>
-      <select id="filter-tramite" [ngModel]="filterTramite()" (ngModelChange)="filterTramite.set($event); onFilterChange()">
-        <option value="">Todos los trámites</option>
-        @for (t of tramiteOptions(); track t) {
-          <option [value]="t">{{ t }}</option>
-        }
-      </select>
-    </div>
-    <div class="clients-filter">
-      <label for="filter-engomado">Engomado</label>
-      <select id="filter-engomado" [ngModel]="filterEngomado()" (ngModelChange)="filterEngomado.set($event); onFilterChange()">
-        <option value="">Todos</option>
-        @for (c of engomadoColors; track c.id) {
-          <option [value]="c.id">{{ c.label }}</option>
-        }
-      </select>
-    </div>
-    <div class="clients-filter">
-      <label for="filter-estado">Estado</label>
-      <select id="filter-estado" [ngModel]="filterEstado()" (ngModelChange)="filterEstado.set($event); onFilterChange()">
-        <option value="">Todos</option>
-        @for (st of mexicoStates; track st) {
-          <option [value]="st">{{ st }}</option>
-        }
-      </select>
-    </div>
-    <div class="clients-filter">
-      <label>Resultados</label>
-      <input type="text" readonly [value]="totalItems() + ' cliente(s)'">
-    </div>
-  </div>
-
-  @if (showAddForm()) {
-    <div class="client-add-form">
-      <h3 class="client-add-title">Nuevo cliente</h3>
-      <p class="client-add-desc">Regístralo manualmente. Después podrás agregar vehículos y placas desde su ficha.</p>
-      <div class="client-add-grid">
-        <div class="client-add-field full">
-          <label for="add-client-name">Nombre *</label>
-          <input id="add-client-name" type="text" [(ngModel)]="newClient.name" placeholder="Ej. Juan Pérez">
+  @if (showForm()) {
+    <form class="client-form" (submit)="$event.preventDefault(); saveClient()" autocomplete="off">
+      <div class="client-form-head">
+        <h3 class="client-form-title">{{ editingId() ? 'Editar cliente' : 'Nuevo cliente' }}</h3>
+        <p class="client-form-desc">
+          {{ editingId() ? 'Los cambios se ven al momento en su ficha y en sus trámites.' : 'Después podrás agregar vehículos y placas desde su ficha.' }}
+        </p>
+      </div>
+      <div class="client-form-grid">
+        <div class="client-field client-field--full">
+          <label for="client-form-name">Nombre</label>
+          <input id="client-form-name" name="client-name" type="text" [(ngModel)]="form.name" placeholder="Ej. Juan Pérez" required>
         </div>
-        <div class="client-add-field">
-          <label for="add-client-email">Email</label>
-          <input id="add-client-email" type="email" [(ngModel)]="newClient.email" placeholder="correo@ejemplo.com">
+        <div class="client-field">
+          <label for="client-form-phone">Teléfono / WhatsApp</label>
+          <input id="client-form-phone" name="client-phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" placeholder="55 1234 5678">
         </div>
-        <div class="client-add-field">
-          <label for="add-client-phone">Teléfono / WhatsApp</label>
-          <input id="add-client-phone" type="tel" [(ngModel)]="newClient.phone" placeholder="55 1234 5678">
+        <div class="client-field">
+          <label for="client-form-email">Email</label>
+          <input id="client-form-email" name="client-email" type="email" [(ngModel)]="form.email" placeholder="correo@ejemplo.com">
         </div>
-        <div class="client-add-field">
-          <label for="add-client-state">Estado de residencia</label>
-          <select id="add-client-state" [(ngModel)]="newClient.residenceState">
-            <option value="">— Seleccionar —</option>
+        <div class="client-field">
+          <label for="client-form-state">Estado de residencia</label>
+          <select id="client-form-state" name="client-state" [(ngModel)]="form.residenceState">
+            <option value="">Sin estado</option>
             @for (st of mexicoStates; track st) {
               <option [value]="st">{{ st }}</option>
             }
           </select>
         </div>
-        <div class="client-add-field full">
-          <label for="add-client-notes">Notas</label>
-          <textarea id="add-client-notes" rows="2" [(ngModel)]="newClient.notes" placeholder="Referido, observaciones..."></textarea>
+        <div class="client-field client-field--full">
+          <label for="client-form-notes">Notas</label>
+          <textarea id="client-form-notes" name="client-notes" rows="2" [(ngModel)]="form.notes" placeholder="Referido, observaciones..."></textarea>
         </div>
       </div>
-      <div class="client-add-actions">
-        <button type="button" class="deal-outline-btn clients-action-btn" (click)="cancelAddForm()">Cancelar</button>
-        <button type="button" class="deal-outline-btn clients-action-btn clients-action-btn--primary" [disabled]="isSaving()" (click)="saveClient()">
-          {{ isSaving() ? 'Guardando...' : 'Guardar cliente' }}
+      <div class="client-form-actions">
+        <button type="button" class="clients-btn" (click)="closeForm()">Cancelar</button>
+        <button type="submit" class="clients-btn clients-btn--primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Guardando...' : (editingId() ? 'Guardar cambios' : 'Guardar cliente') }}
         </button>
       </div>
-    </div>
+    </form>
   }
 
-  @if (isLoading()) {
-    <p class="card-desc">Cargando clientes...</p>
-  } @else if (clients().length === 0) {
-    <p class="card-desc">
-      @if (hasActiveFilters()) {
-        No hay clientes con esos filtros. Prueba otros criterios o limpia los filtros.
-      } @else {
-        No hay clientes registrados todavía. Agrégalos manualmente o se crearán cuando alguien solicite un trámite.
-      }
-    </p>
-  } @else {
-    <div class="client-row-head">
-      <span>Cliente</span>
-      <span>Contacto</span>
-      <span>Estado</span>
-      <span>Autos</span>
-      <span>Engomado</span>
-      <span>Placas</span>
-      <span>Trámites</span>
+  <div class="clients-toolbar" role="search">
+    <div class="clients-search">
+      <svg lucideSearch [size]="15" aria-hidden="true"></svg>
+      <input id="clients-search-input" type="search" aria-label="Buscar clientes"
+        [ngModel]="search()" (ngModelChange)="onSearchChange($event)"
+        placeholder="Buscar por nombre, teléfono, placa o email">
     </div>
-    <div class="clients-table">
+    <select aria-label="Filtrar por trámite" [ngModel]="filterTramite()" (ngModelChange)="filterTramite.set($event); onFilterChange()">
+      <option value="">Todos los trámites</option>
+      @for (t of tramiteOptions(); track t) {
+        <option [value]="t">{{ t }}</option>
+      }
+    </select>
+    <select aria-label="Filtrar por engomado" [ngModel]="filterEngomado()" (ngModelChange)="filterEngomado.set($event); onFilterChange()">
+      <option value="">Cualquier engomado</option>
+      @for (c of engomadoColors; track c.id) {
+        <option [value]="c.id">{{ c.label }}</option>
+      }
+    </select>
+    <select aria-label="Filtrar por estado" [ngModel]="filterEstado()" (ngModelChange)="filterEstado.set($event); onFilterChange()">
+      <option value="">Todos los estados</option>
+      @for (st of mexicoStates; track st) {
+        <option [value]="st">{{ st }}</option>
+      }
+    </select>
+    @if (hasActiveFilters()) {
+      <button type="button" class="clients-link" (click)="clearFilters()">Limpiar filtros</button>
+    }
+  </div>
+
+  @if (isLoading()) {
+    <div class="clients-list" aria-busy="true" aria-label="Cargando clientes">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="client-row client-row--skeleton">
+          <span class="sk sk-name"></span>
+          <span class="sk sk-line"></span>
+          <span class="sk sk-line sk-short"></span>
+          <span class="sk sk-line"></span>
+        </div>
+      }
+    </div>
+  } @else if (clients().length === 0) {
+    <div class="clients-empty">
+      @if (hasActiveFilters()) {
+        <p class="clients-empty-title">Ningún cliente coincide con esos filtros</p>
+        <p class="clients-empty-text">Prueba con otra placa o nombre, o quita los filtros.</p>
+        <button type="button" class="clients-btn" (click)="clearFilters()">Limpiar filtros</button>
+      } @else {
+        <p class="clients-empty-title">Aún no tienes clientes</p>
+        <p class="clients-empty-text">Se agregan solos cuando alguien solicita un trámite. También puedes darlos de alta tú.</p>
+        <button type="button" class="clients-btn clients-btn--primary" (click)="openAddForm()">
+          <svg lucidePlus [size]="15" aria-hidden="true"></svg>
+          Agregar cliente
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="clients-list">
+      <div class="client-row client-row--head" aria-hidden="true">
+        <span>Cliente</span>
+        <span>Contacto</span>
+        <span>Vehículos</span>
+        <span>Trámites</span>
+        <span></span>
+      </div>
+
       @for (c of clients(); track c.id) {
-        <button type="button" class="client-row" (click)="openContact.emit(c.id)">
-          <div>
-            <div class="client-name deal-meta-with-icon">
-              <svg lucideUser [size]="14" aria-hidden="true"></svg>
-              {{ c.name }}
-            </div>
-            @if (c.source) {
-              <div class="client-meta">Origen: {{ c.source }}</div>
-            }
+        <div class="client-row" (click)="openContact.emit(c.id)">
+          <div class="client-cell client-who">
+            <button type="button" class="client-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
+            <span class="client-sub">{{ c.residenceState || 'Sin estado' }}</span>
           </div>
-          <div class="client-meta">
-            @if (c.phone) { <div>{{ c.phone }}</div> }
-            @if (c.email) { <div>{{ c.email }}</div> }
+
+          <div class="client-cell client-contact">
+            @if (c.phone) { <span class="client-phone">{{ c.phone }}</span> }
+            @if (c.email) { <span class="client-sub client-email" [title]="c.email">{{ c.email }}</span> }
+            @if (!c.phone && !c.email) { <span class="client-sub">Sin contacto</span> }
           </div>
-          <div class="client-meta">{{ c.residenceState || '—' }}</div>
-          <div>
-            <span class="client-count">
-              <svg lucideCar [size]="14" aria-hidden="true"></svg>
-              {{ c.vehicleCount || 0 }}
-            </span>
-          </div>
-          <div class="client-meta">
-            @if (c.engomados?.length) {
-              @for (e of c.engomados; track e) {
-                <span class="engomado-tag">{{ engomadoLabel(e) }}</span>
+
+          <div class="client-cell client-vehicles">
+            @if (c.vehicles?.length) {
+              @for (v of c.vehicles!.slice(0, 3); track v.plate) {
+                <span class="plate-chip" [title]="v.engomado ? 'Engomado ' + engomadoLabel(v.engomado) : 'Sin engomado'">
+                  <span class="engomado-dot" [attr.data-color]="v.engomado || 'none'" aria-hidden="true"></span>
+                  {{ v.plate }}
+                </span>
+              }
+              @if (c.vehicles!.length > 3) {
+                <span class="client-sub">+{{ c.vehicles!.length - 3 }}</span>
               }
             } @else {
-              —
+              <span class="client-sub">Sin vehículos</span>
             }
           </div>
-          <div class="client-meta">{{ c.plates || '—' }}</div>
-          <div class="client-meta">{{ c.tramites || '—' }}</div>
-        </button>
+
+          <div class="client-cell client-tramites">
+            @if (c.tramites) {
+              <span class="client-tramite" [title]="c.tramites">{{ firstTramite(c) }}</span>
+              @if ((c.dealCount || 0) > 1) {
+                <span class="client-sub">+{{ (c.dealCount || 0) - 1 }} más</span>
+              }
+            } @else {
+              <span class="client-sub">Sin trámites</span>
+            }
+          </div>
+
+          <div class="client-cell client-actions">
+            <button type="button" class="icon-btn" (click)="$event.stopPropagation(); openEditForm(c)" [attr.aria-label]="'Editar ' + c.name" title="Editar">
+              <svg lucidePencil [size]="15" aria-hidden="true"></svg>
+            </button>
+            <button type="button" class="icon-btn icon-btn--danger" (click)="$event.stopPropagation(); deleteClient(c)" [attr.aria-label]="'Eliminar ' + c.name" title="Eliminar"
+              [disabled]="deletingId() === c.id">
+              <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
+            </button>
+          </div>
+        </div>
       }
     </div>
 
-    @if (totalPages() > 1 || totalItems() > 0) {
-      <div class="pagination">
-        <button type="button" class="page-btn" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">
-          <svg lucideChevronLeft [size]="14" aria-hidden="true"></svg>
+    @if (totalPages() > 1) {
+      <nav class="clients-pagination" aria-label="Páginas de clientes">
+        <button type="button" class="clients-btn" [disabled]="currentPage() <= 1" (click)="goPage(currentPage() - 1)">
+          <svg lucideChevronLeft [size]="15" aria-hidden="true"></svg>
           Anterior
         </button>
-        <span class="page-info">Página {{ currentPage() }} de {{ totalPages() }} · {{ totalItems() }} clientes</span>
-        <button type="button" class="page-btn" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">
+        <span class="clients-page-info">Página {{ currentPage() }} de {{ totalPages() }}</span>
+        <button type="button" class="clients-btn" [disabled]="currentPage() >= totalPages()" (click)="goPage(currentPage() + 1)">
           Siguiente
-          <svg lucideChevronRight [size]="14" aria-hidden="true"></svg>
+          <svg lucideChevronRight [size]="15" aria-hidden="true"></svg>
         </button>
-      </div>
+      </nav>
     }
   }
 </div>
