@@ -338,10 +338,10 @@
           <svg lucideWrench [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Catálogo de servicios
         </h2>
-        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional. Arrastra para definir el orden en tu página pública.</p>
+        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional. Ordena con las flechas o arrastrando el asa · Se guarda automáticamente.</p>
         @if (p.services?.length) {
           <p class="card-desc" style="font-size:11px; margin-bottom:10px;">
-            Arrastra los servicios para cambiar el orden · Se guarda automáticamente
+            Al editar o crear un servicio puedes definir la checklist de requisitos, qué incluye y bonus.
           </p>
         }
         <div class="service-sort-list"
@@ -351,14 +351,25 @@
             <div class="inbox-item service-catalog-item service-sort-item"
                  [class.service-sort-item--dragging]="serviceDragIdx === $index"
                  [class.service-sort-item--over]="serviceDragOverIdx === $index"
-                 draggable="true"
-                 (dragstart)="onServiceDragStart($event, $index)"
+                 (dragover)="onServiceDragOver($event, $index)"
                  (dragenter)="onServiceDragEnter($event, $index)"
                  (dragleave)="onServiceDragLeave()"
                  (drop)="onServiceDropItem($event, $index)">
-              <span class="service-sort-handle" title="Arrastra para mover">
-                <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
-              </span>
+              <div class="service-sort-controls">
+                <span class="service-sort-handle"
+                      title="Arrastra para mover"
+                      draggable="true"
+                      (dragstart)="onServiceDragStart($event, $index)"
+                      (dragend)="resetServiceDragState()">
+                  <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
+                </span>
+                <button type="button" class="service-sort-btn" title="Subir" [disabled]="$index === 0" (click)="moveServiceByButton($index, -1)">
+                  <svg lucideChevronUp [size]="14" aria-hidden="true"></svg>
+                </button>
+                <button type="button" class="service-sort-btn" title="Bajar" [disabled]="$index === (p.services!.length - 1)" (click)="moveServiceByButton($index, 1)">
+                  <svg lucideChevronDown [size]="14" aria-hidden="true"></svg>
+                </button>
+              </div>
               @if (s.imageUrl) {
                 <img class="service-catalog-thumb" [src]="s.imageUrl" alt="" draggable="false">
               }
@@ -413,7 +424,7 @@
           <p class="empty">Aún no tienes servicios. Agrega el primero abajo.</p>
         }
         <hr class="divider">
-        <h4 class="section-sub">{{ editingServiceId ? 'Editar servicio' : 'Nuevo servicio' }}</h4>
+        <h4 class="section-sub" id="service-edit-form">{{ editingServiceId ? 'Editar servicio' : 'Nuevo servicio' }}</h4>
         <div class="form-row">
           <div class="form-group">
             <label>Nombre del trámite</label>

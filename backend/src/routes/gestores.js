@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
-import { authRequired, requireRole } from '../middleware/auth.js';
+import { authRequired, authOptional, requireRole } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
 import { createDealFromSolicitud } from '../crm/helpers.js';
 import { pipelineStagesForUser } from '../crm/stages.js';
@@ -842,7 +842,7 @@ router.post('/review/:dealId', async (req, res) => {
 });
 
 // FASE 4: Chatbot Público
-router.post('/:slugOrId/chat', async (req, res) => {
+router.post('/:slugOrId/chat', authOptional, async (req, res) => {
   try {
     const { message, history } = req.body;
     if (!message) return res.status(400).json({ error: 'Mensaje requerido' });
@@ -873,21 +873,56 @@ router.post('/:slugOrId/chat', async (req, res) => {
       return `- ${s.name}: ${priceLabel}, demora aprox ${s.time_estimate}`;
     }).join('\n');
 
+    let knownClient = null;
+    if (req.user?.id) {
+      const dbUser = await get(
+        'SELECT id, name, email, phone, role FROM users WHERE id = ? LIMIT 1',
+        [req.user.id],
+      );
+      if (dbUser?.email) {
+        knownClient = {
+          name: dbUser.name || req.user.name || '',
+          email: dbUser.email,
+          phone: dbUser.phone || '',
+          role: dbUser.role,
+        };
+      }
+    }
+
     let prompt = `Eres el asistente virtual público de un gestor vehicular llamado "${gestor.name}".
 Aquí está su biografía: "${gestor.bio || 'Gestor profesional.'}"
 Y aquí están sus servicios y precios actuales:
 ${servicesText || 'No hay servicios listados.'}
 ${trainingText ? `\n${trainingText}\n` : ''}
-Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas. 
+Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas.
+4. NUNCA inventes precios o servicios.
+`;
+
+    if (knownClient) {
+      prompt += `
+CLIENTE YA REGISTRADO EN LA PLATAFORMA (sesión iniciada):
+- Nombre: ${knownClient.name || '(sin nombre)'}
+- Email: ${knownClient.email}
+- Teléfono: ${knownClient.phone || '(no guardado)'}
+1. NO le pidas registrarse ni volver a dar nombre/email/teléfono. Ya es usuario de la plataforma.
+2. Salúdalo por su nombre si lo conoces. Si quiere iniciar un trámite, confirma solo el servicio (y ubicación si hace falta) y, cuando confirme, añade EXACTAMENTE al FINAL de tu respuesta este bloque JSON con SUS datos conocidos:
+\`\`\`json
+{"action": "create_lead", "clientName": "${(knownClient.name || 'Cliente').replace(/"/g, '')}", "clientEmail": "${knownClient.email.replace(/"/g, '')}", "clientPhone": "${(knownClient.phone || '').replace(/"/g, '')}", "location": "...", "serviceName": "..."}
+\`\`\`
+3. El serviceName debe coincidir exactamente con uno de la lista. location puede ser "Por confirmar" si no la dijo.
+`;
+    } else {
+      prompt += `
 1. Si el cliente quiere iniciar un trámite o contratar un servicio, DEBES pedirle que te proporcione sus datos para registrar su solicitud.
 2. Los datos que necesitas obligatoriamente son: Su Nombre completo, su Correo electrónico, su Teléfono o WhatsApp, su Ubicación (Ciudad/Estado), y el Servicio que desea contratar.
 3. Pregunta estos datos de forma natural y conversacional, uno a uno o todos juntos si fluye bien en la plática.
-4. NUNCA inventes precios o servicios.
 5. UNA VEZ QUE TENGAS TODOS ESTOS DATOS Y EL CLIENTE CONFIRME QUE DESEA CONTINUAR, debes añadir EXACTAMENTE al FINAL de tu respuesta el siguiente bloque JSON. NUNCA añadas este bloque si faltan datos.
 \`\`\`json
 {"action": "create_lead", "clientName": "...", "clientEmail": "...", "clientPhone": "...", "location": "...", "serviceName": "..."}
 \`\`\`
-Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exactamente con uno de la lista de servicios.`;
+Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exactamente con uno de la lista de servicios.
+`;
+    }
 
     let generatedText = '';
     try {
@@ -899,6 +934,11 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
     const leadData = extractCreateLeadAction(generatedText);
     if (leadData) {
       try {
+        if (knownClient) {
+          leadData.clientName = knownClient.name || leadData.clientName;
+          leadData.clientEmail = knownClient.email;
+          leadData.clientPhone = knownClient.phone || leadData.clientPhone || '';
+        }
         const result = await processLeadCreation(
           gestor,
           leadData.clientName,
@@ -909,7 +949,9 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
         );
         generatedText = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
         if (!generatedText) {
-          generatedText = '¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.';
+          generatedText = knownClient
+            ? '¡Listo! Registré tu solicitud con tu cuenta. Pronto el gestor se pondrá en contacto contigo; también puedes seguirla desde Mi Panel.'
+            : '¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.';
         }
         const io = req.app.get('io');
         if (io) {

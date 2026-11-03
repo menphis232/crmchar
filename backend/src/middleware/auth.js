@@ -18,11 +18,15 @@ export function signToken(user) {
   );
 }
 
-export function authRequired(req, res, next) {
+function readBearerOrQueryToken(req) {
   const header = req.headers.authorization;
-  // Also support token via query string (for direct download links)
   const queryToken = req.query.token;
-  const rawToken = header?.startsWith('Bearer ') ? header.slice(7) : queryToken;
+  return header?.startsWith('Bearer ') ? header.slice(7) : queryToken;
+}
+
+export function authRequired(req, res, next) {
+  // Also support token via query string (for direct download links)
+  const rawToken = readBearerOrQueryToken(req);
   if (!rawToken) {
     return res.status(401).json({ error: 'Token requerido' });
   }
@@ -32,6 +36,18 @@ export function authRequired(req, res, next) {
   } catch {
     return res.status(401).json({ error: 'Token inválido o expirado' });
   }
+}
+
+/** Adjunta req.user si hay JWT válido; si no, continúa como visitante. */
+export function authOptional(req, res, next) {
+  const rawToken = readBearerOrQueryToken(req);
+  if (!rawToken) return next();
+  try {
+    req.user = jwt.verify(rawToken, JWT_SECRET);
+  } catch {
+    /* token inválido: tratar como anónimo */
+  }
+  next();
 }
 
 export function requireRole(...roles) {

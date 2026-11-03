@@ -1089,15 +1089,52 @@ app-crm-team {
   outline-offset: 2px;
 }
 
-.service-sort-handle {
+.service-sort-controls {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.service-sort-handle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 28px;
   height: 28px;
-  margin-top: 2px;
   color: rgba(255, 255, 255, 0.45);
+  cursor: grab;
+  touch-action: none;
+}
+
+.service-sort-handle:active {
+  cursor: grabbing;
+}
+
+.service-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.service-sort-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.service-sort-btn:disabled {
+  opacity: 0.28;
+  cursor: not-allowed;
 }
 
 .service-sort-item .inbox-info {

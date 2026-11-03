@@ -5,6 +5,7 @@ import { DecimalPipe, DatePipe } from '@angular/common';
 import { NavComponent } from '../../shared/nav.component';
 import { WhatsappIconComponent } from '../../shared/whatsapp-icon.component';
 import { GestoresService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { Gestor, GestorService } from '../../models';
 import { HttpClient } from '@angular/common/http';
@@ -32,6 +33,7 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
   private toast = inject(ToastService);
   private sanitizer = inject(DomSanitizer);
   private metaTags = inject(MetaTagsService);
+  readonly auth = inject(AuthService);
 
   readonly mexicoStates = MEXICO_STATES;
 
@@ -245,10 +247,11 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     if (this.chatOpen && this.chatHistory.length === 0) {
       const g = this.gestor();
       if (g) {
-        this.chatHistory.push({
-          role: 'model',
-          content: `¡Hola! Bienvenido/a a ${g.name}. Soy tu asistente virtual. ¿En qué te puedo ayudar hoy? Si deseas iniciar un trámite, con gusto te registro. Solo dime qué servicio necesitas.`
-        });
+        const u = this.auth.user();
+        const greeting = u?.name
+          ? `¡Hola ${u.name}! Bienvenido/a de nuevo a ${g.name}. Ya te reconozco como usuario de la plataforma: no necesitas registrarte otra vez. ¿Qué trámite te interesa hoy?`
+          : `¡Hola! Bienvenido/a a ${g.name}. Soy tu asistente virtual. ¿En qué te puedo ayudar hoy? Si deseas iniciar un trámite, con gusto te registro. Solo dime qué servicio necesitas.`;
+        this.chatHistory.push({ role: 'model', content: greeting });
       }
     }
   }

@@ -63,6 +63,8 @@ import {
   LucideWrench,
   LucideX,
   LucideGripVertical,
+  LucideChevronUp,
+  LucideChevronDown,
   LucideImage,
   LucideStar,
   LucideCar,
@@ -125,7 +127,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css'],
@@ -1369,8 +1371,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.serviceDocs = checklistFromTexts(serviceRequirements(s));
     this.serviceIncludesList = checklistFromTexts(serviceIncludes(s));
     this.serviceBonusList = checklistFromTexts(serviceBonus(s));
-    this.message.set('Editando servicio — guarda los cambios abajo');
+    this.message.set('Editando servicio — requisitos, qué incluye y bonus abajo');
     setTimeout(() => this.message.set(''), 4000);
+    setTimeout(() => {
+      document.getElementById('service-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   }
 
   cancelEditService() {
@@ -1458,9 +1463,18 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   onServiceDragStart(event: DragEvent, idx: number) {
-    this.serviceDragIdx = idx;
     event.dataTransfer?.setData('text/plain', String(idx));
     event.dataTransfer!.effectAllowed = 'move';
+    // Diferir el estado visual: cambiar la clase en dragstart cancela el drag nativo en Chrome.
+    setTimeout(() => {
+      this.serviceDragIdx = idx;
+    });
+  }
+
+  onServiceDragOver(event: DragEvent, idx: number) {
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    if (this.serviceDragOverIdx !== idx) this.serviceDragOverIdx = idx;
   }
 
   onServiceDragEnter(event: DragEvent, idx: number) {
@@ -1480,15 +1494,25 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   onServiceDropItem(event: DragEvent, toIdx: number) {
     event.preventDefault();
     event.stopPropagation();
-    if (this.serviceDragIdx < 0 || this.serviceDragIdx === toIdx) {
+    const fromRaw = event.dataTransfer?.getData('text/plain');
+    const fromIdx = fromRaw !== undefined && fromRaw !== '' ? Number(fromRaw) : this.serviceDragIdx;
+    if (Number.isNaN(fromIdx) || fromIdx < 0 || fromIdx === toIdx) {
       this.resetServiceDragState();
       return;
     }
-    this.moveServiceInList(this.serviceDragIdx, toIdx);
+    this.moveServiceInList(fromIdx, toIdx);
     this.resetServiceDragState();
   }
 
-  private resetServiceDragState() {
+  moveServiceByButton(fromIdx: number, direction: -1 | 1) {
+    const toIdx = fromIdx + direction;
+    const profile = this.profile();
+    if (!profile?.services?.length) return;
+    if (toIdx < 0 || toIdx >= profile.services.length) return;
+    this.moveServiceInList(fromIdx, toIdx);
+  }
+
+  resetServiceDragState() {
     this.serviceDragIdx = -1;
     this.serviceDragOverIdx = -1;
   }
@@ -1496,6 +1520,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   private moveServiceInList(fromIdx: number, toIdx: number) {
     const profile = this.profile();
     if (!profile?.services?.length) return;
+    if (fromIdx < 0 || toIdx < 0 || fromIdx >= profile.services.length || toIdx >= profile.services.length) return;
     const services = [...profile.services];
     const [moved] = services.splice(fromIdx, 1);
     services.splice(toIdx, 0, moved);
@@ -1504,9 +1529,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   private persistServiceOrder(services: { id: string }[]) {
-    if (this.serviceOrderSaving) return;
-    this.serviceOrderSaving = true;
     const order = services.map(s => s.id);
+    this.serviceOrderSaving = true;
     this.gestoresService.reorderServices(order).subscribe({
       next: (res) => {
         const profile = this.profile();

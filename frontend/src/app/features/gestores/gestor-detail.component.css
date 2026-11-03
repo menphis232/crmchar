@@ -180,10 +180,17 @@ app-gestor-showcase-gallery {
   font-family: var(--f-display);
   font-size: 20px;
   font-weight: var(--display-weight);
-  margin-bottom: 20px;
+  margin-bottom: 6px;
   text-transform: uppercase;
   letter-spacing: var(--display-letter-spacing);
   color: #fff;
+}
+.section-note {
+  margin: 0 0 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.55);
+  letter-spacing: 0.02em;
 }
 .reviews-title { margin-top: 40px; }
 .services-list { display: flex; flex-direction: column; gap: 10px; }

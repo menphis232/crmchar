@@ -54,6 +54,7 @@
 
                   @if (b.type === 'services') {
                     <h3 class="section-title">{{ b.data.title }}</h3>
+                    <p class="section-note">(No incluye Derechos)</p>
                     <div class="services-list" style="margin-bottom: 40px;">
                       @for (s of g.services; track s.id) {
                         <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
@@ -276,6 +277,7 @@
           }
 
           <h3 class="section-title">Servicios y Tarifas</h3>
+          <p class="section-note">(No incluye Derechos)</p>
           <div class="services-list">
             @for (s of g.services; track s.id) {
               <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
