@@ -1052,17 +1052,27 @@ export class CrmDealPanelComponent implements OnDestroy {
     });
   };
 
-  // Chat
+  // Chat cliente
   messages: any[] = [];
   newMessage = '';
+  // Chat perito (staff)
+  staffMessages: any[] = [];
+  newStaffMessage = '';
   private joinedDealId: string | null = null;
   private onReceiveMessage = (msg: any) => {
     this.zone.run(() => {
-      if (this.deal() && msg.dealId === this.deal()!.id) {
-        if (!this.messages.some(m => m.id === msg.id)) {
-          this.messages.push(msg);
-          this.scrollToBottom();
+      if (!(this.deal() && msg.dealId === this.deal()!.id)) return;
+      const channel = msg.channel || 'client';
+      if (channel === 'staff') {
+        if (!this.staffMessages.some(m => m.id === msg.id)) {
+          this.staffMessages.push(msg);
+          this.scrollStaffToBottom();
         }
+        return;
+      }
+      if (!this.messages.some(m => m.id === msg.id)) {
+        this.messages.push(msg);
+        this.scrollToBottom();
       }
     });
   };
@@ -1356,6 +1366,13 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.socketService.emit('join_deal', id);
       this.scrollToBottom();
     });
+    this.http.get<any[]>(`${environment.apiUrl}/crm/deals/${id}/staff-messages`).subscribe({
+      next: (res) => {
+        this.staffMessages = res;
+        this.scrollStaffToBottom();
+      },
+      error: () => { this.staffMessages = []; },
+    });
   }
 
   sendMessage() {
@@ -1363,6 +1380,23 @@ export class CrmDealPanelComponent implements OnDestroy {
     const txt = this.newMessage;
     this.newMessage = '';
     this.postChatMessage(txt);
+  }
+
+  sendStaffMessage() {
+    if (!this.newStaffMessage.trim()) return;
+    const d = this.deal();
+    if (!d?.peritoId) return;
+    const txt = this.newStaffMessage.trim();
+    this.newStaffMessage = '';
+    this.http.post<any>(`${environment.apiUrl}/crm/deals/${d.id}/staff-messages`, { message: txt }).subscribe({
+      next: (saved) => {
+        if (!this.staffMessages.find(m => m.id === saved.id)) {
+          this.staffMessages.push({ dealId: d.id, channel: 'staff', ...saved });
+          this.scrollStaffToBottom();
+        }
+      },
+      error: (e) => this.toast.error(e.error?.error || 'Error al enviar mensaje al perito'),
+    });
   }
 
   private postChatMessage(message: string, fileUrl?: string) {
@@ -1409,6 +1443,13 @@ export class CrmDealPanelComponent implements OnDestroy {
         input.value = '';
       },
     });
+  }
+
+  scrollStaffToBottom() {
+    setTimeout(() => {
+      const el = document.getElementById('gestor-staff-chat-box');
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
   }
 
   scrollToBottom() {

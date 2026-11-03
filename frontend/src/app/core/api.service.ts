@@ -729,6 +729,14 @@ export class PeritoService {
     return this.http.post<{ id: string; note: string; createdAt: string }>(`${this.base}/deals/${dealId}/notes`, { note });
   }
 
+  getStaffMessages(dealId: string) {
+    return this.http.get<any[]>(`${this.base}/deals/${dealId}/staff-messages`);
+  }
+
+  sendStaffMessage(dealId: string, message: string, fileUrl?: string) {
+    return this.http.post<any>(`${this.base}/deals/${dealId}/staff-messages`, { message, fileUrl });
+  }
+
   addUpload(dealId: string, data: { docType: string; fileUrl: string; fileName?: string }) {
     return this.http.post(`${this.base}/deals/${dealId}/uploads`, data);
   }

@@ -1281,6 +1281,25 @@ async function migrate() {
       console.log('Migración v61 (service image) aplicada.');
     }
 
+    const v62Path = path.join(__dirname, '..', 'sql', 'migration-v62-staff-chat.sql');
+    if (fs.existsSync(v62Path)) {
+      const v62 = fs.readFileSync(v62Path, 'utf8');
+      const conn62 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v62.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn62.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn62.end();
+      console.log('Migración v62 (staff chat channel) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

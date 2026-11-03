@@ -119,10 +119,11 @@ router.get('/deals/:id/messages', authRequired, requireRole('cliente'), async (r
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const messages = await query(`
-      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
       FROM chat_messages m
       JOIN users u ON u.id = m.sender_id
-      WHERE m.deal_id = ?
+      WHERE m.deal_id = ? AND COALESCE(m.channel, 'client') = 'client'
       ORDER BY m.created_at ASC
     `, [req.params.id]);
     res.json(messages);
@@ -145,12 +146,13 @@ router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (
     
     const id = uuid();
     await run(`
-      INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url, channel)
+      VALUES (?, ?, ?, ?, ?, 'client')
     `, [id, req.params.id, req.user.id, message || null, fileUrl || null]);
     
     const saved = await get(`
-      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
       FROM chat_messages m
       JOIN users u ON u.id = m.sender_id
       WHERE m.id = ?

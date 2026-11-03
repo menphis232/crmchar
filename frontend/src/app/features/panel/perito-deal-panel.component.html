@@ -22,11 +22,6 @@
         </section>
 
         <section class="perito-section">
-          <h4>Costo de servicio</h4>
-          <p class="perito-value">{{ data.deal.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
-        </section>
-
-        <section class="perito-section">
           <h4>Estatus póliza de pago</h4>
           <select [ngModel]="data.deal.peritoPolizaStatus" (ngModelChange)="changePoliza($event)">
             <option value="pendiente">Pendiente</option>
@@ -106,6 +101,33 @@
               }
             </div>
           }
+        </section>
+
+        <section class="perito-section">
+          <h4>Chat con gestoría</h4>
+          <div class="perito-staff-chat">
+            <div class="perito-staff-messages" id="perito-staff-chat-box">
+              @for (msg of staffMessages; track msg.id) {
+                <div class="perito-staff-msg" [class.own]="msg.sender_id === myUserId">
+                  <div class="perito-staff-msg-meta">
+                    <strong>{{ msg.sender_id === myUserId ? 'Tú' : (msg.sender_name || 'Gestoría') }}</strong>
+                    <span>{{ msg.created_at | date:'shortTime' }}</span>
+                  </div>
+                  <p>{{ msg.message }}</p>
+                  @if (msg.file_url) {
+                    <a [href]="msg.file_url" target="_blank" rel="noopener">Ver archivo</a>
+                  }
+                </div>
+              }
+              @if (!staffMessages.length) {
+                <p class="perito-empty">Aún no hay mensajes con la gestoría.</p>
+              }
+            </div>
+            <div class="perito-staff-input">
+              <input type="text" [(ngModel)]="newStaffMessage" placeholder="Escribe a la gestoría…" (keyup.enter)="sendStaffMessage()">
+              <button type="button" class="btn-copy small" (click)="sendStaffMessage()" [disabled]="!newStaffMessage.trim()">Enviar</button>
+            </div>
+          </div>
         </section>
 
         <section class="perito-section">

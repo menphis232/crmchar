@@ -49,13 +49,6 @@
               <span class="kanban-contact">{{ deal.contactName }}</span>
             }
 
-            @if (deal.estimatedValue) {
-              <span class="kanban-value kanban-meta-with-icon">
-                <svg lucideBanknote [size]="12" aria-hidden="true"></svg>
-                {{ deal.estimatedValue | number:'1.0-0' }} MXN
-              </span>
-            }
-
             <span class="kanban-meta" [class.paid]="deal.peritoPolizaStatus === 'pagado'">
               Póliza: {{ deal.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
             </span>

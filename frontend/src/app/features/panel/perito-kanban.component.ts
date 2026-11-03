@@ -1,14 +1,14 @@
 import { Component, input, output, signal, PLATFORM_ID, inject } from '@angular/core';
-import { isPlatformBrowser, DecimalPipe } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucideBanknote, LucideChevronLeft, LucideChevronRight, LucideLightbulb } from '@lucide/angular';
+import { LucideChevronLeft, LucideChevronRight, LucideLightbulb } from '@lucide/angular';
 import { PeritoDeal } from '../../models';
 import { PERITO_STAGES, PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 
 @Component({
   selector: 'app-perito-kanban',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, LucideLightbulb, LucideChevronLeft, LucideChevronRight, LucideBanknote],
+  imports: [FormsModule, LucideLightbulb, LucideChevronLeft, LucideChevronRight],
   templateUrl: './perito-kanban.component.html',
   styleUrl: '../panel/panel-dashboard.css',
 })

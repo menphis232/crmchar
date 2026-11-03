@@ -9,7 +9,7 @@ import { requireActiveSubscription } from '../middleware/subscription.js';
 import {
   PERITO_STAGES, PERITO_STAGE_LABELS, isValidPeritoStage, peritoStagesForApi, PERITO_SUCCESS_STAGE,
 } from '../crm/perito-stages.js';
-import { emitUserNotification } from '../utils/socket-events.js';
+import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 
 /** Avisa al gestor (in-app, sin correo) que un perito actualizó un trámite. */
 async function notifyGestorPeritoUpdate(gestorUserId, { dealId, title, body }) {
@@ -42,7 +42,8 @@ function peritoDealRow(row) {
     title: row.title,
     stage: row.perito_stage || 'tramite',
     peritoStage: row.perito_stage || 'tramite',
-    estimatedValue: Number(row.estimated_value || 0),
+    // El perito no debe ver el costo cobrado al cliente.
+    estimatedValue: null,
     internalNotes: row.internal_notes || null,
     peritoPolizaStatus: row.perito_poliza_status || 'pendiente',
     peritoAssignedAt: row.perito_assigned_at,
@@ -51,6 +52,18 @@ function peritoDealRow(row) {
     updatedAt: row.updated_at,
     contactName: row.contact_name || null,
   };
+}
+
+async function loadStaffMessages(dealId) {
+  return query(
+    `SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+            u.name AS sender_name, u.role AS sender_role
+     FROM chat_messages m
+     JOIN users u ON u.id = m.sender_id
+     WHERE m.deal_id = ? AND m.channel = 'staff'
+     ORDER BY m.created_at ASC`,
+    [dealId],
+  );
 }
 
 async function loadPeritoDeal(peritoUserId, dealId) {
@@ -263,6 +276,48 @@ peritoRouter.delete('/uploads/:id', async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Error al eliminar' });
+  }
+});
+
+peritoRouter.get('/deals/:id/staff-messages', async (req, res) => {
+  try {
+    const deal = await loadPeritoDeal(req.user.id, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    res.json(await loadStaffMessages(req.params.id));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener mensajes' });
+  }
+});
+
+peritoRouter.post('/deals/:id/staff-messages', async (req, res) => {
+  try {
+    const deal = await loadPeritoDeal(req.user.id, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    const { message, fileUrl } = req.body;
+    if (!message && !fileUrl) return res.status(400).json({ error: 'Mensaje vacío' });
+
+    const id = uuid();
+    await run(
+      `INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url, channel)
+       VALUES (?, ?, ?, ?, ?, 'staff')`,
+      [id, req.params.id, req.user.id, message || null, fileUrl || null],
+    );
+    const saved = (await loadStaffMessages(req.params.id)).find((m) => m.id === id);
+    emitChatMessage(req.params.id, { ...saved, channel: 'staff' });
+
+    if (req.user.parent_id) {
+      notifyGestorPeritoUpdate(req.user.parent_id, {
+        dealId: req.params.id,
+        title: 'Mensaje del perito',
+        body: `${req.user.name || 'El perito'}: ${(message || 'Envió un archivo').substring(0, 100)}`,
+      });
+    }
+
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al enviar mensaje' });
   }
 });
 

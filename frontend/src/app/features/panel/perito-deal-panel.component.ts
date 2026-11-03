@@ -1,11 +1,12 @@
 import { Component, input, output, signal, inject, OnInit } from '@angular/core';
-import { CommonModule, DatePipe, CurrencyPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucideX, LucideUpload, LucideTrash2, LucideFileText, LucideStickyNote, LucideExternalLink,
 } from '@lucide/angular';
 import { PeritoDealDetail } from '../../models';
 import { PeritoService, UploadService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PERITO_STAGES, PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 
@@ -19,7 +20,7 @@ const UPLOAD_LABELS: Record<string, string> = {
   selector: 'app-perito-deal-panel',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DatePipe, CurrencyPipe,
+    CommonModule, FormsModule, DatePipe,
     LucideX, LucideUpload, LucideTrash2, LucideFileText, LucideStickyNote, LucideExternalLink,
   ],
   templateUrl: './perito-deal-panel.component.html',
@@ -33,12 +34,19 @@ export class PeritoDealPanelComponent implements OnInit {
   private peritoService = inject(PeritoService);
   private uploadService = inject(UploadService);
   private toast = inject(ToastService);
+  private auth = inject(AuthService);
 
   detail = signal<PeritoDealDetail | null>(null);
   loading = signal(true);
   newNote = '';
+  newStaffMessage = '';
+  staffMessages: any[] = [];
   uploading = signal<string | null>(null);
   stages = PERITO_STAGES.map((id) => ({ id, label: PERITO_STAGE_LABELS[id] }));
+
+  get myUserId() {
+    return this.auth.user()?.id;
+  }
 
   ngOnInit() {
     this.load();
@@ -50,11 +58,43 @@ export class PeritoDealPanelComponent implements OnInit {
       next: (d) => {
         this.detail.set(d);
         this.loading.set(false);
+        this.loadStaffMessages();
       },
       error: () => {
         this.loading.set(false);
         this.toast.error('No se pudo cargar el trámite');
       },
+    });
+  }
+
+  loadStaffMessages() {
+    this.peritoService.getStaffMessages(this.dealId()).subscribe({
+      next: (msgs) => {
+        this.staffMessages = msgs;
+        setTimeout(() => {
+          const el = document.getElementById('perito-staff-chat-box');
+          if (el) el.scrollTop = el.scrollHeight;
+        }, 50);
+      },
+      error: () => { this.staffMessages = []; },
+    });
+  }
+
+  sendStaffMessage() {
+    const txt = this.newStaffMessage.trim();
+    if (!txt) return;
+    this.newStaffMessage = '';
+    this.peritoService.sendStaffMessage(this.dealId(), txt).subscribe({
+      next: (saved) => {
+        if (!this.staffMessages.find((m) => m.id === saved.id)) {
+          this.staffMessages = [...this.staffMessages, saved];
+        }
+        setTimeout(() => {
+          const el = document.getElementById('perito-staff-chat-box');
+          if (el) el.scrollTop = el.scrollHeight;
+        }, 50);
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo enviar el mensaje'),
     });
   }
 

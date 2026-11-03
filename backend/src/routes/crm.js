@@ -644,8 +644,9 @@ router.post('/deals/:id/ai-reply', async (req, res) => {
 
     // Try to get chat history context
     const messages = await query(`
-      SELECT message, sender_id FROM chat_messages 
-      WHERE deal_id = ? ORDER BY created_at ASC LIMIT 10
+      SELECT message, sender_id FROM chat_messages
+      WHERE deal_id = ? AND COALESCE(channel, 'client') = 'client'
+      ORDER BY created_at ASC LIMIT 10
     `, [req.params.id]);
 
     let prompt = `Eres un asistente virtual para una empresa automotriz o de trámites vehiculares.
@@ -2401,10 +2402,11 @@ router.get('/deals/:id/messages', async (req, res) => {
     const deal = await loadDealForRequest(req, req.params.id, { select: 'id' });
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     const messages = await query(`
-      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
       FROM chat_messages m
       JOIN users u ON u.id = m.sender_id
-      WHERE m.deal_id = ?
+      WHERE m.deal_id = ? AND COALESCE(m.channel, 'client') = 'client'
       ORDER BY m.created_at ASC
     `, [req.params.id]);
     res.json(messages);
@@ -2416,16 +2418,19 @@ router.get('/deals/:id/messages', async (req, res) => {
 
 router.post('/deals/:id/messages', async (req, res) => {
   try {
-    const uid = req.orgId;
     const { message, fileUrl } = req.body;
     if (!message && !fileUrl) return res.status(400).json({ error: 'Mensaje vacío' });
     const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     const id = uuid();
-    await run(`INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url) VALUES (?, ?, ?, ?, ?)`,
-      [id, req.params.id, req.user.id, message || null, fileUrl || null]);
+    await run(
+      `INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url, channel)
+       VALUES (?, ?, ?, ?, ?, 'client')`,
+      [id, req.params.id, req.user.id, message || null, fileUrl || null],
+    );
     const saved = await get(`
-      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, u.name as sender_name, u.role as sender_role
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
       FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
     `, [id]);
 
@@ -2447,12 +2452,79 @@ router.post('/deals/:id/messages', async (req, res) => {
         created_at: new Date().toISOString(),
       });
     }
-    emitChatMessage(req.params.id, saved);
+    emitChatMessage(req.params.id, { ...saved, channel: 'client' });
 
     res.status(201).json(saved);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al enviar mensaje' });
+  }
+});
+
+// ─── CHAT STAFF (Gestor ↔ Perito) ─────────────────────────
+router.get('/deals/:id/staff-messages', async (req, res) => {
+  try {
+    const deal = await loadDealForRequest(req, req.params.id, { select: 'id, perito_id' });
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    const messages = await query(`
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
+      FROM chat_messages m
+      JOIN users u ON u.id = m.sender_id
+      WHERE m.deal_id = ? AND m.channel = 'staff'
+      ORDER BY m.created_at ASC
+    `, [req.params.id]);
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al obtener mensajes del perito' });
+  }
+});
+
+router.post('/deals/:id/staff-messages', async (req, res) => {
+  try {
+    const { message, fileUrl } = req.body;
+    if (!message && !fileUrl) return res.status(400).json({ error: 'Mensaje vacío' });
+    const deal = await loadDealForRequest(req, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    if (!deal.perito_id) {
+      return res.status(400).json({ error: 'Asigna un perito para usar este chat' });
+    }
+
+    const id = uuid();
+    await run(
+      `INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url, channel)
+       VALUES (?, ?, ?, ?, ?, 'staff')`,
+      [id, req.params.id, req.user.id, message || null, fileUrl || null],
+    );
+    const saved = await get(`
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
+      FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
+    `, [id]);
+
+    const notifId = uuid();
+    const title = 'Mensaje de la gestoría';
+    const body = message ? message.substring(0, 100) : 'Te enviaron un archivo.';
+    await run(
+      `INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'perito_update', ?, ?, ?)`,
+      [notifId, deal.perito_id, title, body, deal.id],
+    );
+    emitUserNotification(deal.perito_id, {
+      id: notifId,
+      type: 'perito_update',
+      title,
+      body,
+      ref_id: deal.id,
+      is_read: 0,
+      created_at: new Date().toISOString(),
+    });
+    emitChatMessage(req.params.id, { ...saved, channel: 'staff' });
+
+    res.status(201).json(saved);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al enviar mensaje al perito' });
   }
 });
 
