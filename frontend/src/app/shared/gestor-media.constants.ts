@@ -1,4 +1,4 @@
-/** Logo público del gestor: cuadrado 1:1, se muestra en círculo con object-fit cover. */
+/** Logo público del gestor: cuadrado 1:1, se muestra en círculo con object-fit contain. */
 export const GESTOR_LOGO_ASPECT = 1;
 export const GESTOR_LOGO_SIZE_LABEL = '512×512 px';
 

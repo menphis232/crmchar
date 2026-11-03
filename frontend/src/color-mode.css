@@ -276,6 +276,35 @@ html[data-theme='light'] .swal2-content {
   color: #5c5c5c !important;
 }
 
+/* El tema oscuro de SweetAlert deja botones/textos en blanco; en claro quedan invisibles. */
+html[data-theme='light'] .swal2-confirm,
+html[data-theme='light'] .swal2-cancel,
+html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-confirm,
+html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-cancel {
+  color: #3a3a3a !important;
+  -webkit-text-fill-color: #3a3a3a !important;
+  border-color: #3a3a3a !important;
+  background: transparent !important;
+}
+
+html[data-theme='light'] .swal-delete-sub {
+  color: #6b6b6b !important;
+}
+
+html[data-theme='light'] .swal-delete-item {
+  color: #3a3a3a !important;
+  background: #f3f3f3 !important;
+  border-color: #c5c5c5 !important;
+}
+
+html[data-theme='light'] .swal-btn-delete,
+html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-confirm.swal-btn-delete {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: #e63d2f !important;
+  border-color: #e63d2f !important;
+}
+
 app-theme-switch.theme-switch-mobile { display: none; }
 
 @media (max-width: 900px) {
