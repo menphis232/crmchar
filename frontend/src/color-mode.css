@@ -119,6 +119,15 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, a
   filter: none !important;
   object-fit: contain !important;
   background: #fff !important;
+  border-radius: 22px !important;
+  overflow: hidden;
+}
+
+/* Avatar de cuenta: la foto debe seguir el círculo (no quedar cuadrada sobre el fondo claro). */
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-avatar-img,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .avatar-dropdown-photo {
+  border-radius: 22px !important;
+  object-fit: cover !important;
 }
 
 /* Directorio de clientes: acción principal gris sólido y esqueleto de carga visible */
