@@ -277,6 +277,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   );
 
   toggleSidebar() {
+    // ≤991px: drawer móvil (misma hamburguesa izquierda)
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 991px)').matches) {
+      this.isMobileMenuOpen.update((v) => !v);
+      return;
+    }
     const next = !this.sidebarCollapsed();
     this.sidebarCollapsed.set(next);
     try {

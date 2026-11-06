@@ -409,7 +409,7 @@
 
 /* Hamburguesa: colapsar / expandir sidebar (desktop) */
 :host.panel-datta .mon-sidebar-toggle {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   justify-content: center;
   width: 36px;
@@ -422,6 +422,10 @@
   color: var(--mon-text);
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+:host.panel-datta .mon-sidebar-backdrop {
+  display: none;
 }
 
 :host.panel-datta .mon-sidebar-toggle:hover {
@@ -1002,8 +1006,13 @@
     max-height: 28px !important;
   }
 
-  :host.panel-datta .datta-brand {
+  /* Ocultar brand solo en topbar; el del drawer sí debe verse */
+  :host.panel-datta .dash-nav .datta-brand {
     display: none;
+  }
+
+  :host.panel-datta .dash-sidebar .datta-brand {
+    display: flex !important;
   }
 
   :host.panel-datta .mon-top-search {
@@ -1037,6 +1046,22 @@
     transform: translateX(0);
   }
 
+  :host.panel-datta .dash-nav {
+    left: 0 !important;
+  }
+
+  :host.panel-datta .mon-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 210;
+    border: none;
+    padding: 0;
+    margin: 0;
+    background: rgba(50, 51, 56, 0.42);
+    cursor: pointer;
+  }
+
   /* En móvil no usamos el colapso de iconos: el drawer completo */
   :host.panel-datta.sidebar-collapsed {
     --mon-sidebar: 0px;
@@ -1057,7 +1082,21 @@
     margin: 2px 10px !important;
   }
 
-  :host.panel-datta .mon-sidebar-toggle.desktop-only {
+  /* Alinear mobile/desktop: panel-dashboard usa 768px y dejaba tablet sin hamburguesa */
+  :host.panel-datta .mobile-only {
+    display: flex !important;
+  }
+
+  :host.panel-datta .desktop-only {
+    display: none !important;
+  }
+
+  :host.panel-datta .mon-sidebar-toggle {
+    display: inline-flex !important;
+  }
+
+  :host.panel-datta .dash-user .panel-user-name,
+  :host.panel-datta .dash-user ::ng-deep .panel-user-name {
     display: none !important;
   }
 

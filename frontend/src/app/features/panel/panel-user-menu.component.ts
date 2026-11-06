@@ -68,9 +68,14 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       gap: 12px;
     }
     .panel-user-name {
-      color: rgba(255,255,255,0.55);
+      color: #676879;
       font-size: 13px;
+      font-weight: 500;
+      font-family: Figtree, system-ui, sans-serif;
       white-space: nowrap;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .panel-avatar {
       width: 34px;
@@ -78,22 +83,22 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       min-width: 34px;
       min-height: 34px;
       border-radius: 50%;
-      background: #ffffff;
+      background: #0073ea;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #000;
-      font-weight: 800;
+      color: #fff;
+      font-weight: 700;
       font-size: 12px;
-      letter-spacing: 0.05em;
+      letter-spacing: 0;
       cursor: pointer;
       border: none;
       padding: 0;
       overflow: hidden;
       flex-shrink: 0;
-      font-family: var(--f-display, sans-serif);
+      font-family: Figtree, system-ui, sans-serif;
     }
-    .panel-avatar:hover { box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+    .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.2); }
     .panel-avatar-img {
       width: 100%;
       height: 100%;
@@ -105,20 +110,23 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       position: absolute;
       top: calc(100% + 8px);
       right: 0;
-      min-width: 240px;
-      background: #111;
-      border: 1px solid rgba(255,255,255,.14);
+      min-width: 260px;
+      max-width: min(320px, calc(100vw - 24px));
+      background: #fff;
+      border: 1px solid #e6e9ef;
       border-radius: 12px;
-      box-shadow: 0 16px 48px rgba(0,0,0,.55);
+      box-shadow: 0 12px 32px rgba(50, 51, 56, 0.16);
       z-index: 500;
       overflow: hidden;
+      font-family: Figtree, system-ui, sans-serif;
     }
     .avatar-dropdown-header {
       display: flex;
       align-items: center;
       gap: 12px;
       padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid #e6e9ef;
+      background: #f7f8fa;
     }
     .avatar-dropdown-photo {
       width: 40px;
@@ -126,7 +134,7 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
-      border: 1px solid rgba(255,255,255,.15);
+      border: 1px solid #e6e9ef;
     }
     .avatar-dropdown-meta {
       display: flex;
@@ -134,8 +142,20 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       gap: 2px;
       min-width: 0;
     }
-    .avatar-dropdown-header strong { color: #fff; font-size: 14px; }
-    .avatar-dropdown-header span { color: rgba(255,255,255,.45); font-size: 12px; word-break: break-all; }
+    .avatar-dropdown-header strong {
+      color: #323338;
+      font-size: 14px;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .avatar-dropdown-header span {
+      color: #676879;
+      font-size: 12px;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
     .avatar-dropdown-item {
       display: flex;
       align-items: center;
@@ -144,16 +164,19 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       text-align: left;
       background: transparent;
       border: none;
-      color: rgba(255,255,255,.85);
+      color: #323338;
       padding: 12px 16px;
       font-size: 13px;
+      font-weight: 500;
+      font-family: Figtree, system-ui, sans-serif;
       cursor: pointer;
     }
-    .avatar-dropdown-item:hover { background: rgba(255,255,255,.06); }
-    .avatar-dropdown-item.danger { color: #ff6b6b; }
+    .avatar-dropdown-item:hover { background: #f5f6f8; color: #0073ea; }
+    .avatar-dropdown-item.danger { color: #e2445c; }
+    .avatar-dropdown-item.danger:hover { background: #fff0f1; color: #e2445c; }
 
     :host-context(.sidebar-user-section) .panel-user-name {
-      color: rgba(255,255,255,0.75);
+      color: #676879;
       font-size: 12px;
       flex: 1;
       min-width: 0;

@@ -1,15 +1,21 @@
 <nav class="dash-nav">
   <button
     type="button"
-    class="mon-sidebar-toggle desktop-only"
+    class="mon-sidebar-toggle"
     (click)="toggleSidebar()"
-    [attr.aria-label]="sidebarCollapsed() ? 'Expandir menú' : 'Recoger menú'"
-    [attr.aria-expanded]="!sidebarCollapsed()"
-    [title]="sidebarCollapsed() ? 'Expandir menú' : 'Recoger menú'"
+    [attr.aria-label]="isMobileMenuOpen() || !sidebarCollapsed() ? 'Cerrar menú' : 'Abrir menú'"
+    [attr.aria-expanded]="isMobileMenuOpen() || !sidebarCollapsed()"
+    [title]="isMobileMenuOpen() ? 'Cerrar menú' : 'Menú'"
   >
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path d="M3 12h18M3 6h18M3 18h18"/>
-    </svg>
+    @if (isMobileMenuOpen()) {
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    } @else {
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
+    }
   </button>
   @if (auth.user()?.logo_url) {
     <a routerLink="/gestores" class="dash-logo dash-logo-dealer">
@@ -41,28 +47,21 @@
     <app-theme-switch />
     <app-notification-bell />
 
-    <!-- Hamburger Toggle (Mobile) -->
-    <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
-      @if (!isMobileMenuOpen()) {
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      } @else {
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      }
-    </button>
-
-    <!-- Desktop Avatar Menu -->
-    <div class="desktop-only">
-      <app-panel-user-menu
-        [name]="profile()?.name || auth.user()?.name || ''"
-        [email]="auth.user()?.email || ''"
-        [initials]="initials(profile()?.name || auth.user()?.name)"
-        [showName]="true"
-        [showBilling]="!auth.user()?.parent_id"
-        (logout)="auth.logout()"
-      />
-    </div>
+    <!-- Avatar / cuenta (siempre visible; en móvil sin nombre largo) -->
+    <app-panel-user-menu
+      [name]="profile()?.name || auth.user()?.name || ''"
+      [email]="auth.user()?.email || ''"
+      [initials]="initials(profile()?.name || auth.user()?.name)"
+      [showName]="true"
+      [showBilling]="!auth.user()?.parent_id"
+      (logout)="auth.logout()"
+    />
   </div>
 </nav>
+
+@if (isMobileMenuOpen()) {
+  <button type="button" class="mon-sidebar-backdrop" aria-label="Cerrar menú" (click)="isMobileMenuOpen.set(false)"></button>
+}
 
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
