@@ -259,6 +259,23 @@ export class CrmService {
   downloadQuotePdf(quoteId: string) {
     return this.http.get(`${this.base}/quotes/${quoteId}/pdf`, { responseType: 'blob' });
   }
+  sendQuote(quoteId: string) {
+    return this.http.post<{ emailed: boolean; notified: boolean; pdfUrl: string; whatsappUrl: string | null }>(
+      `${this.base}/quotes/${quoteId}/send`,
+      {},
+    );
+  }
+  createClientAccess(dealId: string, reset = false) {
+    return this.http.post<{
+      created: boolean;
+      login: string;
+      password?: string | null;
+      phone?: string | null;
+      email?: string | null;
+      emailed?: boolean;
+      whatsappUrl?: string | null;
+    }>(`${this.base}/deals/${dealId}/client-access`, { reset });
+  }
 
   // Phase 3.2: Documents
   getDocuments(dealId: string) {

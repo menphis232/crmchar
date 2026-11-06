@@ -79,6 +79,11 @@
             <label for="login-phone">Teléfono</label>
             <input id="login-phone" type="tel" inputmode="numeric" [(ngModel)]="email" placeholder="10 dígitos, ej. 5530162526" autocomplete="tel">
           </div>
+        } @else if (role() === 'cliente') {
+          <div class="form-group">
+            <label for="login-email">Correo o teléfono</label>
+            <input id="login-email" type="text" [(ngModel)]="email" placeholder="correo o 10 dígitos" autocomplete="username">
+          </div>
         } @else {
           <div class="form-group">
             <label for="login-email">Email</label>
@@ -91,6 +96,11 @@
             [attr.autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'">
           @if (mode() === 'login' && role() === 'perito') {
             <p class="auth-hint">¿Olvidaste tu contraseña? Pídele a tu gestoría que te asigne una nueva.</p>
+          } @else if (mode() === 'login' && role() === 'cliente') {
+            <p class="auth-hint">Si tu usuario es un teléfono y olvidaste la clave, pídesela de nuevo a tu gestoría.</p>
+            <div class="forgot-row">
+              <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña de correo?</button>
+            </div>
           } @else if (mode() === 'login') {
             <div class="forgot-row">
               <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña?</button>

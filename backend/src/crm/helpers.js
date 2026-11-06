@@ -3,6 +3,8 @@ import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { sendEmail } from '../utils/mailer.js';
+import { normalizeMxPhone, clienteInternalEmail, isInternalClientEmail, whatsappMeUrl } from '../utils/phone.js';
+import { getFrontendBase } from '../utils/frontend-url.js';
 import {
   dealTypeForRole, mapDealStageToSolicitudStatus, mapInquiryStatus, mapSolicitudStatus, templateCategoryForRole,
   firstStageForGestor,
@@ -305,38 +307,139 @@ export async function createManualVentaDeal(dealerUserId, data) {
   return dealId;
 }
 
-export async function ensureClientUser({ clientName, clientEmail, gestorUserId, gestorName, serviceName }) {
-  if (!clientEmail?.trim()) return;
-  const email = clientEmail.trim().toLowerCase();
-  const existingUser = await get('SELECT id FROM users WHERE email = ?', [email]);
-  if (existingUser) return;
+function clientPortalUrl() {
+  return `${getFrontendBase()}/login/cliente`;
+}
 
-  const tempPassword = Math.random().toString(36).slice(-8);
-  const hash = bcrypt.hashSync(tempPassword, 10);
+function accessPlainText({ clientName, gestorName, serviceName, login, password }) {
+  const lines = [
+    `Hola ${clientName}, tu gestor ${gestorName || 'asignado'} registró tu trámite${serviceName ? ` de ${serviceName}` : ''}.`,
+    `Usuario: ${login}`,
+  ];
+  if (password) lines.push(`Contraseña: ${password}`);
+  lines.push(`Entra aquí: ${clientPortalUrl()}`);
+  return lines.join('\n');
+}
+
+function accessPayload({ userId, created, login, password, phone, email, gestorUserId, clientName, gestorName, serviceName, emailed }) {
+  const text = accessPlainText({ clientName, gestorName, serviceName, login, password });
+  return {
+    created,
+    userId,
+    login,
+    password: password || null,
+    phone: phone || null,
+    email: email || null,
+    emailed: !!emailed,
+    whatsappUrl: phone ? whatsappMeUrl(phone, text) : null,
+  };
+}
+
+export async function ensureClientUser({ clientName, clientEmail, clientPhone, gestorUserId, gestorName, serviceName, resetPassword = false }) {
+  const email = clientEmail?.trim().toLowerCase() || '';
+  const phone = normalizeMxPhone(clientPhone);
+  if (!email && !phone) return null;
+  if (email && isInternalClientEmail(email)) return null;
+
+  const name = clientName?.trim() || 'Cliente';
+  let existing = null;
+  if (email) existing = await get('SELECT id, email, phone, name, role FROM users WHERE email = ?', [email]);
+  if (existing && existing.role !== 'cliente') {
+    throw new Error('Ese correo ya pertenece a otra cuenta del sistema');
+  }
+  if (!existing && phone) {
+    existing = await get("SELECT id, email, phone, name FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+  }
+
+  if (existing) {
+    if (phone) {
+      const taken = await get(
+        "SELECT id FROM users WHERE role = 'cliente' AND phone = ? AND id != ?",
+        [phone, existing.id],
+      );
+      if (!taken) await run('UPDATE users SET phone = ? WHERE id = ?', [phone, existing.id]);
+    }
+    let password = null;
+    if (resetPassword) {
+      password = crypto.randomBytes(4).toString('hex');
+      await run('UPDATE users SET password_hash = ? WHERE id = ?', [bcrypt.hashSync(password, 10), existing.id]);
+    }
+    const login = isInternalClientEmail(existing.email) ? (phone || existing.phone) : existing.email;
+    let emailed = false;
+    if (password && email && !isInternalClientEmail(email)) {
+      emailed = await sendClientAccessEmail({
+        email, clientName: name, gestorName, serviceName, login, password, gestorUserId,
+      });
+    }
+    return accessPayload({
+      userId: existing.id,
+      created: false,
+      login,
+      password,
+      phone: phone || normalizeMxPhone(existing.phone),
+      email: isInternalClientEmail(existing.email) ? null : existing.email,
+      gestorUserId,
+      clientName: name,
+      gestorName,
+      serviceName,
+      emailed,
+    });
+  }
+
+  const password = crypto.randomBytes(4).toString('hex');
   const userId = uuid();
+  const loginEmail = email || clienteInternalEmail(phone);
+  const login = email || phone;
   await run(
-    'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
-    [userId, email, hash, 'cliente', clientName.trim()],
+    'INSERT INTO users (id, email, phone, password_hash, role, name, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [userId, loginEmail, phone, bcrypt.hashSync(password, 10), 'cliente', name, 'active'],
   );
 
+  let emailed = false;
+  if (email) {
+    emailed = await sendClientAccessEmail({
+      email, clientName: name, gestorName, serviceName, login, password, gestorUserId,
+    });
+  }
+
+  return accessPayload({
+    userId,
+    created: true,
+    login,
+    password,
+    phone,
+    email: email || null,
+    gestorUserId,
+    clientName: name,
+    gestorName,
+    serviceName,
+    emailed,
+  });
+}
+
+async function sendClientAccessEmail({ email, clientName, gestorName, serviceName, login, password, gestorUserId }) {
   const tramiteLabel = serviceName || 'Trámite vehicular';
   const html = `
-    <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName.trim()},</h2>
+    <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
     <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Tu gestor <strong>${gestorName || 'asignado'}</strong> registró tu trámite de <strong>${tramiteLabel}</strong> en nuestra plataforma.</p>
     <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento, chatear con tu gestor y subir documentos.</p>
     <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
       <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
       <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
-        <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${email}</span></li>
-        <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
+        <li style="margin-bottom: 5px;"><strong>Usuario:</strong> <span style="color: #ffffff;">${login}</span></li>
+        <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${password}</span></li>
       </ul>
     </div>
-    <p style="color: #a0aec0; font-size: 14px; text-align: center;">Por favor cambia tu contraseña en la sección de Ajustes al iniciar sesión.</p>
+    <p style="color: #a0aec0; font-size: 14px; text-align: center;"><a href="${clientPortalUrl()}" style="color:#c8a94a;">Entrar al portal</a></p>
   `;
   try {
-    await sendEmail(email, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html, gestorUserId);
+    await sendEmail(email, 'Tu cuenta ha sido creada - Seguimiento de trámite', accessPlainText({
+      clientName, gestorName, serviceName, login, password,
+    }), html, gestorUserId);
+    return true;
   } catch (e) {
     console.error('Error enviando correo de bienvenida al cliente:', e);
+    return false;
   }
 }
 
@@ -371,9 +474,15 @@ export async function createManualTramiteDeal(gestorUserId, data) {
 
   if (!dealTitle) dealTitle = 'Trámite manual';
 
-  await ensureClientUser({
+  const cleanPhone = clientPhone?.trim() ? normalizeMxPhone(clientPhone) : null;
+  if (clientPhone?.trim() && !cleanPhone) {
+    throw new Error('El teléfono debe tener 10 dígitos');
+  }
+
+  const clientAccess = await ensureClientUser({
     clientName: clientName.trim(),
     clientEmail,
+    clientPhone: cleanPhone,
     gestorUserId,
     gestorName: gestor.name,
     serviceName: dealTitle,
@@ -382,7 +491,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
   const contact = await findOrCreateContact(gestorUserId, {
     name: clientName.trim(),
     email: clientEmail?.trim() || null,
-    phone: clientPhone?.trim() || null,
+    phone: cleanPhone || clientPhone?.trim() || null,
     source: 'manual',
     pipeline: 'tramite',
   });
@@ -396,7 +505,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
       solicitudId, gestor.id, clientName.trim(), dealTitle,
       location?.trim() || null,
       clientEmail?.trim()?.toLowerCase() || null,
-      clientPhone?.trim() || null,
+      cleanPhone || clientPhone?.trim() || null,
       solStatus,
     ],
   );
@@ -427,7 +536,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     );
   }
 
-  return dealId;
+  return { dealId, clientAccess };
 }
 
 export function contactRow(row) {

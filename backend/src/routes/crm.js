@@ -1,4 +1,8 @@
 import { Router } from 'express';
+import fs from 'fs';
+import path from 'path';
+import { PassThrough } from 'stream';
+import { fileURLToPath } from 'url';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { callAIProvider } from '../utils/ai_helper.js';
@@ -7,7 +11,7 @@ import { requireActiveSubscription } from '../middleware/subscription.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
-  createManualVentaDeal, createManualTramiteDeal, findOrCreateContact,
+  createManualVentaDeal, createManualTramiteDeal, findOrCreateContact, ensureClientUser,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -33,9 +37,63 @@ import {
   dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
 } from '../crm/deal-access.js';
 import { PERITO_STAGE_LABELS, PERITO_SUCCESS_STAGE } from '../crm/perito-stages.js';
-import { normalizeMxPhone, peritoInternalEmail } from '../utils/phone.js';
+import { normalizeMxPhone, peritoInternalEmail, whatsappMeUrl } from '../utils/phone.js';
+import { getFrontendBase } from '../utils/frontend-url.js';
+import { sendEmail } from '../utils/mailer.js';
+
+const crmDir = path.dirname(fileURLToPath(import.meta.url));
+const quotesUploadDir = path.join(crmDir, '..', '..', 'uploads', 'quotes');
 
 const router = Router();
+
+async function findClientUserId(dealId) {
+  const contact = await get(
+    `SELECT c.email, c.phone, c.whatsapp, c.name
+     FROM crm_deals d JOIN contacts c ON c.id = d.contact_id WHERE d.id = ?`,
+    [dealId],
+  );
+  if (!contact) return null;
+  const email = contact.email?.trim().toLowerCase();
+  if (email) {
+    const byEmail = await get("SELECT id FROM users WHERE role = 'cliente' AND email = ?", [email]);
+    if (byEmail) return byEmail.id;
+  }
+  const phone = normalizeMxPhone(contact.phone || contact.whatsapp);
+  if (!phone) return null;
+  const byPhone = await get("SELECT id FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+  return byPhone?.id || null;
+}
+
+async function notifyDealClient(dealId, { title, body }) {
+  const clientUserId = await findClientUserId(dealId);
+  if (!clientUserId) return false;
+  const notifId = uuid();
+  await run(
+    `INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
+    [notifId, clientUserId, title, body, dealId],
+  );
+  emitUserNotification(clientUserId, {
+    id: notifId,
+    type: 'new_message',
+    title,
+    body,
+    ref_id: dealId,
+    is_read: 0,
+    created_at: new Date().toISOString(),
+  });
+  return true;
+}
+
+function quotePdfBuffer(deal, quote, user) {
+  const stream = new PassThrough();
+  const chunks = [];
+  stream.on('data', (chunk) => chunks.push(chunk));
+  const done = new Promise((resolve, reject) => {
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+  });
+  return generateQuotePdf(deal, quote, user, stream).then(() => done);
+}
 
 async function loadDealForRequest(req, dealId, { dealType = null, select = '*' } = {}) {
   const access = dealAccessFilter(req.user);
@@ -452,6 +510,7 @@ router.post('/deals', async (req, res) => {
     }
 
     let dealId;
+    let clientAccess = null;
     if (role === 'concesionaria') {
       dealId = await createManualVentaDeal(uid, {
         clientName,
@@ -470,7 +529,7 @@ router.post('/deals', async (req, res) => {
         );
       }
     } else {
-      dealId = await createManualTramiteDeal(uid, {
+      const created = await createManualTramiteDeal(uid, {
         clientName,
         clientEmail,
         clientPhone,
@@ -481,6 +540,8 @@ router.post('/deals', async (req, res) => {
         estimatedValue,
         stage: dealStage,
       });
+      dealId = created.dealId;
+      clientAccess = created.clientAccess;
     }
 
     const row = await get(`
@@ -497,7 +558,9 @@ router.post('/deals', async (req, res) => {
       WHERE d.id = ? AND d.user_id = ?
     `, [dealId, uid]);
 
-    res.status(201).json(dealRow(row));
+    const payload = dealRow(row);
+    if (clientAccess) payload.clientAccess = clientAccess;
+    res.status(201).json(payload);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || 'Error al crear lead' });
@@ -1875,6 +1938,87 @@ router.get('/quotes/:id/pdf', async (req, res) => {
   }
 });
 
+router.post('/quotes/:id/send', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const quote = await get('SELECT * FROM crm_quotes WHERE id = ? AND user_id = ?', [req.params.id, uid]);
+    if (!quote) return res.status(404).json({ error: 'Cotización no encontrada' });
+
+    const dealRaw = await get(`
+      SELECT d.*, c.name as contact_name, c.email as contact_email,
+             c.phone as contact_phone, c.whatsapp as contact_whatsapp
+      FROM crm_deals d
+      JOIN contacts c ON c.id = d.contact_id
+      WHERE d.id = ? AND d.user_id = ?
+    `, [quote.deal_id, uid]);
+    if (!dealRaw) return res.status(404).json({ error: 'Trámite no encontrado' });
+
+    const user = await get('SELECT name, email, logo_url, pdf_settings, role FROM users WHERE id = ?', [uid]);
+    if (user?.pdf_settings && typeof user.pdf_settings === 'string') {
+      try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch { /* sigue sin diseño */ }
+    }
+
+    const buffer = await quotePdfBuffer(dealRaw, quote, user);
+    fs.mkdirSync(quotesUploadDir, { recursive: true });
+    const filename = `cotizacion-${quote.id}.pdf`;
+    fs.writeFileSync(path.join(quotesUploadDir, filename), buffer);
+    const pdfUrl = `${getFrontendBase()}/uploads/quotes/${filename}`;
+
+    const clientName = dealRaw.contact_name || 'cliente';
+    const total = Number(quote.total || dealRaw.estimated_value || 0);
+    const totalLabel = total.toLocaleString('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 });
+    const summary = `Hola ${clientName}, te comparto la cotización de ${dealRaw.title || 'tu trámite'} por ${totalLabel}. PDF: ${pdfUrl}`;
+    const phone = normalizeMxPhone(dealRaw.contact_phone || dealRaw.contact_whatsapp);
+    const email = dealRaw.contact_email?.trim().toLowerCase() || '';
+    const realEmail = email && !email.endsWith('@clientes.tramitesmx.local') ? email : '';
+
+    let emailed = false;
+    if (realEmail) {
+      try {
+        await sendEmail(
+          realEmail,
+          `Cotización de ${dealRaw.title || 'tu trámite'}`,
+          summary,
+          `<p style="color:#a0aec0;font-size:15px;line-height:1.6;">${summary.replace(/\n/g, '<br>')}</p>`,
+          uid,
+          [{ filename, content: buffer, contentType: 'application/pdf' }],
+        );
+        emailed = true;
+      } catch (err) {
+        console.error('send quote email:', err);
+      }
+    }
+
+    const chatId = uuid();
+    await run(
+      `INSERT INTO chat_messages (id, deal_id, sender_id, message, file_url, channel)
+       VALUES (?, ?, ?, ?, ?, 'client')`,
+      [chatId, dealRaw.id, req.user.id, summary, pdfUrl],
+    );
+    const saved = await get(`
+      SELECT m.id, m.sender_id, m.message, m.file_url, m.created_at, m.channel,
+             u.name as sender_name, u.role as sender_role
+      FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
+    `, [chatId]);
+    const notified = await notifyDealClient(dealRaw.id, {
+      title: 'Nueva cotización',
+      body: `Cotización de ${dealRaw.title || 'tu trámite'} por ${totalLabel}`,
+    });
+    emitChatMessage(dealRaw.id, { ...saved, channel: 'client' });
+    await run(`UPDATE crm_quotes SET status = 'sent', updated_at = NOW() WHERE id = ?`, [quote.id]).catch(() => {});
+
+    res.json({
+      emailed,
+      notified,
+      pdfUrl,
+      whatsappUrl: phone ? whatsappMeUrl(phone, summary) : null,
+    });
+  } catch (err) {
+    console.error('send quote:', err);
+    res.status(500).json({ error: 'No se pudo enviar la cotización' });
+  }
+});
+
 // --- FASE 3.2: DOCUMENTOS ---
 
 router.get('/deals/:id/documents', async (req, res) => {
@@ -2399,6 +2543,41 @@ router.get('/ai/insights/stats', async (req, res) => {
   }
 });
 
+router.post('/deals/:id/client-access', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const deal = await get(`
+      SELECT d.id, d.title, c.name as contact_name, c.email as contact_email, c.phone as contact_phone, c.whatsapp as contact_whatsapp
+      FROM crm_deals d
+      JOIN contacts c ON c.id = d.contact_id
+      WHERE d.id = ? AND d.user_id = ?
+    `, [req.params.id, req.orgId]);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+
+    const phoneRaw = deal.contact_phone || deal.contact_whatsapp || '';
+    if (phoneRaw && !normalizeMxPhone(phoneRaw) && !deal.contact_email) {
+      return res.status(400).json({ error: 'El teléfono del cliente debe tener 10 dígitos' });
+    }
+    const gestor = await get('SELECT name FROM gestores WHERE user_id = ?', [req.orgId]);
+    const access = await ensureClientUser({
+      clientName: deal.contact_name,
+      clientEmail: deal.contact_email,
+      clientPhone: phoneRaw,
+      gestorUserId: req.orgId,
+      gestorName: gestor?.name,
+      serviceName: deal.title,
+      resetPassword: !!req.body?.reset,
+    });
+    if (!access) {
+      return res.status(400).json({ error: 'Agrega un teléfono de 10 dígitos o un correo para crear el usuario' });
+    }
+    res.json(access);
+  } catch (err) {
+    console.error('client-access:', err);
+    res.status(500).json({ error: err.message || 'No se pudo crear el acceso del cliente' });
+  }
+});
+
 // ─── CHAT MESSAGES (Gestor ↔ Cliente) ─────────────────────
 router.get('/deals/:id/messages', async (req, res) => {
   try {
@@ -2437,27 +2616,13 @@ router.post('/deals/:id/messages', async (req, res) => {
       FROM chat_messages m JOIN users u ON u.id = m.sender_id WHERE m.id = ?
     `, [id]);
 
-    // Notificar al cliente y actualizar chat en tiempo real
-    if (deal.client_user_id) {
-      const notifId = uuid();
-      const title = 'Nuevo mensaje de tu Gestor/Concesionaria';
-      const body = message ? message.substring(0, 100) : 'Te han enviado un archivo.';
-      await run(`INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, 'new_message', ?, ?, ?)`,
-        [notifId, deal.client_user_id, title, body, deal.id]);
-
-      emitUserNotification(deal.client_user_id, {
-        id: notifId,
-        type: 'new_message',
-        title,
-        body,
-        ref_id: deal.id,
-        is_read: 0,
-        created_at: new Date().toISOString(),
-      });
-    }
+    const notified = await notifyDealClient(req.params.id, {
+      title: 'Nuevo mensaje de tu gestor',
+      body: message ? message.substring(0, 140) : 'Te enviaron un archivo.',
+    });
     emitChatMessage(req.params.id, { ...saved, channel: 'client' });
 
-    res.status(201).json(saved);
+    res.status(201).json({ ...saved, notified });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al enviar mensaje' });

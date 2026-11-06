@@ -1329,7 +1329,7 @@
         <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
       <h2 class="card-title" style="margin-bottom:8px;">+ Nuevo trámite manual</h2>
-      <p class="card-desc" style="margin-bottom:20px;">Registra un cliente con su trámite. Si incluyes email, se creará su cuenta de seguimiento.</p>
+      <p class="card-desc" style="margin-bottom:20px;">Registra un cliente con su trámite. Con teléfono se crea su usuario y te damos la clave para mandársela por WhatsApp. Con correo, también se la enviamos por email.</p>
 
       <div class="form-row">
         <div class="form-group">
@@ -1343,7 +1343,7 @@
           <input id="gl-email" type="email" [(ngModel)]="manualLead.clientEmail" placeholder="correo@ejemplo.com">
         </div>
         <div class="form-group">
-          <label for="gl-phone">Teléfono / WhatsApp</label>
+          <label for="gl-phone">Teléfono / WhatsApp (usuario del cliente)</label>
           <input id="gl-phone" type="tel" [(ngModel)]="manualLead.clientPhone" placeholder="55 1234 5678">
         </div>
       </div>
@@ -1401,6 +1401,38 @@
         <button type="button" class="btn-copy" (click)="saveManualLead()" [disabled]="savingManualLead()">
           {{ savingManualLead() ? 'Guardando...' : 'Crear trámite' }}
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (clientAccessNotice(); as access) {
+  <div class="modal-overlay" (click)="clientAccessNotice.set(null)">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button type="button" class="modal-close" (click)="clientAccessNotice.set(null)" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <h2 class="card-title" style="margin-bottom:8px;">Usuario del cliente</h2>
+      <p class="card-desc" style="margin-bottom:16px;">
+        @if (access.created) {
+          Se creó la cuenta. Mándale estos datos por WhatsApp.
+        } @else if (access.password) {
+          Se generó una clave nueva. La anterior ya no sirve.
+        } @else {
+          Este cliente ya tenía usuario. La clave no se cambió.
+        }
+        @if (access.emailed) { También se envió por correo. }
+      </p>
+      <p><strong>Usuario:</strong> {{ access.login }}</p>
+      @if (access.password) {
+        <p><strong>Contraseña:</strong> {{ access.password }}</p>
+      }
+      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap;">
+        <button type="button" class="btn-ghost" (click)="copyClientAccess()">Copiar</button>
+        @if (access.whatsappUrl) {
+          <a class="btn-copy" [href]="access.whatsappUrl" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+        }
+        <button type="button" class="btn-ghost" (click)="clientAccessNotice.set(null)">Cerrar</button>
       </div>
     </div>
   </div>

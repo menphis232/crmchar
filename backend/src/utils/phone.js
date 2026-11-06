@@ -10,3 +10,20 @@ export function normalizeMxPhone(value) {
 export function peritoInternalEmail(phone) {
   return `perito.${phone}@peritos.tramitesmx.local`;
 }
+
+/** Los clientes creados solo con teléfono usan un correo interno. Entran con los 10 dígitos. */
+export function clienteInternalEmail(phone) {
+  return `cliente.${phone}@clientes.tramitesmx.local`;
+}
+
+export function isInternalClientEmail(email) {
+  return String(email || '').toLowerCase().endsWith('@clientes.tramitesmx.local');
+}
+
+/** Abre WhatsApp con el texto listo. Los 10 dígitos de México llevan lada 52. */
+export function whatsappMeUrl(phone, text) {
+  const digits = String(phone || '').replace(/\D/g, '');
+  if (!digits) return null;
+  const full = digits.length === 10 ? `52${digits}` : digits;
+  return `https://wa.me/${full}?text=${encodeURIComponent(text)}`;
+}

@@ -17,6 +17,16 @@ import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js
 import { maybeAutoReplyClientChat } from '../services/chat-auto-reply.js';
 import { vehicleRowWithVerification } from '../crm/verification-utils.js';
 import { ensureClientVehicleContacts } from '../crm/helpers.js';
+import { clientContactPredicate } from '../crm/client-match.js';
+import { normalizeMxPhone } from '../utils/phone.js';
+
+async function predicateFor(user) {
+  if (user?.id && !normalizeMxPhone(user.phone)) {
+    const row = await get('SELECT email, phone FROM users WHERE id = ?', [user.id]);
+    if (row) user = { ...user, email: row.email || user.email, phone: row.phone };
+  }
+  return clientContactPredicate(user);
+}
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
@@ -32,7 +42,6 @@ const DEALS_SELECT = `
   JOIN contacts c ON c.id = d.contact_id
   LEFT JOIN users u ON u.id = d.user_id
   LEFT JOIN deal_invoices di ON di.deal_id = d.id
-  WHERE c.email = ?
 `;
 
 function mapDealRow(d) {
@@ -50,17 +59,19 @@ function mapDealRow(d) {
   return d;
 }
 
-async function fetchClientDeals(email) {
-  const rows = await query(`${DEALS_SELECT} ORDER BY d.updated_at DESC`, [email]);
+async function fetchClientDeals(user) {
+  const match = await predicateFor(user);
+  const rows = await query(`${DEALS_SELECT} WHERE ${match.sql} ORDER BY d.updated_at DESC`, match.params);
   return rows.map(mapDealRow);
 }
 
-async function clientOwnsDeal(email, dealId) {
+async function clientOwnsDeal(user, dealId) {
+  const match = await predicateFor(user);
   const row = await get(
     `SELECT d.id FROM crm_deals d
      JOIN contacts c ON c.id = d.contact_id
-     WHERE d.id = ? AND c.email = ?`,
-    [dealId, email],
+     WHERE d.id = ? AND ${match.sql}`,
+    [dealId, ...match.params],
   );
   return !!row;
 }
@@ -68,7 +79,7 @@ async function clientOwnsDeal(email, dealId) {
 // Stats for dashboard
 router.get('/deals/stats', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const deals = await fetchClientDeals(req.user.email);
+    const deals = await fetchClientDeals(req.user);
     const active = deals.filter(d => !d.is_closed).length;
     const closed = deals.filter(d => d.is_closed).length;
     res.json({ total: deals.length, active, closed });
@@ -86,7 +97,7 @@ router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
     const search = String(q).trim().toLowerCase();
 
-    let deals = await fetchClientDeals(req.user.email);
+    let deals = await fetchClientDeals(req.user);
 
     if (status === 'active') deals = deals.filter(d => !d.is_closed);
     else if (status === 'closed') deals = deals.filter(d => d.is_closed);
@@ -115,7 +126,7 @@ router.get('/deals', authRequired, requireRole('cliente'), async (req, res) => {
 // Get chat messages for a deal
 router.get('/deals/:id/messages', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+    if (!await clientOwnsDeal(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const messages = await query(`
@@ -136,7 +147,7 @@ router.get('/deals/:id/messages', authRequired, requireRole('cliente'), async (r
 // Send a chat message
 router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+    if (!await clientOwnsDeal(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const { message, fileUrl } = req.body;
@@ -195,6 +206,7 @@ router.post('/deals/:id/messages', authRequired, requireRole('cliente'), async (
 // List all invoices for the client
 router.get('/invoices', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    const match = await predicateFor(req.user);
     const invoices = await query(`
       SELECT i.id, i.invoice_number, i.amount, i.pdf_url, i.payment_method, i.created_at,
              d.id as deal_id, d.title as deal_title, g.name as gestor_name
@@ -202,9 +214,9 @@ router.get('/invoices', authRequired, requireRole('cliente'), async (req, res) =
       JOIN crm_deals d ON d.id = i.deal_id
       JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN gestores g ON g.user_id = d.user_id
-      WHERE i.contact_email = ?
+      WHERE ${match.sql}
       ORDER BY i.created_at DESC
-    `, [req.user.email]);
+    `, match.params);
     res.json(invoices);
   } catch (err) {
     console.error(err);
@@ -215,12 +227,14 @@ router.get('/invoices', authRequired, requireRole('cliente'), async (req, res) =
 // Download invoice PDF (authenticated)
 router.get('/invoices/:id/download', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    const match = await predicateFor(req.user);
     const invoice = await get(
       `SELECT i.*, d.title as deal_title
        FROM deal_invoices i
        JOIN crm_deals d ON d.id = i.deal_id
-       WHERE i.id = ? AND i.contact_email = ?`,
-      [req.params.id, req.user.email],
+       JOIN contacts c ON c.id = d.contact_id
+       WHERE i.id = ? AND ${match.sql}`,
+      [req.params.id, ...match.params],
     );
     if (!invoice) return res.status(404).json({ error: 'Factura no encontrada' });
 
@@ -242,7 +256,7 @@ router.get('/invoices/:id/download', authRequired, requireRole('cliente'), async
 // Invoice for a specific deal
 router.get('/deals/:id/invoice', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+    if (!await clientOwnsDeal(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const invoice = await get(
@@ -261,7 +275,7 @@ router.get('/deals/:id/invoice', authRequired, requireRole('cliente'), async (re
 // Get documents for a deal
 router.get('/deals/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+    if (!await clientOwnsDeal(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const clientDocs = await query('SELECT * FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC', [req.params.id]);
@@ -292,7 +306,7 @@ router.get('/deals/:id/documents', authRequired, requireRole('cliente'), async (
 // Upload a document and perform OCR
 router.post('/deals/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsDeal(req.user.email, req.params.id)) {
+    if (!await clientOwnsDeal(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Trámite no encontrado' });
     }
     const { documentType, fileUrl } = req.body;
@@ -406,19 +420,20 @@ function unifiedVehicleWalletRow(row) {
   };
 }
 
-async function unifiedWalletDocuments(email, userId) {
+async function unifiedWalletDocuments(user) {
+  const match = await predicateFor(user);
   const personal = await query(
     'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
-    [userId],
+    [user.id],
   );
   const vehicleDocs = await query(
     `SELECT cvd.*, cv.plate, cv.make, cv.model, cv.year
      FROM contact_vehicle_documents cvd
      JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
      JOIN contacts c ON c.id = cv.contact_id
-     WHERE LOWER(c.email) = LOWER(?)
+     WHERE ${match.sql}
      ORDER BY cvd.created_at DESC`,
-    [email],
+    match.params,
   );
 
   const items = [
@@ -431,7 +446,7 @@ async function unifiedWalletDocuments(email, userId) {
 
 router.get('/wallet', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    res.json(await unifiedWalletDocuments(req.user.email, req.user.id));
+    res.json(await unifiedWalletDocuments(req.user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener documentos' });
@@ -479,7 +494,7 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
     if (!vehicleId) {
       return res.status(400).json({ error: 'Selecciona un vehículo' });
     }
-    if (!await clientOwnsVehicle(req.user.email, vehicleId)) {
+    if (!await clientOwnsVehicle(req.user, vehicleId)) {
       return res.status(404).json({ error: 'Vehículo no encontrado' });
     }
 
@@ -515,12 +530,13 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
   }
 });
 
-async function clientOwnsVehicle(email, vehicleId) {
+async function clientOwnsVehicle(user, vehicleId) {
+  const match = await predicateFor(user);
   const row = await get(
     `SELECT cv.id FROM contact_vehicles cv
      JOIN contacts c ON c.id = cv.contact_id
-     WHERE cv.id = ? AND LOWER(c.email) = LOWER(?)`,
-    [vehicleId, email],
+     WHERE cv.id = ? AND ${match.sql}`,
+    [vehicleId, ...match.params],
   );
   return !!row;
 }
@@ -548,13 +564,14 @@ function vehicleDocumentRow(row) {
   };
 }
 
-async function vehiclesWithDocuments(email) {
+async function vehiclesWithDocuments(user) {
+  const match = await predicateFor(user);
   const rows = await query(
     `SELECT cv.* FROM contact_vehicles cv
      JOIN contacts c ON c.id = cv.contact_id
-     WHERE LOWER(c.email) = LOWER(?)
+     WHERE ${match.sql}
      ORDER BY cv.updated_at DESC, cv.created_at DESC`,
-    [email],
+    match.params,
   );
   const vehicles = dedupeVehiclesByPlate(rows);
   const ids = vehicles.map((v) => v.id);
@@ -577,7 +594,7 @@ async function vehiclesWithDocuments(email) {
 
 router.get('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    res.json(await vehiclesWithDocuments(req.user.email));
+    res.json(await vehiclesWithDocuments(req.user));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar vehículos' });
@@ -635,7 +652,7 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
 
 router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+    if (!await clientOwnsVehicle(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Vehículo no encontrado' });
     }
 
@@ -650,6 +667,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
       ? (['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null)
       : undefined;
     const tenenciaYear = tenencia !== undefined ? (tenencia ? new Date().getFullYear() : null) : undefined;
+    const match = await predicateFor(req.user);
 
     await run(
       `UPDATE contact_vehicles cv
@@ -665,7 +683,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
            cv.tenencia_2026 = ${tenencia !== undefined ? '?' : 'cv.tenencia_2026'},
            cv.tenencia_year = ${tenenciaYear !== undefined ? '?' : 'cv.tenencia_year'},
            cv.updated_at = NOW()
-       WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
+       WHERE ${match.sql} AND UPPER(cv.plate) = UPPER(?)`,
       [
         plate ? String(plate).trim().toUpperCase() : null,
         make ?? null,
@@ -677,7 +695,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
         ...(insExpiry !== undefined ? [insExpiry] : []),
         ...(tenencia !== undefined ? [tenencia] : []),
         ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
-        req.user.email,
+        ...match.params,
         plateKey,
       ],
     );
@@ -692,16 +710,17 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
 
 router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+    if (!await clientOwnsVehicle(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Vehículo no encontrado' });
     }
 
     const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    const match = await predicateFor(req.user);
     await run(
       `DELETE cv FROM contact_vehicles cv
        JOIN contacts c ON c.id = cv.contact_id
-       WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
-      [req.user.email, row.plate],
+       WHERE ${match.sql} AND UPPER(cv.plate) = UPPER(?)`,
+      [...match.params, row.plate],
     );
     res.json({ ok: true });
   } catch (err) {
@@ -712,7 +731,7 @@ router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req,
 
 router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    if (!await clientOwnsVehicle(req.user.email, req.params.id)) {
+    if (!await clientOwnsVehicle(req.user, req.params.id)) {
       return res.status(404).json({ error: 'Vehículo no encontrado' });
     }
 
@@ -746,12 +765,13 @@ router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), asy
 
 router.delete('/vehicle-documents/:id', authRequired, requireRole('cliente'), async (req, res) => {
   try {
+    const match = await predicateFor(req.user);
     const doc = await get(
       `SELECT cvd.id FROM contact_vehicle_documents cvd
        JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
        JOIN contacts c ON c.id = cv.contact_id
-       WHERE cvd.id = ? AND LOWER(c.email) = LOWER(?)`,
-      [req.params.id, req.user.email],
+       WHERE cvd.id = ? AND ${match.sql}`,
+      [req.params.id, ...match.params],
     );
     if (!doc) return res.status(404).json({ error: 'Documento no encontrado' });
 

@@ -1020,6 +1020,17 @@ export class CrmDealPanelComponent implements OnDestroy {
   quoteBonus: QuoteCheckItem[] = [];
   isSavingQuote = signal(false);
   isLoadingQuote = signal(false);
+  quoteOpen = signal(false);
+  isSendingQuote = signal(false);
+  isCreatingAccess = signal(false);
+  clientAccessNotice = signal<{
+    created: boolean;
+    login: string;
+    password?: string | null;
+    emailed?: boolean;
+    whatsappUrl?: string | null;
+  } | null>(null);
+  private quoteOpenDealId: string | null = null;
   isDownloadingQuote = signal(false);
 
   isGeneratingPayment = signal(false);
@@ -1165,6 +1176,10 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.lostReason = d.lostReason || '';
       this.assignedToModel = d.assignedTo || '';
       this.peritoIdModel = d.peritoId || '';
+      if (this.quoteOpenDealId !== id) {
+        this.quoteOpenDealId = id;
+        this.quoteOpen.set(d.paymentStatus !== 'paid');
+      }
 
       this.loadDocuments(id);
       this.loadMessages(id);
@@ -1348,6 +1363,74 @@ export class CrmDealPanelComponent implements OnDestroy {
     }
   }
 
+  sendQuoteToClient() {
+    const d = this.deal();
+    if (!d) return;
+    this.isSendingQuote.set(true);
+    const payload = this.buildQuotePayload();
+    const deliver = (quoteId: string) => {
+      this.quoteId = quoteId;
+      this.crmService.sendQuote(quoteId).subscribe({
+        next: (res) => {
+          this.isSendingQuote.set(false);
+          const parts = [];
+          if (res.emailed) parts.push('correo');
+          if (res.notified) parts.push('aviso en el portal');
+          this.toast.success(parts.length ? `Cotización enviada por ${parts.join(' y ')}` : 'Cotización lista. Se abre WhatsApp para mandarla.');
+          if (res.whatsappUrl) window.open(res.whatsappUrl, '_blank', 'noopener');
+          this.loadMessages(d.id);
+        },
+        error: (e) => {
+          this.isSendingQuote.set(false);
+          this.toast.error(e.error?.error || 'No se pudo enviar la cotización');
+        },
+      });
+    };
+    const onError = () => {
+      this.isSendingQuote.set(false);
+      this.toast.error('Error al guardar la cotización');
+    };
+    if (this.quoteId) {
+      this.crmService.updateQuote(this.quoteId, payload).subscribe({
+        next: () => deliver(this.quoteId!),
+        error: onError,
+      });
+    } else {
+      this.crmService.createQuote(d.id, payload).subscribe({
+        next: (res) => deliver(res.id),
+        error: onError,
+      });
+    }
+  }
+
+  createClientAccess(reset = false) {
+    const d = this.deal();
+    if (!d) return;
+    this.isCreatingAccess.set(true);
+    this.crmService.createClientAccess(d.id, reset).subscribe({
+      next: (access) => {
+        this.isCreatingAccess.set(false);
+        this.clientAccessNotice.set(access);
+      },
+      error: (e) => {
+        this.isCreatingAccess.set(false);
+        this.toast.error(e.error?.error || 'No se pudo crear el usuario');
+      },
+    });
+  }
+
+  copyClientAccess() {
+    const access = this.clientAccessNotice();
+    if (!access) return;
+    const lines = [`Usuario: ${access.login}`];
+    if (access.password) lines.push(`Contraseña: ${access.password}`);
+    lines.push('Portal: https://central.tramitesvehicularesdemexico.com/login/cliente');
+    navigator.clipboard?.writeText(lines.join('\n')).then(
+      () => this.toast.success('Clave copiada'),
+      () => this.toast.warning('No se pudo copiar. Anótala de la ventana.'),
+    );
+  }
+
   downloadGeneratedQuotePdf() {
     if (!this.quoteId) {
       this.toast.error('Guarda la cotización antes de generar el PDF');
@@ -1425,6 +1508,9 @@ export class CrmDealPanelComponent implements OnDestroy {
           this.scrollToBottom();
         }
         this.socketService.emit('send_message', { dealId: d.id, ...saved });
+        if (saved.notified === false) {
+          this.toast.warning('El mensaje quedó en el chat. Crea el usuario del cliente para que le llegue el aviso al teléfono.');
+        }
       },
       error: (e) => this.toast.error(e.error?.error || 'Error al enviar mensaje al chat'),
     });
@@ -1975,6 +2061,7 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.crmService.getDeal(id).subscribe(d => {
       this.deal.set(d);
       if (d.paymentStatus === 'paid') {
+        this.quoteOpen.set(false);
         this.stopPaymentWatch();
         if (notifyParent) this.updated.emit();
       }
@@ -1997,6 +2084,7 @@ export class CrmDealPanelComponent implements OnDestroy {
         next: (d) => {
           if (d.paymentStatus === 'paid' && this.deal()?.paymentStatus !== 'paid') {
             this.deal.set(d);
+            this.quoteOpen.set(false);
             this.toast.success('El pago fue acreditado correctamente.', '¡Pagado!');
             this.stopPaymentWatch();
             this.updated.emit();

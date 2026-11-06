@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { v4 as uuid } from 'uuid';
-import { get, run } from '../db.js';
+import { get, query, run } from '../db.js';
 import { authRequired, signToken } from '../middleware/auth.js';
 import Stripe from 'stripe';
 import { sendEmail } from '../utils/mailer.js';
@@ -19,7 +19,7 @@ import {
 } from '../utils/subscription-lifecycle.js';
 import { staffHasPerm } from '../utils/org-access.js';
 import { normalizeAiTraining, parseAiTraining } from '../utils/ai-training.js';
-import { normalizeMxPhone } from '../utils/phone.js';
+import { normalizeMxPhone, isInternalClientEmail } from '../utils/phone.js';
 import { crmStagesArrayForRole, mergeCrmStagesForSave } from '../crm/stages.js';
 import { slugify, uniqueUserSlug, uniqueGestorSlug } from '../utils/slug.js';
 
@@ -260,7 +260,13 @@ router.post('/login', async (req, res) => {
       user = await get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase()]);
     } else {
       const phone = normalizeMxPhone(identifier);
-      user = phone ? await get("SELECT * FROM users WHERE role = 'perito' AND phone = ? LIMIT 1", [phone]) : null;
+      if (phone) {
+        const rows = await query(
+          "SELECT * FROM users WHERE phone = ? AND role IN ('cliente', 'perito')",
+          [phone],
+        );
+        user = rows.find((row) => bcrypt.compareSync(password, row.password_hash)) || null;
+      }
     }
     if (!user || !bcrypt.compareSync(password, user.password_hash)) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
@@ -290,7 +296,17 @@ router.post('/forgot-password', async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email requerido' });
 
-    const user = await get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+    const identifier = String(email).trim();
+    let user;
+    if (identifier.includes('@')) {
+      user = await get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase()]);
+    } else {
+      const phone = normalizeMxPhone(identifier);
+      user = phone ? await get("SELECT * FROM users WHERE role = 'cliente' AND phone = ?", [phone]) : null;
+    }
+    if (user && isInternalClientEmail(user.email)) {
+      return res.status(400).json({ error: 'Esta cuenta entra con teléfono. Pide a tu gestoría que te genere otra clave.' });
+    }
     // For security, always return success even if user not found, 
     // but in this case we return success to UI but log if not found.
     if (!user) {

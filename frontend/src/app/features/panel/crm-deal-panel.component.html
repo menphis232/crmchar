@@ -122,6 +122,11 @@
                 WhatsApp
               </a>
             }
+            @if (!isConcesionaria()) {
+              <button type="button" class="deal-outline-btn" style="margin-top:8px;align-self:flex-start;" (click)="createClientAccess(false)" [disabled]="isCreatingAccess()">
+                {{ isCreatingAccess() ? 'Creando usuario...' : 'Crear usuario y mandar clave' }}
+              </button>
+            }
           </div>
         </div>
 
@@ -153,6 +158,7 @@
                 </div>
               }
             </div>
+            <p class="card-desc">Si el cliente ya tiene usuario y aceptó avisos en el portal, este mensaje le llega como notificación al teléfono.</p>
             <div class="chat-input">
               <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
                 <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
@@ -411,8 +417,24 @@
         <!-- COTIZACIÓN EDITABLE (solo gestores) -->
         @if (!isConcesionaria()) {
           <div class="deal-section deal-quote-editor">
-            <h4>Cotización</h4>
-            <p class="card-desc">Los datos del cliente se cargan de su solicitud. Revisa qué incluye, requisitos y bonus; guarda y genera el PDF.</p>
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
+              <h4 style="margin:0;">Cotización</h4>
+              <button type="button" class="deal-outline-btn" (click)="quoteOpen.set(!quoteOpen())">
+                {{ quoteOpen() ? 'Ocultar' : 'Abrir cotización' }}
+              </button>
+            </div>
+            @if (!quoteOpen()) {
+              <p class="card-desc" style="margin-top:8px;">
+                @if (d.paymentStatus === 'paid') {
+                  Este trámite ya está pagado. La cotización queda guardada y el formulario no estorba.
+                } @else if (quoteId) {
+                  Hay una cotización guardada. Ábrela cuando quieras verla o enviarla.
+                } @else {
+                  Ábrela cuando necesites armar la cotización y enviarla al cliente.
+                }
+              </p>
+            } @else {
+            <p class="card-desc">Revisa qué incluye, guarda y usa Enviar al cliente. Se manda por correo, por el chat y se abre WhatsApp.</p>
             @if (d.contact?.id) {
               <button type="button" class="btn-ghost small" style="margin-bottom:10px;" (click)="openContact.emit(d.contact!.id!)">
                 Ver / editar ficha del cliente
@@ -524,6 +546,9 @@
               </div>
 
               <div class="quote-editor-actions">
+                <button type="button" class="btn-copy small" (click)="sendQuoteToClient()" [disabled]="isSendingQuote()">
+                  {{ isSendingQuote() ? 'Enviando...' : 'Enviar al cliente' }}
+                </button>
                 <button type="button" class="deal-outline-btn" (click)="saveQuote()" [disabled]="isSavingQuote()">
                   {{ isSavingQuote() ? 'Guardando...' : 'Guardar cotización' }}
                 </button>
@@ -531,6 +556,7 @@
                   {{ isDownloadingQuote() ? 'Generando PDF...' : 'Ver / Descargar PDF' }}
                 </button>
               </div>
+            }
             }
           </div>
         }
@@ -769,6 +795,41 @@
 
       <div class="register-payment-actions">
         <button type="button" class="pay-method-cancel" (click)="closeShippingUploadModal()">Usar el apartado del panel</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (clientAccessNotice(); as access) {
+  <div class="pay-method-overlay" (click)="clientAccessNotice.set(null)">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="clientAccessNotice.set(null)" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Portal del cliente</p>
+      <h3 class="pay-method-title">Usuario y clave</h3>
+      <p class="pay-method-desc">
+        @if (access.created) {
+          Cuenta nueva. Copia la clave o ábrela en WhatsApp para mandársela.
+        } @else if (access.password) {
+          Clave nueva. La anterior ya no sirve.
+        } @else {
+          Este cliente ya tenía usuario. La clave no cambió.
+        }
+        @if (access.emailed) { También se envió por correo. }
+      </p>
+      <p><strong>Usuario:</strong> {{ access.login }}</p>
+      @if (access.password) {
+        <p><strong>Contraseña:</strong> {{ access.password }}</p>
+      }
+      <div class="register-payment-actions">
+        <button type="button" class="pay-method-cancel" (click)="copyClientAccess()">Copiar</button>
+        @if (!access.password) {
+          <button type="button" class="pay-method-cancel" (click)="createClientAccess(true)" [disabled]="isCreatingAccess()">Nueva clave</button>
+        }
+        @if (access.whatsappUrl) {
+          <a class="btn-copy small" [href]="access.whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+        }
       </div>
     </div>
   </div>

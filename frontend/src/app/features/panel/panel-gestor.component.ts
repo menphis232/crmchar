@@ -269,6 +269,13 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   showManualLeadForm = signal(false);
   savingManualLead = signal(false);
+  clientAccessNotice = signal<{
+    created: boolean;
+    login: string;
+    password?: string | null;
+    emailed?: boolean;
+    whatsappUrl?: string | null;
+  } | null>(null);
   manualLeadServices = signal<{ name: string; price: number | null }[]>([]);
   manualLead = {
     clientName: '',
@@ -777,6 +784,18 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.showManualLeadForm.set(false);
   }
 
+  copyClientAccess() {
+    const access = this.clientAccessNotice();
+    if (!access) return;
+    const lines = [`Usuario: ${access.login}`];
+    if (access.password) lines.push(`Contraseña: ${access.password}`);
+    lines.push('Portal: https://central.tramitesvehicularesdemexico.com/login/cliente');
+    navigator.clipboard?.writeText(lines.join('\n')).then(
+      () => this.toast.success('Clave copiada'),
+      () => this.toast.warning('No se pudo copiar. Anótala de la ventana.'),
+    );
+  }
+
   onManualLeadServiceChange() {
     const service = this.manualLeadServices().find(s => s.name === this.manualLead.serviceName);
     if (!service) return;
@@ -807,7 +826,27 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       next: (deal) => {
         this.savingManualLead.set(false);
         this.showManualLeadForm.set(false);
-        this.toast.success('Trámite registrado');
+        const access = (deal as { clientAccess?: {
+          created: boolean;
+          login: string;
+          password?: string | null;
+          emailed?: boolean;
+          whatsappUrl?: string | null;
+        } }).clientAccess;
+        if (access?.login) {
+          this.clientAccessNotice.set(access as {
+            created: boolean;
+            login: string;
+            password?: string | null;
+            emailed?: boolean;
+            whatsappUrl?: string | null;
+          });
+          this.toast.success(access.password ? 'Trámite creado. Ya tienes la clave del cliente.' : 'Trámite creado. Este cliente ya tenía usuario.');
+        } else if (!this.manualLead.clientPhone.trim() && !this.manualLead.clientEmail.trim()) {
+          this.toast.success('Trámite registrado. Sin teléfono ni correo no se creó usuario.');
+        } else {
+          this.toast.success('Trámite registrado');
+        }
         this.loadCrm();
         this.openDeal(deal.id);
       },
