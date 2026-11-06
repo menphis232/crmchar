@@ -403,21 +403,36 @@ function emptyForm(): ClientForm {
     @container (max-width: 620px) { .client-form-grid { grid-template-columns: 1fr; } }
 
     .status-pill {
-      display: inline-flex;
-      align-items: center;
-      max-width: 180px;
-      padding: 4px 10px;
+      display: inline-block;
+      max-width: 100%;
+      box-sizing: border-box;
+      padding: 6px 10px;
       border-radius: 4px;
       background: #579bfc;
-      color: #fff;
-      -webkit-text-fill-color: #fff;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
       font-size: 12px;
       font-weight: 600;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      line-height: 1.45;
+      letter-spacing: 0.01em;
+      overflow: visible;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      vertical-align: middle;
+      hyphens: none;
     }
-    .status-pill--muted { background: #c5c7d0; color: #323338; -webkit-text-fill-color: #323338; }
+    .status-pill--muted {
+      background: #c5c7d0;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+    }
+    .mon-table td:nth-child(5) {
+      min-width: 220px;
+      max-width: 320px;
+      overflow: visible;
+    }
+    .mon-table { min-width: 900px; }
 
     @media (max-width: 760px) {
       .mon-board-title { font-size: 20px; }
