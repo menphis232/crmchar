@@ -1443,8 +1443,12 @@ app-crm-team {
   color: #0073ea;
 }
 
-/* Entrenar tu IA */
-.ai-train { max-width: 860px; }
+/* Entrenar tu IA — ancho completo como el resto de boards */
+.ai-train {
+  max-width: none;
+  width: 100%;
+  box-sizing: border-box;
+}
 .ai-train + .ai-train { margin-top: 20px; }
 
 .ai-train-steps {
@@ -1452,19 +1456,19 @@ app-crm-team {
   padding-left: 20px;
   display: grid;
   gap: 10px;
-  font-family: var(--f-ui);
+  font-family: Figtree, system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.55;
-  color: rgba(255, 255, 255, 0.78);
+  color: #323338;
 }
-.ai-train-steps strong { color: #fff; font-weight: 700; }
+.ai-train-steps strong { color: #0073ea; font-weight: 700; }
 
 .ai-train-progress {
   margin: 14px 0 22px;
-  font-family: var(--f-ui);
-  font-size: 12px;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.6);
+  font-family: Figtree, system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0;
+  color: #676879;
 }
 
 .ai-train-field { margin-bottom: 18px; }
@@ -1479,7 +1483,7 @@ app-crm-team {
   gap: 12px;
   align-items: end;
   padding: 14px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid #e6e9ef;
 }
 .ai-train-faq .form-group { margin: 0; }
 .ai-train-faq input,

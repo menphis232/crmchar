@@ -2315,3 +2315,30 @@
     font-size: 20px !important;
   }
 }
+
+/* Entrenar IA — full width Monday */
+:host.panel-datta .ai-train,
+:host.panel-datta .dash-card.ai-train {
+  max-width: none !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+:host.panel-datta .ai-train-steps {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .ai-train-steps strong {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+}
+
+:host.panel-datta .ai-train-progress {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .ai-train-faq {
+  border-bottom-color: #e6e9ef !important;
+}
