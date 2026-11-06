@@ -56,7 +56,15 @@
   color-scheme: light !important;
 }
 
-:host.panel-datta,
+:host.panel-datta {
+  background: var(--mon-bg) !important;
+  color: var(--mon-text) !important;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
 :host.panel-datta .dash-container,
 :host.panel-datta .dash-main {
   background: var(--mon-bg) !important;
@@ -245,9 +253,11 @@
 /* ── Sidebar ── */
 :host.panel-datta .dash-container {
   display: block;
-  max-width: none;
-  margin: 0;
-  margin-left: var(--mon-sidebar);
+  /* Evita overflow: panel-dashboard pone width:100% + aquí margin-left → se corta a la derecha */
+  width: calc(100% - var(--mon-sidebar)) !important;
+  max-width: none !important;
+  margin: 0 !important;
+  margin-left: var(--mon-sidebar) !important;
   /* Misma altura real del header fijo (ya no 84px del tema oscuro) */
   padding: calc(var(--mon-header) + 24px) 28px 40px;
   min-height: 100vh;
@@ -255,14 +265,19 @@
   position: relative;
   /* Sin z-index: los modales fixed dentro del main deben pintar sobre el sidebar */
   z-index: auto;
-  transition: margin-left 0.2s ease;
+  overflow-x: clip;
+  transition: margin-left 0.2s ease, width 0.2s ease;
 }
 
 :host.panel-datta .dash-main {
   position: relative;
   z-index: auto;
+  width: 100%;
+  max-width: 100% !important;
   min-width: 0;
   isolation: auto;
+  box-sizing: border-box;
+  overflow-x: clip;
 }
 
 :host.panel-datta .dash-sidebar {
@@ -480,7 +495,7 @@
 /* ── Main / cards ── */
 :host.panel-datta .dash-main {
   gap: 20px;
-  max-width: 1480px;
+  max-width: min(1480px, 100%);
 }
 
 :host.panel-datta .dash-card,
@@ -492,6 +507,44 @@
   box-shadow: 0 2px 8px rgba(50, 51, 56, 0.04) !important;
   padding: 20px 22px !important;
   color: var(--mon-text) !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+:host.panel-datta .stats-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+  gap: 12px !important;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+:host.panel-datta .ai-insights-list,
+:host.panel-datta .ai-insight-row {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+:host.panel-datta .ai-insight-row {
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
+  width: 100%;
+}
+
+:host.panel-datta .ai-insight-row span {
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 1.55 !important;
 }
 
 :host.panel-datta .stat-box,
@@ -967,7 +1020,8 @@
   }
 
   :host.panel-datta .dash-container {
-    margin-left: 0;
+    width: 100% !important;
+    margin-left: 0 !important;
     padding: calc(var(--mon-header) + 20px) 14px 24px;
   }
 
@@ -1025,8 +1079,16 @@
   }
 }
 
+@media (max-width: 760px) {
+  :host.panel-datta .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
 @media (max-width: 640px) {
   :host.panel-datta .dash-container {
+    width: 100% !important;
+    margin-left: 0 !important;
     padding: calc(var(--mon-header) + 16px) 12px 20px;
   }
 
@@ -1041,6 +1103,22 @@
   :host.panel-datta .banner-msg {
     font-size: 13px !important;
   }
+
+  :host.panel-datta .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  :host.panel-datta .mon-home-greet {
+    font-size: 20px !important;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Sidebar colapsado: recalcular ancho del main */
+:host.panel-datta.sidebar-collapsed .dash-container {
+  width: calc(100% - var(--mon-sidebar)) !important;
+  margin-left: var(--mon-sidebar) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════
