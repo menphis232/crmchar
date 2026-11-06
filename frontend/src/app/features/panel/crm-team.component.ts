@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucidePlus, LucideUsers, LucideTrophy } from '@lucide/angular';
+import { LucidePlus } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CrmTeamPerformance } from '../../models';
@@ -39,55 +39,63 @@ const CONCESIONARIA_MODULES = [
 @Component({
   selector: 'app-crm-team',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucideUsers, LucidePlus, LucideTrophy],
+  imports: [CommonModule, FormsModule, LucidePlus],
   host: { '[class.theme-dark]': 'isConcesionaria' },
   template: `
-    <div class="dash-card team-panel perf-panel">
-      <h2 class="card-title card-title-with-icon">
-        <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
-        Desempeño del equipo
-      </h2>
-      <p class="card-desc">{{ perfDesc }}</p>
+    <div class="mon-board team-panel perf-panel">
+      <header class="mon-board-head">
+        <div>
+          <h2 class="mon-board-title">Desempeño del equipo</h2>
+          <p class="mon-board-desc">{{ perfDesc }}</p>
+        </div>
+      </header>
 
       @if (performance().length) {
-        <div class="perf-table">
-          <div class="perf-row perf-head">
-            <span class="perf-col-rank">#</span>
-            <span class="perf-col-name">Vendedor</span>
-            <span class="perf-col-num">Cerrados</span>
-            <span class="perf-col-num">Activos</span>
-            <span class="perf-col-money">Ingresos</span>
-          </div>
-          @for (p of performance(); track p.id; let i = $index) {
-            <div class="perf-row" [class.perf-top]="i === 0 && p.dealsClosed > 0">
-              <span class="perf-col-rank">{{ medal(i) }}</span>
-              <span class="perf-col-name">
-                {{ p.name }}
-                @if (p.isOwner) { <span class="perf-owner-tag">Admin</span> }
-              </span>
-              <span class="perf-col-num perf-strong">{{ p.dealsClosed }}</span>
-              <span class="perf-col-num">{{ p.assignedActive }}</span>
-              <span class="perf-col-money">{{ p.revenueClosed | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-            </div>
-          }
+        <div class="mon-table-wrap">
+          <table class="mon-table perf-table">
+            <thead>
+              <tr>
+                <th class="col-rank">#</th>
+                <th>Vendedor</th>
+                <th class="col-num">Cerrados</th>
+                <th class="col-num">Activos</th>
+                <th class="col-num">Ingresos</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of performance(); track p.id; let i = $index) {
+                <tr [class.perf-top]="i === 0 && p.dealsClosed > 0">
+                  <td class="col-rank">{{ i + 1 }}</td>
+                  <td>
+                    <span class="perf-name">{{ p.name }}</span>
+                    @if (p.isOwner) { <span class="perf-owner-tag">Admin</span> }
+                  </td>
+                  <td class="col-num perf-strong">{{ p.dealsClosed }}</td>
+                  <td class="col-num">{{ p.assignedActive }}</td>
+                  <td class="col-num">{{ p.revenueClosed | currency:'MXN':'symbol-narrow':'1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
         </div>
       } @else {
         <p class="perf-empty">{{ isConcesionaria ? 'Aún no hay ventas cerradas asignadas. Asigna leads a tu equipo desde cada negociación para ver el ranking.' : 'Aún no hay trámites cerrados asignados. Asigna leads a tu equipo desde cada trámite para ver el ranking.' }}</p>
       }
     </div>
 
-    <div class="dash-card team-panel">
-      <h2 class="card-title card-title-with-icon">
-        <svg lucideUsers [size]="20" class="card-title-icon" aria-hidden="true"></svg>
-        {{ panelTitle }}
+    <div class="mon-board team-panel">
+      <header class="mon-board-head">
+        <div>
+          <h2 class="mon-board-title">{{ panelTitle }}</h2>
+          <p class="mon-board-desc">Agrega colaboradores y elige qué secciones del panel pueden ver y usar.</p>
+        </div>
         @if (!showForm()) {
-          <button type="button" class="btn-copy small btn-with-icon" (click)="openForm()">
-            <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+          <button type="button" class="mon-btn-primary" (click)="openForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
             Nuevo empleado
           </button>
         }
-      </h2>
-      <p class="card-desc">Agrega colaboradores y elige qué secciones del panel pueden ver y usar.</p>
+      </header>
 
       @if (message()) {
         <div class="team-alert" [class.error]="message().startsWith('Error') || message().startsWith('Faltan')">{{ message() }}</div>
@@ -130,8 +138,8 @@ const CONCESIONARIA_MODULES = [
           </div>
 
           <div class="team-form-actions">
-            <button type="button" class="btn-ghost" (click)="closeForm()">Cancelar</button>
-            <button type="button" class="btn-copy" (click)="save()">Guardar empleado</button>
+            <button type="button" class="mon-tool-btn" (click)="closeForm()">Cancelar</button>
+            <button type="button" class="mon-btn-primary" (click)="save()">Guardar empleado</button>
           </div>
         </div>
       }
@@ -178,151 +186,133 @@ const CONCESIONARIA_MODULES = [
     </div>
   `,
   styles: [`
-    :host { display: block; }
+    :host { display: block; width: 100%; }
 
-    .dash-card {
-      background: var(--surface, #fff);
-      border: 1px solid var(--border, rgba(0,0,0,0.1));
-      border-top: 3px solid var(--brand-black, #000);
-      padding: 28px 28px 24px;
-      margin-bottom: 0;
-      box-shadow: var(--shadow-card, 0 2px 12px rgba(0,0,0,0.06));
-    }
-
-    .card-title {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 18px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--brand-black, #000);
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    .card-title .btn-copy.small { margin-left: auto; }
-
-    .card-desc {
-      font-family: var(--f-ui, 'Spartan', sans-serif);
-      color: var(--muted, #979797);
-      font-size: 13px;
+    .mon-board {
+      background: #fff;
+      border: 1px solid #e6e9ef;
+      border-radius: 12px;
+      padding: 20px 22px 24px;
       margin-bottom: 16px;
-      line-height: 1.5;
+      color: #323338;
+      font-family: Figtree, system-ui, sans-serif;
+      width: 100%;
+      max-width: none;
+      box-sizing: border-box;
+      box-shadow: none;
     }
+
+    .mon-board-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .mon-board-title {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #323338;
+      text-transform: none;
+    }
+
+    .mon-board-desc {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #676879;
+      max-width: 68ch;
+    }
+
+    .mon-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      border-radius: 8px;
+      background: #0073ea;
+      color: #fff;
+      font: 600 14px Figtree, system-ui, sans-serif;
+      padding: 10px 14px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .mon-btn-primary:hover { background: #0060c2; }
+
+    .mon-tool-btn {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid #e6e9ef;
+      border-radius: 8px;
+      background: #fff;
+      color: #323338;
+      font: 600 13px Figtree, system-ui, sans-serif;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .mon-tool-btn:hover { border-color: #0073ea; color: #0073ea; }
 
     .form-row {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 14px;
       margin-bottom: 14px;
-      flex-wrap: wrap;
     }
 
     .form-group {
-      flex: 1;
-      min-width: 130px;
+      min-width: 0;
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
 
-    .btn-copy {
-      background: var(--btn-primary-bg, #000);
-      color: var(--btn-primary-color, #fff);
-      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #000);
-      border-radius: var(--btn-radius, 4px);
-      padding: var(--btn-py, 12px) var(--btn-px, 28px);
-      font-weight: var(--btn-weight, 700);
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: var(--btn-font-size, 12px);
-      letter-spacing: var(--btn-tracking, 0.12em);
-      text-transform: uppercase;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: var(--transition, all 0.2s ease);
-    }
-
-    .btn-copy.small { padding: 8px 16px; font-size: 11px; }
-
-    .btn-copy:hover {
-      background: var(--btn-primary-hover-bg, transparent);
-      color: var(--btn-primary-hover-color, #000);
-      border-color: var(--btn-primary-hover-border, #000);
-    }
-
-    .btn-ghost {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: var(--btn-font-size, 12px);
-      letter-spacing: var(--btn-tracking, 0.12em);
-      text-transform: uppercase;
-      color: var(--btn-outline-color, #000);
-      background: var(--btn-outline-bg, #fff);
-      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #000);
-      border-radius: var(--btn-radius, 4px);
-      padding: var(--btn-py, 12px) var(--btn-px, 28px);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: var(--transition, all 0.2s ease);
-    }
-
-    .btn-ghost:hover {
-      background: var(--btn-outline-hover-bg, #000);
-      color: var(--btn-outline-hover-color, #fff);
-      border-color: var(--btn-outline-hover-border, #000);
-    }
-
-    /* ── Inputs tema claro (gestor) ── */
     .team-form-card .form-group label {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted, #979797);
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #676879;
     }
 
     .team-form-card .form-group input:not([type="checkbox"]):not([type="radio"]) {
       width: 100%;
       box-sizing: border-box;
-      padding: 12px 14px;
-      background-color: #ffffff;
-      border: 1px solid rgba(0, 0, 0, 0.14);
-      color: #000000;
-      -webkit-text-fill-color: #000000;
-      caret-color: #000000;
+      padding: 10px 12px;
+      background-color: #fff;
+      border: 1px solid #c5c7d0;
+      color: #323338;
+      -webkit-text-fill-color: #323338;
+      caret-color: #323338;
       border-radius: 8px;
-      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 14px;
       outline: none;
     }
 
     .team-form-card .form-group input::placeholder {
-      color: #979797;
+      color: #9ca0ad;
       opacity: 1;
     }
 
     .team-form-card .form-group input:focus {
-      border-color: #000000;
-      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+      border-color: #0073ea;
+      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.15);
     }
 
     /* ── Tema oscuro concesionaria ── */
-    :host.theme-dark .dash-card {
+    :host.theme-dark .mon-board {
       background: #141414;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      border-top: 2px solid rgba(255, 255, 255, 0.28);
-      border-radius: 14px;
-      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+      color: #fff;
     }
 
-    :host.theme-dark .card-title { color: #ffffff; font-size: 20px; }
-    :host.theme-dark .card-desc { color: rgba(255, 255, 255, 0.45); font-size: 14px; }
+    :host.theme-dark .mon-board-title { color: #ffffff; }
+    :host.theme-dark .mon-board-desc { color: rgba(255, 255, 255, 0.45); }
 
     :host.theme-dark .team-form-card {
       background: #0d0d0d;
@@ -427,84 +417,62 @@ const CONCESIONARIA_MODULES = [
     }
 
     .team-panel { margin-bottom: 0; }
+    .perf-panel { margin-bottom: 16px; }
 
-    .perf-panel { margin-bottom: 18px; }
-    .perf-table { display: flex; flex-direction: column; gap: 4px; }
-    .perf-row {
-      display: grid;
-      grid-template-columns: 40px minmax(120px, 1fr) 90px 80px 120px;
-      gap: 10px;
-      align-items: center;
-      padding: 11px 14px;
-      background: #faf9f7;
-      border: 1px solid rgba(0,0,0,0.07);
-      border-radius: 8px;
+    .mon-table-wrap { overflow-x: auto; width: 100%; }
+    .mon-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 560px;
     }
-    .perf-row.perf-head {
-      background: transparent;
-      border: none;
-      padding: 4px 14px;
+    .mon-table th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #676879;
+      padding: 8px 12px;
+      border-bottom: 1px solid #e6e9ef;
+      border-right: 1px solid #e6e9ef;
+      background: #f7f8fa;
+      white-space: nowrap;
     }
-    .perf-head span {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      color: var(--muted, #979797);
-    }
-    .perf-row.perf-top {
-      border-color: rgba(200,169,74,0.45);
-      background: rgba(200,169,74,0.08);
-    }
-    .perf-col-rank { font-size: 15px; text-align: center; }
-    .perf-col-name {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-weight: 700;
-      color: var(--brand-black, #000);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-    .perf-owner-tag {
-      font-size: 9px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 2px 7px;
-      border-radius: 999px;
-      background: rgba(0,0,0,0.06);
-      color: var(--muted, #6b6b6b);
-    }
-    .perf-col-num, .perf-col-money {
-      font-family: var(--f-display, 'Spartan', sans-serif);
+    .mon-table td {
+      padding: 12px;
+      border-bottom: 1px solid #e6e9ef;
+      border-right: 1px solid #eef0f4;
       font-size: 14px;
-      color: var(--brand-black, #000);
-      text-align: right;
+      vertical-align: middle;
+      color: #323338;
+      background: #fff;
     }
-    .perf-col-num { text-align: center; }
-    .perf-strong { font-weight: 800; }
+    .mon-table tbody tr:hover td { background: #f8fbff; }
+    .mon-table tr.perf-top td { background: #e5f4ff; }
+    .col-rank { width: 48px; text-align: center; font-weight: 700; color: #676879; }
+    .col-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .perf-name { font-weight: 600; margin-right: 8px; }
+    .perf-owner-tag {
+      display: inline-flex;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #f0f1f5;
+      color: #676879;
+    }
+    .perf-strong { font-weight: 700; }
     .perf-empty {
       font-size: 13px;
-      color: var(--muted, #979797);
+      color: #676879;
       line-height: 1.5;
       margin: 4px 0 0;
     }
 
-    :host.theme-dark .perf-row { background: #181818; border-color: rgba(255,255,255,0.10); }
-    :host.theme-dark .perf-row.perf-head { background: transparent; border: none; }
-    :host.theme-dark .perf-col-name, :host.theme-dark .perf-col-num, :host.theme-dark .perf-col-money { color: #fff; }
-    :host.theme-dark .perf-row.perf-top { background: rgba(200,169,74,0.12); border-color: rgba(200,169,74,0.45); }
+    :host.theme-dark .mon-table th { background: #1a1a1a; color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.10); }
+    :host.theme-dark .mon-table td { background: #141414; color: #fff; border-color: rgba(255,255,255,0.10); }
+    :host.theme-dark .mon-table tr.perf-top td { background: rgba(0,115,234,0.18); }
     :host.theme-dark .perf-owner-tag { background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.65); }
     :host.theme-dark .perf-empty { color: rgba(255,255,255,0.45); }
-
-    @media (max-width: 800px) {
-      .perf-row {
-        grid-template-columns: 30px 1fr 56px 56px;
-      }
-      .perf-col-money { display: none; }
-    }
 
     .team-alert {
       padding: 10px 14px;
@@ -523,20 +491,20 @@ const CONCESIONARIA_MODULES = [
     }
 
     .team-form-card {
-      background: #faf9f7;
-      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: #f7f8fa;
+      border: 1px solid #e6e9ef;
       border-radius: 10px;
       padding: 20px;
       margin-bottom: 20px;
     }
 
     .team-form-title {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--brand-black, #000);
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      text-transform: none;
+      color: #323338;
       margin: 0 0 16px;
     }
 
@@ -548,18 +516,18 @@ const CONCESIONARIA_MODULES = [
     }
 
     .team-perms-section h4 {
-      font-family: var(--f-display, 'Spartan', sans-serif);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--brand-black, #000);
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #323338;
       margin: 0 0 4px;
     }
 
     .team-perms-hint {
       font-size: 13px;
-      color: var(--muted, #979797);
+      color: #676879;
       margin: 0 0 12px;
       line-height: 1.45;
     }
@@ -587,7 +555,7 @@ const CONCESIONARIA_MODULES = [
     .team-perm-option input[type="checkbox"] {
       width: 18px;
       height: 18px;
-      accent-color: #000;
+      accent-color: #0073ea;
       flex-shrink: 0;
       cursor: pointer;
       margin-top: 2px;
@@ -602,14 +570,14 @@ const CONCESIONARIA_MODULES = [
 
     .team-perm-label {
       font-size: 14px;
-      font-weight: 700;
-      color: var(--brand-black, #000);
+      font-weight: 600;
+      color: #323338;
       line-height: 1.3;
     }
 
     .team-perm-desc {
       font-size: 12px;
-      color: var(--muted, #979797);
+      color: #676879;
       line-height: 1.35;
     }
 
@@ -633,14 +601,15 @@ const CONCESIONARIA_MODULES = [
       grid-template-columns: minmax(180px, 1fr) 1.4fr auto;
       gap: 16px;
       align-items: center;
-      background: #faf9f7;
-      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: #f7f8fa;
+      border: 1px solid #e6e9ef;
+      border-left: 4px solid #0073ea;
       border-radius: 10px;
       padding: 14px 16px;
       transition: border-color 0.15s ease;
     }
 
-    .team-member-card:hover { border-color: rgba(0, 0, 0, 0.14); }
+    .team-member-card:hover { border-color: #c5c7d0; }
 
     .member-main {
       display: flex;
@@ -650,17 +619,17 @@ const CONCESIONARIA_MODULES = [
     }
 
     .member-avatar {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: #000;
+      background: #0073ea;
       color: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
+      font-weight: 700;
       font-size: 13px;
-      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-family: Figtree, system-ui, sans-serif;
       flex-shrink: 0;
     }
 
@@ -668,12 +637,12 @@ const CONCESIONARIA_MODULES = [
 
     .member-info h4 {
       margin: 0 0 3px;
-      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 14px;
-      font-weight: 800;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      color: var(--brand-black, #000);
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #323338;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -681,7 +650,7 @@ const CONCESIONARIA_MODULES = [
 
     .member-info span {
       font-size: 13px;
-      color: var(--muted, #979797);
+      color: #676879;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -696,14 +665,14 @@ const CONCESIONARIA_MODULES = [
     }
 
     .member-perm-badge {
-      background: rgba(0, 0, 0, 0.04);
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      color: var(--brand-black, #000);
-      padding: 5px 11px;
+      background: #e5f4ff;
+      border: 1px solid #b3dbfd;
+      color: #0073ea;
+      padding: 4px 10px;
       border-radius: 999px;
       font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
+      font-weight: 600;
+      letter-spacing: 0;
       white-space: nowrap;
     }
 
@@ -746,9 +715,9 @@ const CONCESIONARIA_MODULES = [
     }
 
     .member-btn:hover {
-      background: #000;
-      color: #fff;
-      border-color: #000;
+      background: #f5f6f8;
+      color: #0073ea;
+      border-color: #0073ea;
     }
 
     .member-btn--delete {
@@ -768,9 +737,9 @@ const CONCESIONARIA_MODULES = [
       align-items: center;
       text-align: center;
       padding: 40px 24px 32px;
-      border: 1px dashed rgba(0, 0, 0, 0.12);
+      border: 1px dashed #c5c7d0;
       border-radius: 10px;
-      background: #faf9f7;
+      background: #f7f8fa;
     }
 
     .team-empty svg {
@@ -785,30 +754,33 @@ const CONCESIONARIA_MODULES = [
     }
 
     .team-empty-title {
-      font-family: var(--f-display, 'Spartan', sans-serif);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 15px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--brand-black, #000);
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
+      color: #323338;
       margin: 0 0 8px;
     }
 
     .team-empty-hint {
       font-size: 13px;
       line-height: 1.5;
-      color: var(--muted, #979797);
+      color: #676879;
       max-width: 360px;
       margin: 0;
     }
 
     @media (max-width: 800px) {
+      .form-row { grid-template-columns: 1fr; }
       .team-perms-grid { grid-template-columns: 1fr; }
       .team-member-card {
         grid-template-columns: 1fr;
         gap: 12px;
       }
       .member-actions { justify-content: flex-end; }
+      .mon-board-title { font-size: 20px; }
+      .mon-board { padding: 16px 14px; }
     }
   `]
 })
@@ -835,10 +807,6 @@ export class CrmTeamComponent implements OnInit {
     return this.isConcesionaria
       ? 'Ranking de ventas cerradas por vendedor. Queda registro permanente de quién cierra más.'
       : 'Ranking de trámites cerrados por vendedor. Queda registro permanente de quién cierra más.';
-  }
-
-  medal(i: number): string {
-    return ['🥇', '🥈', '🥉'][i] || String(i + 1);
   }
 
   form: Employee = { name: '', email: '', password: '', permissions: [] };
