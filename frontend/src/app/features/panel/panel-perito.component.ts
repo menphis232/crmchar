@@ -11,12 +11,13 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-panel-perito',
+  host: { class: 'panel-datta' },
   standalone: true,
   imports: [
     CommonModule, PeritoKanbanComponent, PeritoDealPanelComponent, PanelUserMenuComponent, LucideClipboardList,
   ],
   templateUrl: './panel-perito.component.html',
-  styleUrls: ['./panel-dashboard.css', './panel-perito.component.css'],
+  styleUrls: ['./panel-dashboard.css', './panel-datta.css', './panel-perito.component.css'],
 })
 export class PanelPeritoComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;

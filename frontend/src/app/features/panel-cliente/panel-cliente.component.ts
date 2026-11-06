@@ -80,6 +80,7 @@ const CLIENT_TABS: ClientTab[] = [
 
 @Component({
   selector: 'app-panel-cliente',
+  host: { class: 'panel-datta' },
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
@@ -92,7 +93,7 @@ const CLIENT_TABS: ClientTab[] = [
     LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideBell,
   ],
   templateUrl: './panel-cliente.component.html',
-  styleUrls: ['../panel/panel-dashboard.css', '../panel/panel-dark-theme.css', './panel-cliente.component.css'],
+  styleUrls: ['../panel/panel-dashboard.css', '../panel/panel-dark-theme.css', '../panel/panel-datta.css', './panel-cliente.component.css'],
 })
 export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;

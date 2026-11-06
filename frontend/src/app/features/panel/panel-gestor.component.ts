@@ -123,6 +123,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
 
 @Component({
   selector: 'app-panel-gestor',
+  host: { class: 'panel-datta' },
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
@@ -130,7 +131,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
     LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap,
   ],
   templateUrl: './panel-gestor.component.html',
-  styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css'],
+  styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-datta.css', './panel-gestor.component.css'],
 })
 export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly showPageBuilder = SHOW_PAGE_BUILDER;

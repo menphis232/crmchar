@@ -39,6 +39,13 @@
 
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+    <a class="datta-brand" [href]="tvmMainSite">
+      <span class="datta-brand-mark">
+        <img [src]="auth.user()?.logo_url || tvmLogo" alt="" />
+      </span>
+      <span class="datta-brand-title">{{ auth.user()?.name || 'Concesionaria' }}</span>
+    </a>
+    <p class="datta-nav-caption">Menú</p>
     <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="auth.user()?.name || ''"
