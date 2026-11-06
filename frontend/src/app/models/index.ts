@@ -696,6 +696,10 @@ export interface FinDashboard {
   monthExpense: number;
   monthBalance: number;
   projectedIncome: number;
+  /** Valor estimado de trámites cerrados (informativo; no suma al balance). */
+  completedDealsValue?: number;
+  /** Suma de ingresos por método; debe coincidir con totalIncome. */
+  methodIncome?: number;
   byMethod?: Record<string, number>;
 }
 

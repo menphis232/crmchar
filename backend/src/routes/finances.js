@@ -118,23 +118,21 @@ router.get('/dashboard', async (req, res) => {
       if (r.type === 'expense') monthExpense = Number(r.total);
     });
 
-    // Proyección desde deals
-    const [completedRows] = await query(
-      "SELECT SUM(estimated_value) as total FROM crm_deals WHERE user_id = ? AND stage IN ('completado', 'vendido')",
-      [req.orgId]
-    );
-    const dealsIncome = Number(completedRows?.total || 0);
-
+    // Valor estimado de trámites abiertos (NO entra al balance: el dinero real está en fin_transactions).
     const [pendingRows] = await query(
       "SELECT SUM(estimated_value) as total FROM crm_deals WHERE user_id = ? AND stage NOT IN ('completado', 'vendido', 'perdido')",
       [req.orgId]
     );
     const projectedIncome = Number(pendingRows?.total || 0);
 
-    if (!from && !to) {
-      income += dealsIncome;
-      monthIncome += dealsIncome;
-    }
+    // Valor estimado de trámites cerrados (informativo; tampoco se suma: los pagos ya están en fin_transactions).
+    const [completedRows] = await query(
+      "SELECT SUM(estimated_value) as total FROM crm_deals WHERE user_id = ? AND stage IN ('completado', 'vendido')",
+      [req.orgId]
+    );
+    const completedDealsValue = Number(completedRows?.total || 0);
+
+    const methodIncome = Object.values(byMethod).reduce((s, n) => s + Number(n || 0), 0);
 
     res.json({
       totalIncome: income,
@@ -144,6 +142,8 @@ router.get('/dashboard', async (req, res) => {
       monthExpense,
       monthBalance: monthIncome - monthExpense,
       projectedIncome,
+      completedDealsValue,
+      methodIncome,
       byMethod
     });
   } catch (err) {

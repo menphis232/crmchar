@@ -180,6 +180,17 @@ import { formatMoney } from '../../shared/format-amount.util';
                 }
               }
             </div>
+            @if (dashboard()!.methodIncome != null) {
+              <p class="card-desc" style="margin-top:10px;">
+                Suma por método: {{ fmt(dashboard()!.methodIncome!).display }}
+                · Ingresos totales: {{ fmt(dashboard()!.totalIncome).display }}
+                @if (methodsBalance()) {
+                  · Cuadra
+                } @else {
+                  · Revisar diferencias
+                }
+              </p>
+            }
           </div>
         }
       }
@@ -1237,6 +1248,13 @@ export class FinancesComponent implements OnInit, OnDestroy {
   hasMethodData(): boolean {
     const bm = this.dashboard()?.byMethod;
     return !!bm && Object.values(bm).some(v => v > 0);
+  }
+
+  /** True si la suma por método coincide con ingresos totales (tolerancia 1 centavo). */
+  methodsBalance(): boolean {
+    const d = this.dashboard();
+    if (!d || d.methodIncome == null) return true;
+    return Math.abs(Number(d.methodIncome) - Number(d.totalIncome)) < 0.02;
   }
 
   getMethodAmount(id: string): number {
