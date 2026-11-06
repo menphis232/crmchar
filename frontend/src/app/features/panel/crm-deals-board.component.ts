@@ -118,7 +118,13 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
     </div>
   `,
   styles: [`
-    :host { display: block; }
+    :host {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
     .mon-board {
       background: #fff;
       border: 1px solid #e6e9ef;
@@ -126,6 +132,11 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
       padding: 20px 22px 24px;
       color: #323338;
       font-family: Figtree, system-ui, sans-serif;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: visible;
     }
     .mon-board-head {
       display: flex;

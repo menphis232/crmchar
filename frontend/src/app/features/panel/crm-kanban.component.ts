@@ -23,6 +23,21 @@ export interface KanbanStage extends CrmStageConfig {}
   templateUrl: './crm-kanban.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
+    :host {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+    .kanban-board {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
     .kanban-stage-select {
       color-scheme: light;
       background-color: #fff !important;
