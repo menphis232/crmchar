@@ -210,6 +210,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   promptShippingUploadDealId = signal<string | null>(null);
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
+  globalSearch = '';
   filterStage = '';
   bio = '';
   profileName = '';
@@ -1622,6 +1623,43 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   initials(name?: string) {
     return (name || 'GL').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  firstName(): string {
+    const full = (this.profile()?.name || this.auth.user()?.name || 'Gestor').trim();
+    return full.split(/\s+/)[0] || 'Gestor';
+  }
+
+  todayLabel(): string {
+    return new Intl.DateTimeFormat('es-MX', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'America/Mexico_City',
+    }).format(new Date());
+  }
+
+  greetingLabel(): string {
+    const hour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: 'America/Mexico_City',
+      }).format(new Date()),
+    );
+    if (hour < 12) return 'Buenos días';
+    if (hour < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
+  runGlobalSearch() {
+    const q = this.globalSearch.trim();
+    if (!q) return;
+    this.searchQuery = q;
+    if (this.hasPerm('pipeline')) {
+      this.setTab('pipeline');
+      this.isMobileMenuOpen.set(false);
+    }
   }
 
   // --- AUTOMATIONS ---

@@ -1,32 +1,77 @@
 /*
-  Panel shell inspirado en Datta Able Angular Lite (CodedThemes, MIT).
+  Panel shell — monday.com CRM (tema claro).
   Solo aplica dentro de :host.panel-datta — no afecta páginas públicas.
-  Tema: negro / blanco.
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap');
+
 :host.panel-datta {
-  --datta-sidebar: 264px;
-  --datta-header: 70px;
-  --sidebar-w: 264px;
-  --nav-h: 70px;
+  --mon-bg: #f6f7fb;
+  --mon-surface: #ffffff;
+  --mon-border: #e6e9ef;
+  --mon-text: #323338;
+  --mon-muted: #676879;
+  --mon-primary: #0073ea;
+  --mon-primary-soft: #e5f4ff;
+  --mon-teal: #00c875;
+  --mon-orange: #fdab3d;
+  --mon-red: #e2445c;
+  --mon-purple: #a25ddc;
+  --mon-sidebar: 260px;
+  --mon-header: 56px;
+  --datta-sidebar: 260px;
+  --datta-header: 56px;
+  --sidebar-w: 260px;
+  --nav-h: 56px;
+  --f-ui: 'Figtree', system-ui, sans-serif;
+  --f-display: 'Figtree', system-ui, sans-serif;
+  --f-body: 'Figtree', system-ui, sans-serif;
+  --text: var(--mon-text);
+  --muted: var(--mon-muted);
+  --bg: var(--mon-bg);
+  --surface: var(--mon-surface);
+  --border: var(--mon-border);
+  --btn-primary-bg: var(--mon-primary);
+  --btn-primary-color: #fff;
+  --btn-primary-border: var(--mon-primary);
+  --btn-primary-hover-bg: #0060c2;
+  --btn-primary-hover-color: #fff;
+  --btn-primary-hover-border: #0060c2;
+  --btn-outline-bg: #fff;
+  --btn-outline-color: var(--mon-text);
+  --btn-outline-border: #c5c7d0;
+  --btn-outline-hover-bg: #f5f6f8;
+  --btn-outline-hover-color: var(--mon-text);
+  --btn-outline-hover-border: #c5c7d0;
   display: block;
   min-height: 100vh;
-  background: #000000;
-  color: #ffffff;
-  font-family: 'Open Sans', var(--f-ui, system-ui), sans-serif;
+  background: var(--mon-bg) !important;
+  color: var(--mon-text) !important;
+  font-family: var(--f-ui) !important;
 }
 
+:host.panel-datta,
+:host.panel-datta .dash-container,
+:host.panel-datta .dash-main {
+  background: var(--mon-bg) !important;
+  color: var(--mon-text) !important;
+}
+
+/* ── Topbar ── */
 :host.panel-datta .dash-nav {
   position: fixed;
   top: 0;
-  left: var(--datta-sidebar);
+  left: var(--mon-sidebar);
   right: 0;
   z-index: 1028;
-  height: var(--datta-header);
-  padding: 0 24px;
-  background: #0a0a0a !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+  height: var(--mon-header);
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--mon-surface) !important;
+  border-bottom: 1px solid var(--mon-border) !important;
+  box-shadow: none !important;
 }
 
 :host.panel-datta .dash-logo,
@@ -34,14 +79,63 @@
   display: none;
 }
 
+:host.panel-datta .dash-user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--mon-muted) !important;
+}
+
+:host.panel-datta .mon-top-search {
+  flex: 1;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  background: #f5f6f8;
+  border: 1px solid transparent;
+  color: var(--mon-muted);
+  font-size: 14px;
+}
+
+:host.panel-datta .mon-top-search:focus-within {
+  border-color: var(--mon-primary);
+  background: #fff;
+}
+
+:host.panel-datta .mon-top-search input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  color: var(--mon-text) !important;
+  outline: none;
+  font-size: 14px !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+:host.panel-datta .mon-top-search kbd {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #fff;
+  border: 1px solid var(--mon-border);
+  color: var(--mon-muted);
+}
+
+/* ── Sidebar ── */
 :host.panel-datta .dash-container {
   display: block;
   max-width: none;
   margin: 0;
-  margin-left: var(--datta-sidebar);
-  padding: calc(var(--datta-header) + 20px) 24px 32px;
+  margin-left: var(--mon-sidebar);
+  padding: calc(var(--mon-header) + 20px) 28px 40px;
   min-height: 100vh;
-  background: #000000;
 }
 
 :host.panel-datta .dash-sidebar {
@@ -49,37 +143,37 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: var(--datta-sidebar);
+  width: var(--mon-sidebar);
   z-index: 1030;
   margin: 0;
   padding: 0 0 24px;
-  align-self: stretch;
-  background: #0a0a0a !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--mon-surface) !important;
+  border-right: 1px solid var(--mon-border) !important;
   border-radius: 0;
   overflow-y: auto;
   overflow-x: hidden;
   gap: 0;
+  box-shadow: none !important;
 }
 
 :host.panel-datta .datta-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  height: var(--datta-header);
-  padding: 0 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  height: var(--mon-header);
+  padding: 0 16px;
+  border-bottom: 1px solid var(--mon-border);
   text-decoration: none;
-  color: #fff;
+  color: var(--mon-text) !important;
   flex-shrink: 0;
 }
 
 :host.panel-datta .datta-brand-mark {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #ffffff;
-  color: #000;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--mon-primary);
+  color: #fff;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -91,69 +185,86 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+  background: #fff;
 }
 
 :host.panel-datta .datta-brand-title {
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--mon-text) !important;
 }
 
 :host.panel-datta .datta-nav-caption {
-  margin: 18px 18px 8px;
+  margin: 16px 16px 6px;
   font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--mon-muted) !important;
 }
 
 :host.panel-datta .dash-link {
-  margin: 2px 10px;
-  padding: 11px 14px;
-  border-radius: 8px;
+  margin: 2px 10px !important;
+  padding: 9px 12px !important;
+  border-radius: 8px !important;
   border-left: none !important;
-  text-transform: none;
-  letter-spacing: 0.01em;
-  font-size: 13px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 14px !important;
   font-weight: 500 !important;
-  color: rgba(255, 255, 255, 0.65) !important;
+  font-family: var(--f-ui) !important;
+  color: var(--mon-text) !important;
+  background: transparent !important;
 }
 
 :host.panel-datta .dash-link:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: #ffffff !important;
+  background: #f5f6f8 !important;
+  color: var(--mon-text) !important;
 }
 
 :host.panel-datta .dash-link.active {
-  background: #ffffff !important;
-  color: #000000 !important;
-  font-weight: 700 !important;
+  background: var(--mon-primary-soft) !important;
+  color: var(--mon-primary) !important;
+  font-weight: 600 !important;
 }
 
 :host.panel-datta .dash-link.active .dash-link-icon,
 :host.panel-datta .dash-link.active svg {
-  color: #000000 !important;
-  stroke: #000000 !important;
+  color: var(--mon-primary) !important;
+  stroke: var(--mon-primary) !important;
+}
+
+:host.panel-datta .dash-link .dash-link-icon,
+:host.panel-datta .dash-link svg {
+  color: var(--mon-muted) !important;
+  stroke: var(--mon-muted) !important;
 }
 
 :host.panel-datta .dash-link .kanban-count {
   margin-left: auto;
-  background: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background: #f0f1f5;
+  color: var(--mon-muted);
   border-radius: 999px;
   padding: 1px 8px;
   font-size: 11px;
+  font-weight: 600;
 }
 
 :host.panel-datta .dash-link.active .kanban-count {
-  background: #000;
+  background: var(--mon-primary);
   color: #fff;
 }
 
+:host.panel-datta .sidebar-user-section {
+  color: var(--mon-text) !important;
+  border-color: var(--mon-border) !important;
+}
+
+/* ── Main / cards ── */
 :host.panel-datta .dash-main {
   gap: 20px;
   max-width: 1480px;
@@ -161,41 +272,164 @@
 
 :host.panel-datta .dash-card,
 :host.panel-datta ::ng-deep .dash-card {
-  background: #0a0a0a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--mon-surface) !important;
+  border: 1px solid var(--mon-border) !important;
+  border-top: 1px solid var(--mon-border) !important;
   border-radius: 12px !important;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35) !important;
-  padding: 22px 22px 18px !important;
+  box-shadow: 0 2px 8px rgba(50, 51, 56, 0.04) !important;
+  padding: 20px 22px !important;
+  color: var(--mon-text) !important;
 }
 
-:host.panel-datta .stat-box {
-  background: #0a0a0a !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+:host.panel-datta .stat-box,
+:host.panel-datta ::ng-deep .stat-box {
+  background: var(--mon-surface) !important;
+  border: 1px solid var(--mon-border) !important;
   border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(50, 51, 56, 0.04) !important;
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta .stat-num,
+:host.panel-datta ::ng-deep .stat-num {
+  color: var(--mon-text) !important;
+  font-family: var(--f-ui) !important;
+  font-weight: 700 !important;
+}
+
+:host.panel-datta .stat-label,
+:host.panel-datta ::ng-deep .stat-label,
+:host.panel-datta .card-desc,
+:host.panel-datta ::ng-deep .card-desc {
+  color: var(--mon-muted) !important;
+  font-family: var(--f-ui) !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
 }
 
 :host.panel-datta .card-title,
 :host.panel-datta ::ng-deep .card-title {
   text-transform: none !important;
-  letter-spacing: 0.01em !important;
-  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  font-weight: 700 !important;
   font-size: 18px !important;
+  font-family: var(--f-ui) !important;
+  color: var(--mon-text) !important;
 }
 
+:host.panel-datta .panel-welcome,
+:host.panel-datta .success-msg,
+:host.panel-datta .banner-msg {
+  color: var(--mon-text) !important;
+}
+
+/* Monday home greeting */
+:host.panel-datta .mon-home-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+:host.panel-datta .mon-home-date {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--mon-muted);
+  font-weight: 500;
+}
+
+:host.panel-datta .mon-home-greet {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 700;
+  color: var(--mon-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+:host.panel-datta .mon-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+:host.panel-datta .mon-recent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #d6ebff;
+  background: linear-gradient(180deg, #f3f9ff 0%, #eef7ff 100%);
+  text-align: left;
+  cursor: pointer;
+  color: var(--mon-text);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:host.panel-datta .mon-recent-card:hover {
+  border-color: var(--mon-primary);
+  box-shadow: 0 4px 12px rgba(0, 115, 234, 0.08);
+}
+
+:host.panel-datta .mon-recent-card strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+:host.panel-datta .mon-recent-card span {
+  font-size: 12px;
+  color: var(--mon-muted);
+}
+
+:host.panel-datta .mon-recent-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 115, 234, 0.12);
+  font-size: 12px;
+  color: var(--mon-muted);
+}
+
+:host.panel-datta .mon-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--mon-primary);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Buttons ── */
 :host.panel-datta .btn-copy,
-:host.panel-datta ::ng-deep .btn-copy {
-  background: #ffffff !important;
-  color: #000000 !important;
-  border: 1px solid #ffffff !important;
+:host.panel-datta ::ng-deep .btn-copy,
+:host.panel-datta .btn-nuevo-lead,
+:host.panel-datta ::ng-deep .btn-nuevo-lead {
+  background: var(--mon-primary) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--mon-primary) !important;
   border-radius: 8px !important;
+  font-family: var(--f-ui) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
 }
 
 :host.panel-datta .btn-copy:hover,
-:host.panel-datta ::ng-deep .btn-copy:hover {
-  background: transparent !important;
-  color: #ffffff !important;
+:host.panel-datta ::ng-deep .btn-copy:hover,
+:host.panel-datta .btn-nuevo-lead:hover {
+  background: #0060c2 !important;
+  color: #fff !important;
 }
 
 :host.panel-datta .btn-ghost,
@@ -203,15 +437,183 @@
 :host.panel-datta ::ng-deep .btn-ghost,
 :host.panel-datta ::ng-deep .deal-outline-btn {
   border-radius: 8px !important;
+  border-color: #c5c7d0 !important;
+  color: var(--mon-text) !important;
+  background: #fff !important;
+  font-family: var(--f-ui) !important;
 }
 
+:host.panel-datta .btn-ghost:hover,
+:host.panel-datta .deal-outline-btn:hover,
+:host.panel-datta ::ng-deep .btn-ghost:hover,
+:host.panel-datta ::ng-deep .deal-outline-btn:hover {
+  background: #f5f6f8 !important;
+}
+
+/* ── Forms ── */
 :host.panel-datta .dash-container input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
 :host.panel-datta .dash-container textarea,
-:host.panel-datta .dash-container select {
+:host.panel-datta .dash-container select,
+:host.panel-datta ::ng-deep input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+:host.panel-datta ::ng-deep textarea,
+:host.panel-datta ::ng-deep select {
   border-radius: 8px !important;
-  background: #111 !important;
-  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: #fff !important;
+  border: 1px solid var(--mon-border) !important;
+  color: var(--mon-text) !important;
+  font-family: var(--f-ui) !important;
+}
+
+:host.panel-datta .dash-container input::placeholder,
+:host.panel-datta .dash-container textarea::placeholder,
+:host.panel-datta ::ng-deep input::placeholder,
+:host.panel-datta ::ng-deep textarea::placeholder {
+  color: #9ca0ad !important;
+}
+
+/* ── Tables / boards / lists ── */
+:host.panel-datta ::ng-deep table,
+:host.panel-datta ::ng-deep .fin-table,
+:host.panel-datta ::ng-deep .clients-table {
+  background: var(--mon-surface) !important;
+  color: var(--mon-text) !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+:host.panel-datta ::ng-deep th {
+  background: #f7f8fa !important;
+  color: var(--mon-muted) !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  border-bottom: 1px solid var(--mon-border) !important;
+  border-right: 1px solid var(--mon-border) !important;
+}
+
+:host.panel-datta ::ng-deep td {
+  background: #fff !important;
+  color: var(--mon-text) !important;
+  border-bottom: 1px solid var(--mon-border) !important;
+  font-size: 14px !important;
+}
+
+:host.panel-datta ::ng-deep tr:hover td {
+  background: #f8fbff !important;
+}
+
+:host.panel-datta .status-badge,
+:host.panel-datta ::ng-deep .status-badge,
+:host.panel-datta ::ng-deep .stage-pill,
+:host.panel-datta ::ng-deep .chip {
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+
+:host.panel-datta ::ng-deep .inbox-row {
+  background: transparent !important;
+  border-color: var(--mon-border) !important;
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta ::ng-deep .inbox-row:hover {
+  background: #f8fbff !important;
+}
+
+/* Kanban columns */
+:host.panel-datta ::ng-deep .kanban-col,
+:host.panel-datta ::ng-deep .kanban-column {
+  background: #f0f1f5 !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 10px !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-card,
+:host.panel-datta ::ng-deep .deal-card {
+  background: #fff !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 8px !important;
+  color: var(--mon-text) !important;
+  box-shadow: 0 1px 3px rgba(50, 51, 56, 0.06) !important;
+}
+
+/* Deal panel override to light Monday */
+:host.panel-datta ::ng-deep .deal-panel-overlay {
+  background: rgba(50, 51, 56, 0.45) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-panel {
+  background: #fff !important;
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-panel-header,
+:host.panel-datta ::ng-deep .deal-tabs,
+:host.panel-datta ::ng-deep .deal-panel-body {
+  background: #fff !important;
+  color: var(--mon-text) !important;
+  border-color: var(--mon-border) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-panel-header h3,
+:host.panel-datta ::ng-deep .deal-section h4 {
+  color: var(--mon-text) !important;
+  font-family: var(--f-ui) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-chip {
+  border-color: var(--mon-border) !important;
+  color: var(--mon-text) !important;
+  background: #f5f6f8 !important;
+}
+
+:host.panel-datta ::ng-deep .deal-tab {
+  color: var(--mon-muted) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-tab.active {
+  background: var(--mon-primary) !important;
   color: #fff !important;
+}
+
+:host.panel-datta ::ng-deep .deal-tab-hint,
+:host.panel-datta ::ng-deep .card-desc {
+  color: var(--mon-muted) !important;
+}
+
+:host.panel-datta ::ng-deep .deal-section {
+  border-bottom-color: var(--mon-border) !important;
+}
+
+/* Finanzas light */
+:host.panel-datta ::ng-deep .fin-page,
+:host.panel-datta ::ng-deep .fin-wrap {
+  background: transparent !important;
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta ::ng-deep .fin-title,
+:host.panel-datta ::ng-deep .stat-val,
+:host.panel-datta ::ng-deep .stat-label {
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta ::ng-deep .stat-card {
+  background: #fff !important;
+  border: 1px solid var(--mon-border) !important;
+  color: var(--mon-text) !important;
+}
+
+/* Hide theme switch in Monday light-locked panels (optional UX clarity) */
+:host.panel-datta app-theme-switch {
+  display: none !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  :host.panel-datta .mon-recent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 991px) {
@@ -228,18 +630,43 @@
     display: none;
   }
 
+  :host.panel-datta .mon-top-search {
+    display: none;
+  }
+
   :host.panel-datta .dash-container {
     margin-left: 0;
-    padding: calc(var(--datta-header) + 16px) 14px 24px;
+    padding: calc(var(--mon-header) + 16px) 14px 24px;
   }
 
   :host.panel-datta .dash-sidebar {
     transform: translateX(-105%);
     transition: transform 0.25s ease;
-    width: min(86vw, 280px);
+    width: min(88vw, 300px);
+    box-shadow: 8px 0 24px rgba(50, 51, 56, 0.12);
   }
 
   :host.panel-datta .dash-sidebar.mobile-open {
     transform: translateX(0);
+  }
+
+  :host.panel-datta .mon-recent-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :host.panel-datta .mon-home-greet {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 640px) {
+  :host.panel-datta .dash-container {
+    padding: calc(var(--mon-header) + 12px) 12px 20px;
+  }
+
+  :host.panel-datta .dash-card,
+  :host.panel-datta ::ng-deep .dash-card {
+    padding: 16px !important;
+    border-radius: 10px !important;
   }
 }

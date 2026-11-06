@@ -45,7 +45,7 @@
       </span>
       <span class="datta-brand-title">{{ auth.user()?.name || 'Concesionaria' }}</span>
     </a>
-    <p class="datta-nav-caption">Menú</p>
+    <p class="datta-nav-caption">Espacio de trabajo</p>
     <div class="mobile-only sidebar-user-section">
       <app-panel-user-menu
         [name]="auth.user()?.name || ''"
@@ -68,13 +68,13 @@
     @if (hasPerm('dashboard')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'dashboard'" (click)="setTab('dashboard'); isMobileMenuOpen.set(false)">
         <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-        Dashboard
+        Inicio
       </button>
     }
     @if (hasPerm('pipeline')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
         <svg lucideFunnel [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-        Embudo de Ventas
+        Acuerdos
         @if (crmDashboard()?.totals?.active) {
           <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
         }
