@@ -83,45 +83,65 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       color-scheme: light;
     }
 
-    /* Overlay */
-    .deal-panel-overlay { background: rgba(50,51,56,0.45) !important; backdrop-filter: blur(6px); }
-
-    /* Panel — Monday light */
-    .deal-panel {
-      background: #fff !important;
-      border-left: 1px solid #e6e9ef !important;
-      color: #323338 !important;
-      scrollbar-color: #e6e9ef transparent;
-      font-family: 'Figtree', system-ui, sans-serif !important;
+    /* Página dentro del container (NO modal / NO overlay fijo) */
+    :host {
+      display: block;
+      width: 100%;
+      min-width: 0;
     }
-    .deal-panel::-webkit-scrollbar-thumb { background: #e6e9ef !important; }
-    .deal-panel-body { background: #f6f7fb !important; color: #323338 !important; }
+    .deal-page {
+      display: block;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 0 48px;
+      box-sizing: border-box;
+    }
+    .deal-page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 12px;
+    }
+    .deal-back-btn {
+      border: none;
+      background: transparent;
+      color: #0073ea;
+      font-family: 'Figtree', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+    .deal-back-btn:hover { text-decoration: underline; }
 
-    /* Pantalla completa; el contenido se centra a 960px para que no se estire en monitores anchos */
-    .deal-panel-overlay { align-items: stretch !important; }
+    /* Panel — Monday light, flujo normal (scroll de la página) */
     .deal-panel {
-      width: 100vw !important;
-      max-width: 100vw !important;
-      height: 100dvh !important;
+      position: static !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      max-height: none !important;
+      background: transparent !important;
+      border: none !important;
       border-radius: 0 !important;
-      border-left: none !important;
-      display: flex !important;
-      flex-direction: column !important;
-      overflow: hidden !important;
-    }
-    .deal-panel-header,
-    .deal-panel-body {
-      padding-left: max(16px, calc((100vw - 960px) / 2)) !important;
-      padding-right: max(16px, calc((100vw - 960px) / 2)) !important;
-    }
-    .deal-panel-header,
-    .deal-tabs {
-      flex-shrink: 0;
+      box-shadow: none !important;
+      color: #323338 !important;
+      overflow: visible !important;
+      display: block !important;
+      animation: none !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      padding: 0 !important;
     }
     .deal-panel-body {
-      flex: 1 1 auto !important;
-      overflow-y: auto !important;
-      min-height: 0 !important;
+      background: transparent !important;
+      color: #323338 !important;
+      overflow: visible !important;
+      flex: none !important;
+      height: auto !important;
+      max-height: none !important;
+      padding: 8px 0 0 !important;
     }
     .deal-section { background: transparent !important; border-bottom: 1px solid #e6e9ef !important; }
     .deal-subsection { background: #fff !important; border: 1px solid #e6e9ef !important; border-radius: 12px !important; margin-bottom: 8px !important; }
@@ -131,8 +151,11 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     /* Header */
     .deal-panel-header {
       background: #fff !important;
-      border-bottom: 1px solid #e6e9ef !important;
+      border: 1px solid #e6e9ef !important;
+      border-radius: 12px !important;
+      padding: 18px 20px !important;
       gap: 12px;
+      margin-bottom: 12px;
     }
     .deal-panel-header h3 {
       color: #323338 !important;
@@ -166,9 +189,11 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       display: flex;
       gap: 4px;
       overflow-x: auto;
-      padding: 10px max(16px, calc((100vw - 960px) / 2));
+      padding: 8px;
       background: #fff;
-      border-bottom: 1px solid #e6e9ef;
+      border: 1px solid #e6e9ef;
+      border-radius: 12px;
+      margin-bottom: 12px;
       scrollbar-width: none;
     }
     .deal-tabs::-webkit-scrollbar { display: none; }
@@ -479,9 +504,21 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .activity-type { color: #676879 !important; font-family: 'Figtree', system-ui, sans-serif !important; font-size: 10px !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; }
 
     /* Chat */
-    .deal-chat { border-radius: 12px !important; overflow: hidden !important; border: 1px solid #e6e9ef !important; }
+    .deal-chat {
+      height: min(420px, 55vh) !important;
+      min-height: 280px !important;
+      border-radius: 12px !important;
+      overflow: hidden !important;
+      border: 1px solid #e6e9ef !important;
+      background: #fff !important;
+    }
     .chat-container { background: #fff !important; border-radius: 12px !important; }
-    .deal-panel .chat-messages { background: #fff !important; }
+    .deal-panel .chat-messages {
+      background: #f8f9fb !important;
+      overflow-y: auto !important;
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+    }
 
     /* Mensajes del cliente */
     .deal-panel .message {

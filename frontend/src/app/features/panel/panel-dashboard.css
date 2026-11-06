@@ -1134,19 +1134,17 @@ select option {
 }
 
 /* ══════════════════════════════════════════════
-   DEAL PANEL — MODAL OVERLAY
+   DEAL PANEL — página en flujo (legacy overlay desactivado)
 ══════════════════════════════════════════════ */
 .deal-panel-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 500;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  animation: fadeIn 0.2s ease;
+  position: static;
+  inset: auto;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  z-index: auto;
+  display: block;
+  animation: none;
 }
 
 @keyframes fadeIn {
@@ -1159,19 +1157,16 @@ select option {
 }
 
 .deal-panel {
-  width: 480px;
-  max-width: 95vw;
-  height: 100vh;
-  background: var(--brand-white);
-  border-left: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: var(--shadow-modal);
-  overflow-y: auto;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  background: transparent;
+  border-left: none;
+  box-shadow: none;
+  overflow: visible;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  animation: slideInRight 0.25s cubic-bezier(0.32,0.72,0,1);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+  display: block;
+  animation: none;
   color: var(--brand-black);
 }
 .deal-panel::-webkit-scrollbar { width: 5px; }
@@ -1979,14 +1974,13 @@ select option {
   }
 
   .deal-panel {
-    width: 100vw;
-    max-width: 100vw;
-    height: 92vh;
-    border-radius: 20px 20px 0 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border-radius: 0;
+    overflow: visible;
   }
-  .deal-panel-overlay { align-items: flex-end; }
+  .deal-panel-overlay { display: block; }
 
   .deal-panel-header {
     padding: 16px;

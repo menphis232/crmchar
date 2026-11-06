@@ -761,6 +761,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.selectedDealId.set(id);
     this.selectedContactId.set(null);
     if (this.tab() !== 'pipeline') this.tab.set('pipeline');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   openManualLeadForm() {

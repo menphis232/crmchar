@@ -678,22 +678,52 @@
   box-shadow: 0 1px 3px rgba(50, 51, 56, 0.06) !important;
 }
 
-/* Deal panel override to light Monday */
+/* Deal page — dentro del container, no modal fijo */
 :host.panel-datta ::ng-deep .deal-panel-overlay {
-  background: rgba(50, 51, 56, 0.45) !important;
+  display: none !important;
+}
+
+:host.panel-datta ::ng-deep .deal-page {
+  display: block !important;
+  width: 100% !important;
+  max-width: 960px !important;
+  margin: 0 auto !important;
 }
 
 :host.panel-datta ::ng-deep .deal-panel {
-  background: #fff !important;
+  position: static !important;
+  inset: auto !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  background: transparent !important;
   color: var(--mon-text) !important;
+  overflow: visible !important;
+  box-shadow: none !important;
+  animation: none !important;
 }
 
-:host.panel-datta ::ng-deep .deal-panel-header,
-:host.panel-datta ::ng-deep .deal-tabs,
-:host.panel-datta ::ng-deep .deal-panel-body {
+:host.panel-datta ::ng-deep .deal-panel-header {
   background: #fff !important;
   color: var(--mon-text) !important;
-  border-color: var(--mon-border) !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 12px !important;
+}
+
+:host.panel-datta ::ng-deep .deal-tabs {
+  background: #fff !important;
+  color: var(--mon-text) !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 12px !important;
+}
+
+:host.panel-datta ::ng-deep .deal-panel-body {
+  background: transparent !important;
+  color: var(--mon-text) !important;
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
 }
 
 :host.panel-datta ::ng-deep .deal-panel-header h3,

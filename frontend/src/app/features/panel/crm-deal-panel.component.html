@@ -1,7 +1,18 @@
 @if (deal(); as d) {
-  <div class="deal-panel-overlay" (click)="onOverlayClick($event)">
-    <div class="deal-panel" (click)="$event.stopPropagation()">
+  <div class="deal-page">
+    <div class="deal-page-toolbar">
+      <button type="button" class="deal-back-btn" (click)="closed.emit()">← Volver</button>
+      <div class="deal-panel-header-actions">
+        <button type="button" class="deal-panel-delete" title="Eliminar del embudo" (click)="deleteDeal()">
+          <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
+        </button>
+        <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">
+          <svg lucideX [size]="18" aria-hidden="true"></svg>
+        </button>
+      </div>
+    </div>
 
+    <div class="deal-panel">
       <!-- ── HEADER ── -->
       <div class="deal-panel-header">
         <div style="flex:1; min-width:0;">
@@ -25,14 +36,6 @@
             }
             <button type="button" class="deal-outline-btn" (click)="setDealView('chat')">Abrir chat</button>
           </div>
-        </div>
-        <div class="deal-panel-header-actions">
-          <button type="button" class="deal-panel-delete" title="Eliminar del embudo" (click)="deleteDeal()">
-            <svg lucideTrash2 [size]="16" aria-hidden="true"></svg>
-          </button>
-          <button type="button" class="deal-panel-close" title="Cerrar" (click)="closed.emit()">
-            <svg lucideX [size]="18" aria-hidden="true"></svg>
-          </button>
         </div>
       </div>
 
@@ -722,7 +725,7 @@
 
       </div><!-- /deal-panel-body -->
     </div><!-- /deal-panel -->
-  </div><!-- /overlay -->
+  </div><!-- /deal-page -->
 }
 
 @if (paymentMethodModalOpen()) {

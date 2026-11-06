@@ -128,7 +128,28 @@
     }
   </aside>
 
-  <main class="dash-main">
+  <main class="dash-main" [class.is-deal-page]="!!selectedDealId()">
+    @if (selectedDealId(); as dealId) {
+      <app-crm-deal-panel
+        [dealId]="dealId"
+        [stages]="crmDashboard()?.stages ?? []"
+        [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+        [stagesConfig]="crmStages"
+        [templates]="templates()"
+        [showReply]="true"
+        [isConcesionaria]="true"
+        [promptDeliveryUpload]="promptDeliveryUploadDealId() === dealId"
+        [promptShippingUpload]="promptShippingUploadDealId() === dealId"
+        (closed)="selectedDealId.set(null)"
+        (updated)="onDealUpdated()"
+        (deleted)="onDealDeleted()"
+        (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
+        (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
+        (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+      />
+    }
+
+    <div class="dash-main-flow" [hidden]="!!selectedDealId()">
     @if (panelTheme().welcomeMessage) {
       <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
     }
@@ -273,25 +294,6 @@
         />
       </div>
 
-      @if (selectedDealId()) {
-        <app-crm-deal-panel
-          [dealId]="selectedDealId()"
-          [stages]="crm.stages"
-          [stageLabels]="crm.stageLabels"
-          [stagesConfig]="crmStages"
-          [templates]="templates()"
-          [showReply]="true"
-          [isConcesionaria]="true"
-          [promptDeliveryUpload]="promptDeliveryUploadDealId() === selectedDealId()"
-          [promptShippingUpload]="promptShippingUploadDealId() === selectedDealId()"
-          (closed)="selectedDealId.set(null)"
-          (updated)="onDealUpdated()"
-          (deleted)="onDealDeleted()"
-          (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
-          (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
-          (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
-        />
-      }
       @if (!selectedDealId() && selectedContactId()) {
         <app-crm-contact-panel
           [contactId]="selectedContactId()"
@@ -869,6 +871,7 @@
     @if (tab() === 'team' && !auth.user()?.parent_id) {
       <app-crm-team></app-crm-team>
     }
+    </div><!-- /dash-main-flow -->
   </main>
 </div>
 

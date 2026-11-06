@@ -389,6 +389,9 @@ export class PanelConcesionariaComponent implements OnInit {
     this.selectedDealId.set(id);
     this.selectedContactId.set(null);
     if (this.tab() !== 'pipeline') this.tab.set('pipeline');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   onDealUpdated() {

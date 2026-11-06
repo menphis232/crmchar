@@ -163,7 +163,27 @@
     </a>
   </aside>
 
-  <main class="dash-main">
+  <main class="dash-main" [class.is-deal-page]="!!selectedDealId()">
+    @if (selectedDealId(); as dealId) {
+      <app-crm-deal-panel
+        [dealId]="dealId"
+        [stages]="crmDashboard()?.stages ?? []"
+        [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+        [stagesConfig]="crmStages"
+        [templates]="templates()"
+        [whatsappNumber]="profile()?.whatsapp || ''"
+        [promptDeliveryUpload]="promptDeliveryUploadDealId() === dealId"
+        [promptShippingUpload]="promptShippingUploadDealId() === dealId"
+        (closed)="selectedDealId.set(null)"
+        (updated)="onDealUpdated(); loadVerificationAlerts()"
+        (deleted)="onDealDeleted()"
+        (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
+        (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
+        (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+      />
+    }
+
+    <div class="dash-main-flow" [hidden]="!!selectedDealId()">
     @if (panelTheme().welcomeMessage) {
       <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
     }
@@ -1360,26 +1380,9 @@
         </div>
       </div>
     }
+    </div><!-- /dash-main-flow -->
   </main>
 
-  @if (selectedDealId(); as dealId) {
-    <app-crm-deal-panel
-      [dealId]="dealId"
-      [stages]="crmDashboard()?.stages ?? []"
-      [stageLabels]="crmDashboard()?.stageLabels ?? {}"
-      [stagesConfig]="crmStages"
-      [templates]="templates()"
-      [whatsappNumber]="profile()?.whatsapp || ''"
-      [promptDeliveryUpload]="promptDeliveryUploadDealId() === dealId"
-      [promptShippingUpload]="promptShippingUploadDealId() === dealId"
-      (closed)="selectedDealId.set(null)"
-      (updated)="onDealUpdated(); loadVerificationAlerts()"
-      (deleted)="onDealDeleted()"
-      (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
-      (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
-      (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
-    />
-  }
   @if (!selectedDealId() && selectedContactId(); as contactId) {
     <app-crm-contact-panel
       [contactId]="contactId"
