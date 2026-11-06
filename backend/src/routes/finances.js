@@ -10,6 +10,7 @@ import { get, query, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
 import { findOrCreateContact } from '../crm/helpers.js';
+import { resolvePaymentDate } from '../services/deal-payment.js';
 import { v4 as uuid } from 'uuid';
 import PDFDocument from 'pdfkit';
 import https from 'https';
@@ -190,8 +191,24 @@ async function resolveDealIdForAuto(orgId, autoId) {
   return dealId;
 }
 
+const TX_JOINS = `
+  LEFT JOIN crm_deals d ON f.deal_id = d.id
+  LEFT JOIN contacts c ON d.contact_id = c.id
+  LEFT JOIN autos a ON d.auto_id = a.id`;
+
+const TX_LINK_SELECT = `d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label,
+  c.name as contact_name, c.phone as contact_phone, c.email as contact_email`;
+
+function likePattern(raw) {
+  const clean = String(raw || '').trim().slice(0, 80)
+    .replace(/!/g, '!!')
+    .replace(/%/g, '!%')
+    .replace(/_/g, '!_');
+  return `%${clean}%`;
+}
+
 function buildTxFilters(queryParams, alias = 'f') {
-  const { from, to, payment_method, deal_id } = queryParams;
+  const { from, to, payment_method, deal_id, q } = queryParams;
   let sql = '';
   const params = [];
 
@@ -213,6 +230,20 @@ function buildTxFilters(queryParams, alias = 'f') {
     sql += ` AND ${alias}.deal_id = ?`;
     params.push(deal_id);
   }
+  const term = String(q || '').trim();
+  if (term) {
+    const like = likePattern(term);
+    sql += ` AND (
+      ${alias}.description LIKE ? ESCAPE '!'
+      OR IFNULL(${alias}.referencia, '') LIKE ? ESCAPE '!'
+      OR IFNULL(d.title, '') LIKE ? ESCAPE '!'
+      OR IFNULL(c.name, '') LIKE ? ESCAPE '!'
+      OR IFNULL(c.phone, '') LIKE ? ESCAPE '!'
+      OR IFNULL(c.email, '') LIKE ? ESCAPE '!'
+      OR IFNULL(${VEHICLE_LABEL_SQL}, '') LIKE ? ESCAPE '!'
+    )`;
+    params.push(like, like, like, like, like, like, like);
+  }
 
   return { sql, params };
 }
@@ -226,12 +257,14 @@ function exportPeriodLabel(from, to) {
 
 function exportFiltersSummary(req, userMethods = [], dealTitle = null) {
   const parts = [];
-  const { from, to, payment_method, deal_id } = req.query;
+  const { from, to, payment_method, deal_id, q } = req.query;
   if (from && to) parts.push(`Período: ${formatDate(from)} — ${formatDate(to)}`);
   else if (from) parts.push(`Desde: ${formatDate(from)}`);
   else if (to) parts.push(`Hasta: ${formatDate(to)}`);
   else parts.push('Período: Todos los registros');
   if (payment_method) parts.push(`Método: ${methodLabel(payment_method, userMethods)}`);
+  const search = String(q || '').replace(/[\r\n]/g, ' ').trim().slice(0, 80);
+  if (search) parts.push(`Búsqueda: ${search}`);
   if (deal_id) {
     const label = req.user?.role === 'concesionaria' ? 'Vehículo' : 'Trámite';
     parts.push(`${label}: ${dealTitle || 'Seleccionado'}`);
@@ -250,9 +283,14 @@ router.get('/filter-options', async (req, res) => {
     }
 
     const deals = await query(
-      `SELECT DISTINCT d.id, COALESCE(${VEHICLE_LABEL_SQL}, d.title) as title
+      `SELECT DISTINCT d.id,
+              TRIM(CONCAT(
+                COALESCE(${VEHICLE_LABEL_SQL}, d.title),
+                IF(c.name IS NULL OR c.name = '', '', CONCAT(' — ', c.name))
+              )) as title
        FROM fin_transactions f
        INNER JOIN crm_deals d ON f.deal_id = d.id
+       LEFT JOIN contacts c ON d.contact_id = c.id
        LEFT JOIN autos a ON d.auto_id = a.id
        WHERE f.user_id = ? AND f.deal_id IS NOT NULL${dateFilter}
        ORDER BY title ASC`,
@@ -289,16 +327,16 @@ router.get('/', async (req, res) => {
     const [countRow] = await query(
       `SELECT COUNT(*) as total
        FROM fin_transactions f
+       ${TX_JOINS}
        WHERE f.user_id = ?${extraFilter}`,
       params
     );
     const total = Number(countRow?.total || 0);
 
     const transactions = await query(
-      `SELECT f.*, d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
+      `SELECT f.*, ${TX_LINK_SELECT}
        FROM fin_transactions f
-       LEFT JOIN crm_deals d ON f.deal_id = d.id
-       LEFT JOIN autos a ON d.auto_id = a.id
+       ${TX_JOINS}
        WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC, f.created_at DESC
        LIMIT ${limit} OFFSET ${offset}`,
@@ -329,6 +367,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
     }
 
+    let txDate;
+    try {
+      txDate = resolvePaymentDate(date);
+    } catch (dateErr) {
+      return res.status(400).json({ error: dateErr.message || 'La fecha del pago no es válida' });
+    }
+
     let resolvedDealId = deal_id || null;
     if (!resolvedDealId && auto_id && req.user?.role === 'concesionaria') {
       resolvedDealId = await resolveDealIdForAuto(req.orgId, auto_id);
@@ -337,7 +382,7 @@ router.post('/', async (req, res) => {
     const id = uuid();
     await run(
       'INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, req.orgId, resolvedDealId, type, amount, description, category || 'general', date, payment_method || 'general', referencia?.trim() || null]
+      [id, req.orgId, resolvedDealId, type, amount, description, category || 'general', txDate, payment_method || 'general', referencia?.trim() || null]
     );
     res.status(201).json({ id, deal_id: resolvedDealId });
   } catch (err) {
@@ -412,9 +457,12 @@ router.get('/deals/pending', async (req, res) => {
     }
 
     const deals = await query(
-      `SELECT d.id, d.title, d.estimated_value,
+      `SELECT d.id,
+              TRIM(CONCAT(d.title, IF(c.name IS NULL OR c.name = '', '', CONCAT(' — ', c.name)))) as title,
+              d.estimated_value,
               COALESCE((SELECT SUM(amount) FROM fin_transactions f WHERE f.deal_id = d.id AND f.type = 'income'), 0) as paid_amount
        FROM crm_deals d
+       LEFT JOIN contacts c ON c.id = d.contact_id
        WHERE d.user_id = ?
        HAVING paid_amount < estimated_value AND estimated_value > 0`,
       [req.orgId],
@@ -437,10 +485,9 @@ router.get('/export/csv', async (req, res) => {
 
     const transactions = await query(
       `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, f.referencia,
-              d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
-       FROM fin_transactions f 
-       LEFT JOIN crm_deals d ON f.deal_id = d.id 
-       LEFT JOIN autos a ON d.auto_id = a.id
+              ${TX_LINK_SELECT}
+       FROM fin_transactions f
+       ${TX_JOINS}
        WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC`,
       params
@@ -456,19 +503,20 @@ router.get('/export/csv', async (req, res) => {
     const linkCol = req.user?.role === 'concesionaria' ? 'Vehículo Relacionado' : 'Trámite Relacionado';
 
     // Build CSV
-    const header = `Fecha,Tipo,Descripción,Referencia,Método de Pago,Monto,Categoría,${linkCol}\n`;
+    const header = `Fecha,Tipo,Descripción,Cliente,Referencia,Método de Pago,Monto,Categoría,${linkCol}\n`;
     const rows = transactions.map(t => {
       const tipo = t.type === 'income' ? 'Ingreso' : 'Gasto';
       const metodo = methodLabel(t.payment_method || 'general', userMethods);
       const monto = Number(t.amount).toFixed(2);
       const desc = `"${(t.description || '').replace(/"/g, '""')}"`;
+      const client = `"${(t.contact_name || '').replace(/"/g, '""')}"`;
       const ref = `"${(t.referencia || '').replace(/"/g, '""')}"`;
       const link = req.user?.role === 'concesionaria'
         ? (t.vehicle_label || t.deal_title || '')
         : (t.deal_title || '');
       const deal = `"${link.replace(/"/g, '""')}"`;
       const cat = `"${(t.category || '').replace(/"/g, '""')}"`;
-      return `${t.date},${tipo},${desc},${ref},${metodo},${monto},${cat},${deal}`;
+      return `${t.date},${tipo},${desc},${client},${ref},${metodo},${monto},${cat},${deal}`;
     }).join('\n');
 
     const label = exportPeriodLabel(req.query.from, req.query.to);
@@ -492,10 +540,9 @@ router.get('/export/pdf', async (req, res) => {
 
     const transactions = await query(
       `SELECT f.date, f.type, f.description, f.payment_method, f.amount, f.category, f.referencia,
-              d.title as deal_title, ${VEHICLE_LABEL_SQL} as vehicle_label
-       FROM fin_transactions f 
-       LEFT JOIN crm_deals d ON f.deal_id = d.id 
-       LEFT JOIN autos a ON d.auto_id = a.id
+              ${TX_LINK_SELECT}
+       FROM fin_transactions f
+       ${TX_JOINS}
        WHERE f.user_id = ?${extraFilter}
        ORDER BY f.date DESC`,
       params
@@ -649,9 +696,10 @@ router.get('/export/pdf', async (req, res) => {
 
       const isIncome = t.type === 'income';
       const typeColor = isIncome ? '#22C55E' : '#EF4444';
-      const linkVal = req.user?.role === 'concesionaria'
+      const linkBase = req.user?.role === 'concesionaria'
         ? (t.vehicle_label || t.deal_title || '—')
         : (t.deal_title || '—');
+      const linkVal = t.contact_name ? `${linkBase} · ${t.contact_name}` : linkBase;
 
       doc.fillColor('#BBBBBB').font('Helvetica').fontSize(7);
       doc.text(formatDate(t.date), cols.fecha + 8, rowY + 6, { width: colWidths.fecha });

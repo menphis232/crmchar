@@ -732,6 +732,10 @@
           }
         </select>
 
+        <label>Fecha del pago</label>
+        <input type="date" [(ngModel)]="manualPaymentDate" [max]="todayIso()">
+        <p class="register-payment-hint">Si el pago no fue hoy, elige el día en que se recibió.</p>
+
         <label>Notas (opcional)</label>
         <textarea [(ngModel)]="manualPaymentNotes" rows="2" placeholder="Referencia, folio, banco..."></textarea>
       </div>

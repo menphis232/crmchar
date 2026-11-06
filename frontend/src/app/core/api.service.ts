@@ -135,7 +135,7 @@ export class CrmService {
   getPeritosForAssign() { return this.http.get<PeritoAssignOption[]>(`${this.base}/peritos/list-assign`); }
   getPeritoPerformance() { return this.http.get<PeritoPerformance[]>(`${this.base}/peritos/performance`); }
   getPeritoOverview() { return this.http.get<PeritoOverviewItem[]>(`${this.base}/peritos/overview`); }
-  registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string }) {
+  registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string; paidAt?: string }) {
     return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-payment`, data);
   }
   addActivity(dealId: string, content: string, activityType = 'note') {
@@ -629,6 +629,7 @@ export class FinancesService {
     limit?: number;
     payment_method?: string;
     deal_id?: string;
+    q?: string;
   }) {
     let params = new HttpParams();
     if (opts?.from) params = params.set('from', opts.from);
@@ -637,6 +638,7 @@ export class FinancesService {
     if (opts?.limit) params = params.set('limit', String(opts.limit));
     if (opts?.payment_method) params = params.set('payment_method', opts.payment_method);
     if (opts?.deal_id) params = params.set('deal_id', opts.deal_id);
+    if (opts?.q) params = params.set('q', opts.q);
     return this.http.get<import('../models').FinTransactionsPage>(this.base, { params });
   }
 
@@ -663,23 +665,25 @@ export class FinancesService {
     return this.http.put<{ success: boolean; methods: typeof methods }>(`${this.base}/payment-methods`, { methods });
   }
 
-  exportCsv(from?: string, to?: string, paymentMethod?: string, dealId?: string): string {
+  exportCsv(from?: string, to?: string, paymentMethod?: string, dealId?: string, q?: string): string {
     const token = localStorage.getItem('tramites_token') || '';
     let url = `${this.base}/export/csv?token=${token}`;
     if (from) url += `&from=${encodeURIComponent(from)}`;
     if (to) url += `&to=${encodeURIComponent(to)}`;
     if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
     if (dealId) url += `&deal_id=${encodeURIComponent(dealId)}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
     return url;
   }
 
-  exportPdf(from?: string, to?: string, paymentMethod?: string, dealId?: string): string {
+  exportPdf(from?: string, to?: string, paymentMethod?: string, dealId?: string, q?: string): string {
     const token = localStorage.getItem('tramites_token') || '';
     let url = `${this.base}/export/pdf?token=${token}`;
     if (from) url += `&from=${encodeURIComponent(from)}`;
     if (to) url += `&to=${encodeURIComponent(to)}`;
     if (paymentMethod) url += `&payment_method=${encodeURIComponent(paymentMethod)}`;
     if (dealId) url += `&deal_id=${encodeURIComponent(dealId)}`;
+    if (q) url += `&q=${encodeURIComponent(q)}`;
     return url;
   }
 }

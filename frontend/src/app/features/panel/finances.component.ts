@@ -87,6 +87,10 @@ import { formatMoney } from '../../shared/format-amount.util';
           <button (click)="setRange('all')" [class.active]="quickRange === 'all'">Todo</button>
         </div>
         <div class="tx-filters">
+          <div class="tx-filter-field tx-filter-search">
+            <label>Buscar</label>
+            <input type="search" class="fin-search" [value]="filterQuery" (input)="onSearchInput($any($event.target).value)" placeholder="Cliente, trámite o referencia">
+          </div>
           <div class="tx-filter-field">
             <label>Método de pago</label>
             <select class="fin-select" [(ngModel)]="filterMethod" (change)="onFilterChange()">
@@ -201,6 +205,7 @@ import { formatMoney } from '../../shared/format-amount.util';
                 <th>Fecha</th>
                 <th>Tipo</th>
                 <th>Descripción</th>
+                <th>Cliente</th>
                 <th>Referencia</th>
                 <th>Método</th>
                 <th>{{ isConcesionaria ? 'Vehículo' : 'Trámite' }}</th>
@@ -210,21 +215,22 @@ import { formatMoney } from '../../shared/format-amount.util';
             </thead>
             <tbody>
               @for (tx of transactions(); track tx.id) {
-                <tr class="tx-row">
+                <tr class="tx-row" tabindex="0" (click)="openDetail(tx)" (keydown.enter)="openDetail(tx)">
                   <td class="col-date">{{ tx.date | date:'dd/MM/yyyy' }}</td>
                   <td>
                     <span class="badge" [class.badge-income]="tx.type === 'income'" [class.badge-expense]="tx.type === 'expense'">
                       {{ tx.type === 'income' ? '↑ Ingreso' : '↓ Gasto' }}
                     </span>
                   </td>
-                  <td class="col-desc">{{ tx.description }}</td>
-                  <td class="col-ref">{{ tx.referencia || '—' }}</td>
+                  <td class="col-desc" [title]="tx.description">{{ tx.description }}</td>
+                  <td class="col-client" [title]="tx.contact_name || ''">{{ tx.contact_name || '—' }}</td>
+                  <td class="col-ref" [title]="tx.referencia || ''">{{ tx.referencia || '—' }}</td>
                   <td>
                     <span class="method-tag" [class]="'mt-' + (tx.payment_method || 'general')">
                       {{ methodLabel(tx.payment_method || 'general') }}
                     </span>
                   </td>
-                  <td class="col-deal">{{ linkLabel(tx) }}</td>
+                  <td class="col-deal" [title]="linkLabel(tx)">{{ linkLabel(tx) }}</td>
                   <td class="col-right">
                     @let ta = fmt(tx.type === 'income' ? +tx.amount : -tx.amount, true, 13);
                     <span [class.txt-income]="tx.type === 'income'" [class.txt-expense]="tx.type === 'expense'"
@@ -233,14 +239,14 @@ import { formatMoney } from '../../shared/format-amount.util';
                       (mouseleave)="hideTip()">{{ ta.display }}</span>
                   </td>
                   <td>
-                    <button class="btn-del" (click)="deleteTx(tx.id)" title="Eliminar">
+                    <button class="btn-del" (click)="$event.stopPropagation(); deleteTx(tx.id)" (keydown)="$event.stopPropagation()" title="Eliminar">
                       <svg lucideX [size]="14" aria-hidden="true"></svg>
                     </button>
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="8" class="empty-state">
+                  <td colspan="9" class="empty-state">
                     <div class="empty-inner">
                       <span class="empty-icon"><svg lucideInbox [size]="28" aria-hidden="true"></svg></span>
                       <p>No hay transacciones en este período.</p>
@@ -255,6 +261,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             </tbody>
           </table>
         </div>
+        <p class="table-hint">Haz clic en una fila para ver el cliente, el trámite y la referencia completos.</p>
 
         @if (totalPages() > 1 || totalItems() > 0) {
           <div class="pagination">
@@ -378,6 +385,53 @@ import { formatMoney } from '../../shared/format-amount.util';
         </div>
       }
 
+      @if (selectedTx(); as tx) {
+        <div class="modal-overlay" (click)="closeDetail()">
+          <div class="modal-box" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+              <h3 class="fin-section-with-icon">
+                <svg lucideClipboardList [size]="18" aria-hidden="true"></svg>
+                Detalle del movimiento
+              </h3>
+              <button class="btn-close" (click)="closeDetail()" aria-label="Cerrar">
+                <svg lucideX [size]="18" aria-hidden="true"></svg>
+              </button>
+            </div>
+            <div class="detail-grid">
+              <span class="detail-k">Fecha</span>
+              <span class="detail-v">{{ tx.date | date:'dd/MM/yyyy' }}</span>
+              <span class="detail-k">Tipo</span>
+              <span class="detail-v">{{ tx.type === 'income' ? 'Ingreso' : 'Gasto' }}</span>
+              <span class="detail-k">Monto</span>
+              <span class="detail-v" [class.txt-income]="tx.type === 'income'" [class.txt-expense]="tx.type === 'expense'">{{ fmt(tx.type === 'income' ? +tx.amount : -tx.amount, true, 24).full }}</span>
+              <span class="detail-k">Cliente</span>
+              <span class="detail-v">{{ tx.contact_name || 'Sin cliente vinculado' }}</span>
+              @if (tx.contact_phone) {
+                <span class="detail-k">Teléfono</span>
+                <span class="detail-v">{{ tx.contact_phone }}</span>
+              }
+              @if (tx.contact_email) {
+                <span class="detail-k">Correo</span>
+                <span class="detail-v">{{ tx.contact_email }}</span>
+              }
+              <span class="detail-k">{{ isConcesionaria ? 'Vehículo' : 'Trámite' }}</span>
+              <span class="detail-v">{{ linkLabel(tx) === '—' ? 'Sin trámite vinculado' : linkLabel(tx) }}</span>
+              <span class="detail-k">Método</span>
+              <span class="detail-v">{{ methodLabel(tx.payment_method || 'general') }}</span>
+              <span class="detail-k">Referencia</span>
+              <span class="detail-v">{{ tx.referencia || '—' }}</span>
+              <span class="detail-k">Descripción</span>
+              <span class="detail-v">{{ tx.description }}</span>
+              <span class="detail-k">Categoría</span>
+              <span class="detail-v">{{ tx.category || 'general' }}</span>
+            </div>
+            <div class="modal-footer">
+              <button class="btn-ghost" (click)="closeDetail()">Cerrar</button>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- ── MODAL NUEVA TRANSACCIÓN ── -->
       @if (showForm()) {
         <div class="modal-overlay" (click)="closeForm()">
@@ -429,8 +483,9 @@ import { formatMoney } from '../../shared/format-amount.util';
               </div>
 
               <div class="field-row">
-                <label>Fecha *</label>
-                <input type="date" [(ngModel)]="newTx.date">
+                <label>Fecha del pago *</label>
+                <input type="date" [(ngModel)]="newTx.date" [max]="todayIso()">
+                <p class="field-hint">Si el pago no fue hoy, elige el día en que se recibió.</p>
               </div>
 
               <!-- Método de pago/cobro (ambos tipos) -->
@@ -565,8 +620,12 @@ import { formatMoney } from '../../shared/format-amount.util';
     .quick-btns button { background: transparent; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.45); padding: 6px 12px; border-radius: 999px; font-size: 11px; font-family: var(--f-display); letter-spacing: 0.06em; cursor: pointer; transition: all .2s; }
     .quick-btns button:hover, .quick-btns button.active { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.40); color: #fff; font-weight: 700; }
 
-    .tx-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-left: auto; }
+    .tx-filters { display: flex; gap: 12px; flex-wrap: wrap; margin-left: auto; flex: 1; }
     .tx-filter-field { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+    .tx-filter-search { min-width: 240px; flex: 1; }
+    .fin-search { background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 8px 10px; border-radius: 6px; color: #fff; font-size: 13px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; }
+    .fin-search:focus { border-color: rgba(255,255,255,0.40); }
+    .fin-search::placeholder { color: rgba(255,255,255,0.35); }
     .tx-filter-field label { font-size: 10px; color: rgba(255,255,255,0.40); font-family: var(--f-display); letter-spacing: 0.12em; text-transform: uppercase; }
     .fin-select {
       color-scheme: dark;
@@ -629,11 +688,15 @@ import { formatMoney } from '../../shared/format-amount.util';
     .fin-table th { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.10); color: rgba(255,255,255,0.55); font-size: 10px; font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; text-align: left; background: #000; }
     .fin-table td { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 15px; color: rgba(255,255,255,0.80); font-family: var(--f-display); background: #000; }
     .fin-table tr:last-child td { border-bottom: none; }
-    .tx-row:hover { background: rgba(255,255,255,0.03); }
+    .tx-row { cursor: pointer; }
+    .tx-row:hover td { background: #111; }
+    .tx-row:focus-visible { outline: 1px solid rgba(255,255,255,0.45); outline-offset: -2px; }
     .col-right { text-align: right; }
     .col-date { color: rgba(255,255,255,0.40); font-size: 12px; white-space: nowrap; }
     .col-desc { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .col-deal { color: rgba(255,255,255,0.40); font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-client { max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-deal { color: rgba(255,255,255,0.40); font-size: 12px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .table-hint { margin: -8px 2px 0; font-size: 12px; color: rgba(255,255,255,0.40); font-family: var(--f-display); }
     .col-ref { color: rgba(255,255,255,0.55); font-size: 12px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .badge { padding: 4px 10px; border-radius: 999px; font-size: 10px; font-weight: 700; font-family: var(--f-display); letter-spacing: 0.06em; }
@@ -730,6 +793,10 @@ import { formatMoney } from '../../shared/format-amount.util';
     .modal-fields { display: flex; flex-direction: column; gap: 14px; padding: 16px 24px; }
     .field-row { display: flex; flex-direction: column; gap: 6px; }
     .field-row label { font-size: 10px; color: rgba(255,255,255,0.40); font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; }
+    .field-hint { margin: 0; font-size: 12px; color: rgba(255,255,255,0.40); font-family: var(--f-display); }
+    .detail-grid { display: grid; grid-template-columns: 120px 1fr; gap: 12px 16px; padding: 18px 24px 8px; }
+    .detail-k { font-size: 10px; color: rgba(255,255,255,0.40); font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; padding-top: 3px; }
+    .detail-v { font-size: 14px; color: #fff; font-family: var(--f-display); word-break: break-word; }
     .field-row input, .field-row select { background: #000; border: 1px solid rgba(255,255,255,0.14); padding: 10px 12px; border-radius: 8px; color: #fff; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: dark; }
     .field-row input:focus, .field-row select:focus { border-color: rgba(255,255,255,0.40); }
     .input-money { display: flex; align-items: center; background: #000; border: 1px solid rgba(255,255,255,0.14); border-radius: 8px; overflow: hidden; }
@@ -776,13 +843,16 @@ export class FinancesComponent implements OnInit, OnDestroy {
   pendingDeals = signal<FinPendingLink[]>([]);
   linkOptions = this.pendingDeals;
   showForm = signal(false);
+  selectedTx = signal<FinTransaction | null>(null);
   activeTab: 'transactions' | 'config' = 'transactions';
 
   filterFrom = '';
   filterTo = '';
   filterMethod = '';
   filterDealId = '';
+  filterQuery = '';
   quickRange = 'all';
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Payment methods config
   enabledMethods = signal<FinPaymentMethodOption[]>([]);
@@ -867,19 +937,29 @@ export class FinancesComponent implements OnInit, OnDestroy {
     const from = this.filterFrom || undefined;
     const to = this.filterTo || undefined;
     this.fin.getDashboard(from, to).subscribe(d => this.dashboard.set(d));
+    this.loadTransactions(from, to);
+    this.loadFilterOptions();
+  }
+
+  private txReq = 0;
+
+  loadTransactions(from = this.filterFrom || undefined, to = this.filterTo || undefined) {
+    const q = this.filterQuery.trim();
+    const req = ++this.txReq;
     this.fin.getTransactions({
       from, to,
       page: this.currentPage(),
       limit: this.pageSize,
       payment_method: this.filterMethod || undefined,
       deal_id: this.filterDealId || undefined,
+      q: q || undefined,
     }).subscribe(res => {
+      if (req !== this.txReq) return;
       this.transactions.set(res.items);
       this.totalItems.set(res.total);
       this.totalPages.set(res.pages);
       this.currentPage.set(res.page);
     });
-    this.loadFilterOptions();
   }
 
   loadFilterOptions() {
@@ -899,6 +979,27 @@ export class FinancesComponent implements OnInit, OnDestroy {
   onFilterChange() {
     this.currentPage.set(1);
     this.loadData();
+  }
+
+  onSearchInput(value: string) {
+    this.filterQuery = value;
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.loadTransactions();
+    }, 280);
+  }
+
+  todayIso(): string {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
+  }
+
+  openDetail(tx: FinTransaction) {
+    this.selectedTx.set(tx);
+  }
+
+  closeDetail() {
+    this.selectedTx.set(null);
   }
 
   goPage(page: number) {
@@ -933,6 +1034,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
     }
     this.filterMethod = '';
     this.filterDealId = '';
+    this.filterQuery = '';
     this.currentPage.set(1);
     this.loadData();
   }
@@ -1072,6 +1174,10 @@ export class FinancesComponent implements OnInit, OnDestroy {
 
   saveTx() {
     const txType = this.newTx.type;
+    if (this.newTx.date && this.newTx.date > this.todayIso()) {
+      this.toast.warning('La fecha del pago no puede ser futura.', 'Fecha');
+      return;
+    }
     const allowedIds = new Set(this.formMethods().map(m => m.id));
     if (!this.newTx.payment_method || !allowedIds.has(this.newTx.payment_method)) {
       this.toast.warning('Selecciona un método de cobro/pago configurado en Finanzas.', 'Método requerido');
@@ -1108,8 +1214,9 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.filterTo || undefined,
       this.filterMethod || undefined,
       this.filterDealId || undefined,
+      this.filterQuery.trim() || undefined,
     ), '_blank');
-    this.toast.info('Exportando con los filtros actuales (fecha, método y trámite).', 'Exportando CSV');
+    this.toast.info('Exportando con los filtros actuales (fecha, cliente, trámite y método).', 'Exportando CSV');
   }
 
   doExportPdf() {
@@ -1118,6 +1225,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
       this.filterTo || undefined,
       this.filterMethod || undefined,
       this.filterDealId || undefined,
+      this.filterQuery.trim() || undefined,
     ), '_blank');
     this.toast.info('Generando PDF con los filtros actuales.', 'Exportando PDF');
   }
@@ -1203,6 +1311,7 @@ export class FinancesComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
     this.hideTip();
   }
 }

@@ -40,11 +40,18 @@ function paymentMethodLabel(method) {
   return map[method] || method;
 }
 
+function formatInvoiceDate(paidAt) {
+  if (!paidAt) return new Date().toLocaleDateString('es-MX');
+  const [y, m, d] = String(paidAt).slice(0, 10).split('-');
+  if (!y || !m || !d) return new Date().toLocaleDateString('es-MX');
+  return `${d}/${m}/${y}`;
+}
+
 /**
  * Genera PDF de factura/recibo y lo guarda en uploads/invoices/
  * @returns {Promise<{ filePath: string, pdfUrl: string }>}
  */
-export async function generateInvoicePdfFile({ deal, orgUser, amount, invoiceNumber, paymentMethod, mpOrderId }) {
+export async function generateInvoicePdfFile({ deal, orgUser, amount, invoiceNumber, paymentMethod, mpOrderId, paidAt = null }) {
   if (!fs.existsSync(invoicesDir)) fs.mkdirSync(invoicesDir, { recursive: true });
 
   const safeName = invoiceNumber.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -74,7 +81,7 @@ export async function generateInvoicePdfFile({ deal, orgUser, amount, invoiceNum
 
   doc.fontSize(22).fillColor(primary).text('COMPROBANTE DE PAGO', 50, 110, { align: 'right' });
   doc.fontSize(10).fillColor('#333').text(`Folio: ${invoiceNumber}`, 50, 138, { align: 'right' });
-  doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, { align: 'right' });
+  doc.text(`Fecha: ${formatInvoiceDate(paidAt)}`, { align: 'right' });
 
   doc.moveDown(2);
   doc.fontSize(12).fillColor('#111').text('Datos del cliente', 50, 180);

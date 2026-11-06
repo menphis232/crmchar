@@ -2328,7 +2328,7 @@ router.post('/deals/:id/checkout', async (req, res) => {
 router.post('/deals/:id/register-payment', async (req, res) => {
   try {
     const dealId = req.params.id;
-    const { amount, paymentMethod, notes } = req.body;
+    const { amount, paymentMethod, notes, paidAt } = req.body;
     const orgUser = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
     const allowed = enabledManualPaymentMethodIds(orgUser?.fin_payment_methods);
     if (!paymentMethod || !allowed.includes(paymentMethod)) {
@@ -2351,11 +2351,14 @@ router.post('/deals/:id/register-payment', async (req, res) => {
       paymentMethod,
       keepStage: true,
       notes: notes?.trim() || null,
+      paidAt: paidAt || null,
     });
 
+    const paidOn = paidAt ? String(paidAt).slice(0, 10) : '';
+    const dateNote = /^\d{4}-\d{2}-\d{2}$/.test(paidOn) ? ` con fecha ${paidOn.slice(8, 10)}/${paidOn.slice(5, 7)}/${paidOn.slice(0, 4)}` : '';
     await run(
       `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'note', ?)`,
-      [uuid(), dealId, req.orgId, `Pago registrado manualmente (${paymentMethod}) por $${paidAmount} MXN`],
+      [uuid(), dealId, req.orgId, `Pago registrado manualmente (${paymentMethod}) por $${paidAmount} MXN${dateNote}`],
     );
 
     const updated = await get(`

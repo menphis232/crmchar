@@ -653,6 +653,9 @@ export interface FinTransaction {
   deal_id?: string;
   deal_title?: string;
   vehicle_label?: string;
+  contact_name?: string;
+  contact_phone?: string;
+  contact_email?: string;
   type: 'income' | 'expense';
   amount: number;
   description: string;

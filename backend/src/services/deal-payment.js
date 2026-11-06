@@ -5,6 +5,29 @@ import { sendEmail } from '../utils/mailer.js';
 import { emitDealPaymentPaid } from '../utils/socket-events.js';
 import { isPaymentStageId } from '../crm/payment-stage.js';
 import { resolvePaymentMethodLabel } from '../fin/payment-methods.js';
+function todayInMexico() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
+}
+
+/** Fecha de pago YYYY-MM-DD. Vacía = hoy en México. Rechaza fechas futuras o inválidas. */
+export function resolvePaymentDate(value) {
+  const today = todayInMexico();
+  if (value == null || String(value).trim() === '') return today;
+  const s = String(value).slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    throw new Error('La fecha del pago no es válida');
+  }
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d) {
+    throw new Error('La fecha del pago no es válida');
+  }
+  if (s > today) {
+    throw new Error('La fecha del pago no puede ser futura');
+  }
+  return s;
+}
+
 async function nextInvoiceNumber(userId) {
   const year = new Date().getFullYear();
   const row = await get(
@@ -35,6 +58,7 @@ export async function finalizeDealPayment(dealId, {
   paymentMethod = 'mercadopago',
   keepStage = null,
   notes = null,
+  paidAt = null,
 } = {}) {
   const deal = await loadDealForPayment(dealId);
   if (!deal) throw new Error('Trámite no encontrado');
@@ -69,6 +93,10 @@ export async function finalizeDealPayment(dealId, {
     throw new Error('Monto de pago inválido');
   }
 
+  const paymentDate = paidAt == null || String(paidAt).trim() === ''
+    ? null
+    : resolvePaymentDate(paidAt);
+
   if (shouldKeepStage) {
     await run(
       `UPDATE crm_deals
@@ -91,6 +119,7 @@ export async function finalizeDealPayment(dealId, {
     "SELECT id FROM fin_transactions WHERE deal_id = ? AND category = 'pago_tramite' LIMIT 1",
     [dealId],
   );
+
   if (!finExists) {
     const ref = mpOrderId ? mpOrderId.slice(-8) : `PAGO-${Date.now().toString().slice(-6)}`;
     const description = notes?.trim()
@@ -98,13 +127,14 @@ export async function finalizeDealPayment(dealId, {
       : `${methodLabel} - ${deal.title || 'Trámite'}`;
     await run(
       `INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, date, category, payment_method, referencia)
-       VALUES (?, ?, ?, 'income', ?, ?, NOW(), 'pago_tramite', ?, ?)`,
+       VALUES (?, ?, ?, 'income', ?, ?, ${paymentDate ? '?' : 'CURDATE()'}, 'pago_tramite', ?, ?)`,
       [
         uuid(),
         deal.user_id,
         dealId,
         paidAmount,
         description,
+        ...(paymentDate ? [paymentDate] : []),
         paymentMethod,
         ref,
       ],
@@ -127,6 +157,7 @@ export async function finalizeDealPayment(dealId, {
     invoiceNumber,
     paymentMethod,
     mpOrderId,
+    paidAt: paymentDate,
   });
 
   const invoiceId = uuid();

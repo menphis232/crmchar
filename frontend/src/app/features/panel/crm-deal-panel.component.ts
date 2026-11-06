@@ -443,6 +443,18 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       background: #1a1a1a;
       color: #ffffff;
     }
+    .register-payment-form input[type="date"] {
+      color-scheme: dark;
+    }
+    .register-payment-hint {
+      margin: -4px 0 0;
+      font-size: 12px;
+      line-height: 1.4;
+      color: rgba(255,255,255,0.45);
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
     .register-payment-actions {
       display: flex;
       justify-content: flex-end;
@@ -1022,6 +1034,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   isRegisteringPayment = signal(false);
   manualPaymentAmount = 0;
   manualPaymentMethod = 'efectivo';
+  manualPaymentDate = '';
   manualPaymentNotes = '';
   manualPaymentMethods = signal<FinPaymentMethodOption[]>([]);
 
@@ -1648,11 +1661,16 @@ export class CrmDealPanelComponent implements OnDestroy {
     return all.slice(idx);
   }
 
+  todayIso(): string {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
+  }
+
   openRegisterPaymentModal() {
     const d = this.deal();
     if (!d || d.paymentStatus === 'paid') return;
     this.manualPaymentAmount = Number(d.estimatedValue) || 0;
     this.manualPaymentMethod = 'efectivo';
+    this.manualPaymentDate = this.todayIso();
     this.manualPaymentNotes = '';
     this.fin.getPaymentMethods().subscribe({
       next: (res) => {
@@ -1683,11 +1701,20 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.toast.warning('Indica un monto válido.', 'Pago');
       return;
     }
+    if (!this.manualPaymentDate) {
+      this.toast.warning('Indica la fecha en que se recibió el pago.', 'Pago');
+      return;
+    }
+    if (this.manualPaymentDate > this.todayIso()) {
+      this.toast.warning('La fecha del pago no puede ser futura.', 'Pago');
+      return;
+    }
     this.isRegisteringPayment.set(true);
     this.crmService.registerManualPayment(d.id, {
       amount,
       paymentMethod: this.manualPaymentMethod,
       notes: this.manualPaymentNotes.trim() || undefined,
+      paidAt: this.manualPaymentDate,
     }).subscribe({
       next: () => {
         this.isRegisteringPayment.set(false);
