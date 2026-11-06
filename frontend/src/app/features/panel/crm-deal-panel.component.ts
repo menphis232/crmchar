@@ -45,23 +45,42 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`
-    /* ══ DEAL PANEL — NEGRO TOTAL ══ */
+    /* ══ DEAL PANEL — Monday light (Operate) ══ */
     :host {
-      --brand-black:  #ffffff;
-      --brand-white:  #0a0a0a;
-      --surface:      #141414;
-      --surface-hover:#1a1a1a;
-      --surface-2:    rgba(255,255,255,0.04);
-      --border:       #e6e9ef;
-      --border-hover: rgba(255,255,255,0.30);
-      --text:         #ffffff;
-      --muted:        #676879;
-      --mx-white:     #ffffff;
-      --gold:         #676879;
-      --gold-glow:    rgba(255,255,255,0.05);
-      --gold-dim:     rgba(255,255,255,0.05);
-      --brand-grey:   #9ca0ad;
-      --shadow-card:  0 4px 20px rgba(0,0,0,0.6);
+      --mon-bg: #f6f7fb;
+      --mon-surface: #ffffff;
+      --mon-border: #e6e9ef;
+      --mon-text: #323338;
+      --mon-muted: #676879;
+      --mon-primary: #0073ea;
+      --brand-black: #323338;
+      --brand-white: #ffffff;
+      --surface: #ffffff;
+      --surface-hover: #f5f6f8;
+      --surface-2: #f6f7fb;
+      --border: #e6e9ef;
+      --border-hover: #c5c7d0;
+      --text: #323338;
+      --muted: #676879;
+      --mx-white: #323338;
+      --gold: #0073ea;
+      --gold-glow: rgba(0, 115, 234, 0.12);
+      --gold-dim: rgba(0, 115, 234, 0.08);
+      --brand-grey: #676879;
+      --shadow-card: 0 1px 2px rgba(50, 51, 56, 0.06);
+      --btn-primary-bg: #0073ea;
+      --btn-primary-color: #fff;
+      --btn-primary-border: #0073ea;
+      --btn-primary-hover-bg: #0060c2;
+      --btn-primary-hover-color: #fff;
+      --btn-primary-hover-border: #0060c2;
+      --btn-outline-bg: #fff;
+      --btn-outline-color: #323338;
+      --btn-outline-border: #c5c7d0;
+      --btn-outline-hover-bg: #f5f6f8;
+      --btn-outline-hover-color: #323338;
+      --btn-outline-hover-border: #c5c7d0;
+      color-scheme: light;
     }
 
     /* Overlay */
@@ -73,10 +92,10 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       border-left: 1px solid #e6e9ef !important;
       color: #323338 !important;
       scrollbar-color: #e6e9ef transparent;
-      font-family: var(--f-display) !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
     }
     .deal-panel::-webkit-scrollbar-thumb { background: #e6e9ef !important; }
-    .deal-panel-body { background: #f6f7fb !important; }
+    .deal-panel-body { background: #f6f7fb !important; color: #323338 !important; }
 
     /* Pantalla completa; el contenido se centra a 960px para que no se estire en monitores anchos */
     .deal-panel-overlay { align-items: stretch !important; }
@@ -133,15 +152,15 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       align-items: center;
       gap: 6px;
       padding: 4px 10px;
-      border-radius: 999px;
+      border-radius: 4px;
       font-size: 12px;
       font-weight: 600;
       border: 1px solid #e6e9ef;
-      color: rgba(255,255,255,0.8);
-      background: rgba(255,255,255,0.04);
+      color: #323338;
+      background: #f5f6f8;
     }
     .deal-chip--paid { border-color: #00c875; color: #fff; background: #00c875; }
-    .deal-chip--pending { color: #676879; }
+    .deal-chip--pending { color: #676879; background: #f5f6f8; }
 
     .deal-tabs {
       display: flex;
@@ -167,8 +186,9 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-tab:hover { color: #323338; background: #f5f6f8; }
     .deal-tab.active {
-      background: #0073ea;
-      color: #323338 !important;
+      background: #0073ea !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
     }
     .deal-tab-hint {
       margin: 0 0 16px;
@@ -190,9 +210,9 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-panel-delete,
     .deal-panel-close {
-      background: transparent !important;
-      border: 1px solid rgba(255,255,255,0.15) !important;
-      color: rgba(255,255,255,0.50) !important;
+      background: #fff !important;
+      border: 1px solid #c5c7d0 !important;
+      color: #676879 !important;
       border-radius: 8px !important;
       display: inline-flex;
       align-items: center;
@@ -202,104 +222,160 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       cursor: pointer;
     }
     .deal-panel-delete:hover {
-      background: rgba(230,61,47,0.15) !important;
-      border-color: #e63d2f !important;
-      color: #e63d2f !important;
+      background: #fde8ea !important;
+      border-color: #e2445c !important;
+      color: #e2445c !important;
     }
-    .deal-panel-close:hover { background: rgba(230,61,47,0.15) !important; border-color: #e63d2f !important; color: #e63d2f !important; }
+    .deal-panel-close:hover {
+      background: #f5f6f8 !important;
+      border-color: #c5c7d0 !important;
+      color: #323338 !important;
+    }
 
     /* Sections */
-    .deal-section { border-bottom: 1px solid rgba(255,255,255,0.07) !important; }
+    .deal-section { border-bottom: 1px solid #e6e9ef !important; padding: 18px 0 !important; }
     .deal-section h4 {
-      color: rgba(255,255,255,0.40) !important;
-      font-family: var(--f-display) !important;
-      font-size: 11px !important;
-      letter-spacing: 0.22em !important;
+      color: #676879 !important;
+      -webkit-text-fill-color: #676879 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 12px !important;
+      letter-spacing: 0.04em !important;
       font-weight: 700 !important;
+      text-transform: uppercase !important;
+      margin: 0 0 10px !important;
     }
-    .deal-section h4::before { background: rgba(255,255,255,0.20) !important; }
+    .deal-section h4::before { display: none !important; }
+    .deal-section label,
+    .deal-panel label:not(.deal-outline-btn) {
+      color: #676879 !important;
+      -webkit-text-fill-color: #676879 !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.02em !important;
+    }
 
-    /* Contact card */
+    /* Contact card — Monday surface */
     .deal-contact-card {
-      background: #141414 !important;
+      background: #fff !important;
       border: 1px solid #e6e9ef !important;
-      border-radius: 14px !important;
-      padding: 20px 22px !important;
+      border-radius: 12px !important;
+      padding: 18px 20px !important;
       display: flex !important;
       flex-direction: column !important;
-      gap: 12px !important;
+      gap: 8px !important;
+      box-shadow: 0 1px 2px rgba(50, 51, 56, 0.04) !important;
     }
     .deal-contact-card .link-name,
     .deal-contact-card .deal-contact-name,
     .deal-contact-card strong {
       color: #323338 !important;
-      font-family: var(--f-display) !important;
-      font-size: 22px !important;
-      font-weight: 800 !important;
-      letter-spacing: 0.06em !important;
-      text-transform: uppercase !important;
+      -webkit-text-fill-color: #323338 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.02em !important;
+      text-transform: none !important;
       text-decoration: none !important;
       background: none !important;
       border: none !important;
       padding: 0 !important;
-      margin: 0 0 6px !important;
+      margin: 0 0 4px !important;
       cursor: pointer !important;
-      line-height: 1.2 !important;
+      line-height: 1.25 !important;
+      text-align: left !important;
     }
     .deal-contact-card .link-name:hover {
-      color: rgba(255,255,255,0.65) !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
       text-decoration: none !important;
     }
-    .deal-contact-card p {
-      color: rgba(255,255,255,0.72) !important;
-      font-family: var(--f-display) !important;
-      font-size: 16px !important;
-      letter-spacing: 0.03em !important;
+    .deal-contact-card p,
+    .deal-contact-card .deal-meta-with-icon {
+      color: #676879 !important;
+      -webkit-text-fill-color: #676879 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 14px !important;
+      letter-spacing: 0 !important;
       margin: 0 !important;
-      line-height: 1.5 !important;
+      line-height: 1.45 !important;
     }
     .deal-contact-card .btn-copy.small {
       margin-top: 8px !important;
       align-self: flex-start !important;
-      background: transparent !important;
-      color: rgba(255,255,255,0.75) !important;
-      border: 1px solid rgba(255,255,255,0.28) !important;
-      font-family: var(--f-display) !important;
-      font-size: 11px !important;
-      letter-spacing: 0.14em !important;
-      padding: 9px 18px !important;
-      border-radius: 999px !important;
+      background: #fff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border: 1px solid #c5c7d0 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+      padding: 8px 14px !important;
+      border-radius: 8px !important;
     }
     .deal-contact-card .btn-copy.small:hover {
-      background: #e6e9ef !important;
+      background: #e5f4ff !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
+      border-color: #0073ea !important;
+    }
+    .deal-contact-card .deal-outline-btn,
+    .deal-panel .deal-outline-btn,
+    label.deal-outline-btn,
+    button.deal-outline-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      padding: 9px 14px !important;
+      background: #fff !important;
       color: #323338 !important;
-      border-color: rgba(255,255,255,0.50) !important;
+      -webkit-text-fill-color: #323338 !important;
+      border: 1px solid #c5c7d0 !important;
+      border-radius: 8px !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+      cursor: pointer !important;
+    }
+    .deal-outline-btn:hover {
+      background: #f5f6f8 !important;
+      border-color: #0073ea !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
     }
 
-    /* Selects — mismo estilo que kanban leads */
+    /* Selects — Monday light */
     .deal-panel select,
     .deal-section select {
-      color-scheme: dark !important;
-      background-color: #1a1a1a !important;
-      border: 1px solid rgba(255,255,255,0.18) !important;
-      color: rgba(255,255,255,0.80) !important;
-      -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
-      border-radius: 6px !important;
-      font-size: 12px !important;
-      padding: 8px 10px !important;
+      color-scheme: light !important;
+      background-color: #fff !important;
+      background: #fff !important;
+      border: 1px solid #c5c7d0 !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border-radius: 8px !important;
+      font-size: 14px !important;
+      font-weight: 500 !important;
+      padding: 10px 12px !important;
       width: 100% !important;
       cursor: pointer !important;
-      font-family: var(--f-display) !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
       box-sizing: border-box !important;
+      box-shadow: none !important;
+      min-height: 40px !important;
     }
     .deal-panel select:focus,
     .deal-section select:focus {
-      border-color: #676879 !important;
+      border-color: #0073ea !important;
       outline: none !important;
-      background-color: #1a1a1a !important;
-      color: rgba(255,255,255,0.80) !important;
-      -webkit-text-fill-color: rgba(255,255,255,0.80) !important;
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
+      background-color: #fff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.16) !important;
     }
     .deal-panel select option,
     .deal-section select option {
@@ -312,30 +388,35 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-section input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
     .deal-panel textarea,
     .deal-section textarea {
-      background: #f5f6f8 !important;
-      border: 1px solid rgba(255,255,255,0.13) !important;
+      background: #fff !important;
+      border: 1px solid #c5c7d0 !important;
       color: #323338 !important;
       -webkit-text-fill-color: #323338 !important;
-      caret-color: #323338 !important;
+      caret-color: #0073ea !important;
       border-radius: 8px !important;
-      font-family: var(--f-display) !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
       font-size: 14px !important;
-      color-scheme: dark !important;
+      color-scheme: light !important;
       width: 100% !important;
       box-sizing: border-box !important;
+      min-height: 40px !important;
     }
     .deal-panel input::placeholder,
     .deal-panel textarea::placeholder,
     .deal-section input::placeholder,
-    .deal-section textarea::placeholder { color: rgba(255,255,255,0.25) !important; opacity: 1; }
+    .deal-section textarea::placeholder {
+      color: #9ca0ad !important;
+      -webkit-text-fill-color: #9ca0ad !important;
+      opacity: 1;
+    }
     .deal-panel input:focus,
     .deal-panel textarea:focus,
     .deal-section input:focus,
     .deal-section textarea:focus {
-      border-color: rgba(255,255,255,0.40) !important;
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
+      border-color: #0073ea !important;
+      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.16) !important;
       outline: none !important;
-      background: #f5f6f8 !important;
+      background: #fff !important;
     }
 
     /* Botones — heredan variables del panel padre */
@@ -366,17 +447,17 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
     /* Card desc + general */
     .card-desc { color: #676879 !important; font-family: var(--f-display) !important; font-size: 13px !important; }
-    .section-sub { color: rgba(255,255,255,0.75) !important; font-family: var(--f-display) !important; font-size: 15px !important; }
-    .divider { border-color: rgba(255,255,255,0.07) !important; }
+    .section-sub { color: #323338 !important; font-family: 'Figtree', system-ui, sans-serif !important; font-size: 15px !important; }
+    .divider { border-color: #e6e9ef !important; }
     .inquiry-msg,
     .deal-panel .inquiry-msg {
-      color: rgba(255,255,255,0.80) !important;
-      background: #f5f6f8 !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      background: #fff !important;
       border: 1px solid #e6e9ef !important;
-      border-left: 3px solid rgba(255,255,255,0.25) !important;
       border-radius: 10px !important;
       padding: 12px 14px !important;
-      font-family: var(--f-display) !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
       font-size: 14px !important;
       font-style: italic !important;
       line-height: 1.5 !important;
@@ -388,15 +469,14 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .activity-item {
       background: #fff !important;
       border: 1px solid #e6e9ef !important;
-      border-left: 3px solid rgba(255,255,255,0.20) !important;
       border-radius: 10px !important;
       margin-bottom: 8px !important;
       padding: 10px 14px !important;
     }
-    .activity-item:hover { border-left-color: rgba(255,255,255,0.50) !important; background: #f5f6f8 !important; }
-    .activity-item p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
-    .activity-item small { color: rgba(255,255,255,0.30) !important; font-family: var(--f-display) !important; }
-    .activity-type { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 10px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; }
+    .activity-item:hover { background: #f8fbff !important; border-color: #c9d4e4 !important; }
+    .activity-item p { color: #323338 !important; font-family: 'Figtree', system-ui, sans-serif !important; font-size: 13px !important; }
+    .activity-item small { color: #9ca0ad !important; font-family: 'Figtree', system-ui, sans-serif !important; }
+    .activity-type { color: #676879 !important; font-family: 'Figtree', system-ui, sans-serif !important; font-size: 10px !important; letter-spacing: 0.08em !important; text-transform: uppercase !important; }
 
     /* Chat */
     .deal-chat { border-radius: 12px !important; overflow: hidden !important; border: 1px solid #e6e9ef !important; }
@@ -405,17 +485,19 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
     /* Mensajes del cliente */
     .deal-panel .message {
-      background: #1e1e1e !important;
+      background: #f0f1f5 !important;
       border: 1px solid #e6e9ef !important;
-      color: rgba(255,255,255,0.80) !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
       border-radius: 10px !important;
-      font-family: var(--f-display) !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
       font-size: 13px !important;
     }
     .deal-panel .message.own {
-      background: #f5f6f8 !important;
-      border-color: rgba(255,255,255,0.18) !important;
+      background: #e5f4ff !important;
+      border-color: #b6d9f7 !important;
       color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
       align-self: flex-end !important;
     }
 
@@ -437,16 +519,17 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     /* Template chips */
     .template-chips .chip {
       background: #fff !important;
-      border: 1px solid #e6e9ef !important;
-      color: rgba(255,255,255,0.65) !important;
-      border-radius: 999px !important;
-      font-family: var(--f-display) !important;
+      border: 1px solid #c5c7d0 !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border-radius: 8px !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
     }
-    .template-chips .chip:hover { background: #f5f6f8 !important; color: #323338 !important; border-color: #9ca0ad !important; }
+    .template-chips .chip:hover { background: #e5f4ff !important; color: #0073ea !important; border-color: #0073ea !important; }
 
     /* Tasks */
-    .task-row { background: #f5f6f8 !important; border: 1px solid #e6e9ef !important; border-radius: 8px !important; color: #323338 !important; font-family: var(--f-display) !important; }
-    .task-row .done { color: rgba(255,255,255,0.30) !important; }
+    .task-row { background: #fff !important; border: 1px solid #e6e9ef !important; border-radius: 8px !important; color: #323338 !important; font-family: 'Figtree', system-ui, sans-serif !important; }
+    .task-row .done { color: #9ca0ad !important; }
 
     /* Status / chips */
     .chip { border-radius: 999px !important; font-family: var(--f-display) !important; }
@@ -457,10 +540,11 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-payment-box {
       margin-top: 16px !important;
       padding: 18px 20px !important;
-      background: #141414 !important;
+      background: #fff !important;
       border: 1px solid #e6e9ef !important;
-      border-radius: 14px !important;
-      border-top: none !important;
+      border-radius: 12px !important;
+      border-top: 1px solid #e6e9ef !important;
+      color: #323338 !important;
     }
     .deal-payment-status {
       display: flex;
@@ -497,22 +581,23 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       width: 100%;
       box-sizing: border-box;
       background: #fff !important;
-      border: 1px solid rgba(255,255,255,0.18) !important;
+      border: 1px solid #c5c7d0 !important;
       color: #323338 !important;
       -webkit-text-fill-color: #323338 !important;
       border-radius: 8px;
       padding: 10px 12px;
+      color-scheme: light !important;
     }
     .register-payment-form select {
-      color-scheme: dark;
+      color-scheme: light !important;
       cursor: pointer;
     }
     .register-payment-form select option {
-      background: #1a1a1a;
+      background: #fff;
       color: #323338;
     }
     .register-payment-form input[type="date"] {
-      color-scheme: dark;
+      color-scheme: light !important;
     }
     .register-payment-hint {
       margin: -4px 0 0;
