@@ -1212,3 +1212,406 @@
   gap: 6px !important;
   white-space: nowrap;
 }
+
+/* ── Contactos board: anular overrides oscuros del gestor ── */
+:host.panel-datta ::ng-deep app-crm-clients-directory .clients-search,
+:host.panel-datta ::ng-deep app-crm-clients-directory .clients-search-field {
+  background: #f5f6f8 !important;
+  background-color: #f5f6f8 !important;
+  border: 1px solid #e6e9ef !important;
+}
+
+:host.panel-datta ::ng-deep app-crm-clients-directory .clients-search input,
+:host.panel-datta ::ng-deep app-crm-clients-directory .clients-search-field input,
+:host.panel-datta ::ng-deep app-crm-clients-directory #clients-search-input {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  caret-color: #323338 !important;
+}
+
+:host.panel-datta ::ng-deep app-crm-clients-directory .mon-board,
+:host.panel-datta ::ng-deep app-crm-clients-directory .clients-board {
+  background: #fff !important;
+  color: #323338 !important;
+}
+
+/* ── Servicios board Monday ── */
+:host.panel-datta .mon-services-board,
+:host.panel-datta .mon-board.mon-services-board {
+  background: #fff !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 12px !important;
+  padding: 20px 22px 24px !important;
+  color: #323338 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  box-shadow: none !important;
+}
+
+:host.panel-datta .mon-services-board .mon-board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+:host.panel-datta .mon-services-board .mon-board-title {
+  margin: 0 0 6px !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .mon-services-board .mon-board-desc {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .mon-services-board .mon-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #0073ea !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font: 600 14px Figtree, system-ui, sans-serif;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+:host.panel-datta .mon-services-board .mon-btn-primary:hover {
+  background: #0060c2 !important;
+}
+
+:host.panel-datta .mon-services-board .mon-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 12px 4px 8px;
+  font: 700 14px Figtree, system-ui, sans-serif;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-align: left;
+  opacity: 1;
+  cursor: default;
+}
+
+:host.panel-datta .mon-services-board .mon-group-bar {
+  width: 4px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+:host.panel-datta .mon-services-board .mon-chevron { color: #676879; width: 12px; }
+
+:host.panel-datta .mon-services-board .mon-count {
+  background: #f0f1f5;
+  color: #676879;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:host.panel-datta .mon-services-board .mon-table-wrap { overflow-x: auto; }
+
+:host.panel-datta .mon-services-board .mon-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 820px;
+}
+
+:host.panel-datta .mon-services-board .mon-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e6e9ef;
+  border-right: 1px solid #e6e9ef;
+  background: #f7f8fa !important;
+  white-space: nowrap;
+}
+
+:host.panel-datta .mon-services-board .mon-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e6e9ef;
+  border-right: 1px solid #eef0f4;
+  font-size: 14px;
+  vertical-align: middle;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  background: #fff !important;
+}
+
+:host.panel-datta .mon-services-board .mon-table tbody tr:hover td {
+  background: #f8fbff !important;
+}
+
+:host.panel-datta .mon-services-board .col-sort { width: 52px; }
+:host.panel-datta .mon-services-board .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-weight: 600;
+}
+:host.panel-datta .mon-services-board .col-actions {
+  width: 160px;
+  white-space: nowrap;
+  text-align: right;
+}
+
+:host.panel-datta .mon-services-board .mon-deal-name {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  font: 600 14px Figtree, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+:host.panel-datta .mon-services-board .mon-deal-name:hover {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+  text-decoration: underline;
+}
+
+:host.panel-datta .mon-services-board .mon-muted {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .mon-services-board .svc-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+:host.panel-datta .mon-services-board .service-catalog-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid #e6e9ef;
+  flex-shrink: 0;
+}
+
+:host.panel-datta .mon-services-board .svc-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:host.panel-datta .mon-services-board .service-sort-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+:host.panel-datta .mon-services-board .service-sort-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: #676879 !important;
+  cursor: grab;
+}
+
+:host.panel-datta .mon-services-board .service-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid #e6e9ef !important;
+  background: #fff !important;
+  color: #676879 !important;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+:host.panel-datta .mon-services-board .service-sort-btn:hover:not(:disabled) {
+  background: #f5f6f8 !important;
+  color: #0073ea !important;
+  border-color: #0073ea !important;
+}
+
+:host.panel-datta .mon-services-board .service-sort-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+:host.panel-datta .mon-services-board .service-sort-item--dragging {
+  opacity: 0.45;
+}
+
+:host.panel-datta .mon-services-board .service-sort-item--over td {
+  outline: 2px dashed #0073ea;
+  outline-offset: -2px;
+}
+
+:host.panel-datta .mon-services-board .mon-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  background: #fff !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 6px 10px;
+  font: 600 12px Figtree, system-ui, sans-serif;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+:host.panel-datta .mon-services-board .mon-tool-btn:hover {
+  border-color: #0073ea;
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+}
+
+:host.panel-datta .mon-services-board .mon-tool-btn--danger:hover {
+  border-color: #e2445c;
+  color: #e2445c !important;
+  -webkit-text-fill-color: #e2445c !important;
+  background: #fff0f1 !important;
+}
+
+:host.panel-datta .mon-services-board .mon-add-row {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #e6e9ef;
+  background: transparent;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  text-align: left;
+  padding: 10px 12px;
+  font: 400 13px Figtree, system-ui, sans-serif;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+:host.panel-datta .mon-services-board .mon-add-row:hover {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+  background: #f8fbff;
+}
+
+:host.panel-datta .mon-services-board .mon-empty {
+  padding: 28px 4px 16px;
+}
+
+:host.panel-datta .mon-services-board .mon-empty-title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #323338 !important;
+}
+
+:host.panel-datta .mon-services-board .mon-empty-text {
+  margin: 0;
+  font-size: 13px;
+  color: #676879 !important;
+}
+
+:host.panel-datta .mon-services-board .mon-service-form {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid #e6e9ef;
+}
+
+:host.panel-datta .mon-services-board .mon-form-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .mon-services-board .service-requisitos-panel summary {
+  cursor: pointer;
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+:host.panel-datta .mon-services-board .service-requisitos-body {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f7f8fa;
+  border-radius: 8px;
+  border: 1px solid #e6e9ef;
+}
+
+:host.panel-datta .mon-services-board .service-requisitos-heading {
+  margin: 8px 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #676879 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+:host.panel-datta .mon-services-board .service-requisitos-heading:first-child {
+  margin-top: 0;
+}
+
+:host.panel-datta .mon-services-board .service-requisitos-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #323338 !important;
+  font-size: 13px;
+}
+
+:host.panel-datta .mon-services-board .service-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+:host.panel-datta .mon-services-board h5 {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .mon-services-board .card-desc {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+@media (max-width: 760px) {
+  :host.panel-datta .mon-services-board {
+    padding: 16px 14px !important;
+  }
+  :host.panel-datta .mon-services-board .mon-board-title {
+    font-size: 20px !important;
+  }
+}

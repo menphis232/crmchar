@@ -422,98 +422,134 @@
 
     <!-- ── SERVICIOS ── -->
     @if (tab() === 'servicios' && profile(); as p) {
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideWrench [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Catálogo de servicios
-        </h2>
-        <p class="card-desc">Define tus trámites con tiempo estimado. El precio es opcional. Ordena con las flechas o arrastrando el asa · Se guarda automáticamente.</p>
+      <div class="mon-board mon-services-board">
+        <header class="mon-board-head">
+          <div>
+            <h2 class="mon-board-title">Servicios</h2>
+            <p class="mon-board-desc">Catálogo de trámites con tiempo y precio. Arrastra o usa las flechas para ordenar · Se guarda solo.</p>
+          </div>
+          <button type="button" class="mon-btn-primary" (click)="cancelEditService(); scrollToServiceForm()">
+            <svg lucidePlus [size]="16" aria-hidden="true"></svg>
+            Agregar servicio
+          </button>
+        </header>
+
         @if (p.services?.length) {
-          <p class="card-desc" style="font-size:11px; margin-bottom:10px;">
-            Al editar o crear un servicio puedes definir la checklist de requisitos, qué incluye y bonus.
-          </p>
-        }
-        <div class="service-sort-list"
-             (dragover)="$event.preventDefault()"
-             (drop)="onServiceDrop($event)">
-          @for (s of p.services; track s.id) {
-            <div class="inbox-item service-catalog-item service-sort-item"
-                 [class.service-sort-item--dragging]="serviceDragIdx === $index"
-                 [class.service-sort-item--over]="serviceDragOverIdx === $index"
-                 (dragover)="onServiceDragOver($event, $index)"
-                 (dragenter)="onServiceDragEnter($event, $index)"
-                 (dragleave)="onServiceDragLeave()"
-                 (drop)="onServiceDropItem($event, $index)">
-              <div class="service-sort-controls">
-                <span class="service-sort-handle"
-                      title="Arrastra para mover"
-                      draggable="true"
-                      (dragstart)="onServiceDragStart($event, $index)"
-                      (dragend)="resetServiceDragState()">
-                  <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
-                </span>
-                <button type="button" class="service-sort-btn" title="Subir" [disabled]="$index === 0" (click)="moveServiceByButton($index, -1)">
-                  <svg lucideChevronUp [size]="14" aria-hidden="true"></svg>
-                </button>
-                <button type="button" class="service-sort-btn" title="Bajar" [disabled]="$index === (p.services!.length - 1)" (click)="moveServiceByButton($index, 1)">
-                  <svg lucideChevronDown [size]="14" aria-hidden="true"></svg>
-                </button>
-              </div>
-              @if (s.imageUrl) {
-                <img class="service-catalog-thumb" [src]="s.imageUrl" alt="" draggable="false">
-              }
-              <div class="inbox-info">
-              <h4>{{ s.name }}</h4>
-              <p class="deal-meta-with-icon">
-                <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
-                {{ s.timeEstimate }}
-                —
-                @if (hasServicePrice(s)) {
-                  ${{ s.price | number }} MXN
-                } @else {
-                  Precio por definir
+          <div class="mon-table-wrap"
+               (dragover)="$event.preventDefault()"
+               (drop)="onServiceDrop($event)">
+            <button type="button" class="mon-group-head" disabled>
+              <span class="mon-group-bar" style="background:#0073ea" aria-hidden="true"></span>
+              <span class="mon-chevron" aria-hidden="true">▾</span>
+              <strong>Catálogo</strong>
+              <span class="mon-count">{{ p.services!.length }}</span>
+            </button>
+            <table class="mon-table mon-services-table">
+              <thead>
+                <tr>
+                  <th class="col-sort"></th>
+                  <th>Servicio</th>
+                  <th>Tiempo</th>
+                  <th class="col-num">Precio</th>
+                  <th>Detalles</th>
+                  <th class="col-actions"></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (s of p.services; track s.id) {
+                  <tr class="service-sort-item"
+                      [class.service-sort-item--dragging]="serviceDragIdx === $index"
+                      [class.service-sort-item--over]="serviceDragOverIdx === $index"
+                      (dragover)="onServiceDragOver($event, $index)"
+                      (dragenter)="onServiceDragEnter($event, $index)"
+                      (dragleave)="onServiceDragLeave()"
+                      (drop)="onServiceDropItem($event, $index)">
+                    <td class="col-sort">
+                      <div class="service-sort-controls">
+                        <span class="service-sort-handle"
+                              title="Arrastra para mover"
+                              draggable="true"
+                              (dragstart)="onServiceDragStart($event, $index)"
+                              (dragend)="resetServiceDragState()">
+                          <svg lucideGripVertical [size]="16" aria-hidden="true"></svg>
+                        </span>
+                        <button type="button" class="service-sort-btn" title="Subir" [disabled]="$index === 0" (click)="moveServiceByButton($index, -1)">
+                          <svg lucideChevronUp [size]="14" aria-hidden="true"></svg>
+                        </button>
+                        <button type="button" class="service-sort-btn" title="Bajar" [disabled]="$index === (p.services!.length - 1)" (click)="moveServiceByButton($index, 1)">
+                          <svg lucideChevronDown [size]="14" aria-hidden="true"></svg>
+                        </button>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="svc-name-cell">
+                        @if (s.imageUrl) {
+                          <img class="service-catalog-thumb" [src]="s.imageUrl" alt="" draggable="false">
+                        }
+                        <button type="button" class="mon-deal-name" (click)="startEditService(s)">{{ s.name }}</button>
+                      </div>
+                    </td>
+                    <td class="mon-muted">
+                      <span class="svc-time">
+                        <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+                        {{ s.timeEstimate || '—' }}
+                      </span>
+                    </td>
+                    <td class="col-num">
+                      @if (hasServicePrice(s)) {
+                        ${{ s.price | number }}
+                      } @else {
+                        <span class="mon-muted">Por definir</span>
+                      }
+                    </td>
+                    <td>
+                      <details class="service-requisitos-panel">
+                        <summary>Ver detalles</summary>
+                        <div class="service-requisitos-body">
+                          <p class="service-requisitos-heading">Documentos requeridos</p>
+                          <ul class="service-requisitos-list">
+                            @for (doc of serviceRequirements(s); track doc) {
+                              <li>{{ doc }}</li>
+                            }
+                          </ul>
+                          @if (serviceIncludes(s).length) {
+                            <p class="service-requisitos-heading">Qué incluye</p>
+                            <ul class="service-requisitos-list">
+                              @for (item of serviceIncludes(s); track item) {
+                                <li>{{ item }}</li>
+                              }
+                            </ul>
+                          }
+                          @if (serviceBonus(s).length) {
+                            <p class="service-requisitos-heading">Bonus</p>
+                            <ul class="service-requisitos-list">
+                              @for (item of serviceBonus(s); track item) {
+                                <li>{{ item }}</li>
+                              }
+                            </ul>
+                          }
+                        </div>
+                      </details>
+                    </td>
+                    <td class="col-actions">
+                      <button type="button" class="mon-tool-btn" (click)="startEditService(s)">Editar</button>
+                      <button type="button" class="mon-tool-btn mon-tool-btn--danger" (click)="deleteService(s.id)">Eliminar</button>
+                    </td>
+                  </tr>
                 }
-              </p>
-              <details class="service-requisitos-panel">
-                <summary>Ver detalles</summary>
-                <div class="service-requisitos-body">
-                  <p class="service-requisitos-heading">Documentos requeridos</p>
-                  <ul class="service-requisitos-list">
-                    @for (doc of serviceRequirements(s); track doc) {
-                      <li>{{ doc }}</li>
-                    }
-                  </ul>
-                  @if (serviceIncludes(s).length) {
-                    <p class="service-requisitos-heading">Qué incluye</p>
-                    <ul class="service-requisitos-list">
-                      @for (item of serviceIncludes(s); track item) {
-                        <li>{{ item }}</li>
-                      }
-                    </ul>
-                  }
-                  @if (serviceBonus(s).length) {
-                    <p class="service-requisitos-heading">Bonus</p>
-                    <ul class="service-requisitos-list">
-                      @for (item of serviceBonus(s); track item) {
-                        <li>{{ item }}</li>
-                      }
-                    </ul>
-                  }
-                </div>
-              </details>
-            </div>
-              <div class="service-catalog-actions">
-                <button type="button" class="btn-copy small" (click)="startEditService(s)">Editar</button>
-                <button class="btn-delete small" (click)="deleteService(s.id)">Eliminar</button>
-              </div>
-            </div>
-          }
-        </div>
-        @if (!p.services?.length) {
-          <p class="empty">Aún no tienes servicios. Agrega el primero abajo.</p>
+              </tbody>
+            </table>
+            <button type="button" class="mon-add-row" (click)="cancelEditService(); scrollToServiceForm()">+ Agregar servicio</button>
+          </div>
+        } @else {
+          <div class="mon-empty">
+            <p class="mon-empty-title">Aún no tienes servicios</p>
+            <p class="mon-empty-text">Agrega el primero para mostrarlos en tu ficha pública y cotizaciones.</p>
+          </div>
         }
-        <hr class="divider">
-        <h4 class="section-sub" id="service-edit-form">{{ editingServiceId ? 'Editar servicio' : 'Nuevo servicio' }}</h4>
+
+        <div class="mon-service-form" id="service-edit-form">
+        <h3 class="mon-form-title">{{ editingServiceId ? 'Editar servicio' : 'Nuevo servicio' }}</h3>
         <div class="form-row">
           <div class="form-group">
             <label>Nombre del trámite</label>
@@ -644,6 +680,7 @@
               Agregar servicio
             }
           </button>
+        </div>
         </div>
       </div>
     }

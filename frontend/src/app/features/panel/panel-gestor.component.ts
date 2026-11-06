@@ -1431,6 +1431,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.resetServiceForm();
   }
 
+  scrollToServiceForm() {
+    setTimeout(() => {
+      document.getElementById('service-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  }
+
   saveService() {
     if (!this.serviceForm.name || !this.serviceForm.timeEstimate) return;
     const docs = this.checklistTexts(this.serviceDocs);

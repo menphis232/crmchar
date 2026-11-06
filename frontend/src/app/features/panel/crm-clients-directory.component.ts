@@ -20,33 +20,70 @@ function emptyForm(): ClientForm {
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
     :host { display: block; }
-    .clients-card { padding: 24px 28px; box-sizing: border-box; container-type: inline-size; }
+    .clients-board, .mon-board {
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
+      border-radius: 12px !important;
+      padding: 20px 22px 24px !important;
+      box-sizing: border-box;
+      container-type: inline-size;
+      color: #323338 !important;
+      font-family: Figtree, system-ui, sans-serif;
+      box-shadow: none !important;
+    }
 
-    .clients-head {
+    .mon-board-head {
       display: flex;
       align-items: flex-start;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
     }
-    .clients-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; }
+    .mon-board-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #323338 !important;
+      text-transform: none !important;
+    }
     .clients-total {
-      font-family: var(--f-ui);
       font-size: 13px;
       font-weight: 600;
-      letter-spacing: 0;
       color: #676879;
       font-variant-numeric: tabular-nums;
     }
     .clients-desc {
       margin: 0;
       max-width: 62ch;
-      font-family: var(--f-ui);
       font-size: 13px;
       line-height: 1.5;
       color: #676879;
     }
 
+    .mon-btn-primary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 40px;
+      padding: 0 16px;
+      flex-shrink: 0;
+      border: none;
+      border-radius: 8px;
+      background: #0073ea !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mon-btn-primary:hover:not(:disabled) { background: #0060c2 !important; }
     .clients-btn {
       display: inline-flex;
       align-items: center;
@@ -55,26 +92,26 @@ function emptyForm(): ClientForm {
       min-height: 40px;
       padding: 0 16px;
       flex-shrink: 0;
-      border: 1px solid #e6e9ef;
+      border: 1px solid #c5c7d0;
       border-radius: 8px;
-      background: transparent;
+      background: #fff;
       color: #323338;
       font-family: Figtree, system-ui, sans-serif;
-      font-size: 11px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
       letter-spacing: 0;
       text-transform: none;
       cursor: pointer;
       transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .clients-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: #676879; }
-    .clients-btn:focus-visible, .icon-btn:focus-visible, .client-name:focus-visible, .clients-link:focus-visible {
+    .clients-btn:hover:not(:disabled) { background: #f5f6f8; border-color: #0073ea; color: #0073ea; }
+    .clients-btn:focus-visible, .icon-btn:focus-visible, .mon-deal-name:focus-visible, .clients-link:focus-visible, .mon-btn-primary:focus-visible {
       outline: 2px solid #0073ea;
       outline-offset: 2px;
     }
     .clients-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .clients-btn--primary { background: #fff; color: #000; border-color: #323338; }
-    .clients-btn--primary:hover:not(:disabled) { background: #0060c2; border-color: #0060c2; color: #fff; }
+    .clients-btn--primary { background: #0073ea !important; color: #fff !important; -webkit-text-fill-color: #fff !important; border-color: #0073ea !important; }
+    .clients-btn--primary:hover:not(:disabled) { background: #0060c2 !important; border-color: #0060c2 !important; color: #fff !important; }
 
     .clients-link {
       background: none;
@@ -102,17 +139,17 @@ function emptyForm(): ClientForm {
       display: flex;
       align-items: center;
       gap: 8px;
-      min-height: 42px;
+      min-height: 36px;
       padding: 0 12px;
       border: 1px solid #e6e9ef;
       border-radius: 8px;
-      background: #fff;
+      background: #f5f6f8;
       box-sizing: border-box;
     }
-    .clients-search:focus-within { border-color: #676879; }
+    .clients-search:focus-within { border-color: #0073ea; background: #fff; }
     .clients-search svg { color: #676879; flex-shrink: 0; }
-    .clients-card .clients-search input#clients-search-input,
-    .clients-card .clients-search input#clients-search-input:focus {
+    .clients-board .clients-search input#clients-search-input,
+    .clients-board .clients-search input#clients-search-input:focus {
       flex: 1;
       min-width: 0;
       background: transparent !important;
@@ -121,9 +158,9 @@ function emptyForm(): ClientForm {
       border-radius: 0 !important;
       outline: none;
       padding: 10px 0;
-      color: #fff !important;
+      color: #323338 !important;
       -webkit-text-fill-color: #323338 !important;
-      font-family: var(--f-ui);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 14px;
     }
     .clients-search input::placeholder { color: #9ca0ad !important; -webkit-text-fill-color: #9ca0ad !important; }
@@ -135,12 +172,12 @@ function emptyForm(): ClientForm {
       border: 1px solid #e6e9ef !important;
       border-radius: 8px;
       background: #fff !important;
-      color: #fff !important;
+      color: #323338 !important;
       -webkit-text-fill-color: #323338 !important;
-      font-family: var(--f-ui);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 13px;
       outline: none;
-      color-scheme: light;
+      color-scheme: light !important;
     }
     .clients-toolbar select:focus { border-color: #0073ea !important; }
     @container (max-width: 860px) {
@@ -152,73 +189,91 @@ function emptyForm(): ClientForm {
       .clients-toolbar { grid-template-columns: 1fr; }
     }
 
-    /* Lista */
-    .clients-list { display: flex; flex-direction: column; }
-    .client-row {
-      display: grid;
-      grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.2fr) minmax(0, 1.3fr) minmax(0, 1.2fr) 80px;
-      gap: 16px;
+    .mon-table-wrap { overflow-x: auto; }
+    .mon-group-head {
+      display: flex;
       align-items: center;
-      padding: 14px 12px;
-      border-bottom: 1px solid #e6e9ef;
-      cursor: pointer;
-      transition: background-color 0.15s ease;
-    }
-    .client-row:hover { background: #f8fbff; }
-    .client-row--head {
-      padding-top: 0;
-      padding-bottom: 10px;
-      cursor: default;
-      font-family: var(--f-ui);
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0;
-      text-transform: none;
-      color: #676879;
-    }
-    .client-row--head:hover { background: none; }
-
-    .client-cell { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-    .client-name {
-      align-self: flex-start;
-      max-width: 100%;
-      padding: 0;
-      background: none;
+      gap: 8px;
+      width: 100%;
       border: none;
-      color: #323338;
-      font-family: var(--f-ui);
-      font-size: 14px;
-      font-weight: 700;
-      text-align: left;
-      line-height: 1.3;
+      background: transparent;
+      padding: 12px 4px 8px;
       cursor: pointer;
-      overflow-wrap: anywhere;
+      font: 700 14px Figtree, system-ui, sans-serif;
+      color: #323338;
+      text-align: left;
     }
-    .client-name:hover { text-decoration: underline; text-underline-offset: 3px; }
-    .client-sub {
-      font-family: var(--f-ui);
+    .mon-group-bar { width: 4px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+    .mon-chevron { color: #676879; width: 12px; }
+    .mon-count {
+      background: #f0f1f5;
+      color: #676879;
+      border-radius: 999px;
+      padding: 1px 8px;
       font-size: 12px;
-      color: #676879;
-      line-height: 1.35;
+      font-weight: 600;
     }
-    .client-phone {
-      font-family: var(--f-ui);
-      font-size: 13px;
-      color: #676879;
-      font-variant-numeric: tabular-nums;
+    .mon-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 780px;
     }
-    .client-email, .client-tramite {
+    .mon-table th {
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #676879;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e6e9ef;
+      border-right: 1px solid #e6e9ef;
+      background: #f7f8fa;
+      white-space: nowrap;
+    }
+    .mon-table td {
+      padding: 10px;
+      border-bottom: 1px solid #e6e9ef;
+      border-right: 1px solid #eef0f4;
+      font-size: 14px;
+      vertical-align: middle;
+      color: #323338;
+    }
+    .mon-table tbody tr { cursor: pointer; }
+    .mon-table tbody tr:hover td { background: #f8fbff; }
+    .mon-deal-name {
+      border: none;
+      background: none;
+      padding: 0;
+      color: #323338;
+      font: 600 14px Figtree, system-ui, sans-serif;
+      text-align: left;
+      cursor: pointer;
+    }
+    .mon-deal-name:hover { color: #0073ea; text-decoration: underline; }
+    .mon-muted { color: #676879; font-size: 13px; }
+    .client-state { margin-top: 2px; font-size: 12px; }
+    .client-email {
+      max-width: 220px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .client-tramite {
-      font-family: var(--f-ui);
-      font-size: 13px;
-      color: rgba(255, 255, 255, 0.85);
+    .deal-extra { display: block; margin-top: 4px; font-size: 12px; }
+    .mon-add-row {
+      width: 100%;
+      border: none;
+      border-bottom: 1px solid #e6e9ef;
+      background: transparent;
+      color: #676879;
+      text-align: left;
+      padding: 10px 12px;
+      font: 400 13px Figtree, system-ui, sans-serif;
+      cursor: pointer;
+      margin-bottom: 8px;
     }
+    .mon-add-row:hover { color: #0073ea; background: #f8fbff; }
 
-    .client-vehicles { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 6px; }
+    .client-vehicles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
     .plate-chip {
       display: inline-flex;
       align-items: center;
@@ -226,20 +281,21 @@ function emptyForm(): ClientForm {
       padding: 3px 8px;
       border: 1px solid #e6e9ef;
       border-radius: 6px;
-      font-family: var(--f-ui);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.04em;
       color: #323338;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+      background: #fff;
     }
     .engomado-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
-      background: rgba(255, 255, 255, 0.25);
+      background: #c5c7d0;
     }
     .engomado-dot[data-color='amarillo'] { background: #f5c518; }
     .engomado-dot[data-color='rosa'] { background: #f472b6; }
@@ -247,27 +303,26 @@ function emptyForm(): ClientForm {
     .engomado-dot[data-color='verde'] { background: #22c55e; }
     .engomado-dot[data-color='azul'] { background: #3b82f6; }
 
-    .client-actions { flex-direction: row; justify-content: flex-end; gap: 6px; }
+    .col-actions { width: 88px; white-space: nowrap; text-align: right; }
     .icon-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border: 1px solid #e6e9ef;
       border-radius: 8px;
-      background: transparent;
+      background: #fff;
       color: #676879;
       cursor: pointer;
-      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      margin-left: 4px;
     }
-    .icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: #676879; color: #323338; }
-    .icon-btn--danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.6); color: #f87171; }
+    .icon-btn:hover:not(:disabled) { background: #f5f6f8; border-color: #0073ea; color: #0073ea; }
+    .icon-btn--danger:hover:not(:disabled) { background: #fff0f1; border-color: #e2445c; color: #e2445c; }
     .icon-btn:disabled { opacity: 0.4; cursor: wait; }
 
-    /* Carga */
-    .client-row--skeleton { cursor: default; }
-    .client-row--skeleton:hover { background: none; }
+    .client-row--skeleton { cursor: default !important; }
+    .client-row--skeleton:hover td { background: transparent !important; }
     .sk {
       display: block;
       height: 12px;
@@ -332,106 +387,42 @@ function emptyForm(): ClientForm {
       width: 100%;
       box-sizing: border-box;
       padding: 10px 12px;
-      border: 1px solid #e6e9ef !important;
+      border: 1px solid #c5c7d0 !important;
       border-radius: 8px;
       background: #fff !important;
-      color: #fff !important;
+      color: #323338 !important;
       -webkit-text-fill-color: #323338 !important;
-      font-family: var(--f-ui);
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 14px;
       outline: none;
-      color-scheme: light;
+      color-scheme: light !important;
     }
     .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: #0073ea !important; }
     .client-field textarea { resize: vertical; line-height: 1.5; }
     .client-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
     @container (max-width: 620px) { .client-form-grid { grid-template-columns: 1fr; } }
 
-    /* Tarjetas cuando la tarjeta del directorio es angosta (panel con menú lateral o móvil) */
-    @container (max-width: 760px) {
-      .client-row--head { display: none; }
-      .client-row {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
-        grid-template-areas: 'who who who actions' 'contact vehicles tramites tramites';
-        gap: 10px 16px;
-        padding: 14px 4px;
-      }
-      .client-who { grid-area: who; }
-      .client-actions { grid-area: actions; align-self: start; }
-      .client-contact { grid-area: contact; }
-      .client-vehicles { grid-area: vehicles; align-content: flex-start; }
-      .client-tramites { grid-area: tramites; }
-      .is-empty { display: none; }
-    }
-    @container (max-width: 520px) {
-      .client-row {
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-areas: 'who actions' 'contact contact' 'vehicles vehicles' 'tramites tramites';
-        gap: 6px 12px;
-      }
-    }
-
-    .board-group-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      width: 100%;
-      margin-top: 10px;
-      padding: 10px 8px;
-      border: none;
-      background: transparent;
-      color: #323338;
-      font-family: Figtree, system-ui, sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: left;
-    }
-    .board-group-head.is-collapsed { opacity: 0.85; }
-    .board-group-bar {
-      width: 4px;
-      height: 18px;
-      border-radius: 4px;
-      flex-shrink: 0;
-    }
-    .board-group-chevron { color: #676879; width: 14px; }
-    .board-group-count {
-      margin-left: 4px;
-      padding: 1px 8px;
-      border-radius: 999px;
-      background: #f0f1f5;
-      color: #676879;
-      font-size: 12px;
-      font-weight: 600;
-    }
     .status-pill {
       display: inline-flex;
       align-items: center;
-      max-width: 100%;
+      max-width: 180px;
       padding: 4px 10px;
       border-radius: 4px;
       background: #579bfc;
       color: #fff;
+      -webkit-text-fill-color: #fff;
       font-size: 12px;
       font-weight: 600;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .status-pill--muted { background: #c5c7d0; color: #323338; }
-    .board-add-row {
-      width: 100%;
-      padding: 10px 12px;
-      border: none;
-      border-bottom: 1px solid #e6e9ef;
-      background: transparent;
-      color: #676879;
-      font-family: Figtree, system-ui, sans-serif;
-      font-size: 13px;
-      text-align: left;
-      cursor: pointer;
+    .status-pill--muted { background: #c5c7d0; color: #323338; -webkit-text-fill-color: #323338; }
+
+    @media (max-width: 760px) {
+      .mon-board-title { font-size: 20px; }
+      .clients-board, .mon-board { padding: 16px 14px !important; }
     }
-    .board-add-row:hover { color: #0073ea; background: #f8fbff; }
   `],
 })
 export class CrmClientsDirectoryComponent implements OnInit {
