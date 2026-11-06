@@ -120,63 +120,75 @@
   } @else {
     <div class="clients-list">
       <div class="client-row client-row--head" aria-hidden="true">
-        <span>Cliente</span>
         <span>Contacto</span>
+        <span>Datos</span>
         <span>Vehículos</span>
-        <span>Trámites</span>
+        <span>Acuerdos</span>
         <span></span>
       </div>
 
-      @for (c of clients(); track c.id) {
-        <div class="client-row" (click)="openContact.emit(c.id)">
-          <div class="client-cell client-who">
-            <button type="button" class="client-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
-            <span class="client-sub" [class.is-empty]="!c.residenceState">{{ c.residenceState || 'Sin estado' }}</span>
-          </div>
+      @for (group of contactGroups(); track group.id) {
+        <button type="button" class="board-group-head" [class.is-collapsed]="collapsedGroups()[group.id]" (click)="toggleGroup(group.id)">
+          <span class="board-group-bar" [style.background]="group.color" aria-hidden="true"></span>
+          <span class="board-group-chevron" aria-hidden="true">{{ collapsedGroups()[group.id] ? '▸' : '▾' }}</span>
+          <strong>{{ group.label }}</strong>
+          <span class="board-group-count">{{ group.items.length }}</span>
+        </button>
 
-          <div class="client-cell client-contact">
-            @if (c.phone) { <span class="client-phone">{{ c.phone }}</span> }
-            @if (c.email) { <span class="client-sub client-email" [title]="c.email">{{ c.email }}</span> }
-            @if (!c.phone && !c.email) { <span class="client-sub">Sin contacto</span> }
-          </div>
+        @if (!collapsedGroups()[group.id]) {
+          @for (c of group.items; track c.id) {
+            <div class="client-row" (click)="openContact.emit(c.id)">
+              <div class="client-cell client-who">
+                <button type="button" class="client-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
+                <span class="client-sub" [class.is-empty]="!c.residenceState">{{ c.residenceState || 'Sin estado' }}</span>
+              </div>
 
-          <div class="client-cell client-vehicles">
-            @if (c.vehicles?.length) {
-              @for (v of c.vehicles!.slice(0, 3); track v.plate) {
-                <span class="plate-chip" [title]="v.engomado ? 'Engomado ' + engomadoLabel(v.engomado) : 'Sin engomado'">
-                  <span class="engomado-dot" [attr.data-color]="v.engomado || 'none'" aria-hidden="true"></span>
-                  {{ v.plate }}
-                </span>
-              }
-              @if (c.vehicles!.length > 3) {
-                <span class="client-sub">+{{ c.vehicles!.length - 3 }}</span>
-              }
-            } @else {
-              <span class="client-sub is-empty">Sin vehículos</span>
-            }
-          </div>
+              <div class="client-cell client-contact">
+                @if (c.phone) { <span class="client-phone">{{ c.phone }}</span> }
+                @if (c.email) { <span class="client-sub client-email" [title]="c.email">{{ c.email }}</span> }
+                @if (!c.phone && !c.email) { <span class="client-sub">Sin contacto</span> }
+              </div>
 
-          <div class="client-cell client-tramites">
-            @if (c.tramites) {
-              <span class="client-tramite" [title]="c.tramites">{{ firstTramite(c) }}</span>
-              @if ((c.dealCount || 0) > 1) {
-                <span class="client-sub">+{{ (c.dealCount || 0) - 1 }} más</span>
-              }
-            } @else {
-              <span class="client-sub is-empty">Sin trámites</span>
-            }
-          </div>
+              <div class="client-cell client-vehicles">
+                @if (c.vehicles?.length) {
+                  @for (v of c.vehicles!.slice(0, 3); track v.plate) {
+                    <span class="plate-chip" [title]="v.engomado ? 'Engomado ' + engomadoLabel(v.engomado) : 'Sin engomado'">
+                      <span class="engomado-dot" [attr.data-color]="v.engomado || 'none'" aria-hidden="true"></span>
+                      {{ v.plate }}
+                    </span>
+                  }
+                  @if (c.vehicles!.length > 3) {
+                    <span class="client-sub">+{{ c.vehicles!.length - 3 }}</span>
+                  }
+                } @else {
+                  <span class="client-sub is-empty">Sin vehículos</span>
+                }
+              </div>
 
-          <div class="client-cell client-actions">
-            <button type="button" class="icon-btn" (click)="$event.stopPropagation(); openEditForm(c)" [attr.aria-label]="'Editar ' + c.name" title="Editar">
-              <svg lucidePencil [size]="15" aria-hidden="true"></svg>
-            </button>
-            <button type="button" class="icon-btn icon-btn--danger" (click)="$event.stopPropagation(); deleteClient(c)" [attr.aria-label]="'Eliminar ' + c.name" title="Eliminar"
-              [disabled]="deletingId() === c.id">
-              <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
-            </button>
-          </div>
-        </div>
+              <div class="client-cell client-tramites">
+                @if (c.tramites) {
+                  <span class="status-pill" [title]="c.tramites">{{ firstTramite(c) }}</span>
+                  @if ((c.dealCount || 0) > 1) {
+                    <span class="client-sub">+{{ (c.dealCount || 0) - 1 }} más</span>
+                  }
+                } @else {
+                  <span class="status-pill status-pill--muted">Sin acuerdos</span>
+                }
+              </div>
+
+              <div class="client-cell client-actions">
+                <button type="button" class="icon-btn" (click)="$event.stopPropagation(); openEditForm(c)" [attr.aria-label]="'Editar ' + c.name" title="Editar">
+                  <svg lucidePencil [size]="15" aria-hidden="true"></svg>
+                </button>
+                <button type="button" class="icon-btn icon-btn--danger" (click)="$event.stopPropagation(); deleteClient(c)" [attr.aria-label]="'Eliminar ' + c.name" title="Eliminar"
+                  [disabled]="deletingId() === c.id">
+                  <svg lucideTrash2 [size]="15" aria-hidden="true"></svg>
+                </button>
+              </div>
+            </div>
+          }
+          <button type="button" class="board-add-row" (click)="openAddForm()">+ Agregar contacto</button>
+        }
       }
     </div>
 

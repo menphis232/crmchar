@@ -52,31 +52,31 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       --surface:      #141414;
       --surface-hover:#1a1a1a;
       --surface-2:    rgba(255,255,255,0.04);
-      --border:       rgba(255,255,255,0.10);
+      --border:       #e6e9ef;
       --border-hover: rgba(255,255,255,0.30);
       --text:         #ffffff;
-      --muted:        rgba(255,255,255,0.45);
+      --muted:        #676879;
       --mx-white:     #ffffff;
-      --gold:         rgba(255,255,255,0.55);
+      --gold:         #676879;
       --gold-glow:    rgba(255,255,255,0.05);
       --gold-dim:     rgba(255,255,255,0.05);
-      --brand-grey:   rgba(255,255,255,0.35);
+      --brand-grey:   #9ca0ad;
       --shadow-card:  0 4px 20px rgba(0,0,0,0.6);
     }
 
     /* Overlay */
-    .deal-panel-overlay { background: rgba(0,0,0,0.75) !important; backdrop-filter: blur(6px); }
+    .deal-panel-overlay { background: rgba(50,51,56,0.45) !important; backdrop-filter: blur(6px); }
 
-    /* Panel — todo negro */
+    /* Panel — Monday light */
     .deal-panel {
-      background: #000 !important;
-      border-left: 1px solid rgba(255,255,255,0.10) !important;
-      color: #ffffff !important;
-      scrollbar-color: rgba(255,255,255,0.12) transparent;
+      background: #fff !important;
+      border-left: 1px solid #e6e9ef !important;
+      color: #323338 !important;
+      scrollbar-color: #e6e9ef transparent;
       font-family: var(--f-display) !important;
     }
-    .deal-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14) !important; }
-    .deal-panel-body { background: #000 !important; }
+    .deal-panel::-webkit-scrollbar-thumb { background: #e6e9ef !important; }
+    .deal-panel-body { background: #f6f7fb !important; }
 
     /* Pantalla completa; el contenido se centra a 960px para que no se estire en monitores anchos */
     .deal-panel-overlay { align-items: stretch !important; }
@@ -104,19 +104,19 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       overflow-y: auto !important;
       min-height: 0 !important;
     }
-    .deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
-    .deal-subsection { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; margin-bottom: 8px !important; }
-    .deal-subsection--ocr { background: #0d0d0d !important; border-color: rgba(255,255,255,0.10) !important; }
-    .deal-subsection--ocr h4 { color: rgba(255,255,255,0.45) !important; }
+    .deal-section { background: transparent !important; border-bottom: 1px solid #e6e9ef !important; }
+    .deal-subsection { background: #fff !important; border: 1px solid #e6e9ef !important; border-radius: 12px !important; margin-bottom: 8px !important; }
+    .deal-subsection--ocr { background: #fff !important; border-color: #e6e9ef !important; }
+    .deal-subsection--ocr h4 { color: #676879 !important; }
 
     /* Header */
     .deal-panel-header {
-      background: #0a0a0a !important;
-      border-bottom: 1px solid rgba(255,255,255,0.09) !important;
+      background: #fff !important;
+      border-bottom: 1px solid #e6e9ef !important;
       gap: 12px;
     }
     .deal-panel-header h3 {
-      color: #ffffff !important;
+      color: #323338 !important;
       font-family: var(--f-ui, system-ui), sans-serif !important;
       font-size: 18px !important;
       font-weight: 650 !important;
@@ -136,20 +136,20 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       border-radius: 999px;
       font-size: 12px;
       font-weight: 600;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid #e6e9ef;
       color: rgba(255,255,255,0.8);
       background: rgba(255,255,255,0.04);
     }
-    .deal-chip--paid { border-color: rgba(255,255,255,0.35); color: #fff; background: rgba(255,255,255,0.1); }
-    .deal-chip--pending { color: rgba(255,255,255,0.55); }
+    .deal-chip--paid { border-color: #00c875; color: #fff; background: #00c875; }
+    .deal-chip--pending { color: #676879; }
 
     .deal-tabs {
       display: flex;
       gap: 4px;
       overflow-x: auto;
       padding: 10px max(16px, calc((100vw - 960px) / 2));
-      background: #0a0a0a;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
+      background: #fff;
+      border-bottom: 1px solid #e6e9ef;
       scrollbar-width: none;
     }
     .deal-tabs::-webkit-scrollbar { display: none; }
@@ -157,7 +157,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       flex: 0 0 auto;
       border: 1px solid transparent;
       background: transparent;
-      color: rgba(255,255,255,0.55);
+      color: #676879;
       border-radius: 8px;
       padding: 8px 14px;
       font-size: 13px;
@@ -165,14 +165,14 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       cursor: pointer;
       white-space: nowrap;
     }
-    .deal-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .deal-tab:hover { color: #323338; background: #f5f6f8; }
     .deal-tab.active {
-      background: #fff;
-      color: #000;
+      background: #0073ea;
+      color: #323338 !important;
     }
     .deal-tab-hint {
       margin: 0 0 16px;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
       font-size: 13px;
       line-height: 1.45;
     }
@@ -222,7 +222,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     /* Contact card */
     .deal-contact-card {
       background: #141414 !important;
-      border: 1px solid rgba(255,255,255,0.10) !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 14px !important;
       padding: 20px 22px !important;
       display: flex !important;
@@ -232,7 +232,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-contact-card .link-name,
     .deal-contact-card .deal-contact-name,
     .deal-contact-card strong {
-      color: #ffffff !important;
+      color: #323338 !important;
       font-family: var(--f-display) !important;
       font-size: 22px !important;
       font-weight: 800 !important;
@@ -271,8 +271,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       border-radius: 999px !important;
     }
     .deal-contact-card .btn-copy.small:hover {
-      background: rgba(255,255,255,0.08) !important;
-      color: #ffffff !important;
+      background: #e6e9ef !important;
+      color: #323338 !important;
       border-color: rgba(255,255,255,0.50) !important;
     }
 
@@ -294,7 +294,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-panel select:focus,
     .deal-section select:focus {
-      border-color: rgba(255,255,255,0.45) !important;
+      border-color: #676879 !important;
       outline: none !important;
       background-color: #1a1a1a !important;
       color: rgba(255,255,255,0.80) !important;
@@ -303,8 +303,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-panel select option,
     .deal-section select option {
-      background: #1a1a1a !important;
-      color: #ffffff !important;
+      background: #fff !important;
+      color: #323338 !important;
     }
 
     /* Inputs / textarea */
@@ -312,11 +312,11 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-section input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="file"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]),
     .deal-panel textarea,
     .deal-section textarea {
-      background: #161616 !important;
+      background: #f5f6f8 !important;
       border: 1px solid rgba(255,255,255,0.13) !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      caret-color: #ffffff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      caret-color: #323338 !important;
       border-radius: 8px !important;
       font-family: var(--f-display) !important;
       font-size: 14px !important;
@@ -335,7 +335,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       border-color: rgba(255,255,255,0.40) !important;
       box-shadow: 0 0 0 3px rgba(255,255,255,0.05) !important;
       outline: none !important;
-      background: #161616 !important;
+      background: #f5f6f8 !important;
     }
 
     /* Botones — heredan variables del panel padre */
@@ -365,14 +365,14 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .btn-delete { border-radius: var(--btn-radius, 4px) !important; font-family: var(--f-display) !important; }
 
     /* Card desc + general */
-    .card-desc { color: rgba(255,255,255,0.45) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
+    .card-desc { color: #676879 !important; font-family: var(--f-display) !important; font-size: 13px !important; }
     .section-sub { color: rgba(255,255,255,0.75) !important; font-family: var(--f-display) !important; font-size: 15px !important; }
     .divider { border-color: rgba(255,255,255,0.07) !important; }
     .inquiry-msg,
     .deal-panel .inquiry-msg {
       color: rgba(255,255,255,0.80) !important;
-      background: #161616 !important;
-      border: 1px solid rgba(255,255,255,0.12) !important;
+      background: #f5f6f8 !important;
+      border: 1px solid #e6e9ef !important;
       border-left: 3px solid rgba(255,255,255,0.25) !important;
       border-radius: 10px !important;
       padding: 12px 14px !important;
@@ -386,66 +386,66 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
     /* Activity */
     .activity-item {
-      background: #111 !important;
-      border: 1px solid rgba(255,255,255,0.08) !important;
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
       border-left: 3px solid rgba(255,255,255,0.20) !important;
       border-radius: 10px !important;
       margin-bottom: 8px !important;
       padding: 10px 14px !important;
     }
-    .activity-item:hover { border-left-color: rgba(255,255,255,0.50) !important; background: #161616 !important; }
+    .activity-item:hover { border-left-color: rgba(255,255,255,0.50) !important; background: #f5f6f8 !important; }
     .activity-item p { color: rgba(255,255,255,0.70) !important; font-family: var(--f-display) !important; font-size: 13px !important; }
     .activity-item small { color: rgba(255,255,255,0.30) !important; font-family: var(--f-display) !important; }
     .activity-type { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 10px !important; letter-spacing: 0.12em !important; text-transform: uppercase !important; }
 
     /* Chat */
-    .deal-chat { border-radius: 12px !important; overflow: hidden !important; border: 1px solid rgba(255,255,255,0.10) !important; }
-    .chat-container { background: #0d0d0d !important; border-radius: 12px !important; }
-    .deal-panel .chat-messages { background: #0d0d0d !important; }
+    .deal-chat { border-radius: 12px !important; overflow: hidden !important; border: 1px solid #e6e9ef !important; }
+    .chat-container { background: #fff !important; border-radius: 12px !important; }
+    .deal-panel .chat-messages { background: #fff !important; }
 
     /* Mensajes del cliente */
     .deal-panel .message {
       background: #1e1e1e !important;
-      border: 1px solid rgba(255,255,255,0.09) !important;
+      border: 1px solid #e6e9ef !important;
       color: rgba(255,255,255,0.80) !important;
       border-radius: 10px !important;
       font-family: var(--f-display) !important;
       font-size: 13px !important;
     }
     .deal-panel .message.own {
-      background: #2a2a2a !important;
+      background: #f5f6f8 !important;
       border-color: rgba(255,255,255,0.18) !important;
-      color: #ffffff !important;
+      color: #323338 !important;
       align-self: flex-end !important;
     }
 
     /* Chat input bar */
     .deal-panel .chat-input {
-      background: #111 !important;
-      border-top: 1px solid rgba(255,255,255,0.09) !important;
+      background: #fff !important;
+      border-top: 1px solid #e6e9ef !important;
       padding: 8px !important;
     }
     .deal-panel .chat-input input[type="text"] {
-      background: #1a1a1a !important;
-      border: 1px solid rgba(255,255,255,0.14) !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
       border-radius: 8px !important;
       font-family: var(--f-display) !important;
     }
 
     /* Template chips */
     .template-chips .chip {
-      background: #1a1a1a !important;
-      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
       color: rgba(255,255,255,0.65) !important;
       border-radius: 999px !important;
       font-family: var(--f-display) !important;
     }
-    .template-chips .chip:hover { background: #2a2a2a !important; color: #fff !important; border-color: rgba(255,255,255,0.35) !important; }
+    .template-chips .chip:hover { background: #f5f6f8 !important; color: #323338 !important; border-color: #9ca0ad !important; }
 
     /* Tasks */
-    .task-row { background: #161616 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 8px !important; color: #fff !important; font-family: var(--f-display) !important; }
+    .task-row { background: #f5f6f8 !important; border: 1px solid #e6e9ef !important; border-radius: 8px !important; color: #323338 !important; font-family: var(--f-display) !important; }
     .task-row .done { color: rgba(255,255,255,0.30) !important; }
 
     /* Status / chips */
@@ -458,7 +458,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin-top: 16px !important;
       padding: 18px 20px !important;
       background: #141414 !important;
-      border: 1px solid rgba(255,255,255,0.10) !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 14px !important;
       border-top: none !important;
     }
@@ -486,7 +486,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .register-payment-form label {
       font-size: 11px;
-      color: rgba(255,255,255,0.55);
+      color: #676879;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       font-weight: 700;
@@ -496,10 +496,10 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .register-payment-form textarea {
       width: 100%;
       box-sizing: border-box;
-      background: #111 !important;
+      background: #fff !important;
       border: 1px solid rgba(255,255,255,0.18) !important;
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
       border-radius: 8px;
       padding: 10px 12px;
     }
@@ -509,7 +509,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .register-payment-form select option {
       background: #1a1a1a;
-      color: #ffffff;
+      color: #323338;
     }
     .register-payment-form input[type="date"] {
       color-scheme: dark;
@@ -518,7 +518,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin: -4px 0 0;
       font-size: 12px;
       line-height: 1.4;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
       text-transform: none;
       letter-spacing: 0;
       font-weight: 400;
@@ -578,15 +578,15 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       font-weight: 700 !important;
     }
     .deal-payment-status .btn-ghost.small:hover {
-      background: rgba(255,255,255,0.08) !important;
-      color: #ffffff !important;
-      border-color: rgba(255,255,255,0.45) !important;
+      background: #e6e9ef !important;
+      color: #323338 !important;
+      border-color: #676879 !important;
     }
     .deal-payment-link-box {
       margin-top: 14px !important;
       padding: 14px 16px !important;
-      background: #1a1a1a !important;
-      border: 1px solid rgba(255,255,255,0.09) !important;
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 12px !important;
     }
     .deal-payment-link-label {
@@ -606,8 +606,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       min-width: 0 !important;
       font-size: 12px !important;
       font-family: var(--f-display) !important;
-      background: #111 !important;
-      border: 1px solid rgba(255,255,255,0.14) !important;
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
       color: rgba(255,255,255,0.75) !important;
       border-radius: 8px !important;
       padding: 8px 10px !important;
@@ -626,7 +626,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       font-size: 11px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
       font-family: var(--f-display);
     }
     .deal-payment-watching-dot {
@@ -656,8 +656,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .pay-method-modal {
       position: relative;
       width: min(440px, 100%);
-      background: #0a0a0a;
-      border: 1px solid rgba(255,255,255,0.12);
+      background: #fff;
+      border: 1px solid #e6e9ef;
       border-radius: 20px;
       padding: 28px 24px 22px;
       box-shadow: 0 24px 80px rgba(0,0,0,0.65);
@@ -669,7 +669,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       right: 14px;
       background: transparent;
       border: none;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
       cursor: pointer;
       padding: 6px;
     }
@@ -679,7 +679,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       font-size: 10px;
       letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.35);
+      color: #9ca0ad;
     }
     .pay-method-title {
       margin: 0 0 8px;
@@ -705,7 +705,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       text-align: left;
       padding: 16px 18px;
       border-radius: 14px;
-      border: 1px solid rgba(255,255,255,0.12);
+      border: 1px solid #e6e9ef;
       background: #141414;
       color: #fff;
       cursor: pointer;
@@ -714,7 +714,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .pay-method-card:hover {
       transform: translateY(-1px);
-      border-color: rgba(255,255,255,0.35);
+      border-color: #9ca0ad;
       background: #1a1a1a;
     }
     .pay-method-card strong {
@@ -723,7 +723,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .pay-method-card span:last-child {
       font-size: 12px;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
     }
     .pay-method-card-icon {
       font-size: 22px;
@@ -736,9 +736,9 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin-top: 16px;
       padding: 12px;
       background: transparent;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid #e6e9ef;
       border-radius: 999px;
-      color: rgba(255,255,255,0.55);
+      color: #676879;
       font-family: var(--f-display);
       font-size: 11px;
       letter-spacing: 0.12em;
@@ -778,9 +778,9 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       align-self: flex-start;
       padding: 9px 16px !important;
       background: transparent !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      border: 1px solid rgba(255,255,255,0.35) !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border: 1px solid #9ca0ad !important;
       border-radius: 999px !important;
       font-family: var(--f-display) !important;
       font-size: 10px !important;
@@ -794,10 +794,10 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-outline-btn:hover,
     label.deal-outline-btn:hover,
     button.deal-outline-btn:hover {
-      background: rgba(255,255,255,0.10) !important;
+      background: #e6e9ef !important;
       border-color: rgba(255,255,255,0.60) !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
     }
     .deal-outline-btn.disabled,
     label.deal-outline-btn.disabled {
@@ -807,7 +807,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .quote-doc-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 0; }
     .quote-doc-item {
       display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-      background: #111 !important; border: 1px solid rgba(255,255,255,0.10) !important;
+      background: #fff !important; border: 1px solid #e6e9ef !important;
       border-radius: 10px !important; padding: 12px 14px;
     }
     .quote-doc-info { flex: 1; min-width: 0; }
@@ -822,7 +822,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .deal-doc-delete {
       background: transparent !important;
       border: none !important;
-      color: rgba(255,255,255,0.35) !important;
+      color: #9ca0ad !important;
       cursor: pointer !important;
       padding: 8px 4px !important;
       font-size: 14px !important;
@@ -834,12 +834,12 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       padding: 18px 20px !important;
       margin: 8px 0 4px !important;
       background: #141414 !important;
-      border: 1px solid rgba(255,255,255,0.10) !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 14px !important;
     }
     .deal-quote-upload h4 {
       margin: 0 0 8px !important;
-      color: rgba(255,255,255,0.55) !important;
+      color: #676879 !important;
     }
     .deal-quote-upload .card-desc {
       margin: 0 0 16px !important;
@@ -863,7 +863,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin-top: 4px;
     }
 
-    .deal-doc-item { background: #111 !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 10px !important; }
+    .deal-doc-item { background: #fff !important; border: 1px solid #e6e9ef !important; border-radius: 10px !important; }
     .deal-doc-item-top { background: transparent !important; }
 
     .quote-upload-form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
@@ -901,7 +901,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       font-size: 11px;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
     }
     .quote-item-row {
       display: grid;
@@ -950,7 +950,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin-bottom: 18px;
       padding: 14px 16px;
       background: #111;
-      border: 1px solid rgba(255,255,255,0.10);
+      border: 1px solid #e6e9ef;
       border-radius: 12px;
     }
     .quote-checklist-block h5 {
@@ -984,17 +984,17 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
 
     /* Upload area */
-    .deal-upload-area { background: #111 !important; border-color: rgba(255,255,255,0.15) !important; }
+    .deal-upload-area { background: #fff !important; border-color: rgba(255,255,255,0.15) !important; }
 
     /* Cover ALL remaining white/cream backgrounds */
     div:not([class*="vega"]):not([class*="toast"]) { color: inherit; }
 
     /* Typography catch-all */
     p      { color: rgba(255,255,255,0.65) !important; font-family: var(--f-display) !important; }
-    strong { color: #ffffff !important; font-family: var(--f-display) !important; }
-    h4     { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; font-size: 9px !important; letter-spacing: 0.22em !important; text-transform: uppercase !important; font-weight: 700 !important; }
+    strong { color: #323338 !important; font-family: var(--f-display) !important; }
+    h4     { color: #9ca0ad !important; font-family: var(--f-display) !important; font-size: 9px !important; letter-spacing: 0.22em !important; text-transform: uppercase !important; font-weight: 700 !important; }
     label:not(.deal-outline-btn) { color: rgba(255,255,255,0.40) !important; font-family: var(--f-display) !important; font-size: 11px !important; letter-spacing: 0.12em !important; }
-    small  { color: rgba(255,255,255,0.35) !important; font-family: var(--f-display) !important; }
+    small  { color: #9ca0ad !important; font-family: var(--f-display) !important; }
     .deal-delivery-section {
       border: 1px solid rgba(34, 197, 94, 0.35);
       background: rgba(34, 197, 94, 0.06);
@@ -1036,9 +1036,9 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       color: rgba(255,255,255,0.85);
       transition: border-color 0.2s, background 0.2s;
     }
-    .deal-delivery-upload-zone:hover { border-color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.04); }
+    .deal-delivery-upload-zone:hover { border-color: #676879; background: rgba(255,255,255,0.04); }
     .deal-delivery-upload-zone.loading { opacity: 0.6; pointer-events: none; }
-    .deal-delivery-upload-zone span { font-size: 12px; color: rgba(255,255,255,0.45); }
+    .deal-delivery-upload-zone span { font-size: 12px; color: #676879; }
     a      { color: rgba(255,255,255,0.75) !important; }
   `],
 })

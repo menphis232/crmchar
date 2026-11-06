@@ -35,7 +35,7 @@ function emptyForm(): ClientForm {
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0;
-      color: rgba(255, 255, 255, 0.5);
+      color: #676879;
       font-variant-numeric: tabular-nums;
     }
     .clients-desc {
@@ -44,7 +44,7 @@ function emptyForm(): ClientForm {
       font-family: var(--f-ui);
       font-size: 13px;
       line-height: 1.5;
-      color: rgba(255, 255, 255, 0.55);
+      color: #676879;
     }
 
     .clients-btn {
@@ -55,32 +55,32 @@ function emptyForm(): ClientForm {
       min-height: 40px;
       padding: 0 16px;
       flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.28);
+      border: 1px solid #e6e9ef;
       border-radius: 8px;
       background: transparent;
-      color: #fff;
-      font-family: var(--f-display);
+      color: #323338;
+      font-family: Figtree, system-ui, sans-serif;
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
+      letter-spacing: 0;
+      text-transform: none;
       cursor: pointer;
       transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .clients-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.55); }
+    .clients-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: #676879; }
     .clients-btn:focus-visible, .icon-btn:focus-visible, .client-name:focus-visible, .clients-link:focus-visible {
-      outline: 2px solid #fff;
+      outline: 2px solid #0073ea;
       outline-offset: 2px;
     }
     .clients-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .clients-btn--primary { background: #fff; color: #000; border-color: #fff; }
-    .clients-btn--primary:hover:not(:disabled) { background: rgba(255, 255, 255, 0.86); border-color: rgba(255, 255, 255, 0.86); }
+    .clients-btn--primary { background: #fff; color: #000; border-color: #323338; }
+    .clients-btn--primary:hover:not(:disabled) { background: #0060c2; border-color: #0060c2; color: #fff; }
 
     .clients-link {
       background: none;
       border: none;
       padding: 0 4px;
-      color: rgba(255, 255, 255, 0.7);
+      color: #676879;
       font-family: var(--f-ui);
       font-size: 13px;
       text-decoration: underline;
@@ -88,7 +88,7 @@ function emptyForm(): ClientForm {
       cursor: pointer;
       white-space: nowrap;
     }
-    .clients-link:hover { color: #fff; }
+    .clients-link:hover { color: #323338; }
 
     /* Toolbar: búsqueda + filtros en una sola línea */
     .clients-toolbar {
@@ -104,13 +104,13 @@ function emptyForm(): ClientForm {
       gap: 8px;
       min-height: 42px;
       padding: 0 12px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid #e6e9ef;
       border-radius: 8px;
-      background: #000;
+      background: #fff;
       box-sizing: border-box;
     }
-    .clients-search:focus-within { border-color: rgba(255, 255, 255, 0.5); }
-    .clients-search svg { color: rgba(255, 255, 255, 0.5); flex-shrink: 0; }
+    .clients-search:focus-within { border-color: #676879; }
+    .clients-search svg { color: #676879; flex-shrink: 0; }
     .clients-card .clients-search input#clients-search-input,
     .clients-card .clients-search input#clients-search-input:focus {
       flex: 1;
@@ -122,27 +122,27 @@ function emptyForm(): ClientForm {
       outline: none;
       padding: 10px 0;
       color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
+      -webkit-text-fill-color: #323338 !important;
       font-family: var(--f-ui);
       font-size: 14px;
     }
-    .clients-search input::placeholder { color: rgba(255, 255, 255, 0.45) !important; -webkit-text-fill-color: rgba(255, 255, 255, 0.45) !important; }
+    .clients-search input::placeholder { color: #9ca0ad !important; -webkit-text-fill-color: #9ca0ad !important; }
     .clients-toolbar select {
       width: 100%;
       min-height: 42px;
       padding: 0 12px;
       box-sizing: border-box;
-      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 8px;
-      background: #000 !important;
+      background: #fff !important;
       color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
+      -webkit-text-fill-color: #323338 !important;
       font-family: var(--f-ui);
       font-size: 13px;
       outline: none;
-      color-scheme: dark;
+      color-scheme: light;
     }
-    .clients-toolbar select:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
+    .clients-toolbar select:focus { border-color: #0073ea !important; }
     @container (max-width: 860px) {
       .clients-toolbar { grid-template-columns: 1fr 1fr 1fr; }
       .clients-search { grid-column: 1 / -1; }
@@ -160,11 +160,11 @@ function emptyForm(): ClientForm {
       gap: 16px;
       align-items: center;
       padding: 14px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      border-bottom: 1px solid #e6e9ef;
       cursor: pointer;
       transition: background-color 0.15s ease;
     }
-    .client-row:hover { background: rgba(255, 255, 255, 0.04); }
+    .client-row:hover { background: #f8fbff; }
     .client-row--head {
       padding-top: 0;
       padding-bottom: 10px;
@@ -172,9 +172,9 @@ function emptyForm(): ClientForm {
       font-family: var(--f-ui);
       font-size: 11px;
       font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0;
+      text-transform: none;
+      color: #676879;
     }
     .client-row--head:hover { background: none; }
 
@@ -185,7 +185,7 @@ function emptyForm(): ClientForm {
       padding: 0;
       background: none;
       border: none;
-      color: #fff;
+      color: #323338;
       font-family: var(--f-ui);
       font-size: 14px;
       font-weight: 700;
@@ -198,13 +198,13 @@ function emptyForm(): ClientForm {
     .client-sub {
       font-family: var(--f-ui);
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.55);
+      color: #676879;
       line-height: 1.35;
     }
     .client-phone {
       font-family: var(--f-ui);
       font-size: 13px;
-      color: rgba(255, 255, 255, 0.88);
+      color: #676879;
       font-variant-numeric: tabular-nums;
     }
     .client-email, .client-tramite {
@@ -224,13 +224,13 @@ function emptyForm(): ClientForm {
       align-items: center;
       gap: 6px;
       padding: 3px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid #e6e9ef;
       border-radius: 6px;
       font-family: var(--f-ui);
       font-size: 12px;
       font-weight: 600;
       letter-spacing: 0.04em;
-      color: #fff;
+      color: #323338;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
@@ -254,14 +254,14 @@ function emptyForm(): ClientForm {
       justify-content: center;
       width: 36px;
       height: 36px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      border: 1px solid #e6e9ef;
       border-radius: 8px;
       background: transparent;
-      color: rgba(255, 255, 255, 0.8);
+      color: #676879;
       cursor: pointer;
       transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
-    .icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); color: #fff; }
+    .icon-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.08); border-color: #676879; color: #323338; }
     .icon-btn--danger:hover:not(:disabled) { background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.6); color: #f87171; }
     .icon-btn:disabled { opacity: 0.4; cursor: wait; }
 
@@ -272,7 +272,7 @@ function emptyForm(): ClientForm {
       display: block;
       height: 12px;
       border-radius: 6px;
-      background: rgba(255, 255, 255, 0.07);
+      background: #eef0f4;
       animation: sk-pulse 1.2s ease-in-out infinite;
     }
     .sk-name { height: 14px; width: 70%; }
@@ -288,8 +288,8 @@ function emptyForm(): ClientForm {
       gap: 6px;
       padding: 28px 4px 8px;
     }
-    .clients-empty-title { margin: 0; font-family: var(--f-ui); font-size: 15px; font-weight: 700; color: #fff; }
-    .clients-empty-text { margin: 0 0 10px; font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+    .clients-empty-title { margin: 0; font-family: var(--f-ui); font-size: 15px; font-weight: 700; color: #323338; }
+    .clients-empty-text { margin: 0 0 10px; font-family: var(--f-ui); font-size: 13px; color: #676879; }
 
     .clients-pagination {
       display: flex;
@@ -298,13 +298,13 @@ function emptyForm(): ClientForm {
       gap: 12px;
       padding-top: 16px;
     }
-    .clients-page-info { font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.6); font-variant-numeric: tabular-nums; }
+    .clients-page-info { font-family: var(--f-ui); font-size: 13px; color: #676879; font-variant-numeric: tabular-nums; }
 
     /* Formulario alta / edición */
     .client-form {
       margin-bottom: 22px;
       padding: 18px 20px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      border: 1px solid #e6e9ef;
       border-radius: 12px;
     }
     .client-form-head { margin-bottom: 14px; }
@@ -313,11 +313,11 @@ function emptyForm(): ClientForm {
       font-family: var(--f-ui);
       font-size: 15px;
       font-weight: 700;
-      color: #fff;
+      color: #323338;
       text-transform: none;
       letter-spacing: 0;
     }
-    .client-form-desc { margin: 0; font-family: var(--f-ui); font-size: 13px; color: rgba(255, 255, 255, 0.55); }
+    .client-form-desc { margin: 0; font-family: var(--f-ui); font-size: 13px; color: #676879; }
     .client-form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     .client-field--full { grid-column: 1 / -1; }
     .client-field label {
@@ -326,23 +326,23 @@ function emptyForm(): ClientForm {
       font-family: var(--f-ui);
       font-size: 12px;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.7);
+      color: #676879;
     }
     .client-field input, .client-field select, .client-field textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 10px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.18) !important;
+      border: 1px solid #e6e9ef !important;
       border-radius: 8px;
-      background: #000 !important;
+      background: #fff !important;
       color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
+      -webkit-text-fill-color: #323338 !important;
       font-family: var(--f-ui);
       font-size: 14px;
       outline: none;
-      color-scheme: dark;
+      color-scheme: light;
     }
-    .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: rgba(255, 255, 255, 0.5) !important; }
+    .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: #0073ea !important; }
     .client-field textarea { resize: vertical; line-height: 1.5; }
     .client-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
     @container (max-width: 620px) { .client-form-grid { grid-template-columns: 1fr; } }
@@ -370,6 +370,68 @@ function emptyForm(): ClientForm {
         gap: 6px 12px;
       }
     }
+
+    .board-group-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 8px;
+      border: none;
+      background: transparent;
+      color: #323338;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+    }
+    .board-group-head.is-collapsed { opacity: 0.85; }
+    .board-group-bar {
+      width: 4px;
+      height: 18px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .board-group-chevron { color: #676879; width: 14px; }
+    .board-group-count {
+      margin-left: 4px;
+      padding: 1px 8px;
+      border-radius: 999px;
+      background: #f0f1f5;
+      color: #676879;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      max-width: 100%;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: #579bfc;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .status-pill--muted { background: #c5c7d0; color: #323338; }
+    .board-add-row {
+      width: 100%;
+      padding: 10px 12px;
+      border: none;
+      border-bottom: 1px solid #e6e9ef;
+      background: transparent;
+      color: #676879;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 13px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .board-add-row:hover { color: #0073ea; background: #f8fbff; }
   `],
 })
 export class CrmClientsDirectoryComponent implements OnInit {
@@ -398,11 +460,27 @@ export class CrmClientsDirectoryComponent implements OnInit {
   readonly mexicoStates = MEXICO_STATES;
 
   form: ClientForm = emptyForm();
+  collapsedGroups = signal<Record<string, boolean>>({});
 
   constructor(private crmService: CrmService) {}
 
   ngOnInit() {
     this.load();
+  }
+
+  contactGroups(): { id: string; label: string; color: string; items: CrmContact[] }[] {
+    const all = this.clients();
+    const active = all.filter((c) => (c.dealCount || 0) > 0 || !!c.tramites);
+    const idle = all.filter((c) => !((c.dealCount || 0) > 0 || !!c.tramites));
+    const groups = [];
+    if (active.length) groups.push({ id: 'activos', label: 'Contactos activos', color: '#00c875', items: active });
+    if (idle.length) groups.push({ id: 'inactivos', label: 'Contactos sin acuerdos', color: '#e2445c', items: idle });
+    if (!groups.length) groups.push({ id: 'todos', label: 'Contactos', color: '#0073ea', items: all });
+    return groups;
+  }
+
+  toggleGroup(id: string) {
+    this.collapsedGroups.update((m) => ({ ...m, [id]: !m[id] }));
   }
 
   load(page = this.currentPage()) {
