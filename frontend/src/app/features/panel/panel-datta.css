@@ -1329,54 +1329,103 @@
   font-weight: 600;
 }
 
-:host.panel-datta .mon-services-board .mon-table-wrap { overflow-x: auto; }
-
-:host.panel-datta .mon-services-board .mon-table {
+:host.panel-datta .mon-services-board .mon-table-wrap {
+  overflow-x: auto;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  min-width: 820px;
 }
 
-:host.panel-datta .mon-services-board .mon-table th {
+:host.panel-datta .mon-services-board .mon-table,
+:host.panel-datta .mon-services-board table.mon-services-table {
+  display: table !important;
+  width: 100% !important;
+  table-layout: fixed !important;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  min-width: 720px;
+}
+
+:host.panel-datta .mon-services-board .mon-table thead {
+  display: table-header-group !important;
+}
+
+:host.panel-datta .mon-services-board .mon-table tbody {
+  display: table-row-group !important;
+}
+
+:host.panel-datta .mon-services-board .mon-table tr,
+:host.panel-datta .mon-services-board .mon-table tr.service-sort-item {
+  display: table-row !important;
+  width: auto !important;
+  gap: 0 !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  justify-content: normal !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+:host.panel-datta .mon-services-board .mon-table th,
+:host.panel-datta .mon-services-board .mon-table td {
+  display: table-cell !important;
   text-align: left;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   color: #676879 !important;
   -webkit-text-fill-color: #676879 !important;
-  padding: 8px 10px;
-  border-bottom: 1px solid #e6e9ef;
-  border-right: 1px solid #e6e9ef;
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #e6e9ef !important;
+  border-right: 1px solid #eef0f4 !important;
   background: #f7f8fa !important;
   white-space: nowrap;
+  vertical-align: middle !important;
+  box-sizing: border-box !important;
+  float: none !important;
+  width: auto !important;
+  flex: none !important;
 }
 
 :host.panel-datta .mon-services-board .mon-table td {
-  padding: 10px;
-  border-bottom: 1px solid #e6e9ef;
-  border-right: 1px solid #eef0f4;
   font-size: 14px;
-  vertical-align: middle;
+  font-weight: 400;
   color: #323338 !important;
   -webkit-text-fill-color: #323338 !important;
   background: #fff !important;
+  white-space: normal;
 }
 
 :host.panel-datta .mon-services-board .mon-table tbody tr:hover td {
   background: #f8fbff !important;
 }
 
-:host.panel-datta .mon-services-board .col-sort { width: 52px; }
+:host.panel-datta .mon-services-board .col-sort {
+  width: 88px !important;
+  white-space: nowrap !important;
+}
+:host.panel-datta .mon-services-board .mon-table th:nth-child(2),
+:host.panel-datta .mon-services-board .mon-table td:nth-child(2) {
+  width: 34% !important;
+}
+:host.panel-datta .mon-services-board .mon-table th:nth-child(3),
+:host.panel-datta .mon-services-board .mon-table td:nth-child(3) {
+  width: 18% !important;
+  white-space: nowrap !important;
+}
 :host.panel-datta .mon-services-board .col-num {
-  text-align: right;
+  width: 12% !important;
+  text-align: right !important;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  font-weight: 600;
+  white-space: nowrap !important;
+  font-weight: 600 !important;
+}
+:host.panel-datta .mon-services-board .mon-table th:nth-child(5),
+:host.panel-datta .mon-services-board .mon-table td:nth-child(5) {
+  width: 14% !important;
 }
 :host.panel-datta .mon-services-board .col-actions {
-  width: 160px;
-  white-space: nowrap;
-  text-align: right;
+  width: 150px !important;
+  white-space: nowrap !important;
+  text-align: right !important;
 }
 
 :host.panel-datta .mon-services-board .mon-deal-name {
@@ -1406,6 +1455,14 @@
   align-items: center;
   gap: 10px;
   min-width: 0;
+  max-width: 100%;
+}
+
+:host.panel-datta .mon-services-board .svc-name-cell .mon-deal-name {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  text-align: left;
 }
 
 :host.panel-datta .mon-services-board .service-catalog-thumb {
@@ -1424,10 +1481,11 @@
 }
 
 :host.panel-datta .mon-services-board .service-sort-controls {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex !important;
+  flex-direction: row !important;
   align-items: center;
   gap: 2px;
+  margin: 0 !important;
 }
 
 :host.panel-datta .mon-services-board .service-sort-handle {

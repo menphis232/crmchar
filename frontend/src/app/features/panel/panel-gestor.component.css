@@ -1069,10 +1069,9 @@ app-crm-team {
   margin-bottom: 8px;
 }
 
+/* Filas del board Servicios: deben ser table-row (no flex) o la tabla Monday se desalinean */
 .service-sort-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  display: table-row;
   cursor: grab;
 }
 
@@ -1084,18 +1083,16 @@ app-crm-team {
   opacity: 0.45;
 }
 
-.service-sort-item--over {
-  outline: 2px dashed rgba(200, 169, 74, 0.65);
-  outline-offset: 2px;
+.service-sort-item--over td {
+  outline: 2px dashed #0073ea;
+  outline-offset: -2px;
 }
 
 .service-sort-controls {
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
   gap: 2px;
-  margin-top: 2px;
 }
 
 .service-sort-handle {
