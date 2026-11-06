@@ -47,12 +47,12 @@
     <app-theme-switch />
     <app-notification-bell />
 
-    <!-- Avatar / cuenta (siempre visible; en móvil sin nombre largo) -->
+    <!-- Solo avatar en topbar (el nombre largo se veía cortado) -->
     <app-panel-user-menu
       [name]="profile()?.name || auth.user()?.name || ''"
       [email]="auth.user()?.email || ''"
       [initials]="initials(profile()?.name || auth.user()?.name)"
-      [showName]="true"
+      [showName]="false"
       [showBilling]="!auth.user()?.parent_id"
       (logout)="auth.logout()"
     />

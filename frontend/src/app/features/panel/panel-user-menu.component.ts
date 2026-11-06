@@ -83,22 +83,23 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       min-width: 34px;
       min-height: 34px;
       border-radius: 50%;
-      background: #0073ea;
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #fff;
+      color: #000;
       font-weight: 700;
       font-size: 12px;
       letter-spacing: 0;
       cursor: pointer;
-      border: none;
+      border: 1.5px solid #000;
       padding: 0;
       overflow: hidden;
       flex-shrink: 0;
       font-family: Figtree, system-ui, sans-serif;
+      box-sizing: border-box;
     }
-    .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.2); }
+    .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12); }
     .panel-avatar-img {
       width: 100%;
       height: 100%;

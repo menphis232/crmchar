@@ -115,14 +115,19 @@
 
 :host.panel-datta .dash-user .panel-user-name,
 :host.panel-datta .dash-user ::ng-deep .panel-user-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 160px;
-  color: var(--mon-muted) !important;
-  -webkit-text-fill-color: var(--mon-muted) !important;
-  font-size: 13px !important;
-  font-weight: 500 !important;
+  display: none !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .panel-avatar {
+  background: #fff !important;
+  color: #000 !important;
+  -webkit-text-fill-color: #000 !important;
+  border: 1.5px solid #000 !important;
+  box-shadow: none !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .panel-avatar:hover {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Buscador Monday: UN solo chip (icono + input + kbd). Sin caja interna. */
