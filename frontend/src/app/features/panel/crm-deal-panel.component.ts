@@ -86,11 +86,23 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       height: 100dvh !important;
       border-radius: 0 !important;
       border-left: none !important;
+      display: flex !important;
+      flex-direction: column !important;
+      overflow: hidden !important;
     }
     .deal-panel-header,
     .deal-panel-body {
       padding-left: max(16px, calc((100vw - 960px) / 2)) !important;
       padding-right: max(16px, calc((100vw - 960px) / 2)) !important;
+    }
+    .deal-panel-header,
+    .deal-tabs {
+      flex-shrink: 0;
+    }
+    .deal-panel-body {
+      flex: 1 1 auto !important;
+      overflow-y: auto !important;
+      min-height: 0 !important;
     }
     .deal-section { background: transparent !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; }
     .deal-subsection { background: #0d0d0d !important; border: 1px solid rgba(255,255,255,0.08) !important; border-radius: 12px !important; margin-bottom: 8px !important; }
@@ -99,20 +111,76 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
     /* Header */
     .deal-panel-header {
-      background: #111 !important;
+      background: #0a0a0a !important;
       border-bottom: 1px solid rgba(255,255,255,0.09) !important;
-    }
-    .deal-panel-eyebrow {
-      color: rgba(255,255,255,0.35) !important;
-      font-size: 9px !important;
-      letter-spacing: 0.20em !important;
-      font-family: var(--f-display) !important;
+      gap: 12px;
     }
     .deal-panel-header h3 {
       color: #ffffff !important;
-      font-family: var(--f-display) !important;
+      font-family: var(--f-ui, system-ui), sans-serif !important;
       font-size: 18px !important;
-      font-weight: 800 !important;
+      font-weight: 650 !important;
+      letter-spacing: 0.01em !important;
+    }
+    .deal-header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .deal-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.14);
+      color: rgba(255,255,255,0.8);
+      background: rgba(255,255,255,0.04);
+    }
+    .deal-chip--paid { border-color: rgba(255,255,255,0.35); color: #fff; background: rgba(255,255,255,0.1); }
+    .deal-chip--pending { color: rgba(255,255,255,0.55); }
+
+    .deal-tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      padding: 10px max(16px, calc((100vw - 960px) / 2));
+      background: #0a0a0a;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      scrollbar-width: none;
+    }
+    .deal-tabs::-webkit-scrollbar { display: none; }
+    .deal-tab {
+      flex: 0 0 auto;
+      border: 1px solid transparent;
+      background: transparent;
+      color: rgba(255,255,255,0.55);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .deal-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .deal-tab.active {
+      background: #fff;
+      color: #000;
+    }
+    .deal-tab-hint {
+      margin: 0 0 16px;
+      color: rgba(255,255,255,0.45);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .deal-quick-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
     }
     .deal-panel-header-actions {
       display: flex;
@@ -1021,7 +1089,14 @@ export class CrmDealPanelComponent implements OnDestroy {
   isSavingQuote = signal(false);
   isLoadingQuote = signal(false);
   quoteOpen = signal(false);
+  /** Pestañas CRM: evita el scroll infinito que confunde al gestor. */
+  dealView = signal<'resumen' | 'cotizacion' | 'chat' | 'docs' | 'seguimiento'>('resumen');
   isSendingQuote = signal(false);
+
+  setDealView(view: 'resumen' | 'cotizacion' | 'chat' | 'docs' | 'seguimiento') {
+    this.dealView.set(view);
+    if (view === 'cotizacion') this.quoteOpen.set(true);
+  }
   isCreatingAccess = signal(false);
   clientAccessNotice = signal<{
     created: boolean;
@@ -1178,6 +1253,7 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.peritoIdModel = d.peritoId || '';
       if (this.quoteOpenDealId !== id) {
         this.quoteOpenDealId = id;
+        this.dealView.set('resumen');
         this.quoteOpen.set(d.paymentStatus !== 'paid');
       }
 

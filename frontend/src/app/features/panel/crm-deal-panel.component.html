@@ -5,14 +5,25 @@
       <!-- ── HEADER ── -->
       <div class="deal-panel-header">
         <div style="flex:1; min-width:0;">
-          <p class="deal-panel-eyebrow">Trámite</p>
-          <div style="display:flex; align-items:center; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <h3 style="margin:0;">{{ d.title }}</h3>
+          </div>
+          <div class="deal-header-meta">
             @if (d.trackingCode) {
-              <span style="font-size:11px; background:rgba(200,169,74,0.15); color:var(--gold); padding:2px 8px; border-radius:12px; border:1px solid rgba(200,169,74,0.3);">
-                Código: {{ d.trackingCode }}
+              <span class="deal-chip">Código {{ d.trackingCode }}</span>
+            }
+            <span class="deal-chip">{{ stageLabels()[d.stage] || d.stage }}</span>
+            @if (!isConcesionaria()) {
+              <span class="deal-chip" [class.deal-chip--paid]="d.paymentStatus === 'paid'" [class.deal-chip--pending]="d.paymentStatus !== 'paid'">
+                {{ d.paymentStatus === 'paid' ? 'Pagado' : 'Pago pendiente' }}
               </span>
             }
+          </div>
+          <div class="deal-quick-row">
+            @if (!isConcesionaria() && d.paymentStatus !== 'paid') {
+              <button type="button" class="btn-copy small" (click)="setDealView('cotizacion')">Ir a cotización</button>
+            }
+            <button type="button" class="deal-outline-btn" (click)="setDealView('chat')">Abrir chat</button>
           </div>
         </div>
         <div class="deal-panel-header-actions">
@@ -25,10 +36,20 @@
         </div>
       </div>
 
+
+      <nav class="deal-tabs" aria-label="Secciones del trámite">
+        <button type="button" class="deal-tab" [class.active]="dealView() === 'resumen'" (click)="setDealView('resumen')">Resumen</button>
+        <button type="button" class="deal-tab" [class.active]="dealView() === 'cotizacion'" (click)="setDealView('cotizacion')">Cotización</button>
+        <button type="button" class="deal-tab" [class.active]="dealView() === 'chat'" (click)="setDealView('chat')">Chat</button>
+        <button type="button" class="deal-tab" [class.active]="dealView() === 'docs'" (click)="setDealView('docs')">Documentos</button>
+        <button type="button" class="deal-tab" [class.active]="dealView() === 'seguimiento'" (click)="setDealView('seguimiento')">Seguimiento</button>
+      </nav>
+
       <!-- ── BODY ── -->
       <div class="deal-panel-body">
-
-        @if (isDealShipped()) {
+        @if (dealView() === 'resumen') {
+          <p class="deal-tab-hint">Datos del trámite, contacto, etapa y cobro. Usa las otras pestañas para cotizar, chatear o ver documentos.</p>
+          @if (isDealShipped()) {
           <div id="deal-shipping-section" class="deal-section deal-shipping-section">
             <div class="deal-shipping-section-head">
               <h4>Etiqueta / guía de envío</h4>
@@ -129,80 +150,6 @@
             }
           </div>
         </div>
-
-        <!-- CHAT CON CLIENTE -->
-        <div class="deal-section">
-          <h4>Chat con cliente</h4>
-          <div class="chat-container deal-chat">
-            <div class="chat-messages" id="gestor-chat-box">
-              @for (msg of messages; track msg.id) {
-                <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
-                  <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
-                    <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
-                    <span>{{ msg.created_at | date:'shortTime' }}</span>
-                  </div>
-                  <div style="font-size: 13px; line-height: 1.4;">
-                    {{ msg.message }}
-                    @if (msg.file_url) {
-                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px; display:flex; gap:8px; flex-wrap:wrap;">
-                        <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
-                          <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
-                          Ver Documento
-                        </a>
-                        <button type="button" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline; background:none; border:none; padding:0; cursor:pointer; font-size:inherit;" (click)="downloadDocument({ file_url: msg.file_url })">
-                          Descargar
-                        </button>
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            <p class="card-desc">Si el cliente ya tiene usuario y aceptó avisos en el portal, este mensaje le llega como notificación al teléfono.</p>
-            <div class="chat-input">
-              <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
-                <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
-              </button>
-              <input type="file" #fileInput style="display:none" [accept]="chatAttachmentAccept" (change)="onChatFileSelected($event)">
-              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
-              <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- CHAT CON PERITO -->
-        @if (d.peritoId) {
-          <div class="deal-section">
-            <h4>Chat con perito{{ d.peritoName ? ' · ' + d.peritoName : '' }}</h4>
-            <div class="chat-container deal-chat">
-              <div class="chat-messages" id="gestor-staff-chat-box">
-                @for (msg of staffMessages; track msg.id) {
-                  <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
-                      <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
-                      <span>{{ msg.created_at | date:'shortTime' }}</span>
-                    </div>
-                    <div style="font-size: 13px; line-height: 1.4;">
-                      {{ msg.message }}
-                      @if (msg.file_url) {
-                        <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
-                          <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
-                            <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
-                            Ver Documento
-                          </a>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-              <div class="chat-input">
-                <input type="text" [(ngModel)]="newStaffMessage" placeholder="Mensaje para el perito..." (keyup.enter)="sendStaffMessage()">
-                <button type="button" class="btn-copy small" (click)="sendStaffMessage()">Enviar</button>
-              </div>
-            </div>
-          </div>
-        }
 
         <!-- ETAPA -->
         <div class="deal-section">
@@ -327,113 +274,17 @@
             </div>
           }
         </div>
-
-        <!-- DOCUMENTOS DEL CLIENTE -->
-        @if (!isConcesionaria()) {
-        <div class="deal-section deal-subsection deal-subsection--ocr">
-          <h4>Documentos del Cliente</h4>
-          @if (clientDocuments().length > 0) {
-            <div style="display:flex; flex-direction:column; gap:8px;">
-              @for (doc of clientDocuments(); track doc.id) {
-                <div class="deal-doc-item">
-                  <div class="deal-doc-item-top">
-                    <div>
-                      <strong>{{ doc.document_type }}</strong>
-                      <div class="card-desc">{{ doc.created_at | date:'short' }}</div>
-                    </div>
-                    <div style="display:flex; gap:8px;">
-                      <a [href]="doc.file_url" target="_blank" class="btn-ghost small" style="padding:2px 8px; font-size:11px;">Ver</a>
-                      <button type="button" class="btn-ghost small" style="padding:2px 8px; font-size:11px;" (click)="downloadDocument(doc)">Descargar</button>
-                    </div>
-                  </div>
-                  @if (doc.extracted_data) {
-                    <div class="deal-ocr-block">
-                      <p class="deal-ocr-label deal-meta-with-icon">
-                        <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
-                        Datos Extraídos:
-                      </p>
-                      <div class="deal-ocr-data">
-                        @for (item of doc.extracted_data | keyvalue; track item.key) {
-                          <div class="deal-ocr-row">
-                            <strong>{{ item.key }}:</strong> 
-                            <span>{{ item.value }}</span>
-                          </div>
-                        }
-                      </div>
-                      @if (doc.status !== 'approved') {
-                        <button type="button" class="btn-copy small" style="width:100%; font-size:11px; background:linear-gradient(135deg, #6366f1, #8b5cf6);" (click)="applyOcrData(doc.id)">
-                          Aplicar a Nota Interna
-                        </button>
-                      } @else {
-                        <p class="deal-applied-label">
-                          <svg lucideCircleCheck [size]="12" aria-hidden="true"></svg>
-                          Datos aplicados
-                        </p>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="card-desc">El cliente aún no ha subido documentos.</p>
-          }
-        </div>
         }
 
-        <!-- DOCUMENTOS (Phase 3.2) -->
-        <div class="deal-section deal-subsection deal-attach-section">
-          <div class="deal-attach-header">
-            <h4>Documentos Adjuntos</h4>
-            <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploading()">
-              <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
-              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-              {{ isUploading() ? 'Subiendo...' : 'Subir archivo' }}
-            </label>
-          </div>
-
-          @if (documents().length > 0) {
-            <div class="quote-doc-list">
-              @for (doc of documents(); track doc.id) {
-                <div class="quote-doc-item">
-                  <div class="quote-doc-info">
-                    <strong>{{ doc.file_name }}</strong>
-                    <span class="card-desc">{{ doc.created_at | date:'short' }}</span>
-                  </div>
-                  <div class="quote-doc-actions">
-                    <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
-                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
-                      <svg lucideX [size]="14" aria-hidden="true"></svg>
-                    </button>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <p class="card-desc">No hay documentos adjuntos en este trámite.</p>
+        @if (dealView() === 'cotizacion') {
+          @if (isConcesionaria() && d.dealType !== 'venta_auto') {
+            <p class="deal-tab-hint">Esta vista de cotización aplica a gestores o a ventas de auto con PDF.</p>
           }
-        </div>
-
-        <!-- COTIZACIÓN EDITABLE (solo gestores) -->
+          <!-- COTIZACIÓN EDITABLE (solo gestores) -->
         @if (!isConcesionaria()) {
           <div class="deal-section deal-quote-editor">
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:12px;">
-              <h4 style="margin:0;">Cotización</h4>
-              <button type="button" class="deal-outline-btn" (click)="quoteOpen.set(!quoteOpen())">
-                {{ quoteOpen() ? 'Ocultar' : 'Abrir cotización' }}
-              </button>
-            </div>
-            @if (!quoteOpen()) {
-              <p class="card-desc" style="margin-top:8px;">
-                @if (d.paymentStatus === 'paid') {
-                  Este trámite ya está pagado. La cotización queda guardada y el formulario no estorba.
-                } @else if (quoteId) {
-                  Hay una cotización guardada. Ábrela cuando quieras verla o enviarla.
-                } @else {
-                  Ábrela cuando necesites armar la cotización y enviarla al cliente.
-                }
-              </p>
-            } @else {
+            <h4>Cotización</h4>
+            <p class="deal-tab-hint">Arma qué incluye, guarda y envía al cliente por correo, chat y WhatsApp.</p>
             <p class="card-desc">Revisa qué incluye, guarda y usa Enviar al cliente. Se manda por correo, por el chat y se abre WhatsApp.</p>
             @if (d.contact?.id) {
               <button type="button" class="btn-ghost small" style="margin-bottom:10px;" (click)="openContact.emit(d.contact!.id!)">
@@ -557,7 +408,6 @@
                 </button>
               </div>
             }
-            }
           </div>
         }
 
@@ -597,8 +447,177 @@
             </div>
           </div>
         }
+        }
 
-        <!-- NOTAS INTERNAS -->
+        @if (dealView() === 'chat') {
+          <p class="deal-tab-hint">Mensajes con el cliente y, si hay perito asignado, el chat interno.</p>
+          <!-- CHAT CON CLIENTE -->
+        <div class="deal-section">
+          <h4>Chat con cliente</h4>
+          <div class="chat-container deal-chat">
+            <div class="chat-messages" id="gestor-chat-box">
+              @for (msg of messages; track msg.id) {
+                <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
+                  <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
+                    <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
+                    <span>{{ msg.created_at | date:'shortTime' }}</span>
+                  </div>
+                  <div style="font-size: 13px; line-height: 1.4;">
+                    {{ msg.message }}
+                    @if (msg.file_url) {
+                      <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px; display:flex; gap:8px; flex-wrap:wrap;">
+                        <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
+                          <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
+                          Ver Documento
+                        </a>
+                        <button type="button" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline; background:none; border:none; padding:0; cursor:pointer; font-size:inherit;" (click)="downloadDocument({ file_url: msg.file_url })">
+                          Descargar
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <p class="card-desc">Si el cliente ya tiene usuario y aceptó avisos en el portal, este mensaje le llega como notificación al teléfono.</p>
+            <div class="chat-input">
+              <button type="button" class="btn-ghost small" (click)="fileInput.click()" aria-label="Adjuntar archivo">
+                <svg lucidePaperclip [size]="16" aria-hidden="true"></svg>
+              </button>
+              <input type="file" #fileInput style="display:none" [accept]="chatAttachmentAccept" (change)="onChatFileSelected($event)">
+              <input type="text" [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
+              <button type="button" class="btn-copy small" (click)="sendMessage()">Enviar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHAT CON PERITO -->
+        @if (d.peritoId) {
+          <div class="deal-section">
+            <h4>Chat con perito{{ d.peritoName ? ' · ' + d.peritoName : '' }}</h4>
+            <div class="chat-container deal-chat">
+              <div class="chat-messages" id="gestor-staff-chat-box">
+                @for (msg of staffMessages; track msg.id) {
+                  <div class="message" [class.own]="msg.sender_id === auth.user()?.id">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 4px; opacity: 0.7;">
+                      <strong>{{ msg.sender_id === auth.user()?.id ? 'Tú' : msg.sender_name }}</strong>
+                      <span>{{ msg.created_at | date:'shortTime' }}</span>
+                    </div>
+                    <div style="font-size: 13px; line-height: 1.4;">
+                      {{ msg.message }}
+                      @if (msg.file_url) {
+                        <div style="margin-top: 4px; border-top: 1px solid rgba(0,0,0,0.1); padding-top: 4px;">
+                          <a [href]="msg.file_url" target="_blank" class="deal-meta-with-icon" style="color: inherit; text-decoration: underline;">
+                            <svg lucidePaperclip [size]="12" aria-hidden="true"></svg>
+                            Ver Documento
+                          </a>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="chat-input">
+                <input type="text" [(ngModel)]="newStaffMessage" placeholder="Mensaje para el perito..." (keyup.enter)="sendStaffMessage()">
+                <button type="button" class="btn-copy small" (click)="sendStaffMessage()">Enviar</button>
+              </div>
+            </div>
+          </div>
+        }
+        }
+
+        @if (dealView() === 'docs') {
+          <p class="deal-tab-hint">Archivos del cliente y adjuntos del trámite.</p>
+          <!-- DOCUMENTOS DEL CLIENTE -->
+        @if (!isConcesionaria()) {
+        <div class="deal-section deal-subsection deal-subsection--ocr">
+          <h4>Documentos del Cliente</h4>
+          @if (clientDocuments().length > 0) {
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              @for (doc of clientDocuments(); track doc.id) {
+                <div class="deal-doc-item">
+                  <div class="deal-doc-item-top">
+                    <div>
+                      <strong>{{ doc.document_type }}</strong>
+                      <div class="card-desc">{{ doc.created_at | date:'short' }}</div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                      <a [href]="doc.file_url" target="_blank" class="btn-ghost small" style="padding:2px 8px; font-size:11px;">Ver</a>
+                      <button type="button" class="btn-ghost small" style="padding:2px 8px; font-size:11px;" (click)="downloadDocument(doc)">Descargar</button>
+                    </div>
+                  </div>
+                  @if (doc.extracted_data) {
+                    <div class="deal-ocr-block">
+                      <p class="deal-ocr-label deal-meta-with-icon">
+                        <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                        Datos Extraídos:
+                      </p>
+                      <div class="deal-ocr-data">
+                        @for (item of doc.extracted_data | keyvalue; track item.key) {
+                          <div class="deal-ocr-row">
+                            <strong>{{ item.key }}:</strong> 
+                            <span>{{ item.value }}</span>
+                          </div>
+                        }
+                      </div>
+                      @if (doc.status !== 'approved') {
+                        <button type="button" class="btn-copy small" style="width:100%; font-size:11px; background:linear-gradient(135deg, #6366f1, #8b5cf6);" (click)="applyOcrData(doc.id)">
+                          Aplicar a Nota Interna
+                        </button>
+                      } @else {
+                        <p class="deal-applied-label">
+                          <svg lucideCircleCheck [size]="12" aria-hidden="true"></svg>
+                          Datos aplicados
+                        </p>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc">El cliente aún no ha subido documentos.</p>
+          }
+        </div>
+        }
+
+        <!-- DOCUMENTOS (Phase 3.2) -->
+        <div class="deal-section deal-subsection deal-attach-section">
+          <div class="deal-attach-header">
+            <h4>Documentos Adjuntos</h4>
+            <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploading()">
+              <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              {{ isUploading() ? 'Subiendo...' : 'Subir archivo' }}
+            </label>
+          </div>
+
+          @if (documents().length > 0) {
+            <div class="quote-doc-list">
+              @for (doc of documents(); track doc.id) {
+                <div class="quote-doc-item">
+                  <div class="quote-doc-info">
+                    <strong>{{ doc.file_name }}</strong>
+                    <span class="card-desc">{{ doc.created_at | date:'short' }}</span>
+                  </div>
+                  <div class="quote-doc-actions">
+                    <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
+                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
+                      <svg lucideX [size]="14" aria-hidden="true"></svg>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc">No hay documentos adjuntos en este trámite.</p>
+          }
+        </div>
+        }
+
+        @if (dealView() === 'seguimiento') {
+          <p class="deal-tab-hint">Notas internas, tareas e historial del trámite.</p>
+          <!-- NOTAS INTERNAS -->
         <div class="deal-section">
           <h4>Notas internas</h4>
           <textarea [(ngModel)]="internalNotes" rows="3" placeholder="Escribe notas privadas del trámite..."></textarea>
@@ -698,6 +717,7 @@
               </div>
             }
           </div>
+        }
         }
 
       </div><!-- /deal-panel-body -->
