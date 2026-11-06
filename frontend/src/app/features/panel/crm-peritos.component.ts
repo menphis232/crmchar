@@ -1,7 +1,7 @@
 import { Component, OnInit, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { LucidePlus, LucideUserCheck, LucideTrophy } from '@lucide/angular';
+import { LucidePlus } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { PeritoAccount, PeritoOverviewItem, PeritoPerformance } from '../../models';
 import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
@@ -9,7 +9,7 @@ import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 @Component({
   selector: 'app-crm-peritos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, LucideUserCheck, LucidePlus, LucideTrophy],
+  imports: [CommonModule, FormsModule, CurrencyPipe, LucidePlus],
   templateUrl: './crm-peritos.component.html',
   styleUrl: './crm-peritos.component.css',
 })
@@ -118,10 +118,6 @@ export class CrmPeritosComponent implements OnInit {
       },
       error: (e) => this.message.set(e.error?.error || 'Error al eliminar'),
     });
-  }
-
-  medal(i: number) {
-    return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : String(i + 1);
   }
 
   stageLabel(stage: string) {

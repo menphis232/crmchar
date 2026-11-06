@@ -1,83 +1,101 @@
 @if (overview().length) {
-  <div class="dash-card">
-    <h2 class="card-title card-title-with-icon">
-      Seguimiento de trámites con perito
-      <button type="button" class="btn-ghost small" (click)="reload()" title="Actualizar">Actualizar</button>
-    </h2>
-    <p class="card-desc">Estado actual de los trámites asignados a peritos. Haz clic en una fila para abrir el trámite.</p>
-    <div class="perito-overview-table">
-      <div class="perf-row perf-head">
-        <span class="ov-col-title">Trámite</span>
-        <span class="ov-col-perito">Perito</span>
-        <span class="ov-col-stage">Etapa</span>
-        <span class="ov-col-poliza">Póliza</span>
-        <span class="ov-col-money">Costo</span>
+  <div class="mon-board">
+    <header class="mon-board-head">
+      <div>
+        <h2 class="mon-board-title">Seguimiento de trámites con perito</h2>
+        <p class="mon-board-desc">Estado actual de los trámites asignados a peritos. Haz clic en una fila para abrir el trámite.</p>
       </div>
-      @for (item of overview(); track item.id) {
-        <div class="perf-row perf-row-clickable" (click)="openDeal.emit(item.id)">
-          <span class="ov-col-title">{{ item.title }}</span>
-          <span class="ov-col-perito">{{ item.peritoName }}</span>
-          <span class="ov-col-stage">{{ stageLabel(item.peritoStage) }}</span>
-          <span class="ov-col-poliza" [class.paid]="item.peritoPolizaStatus === 'pagado'">
-            {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
-          </span>
-          <span class="ov-col-money">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
-        </div>
-      }
+      <button type="button" class="mon-tool-btn" (click)="reload()" title="Actualizar">Actualizar</button>
+    </header>
+
+    <div class="mon-table-wrap">
+      <table class="mon-table">
+        <thead>
+          <tr>
+            <th>Trámite</th>
+            <th>Perito</th>
+            <th>Etapa</th>
+            <th>Póliza</th>
+            <th class="col-num">Costo</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of overview(); track item.id) {
+            <tr class="row-clickable" (click)="openDeal.emit(item.id)">
+              <td><span class="cell-strong">{{ item.title }}</span></td>
+              <td>{{ item.peritoName }}</td>
+              <td>{{ stageLabel(item.peritoStage) }}</td>
+              <td>
+                <span class="status-pill" [class.paid]="item.peritoPolizaStatus === 'pagado'">
+                  {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
+                </span>
+              </td>
+              <td class="col-num">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   </div>
 }
 
-<div class="dash-card">
-  <h2 class="card-title card-title-with-icon">
-    <svg lucideTrophy [size]="20" class="card-title-icon" aria-hidden="true"></svg>
-    Trámites exitosos por perito
-  </h2>
-  <p class="card-desc">Un trámite cuenta como exitoso cuando llega a la etapa «Pago de servicio».</p>
+<div class="mon-board">
+  <header class="mon-board-head">
+    <div>
+      <h2 class="mon-board-title">Trámites exitosos por perito</h2>
+      <p class="mon-board-desc">Un trámite cuenta como exitoso cuando llega a la etapa «Pago de servicio».</p>
+    </div>
+  </header>
 
   @if (performance().length) {
-    <div class="perf-table">
-      <div class="perf-row perf-head">
-        <span class="perf-col-rank">#</span>
-        <span class="perf-col-name">Perito</span>
-        <span class="perf-col-num">Exitosos</span>
-        <span class="perf-col-num">En curso</span>
-        <span class="perf-col-num">Total</span>
-      </div>
-      @for (p of performance(); track p.id; let i = $index) {
-        <div class="perf-row" [class.perf-top]="i === 0 && p.completedSuccess > 0">
-          <span class="perf-col-rank">{{ medal(i) }}</span>
-          <span class="perf-col-name">{{ p.name }}</span>
-          <span class="perf-col-num perf-strong">{{ p.completedSuccess }}</span>
-          <span class="perf-col-num">{{ p.inProgress }}</span>
-          <span class="perf-col-num">{{ p.totalAssigned }}</span>
-        </div>
-      }
+    <div class="mon-table-wrap">
+      <table class="mon-table">
+        <thead>
+          <tr>
+            <th class="col-rank">#</th>
+            <th>Perito</th>
+            <th class="col-num">Exitosos</th>
+            <th class="col-num">En curso</th>
+            <th class="col-num">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of performance(); track p.id; let i = $index) {
+            <tr [class.perf-top]="i === 0 && p.completedSuccess > 0">
+              <td class="col-rank">{{ i + 1 }}</td>
+              <td><span class="cell-strong">{{ p.name }}</span></td>
+              <td class="col-num perf-strong">{{ p.completedSuccess }}</td>
+              <td class="col-num">{{ p.inProgress }}</td>
+              <td class="col-num">{{ p.totalAssigned }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
     </div>
   } @else {
-    <div class="perito-empty">
-      <svg lucideTrophy [size]="28" class="perito-empty-icon" aria-hidden="true"></svg>
-      <p class="perito-empty-title">Sin datos de ranking</p>
-      <p class="perito-empty-hint">Crea peritos y asígnales trámites para ver el ranking de éxitos.</p>
+    <div class="mon-empty">
+      <p class="mon-empty-title">Sin datos de ranking</p>
+      <p class="mon-empty-hint">Crea peritos y asígnales trámites para ver el ranking de éxitos.</p>
     </div>
   }
 </div>
 
-<div class="dash-card">
-  <h2 class="card-title card-title-with-icon">
-    <svg lucideUserCheck [size]="20" class="card-title-icon" aria-hidden="true"></svg>
-    Peritos
+<div class="mon-board">
+  <header class="mon-board-head">
+    <div>
+      <h2 class="mon-board-title">Peritos</h2>
+      <p class="mon-board-desc">
+        Cuentas externas con acceso solo a su tablero de trámites. No reciben correos del flujo.
+        Entran en <strong>/login/perito</strong> con su teléfono y la contraseña que les pongas aquí.
+      </p>
+    </div>
     @if (!showForm()) {
-      <button type="button" class="btn-copy small btn-with-icon" (click)="openForm()">
-        <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+      <button type="button" class="mon-btn-primary" (click)="openForm()">
+        <svg lucidePlus [size]="16" aria-hidden="true"></svg>
         Nuevo perito
       </button>
     }
-  </h2>
-  <p class="card-desc">
-    Cuentas externas con acceso solo a su tablero de trámites. No reciben correos del flujo.
-    Entran en <strong>/login/perito</strong> con su teléfono y la contraseña que les pongas aquí.
-  </p>
+  </header>
 
   @if (message()) {
     <div class="team-alert" [class.error]="message().startsWith('Error') || message().startsWith('Faltan')">{{ message() }}</div>
@@ -103,8 +121,8 @@
         </div>
       </form>
       <div class="team-form-actions">
-        <button type="button" class="btn-ghost" (click)="closeForm()">Cancelar</button>
-        <button type="button" class="btn-copy" (click)="save()">Guardar</button>
+        <button type="button" class="mon-tool-btn" (click)="closeForm()">Cancelar</button>
+        <button type="button" class="mon-btn-primary" (click)="save()">Guardar</button>
       </div>
     </div>
   }
@@ -120,16 +138,21 @@
           </div>
         </div>
         <div class="member-actions">
-          <button type="button" class="btn-ghost small" (click)="openForm(p)">Editar</button>
-          <button type="button" class="btn-ghost small danger" (click)="remove(p)">Eliminar</button>
+          <button type="button" class="member-btn" (click)="openForm(p)" title="Editar">
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            Editar
+          </button>
+          <button type="button" class="member-btn member-btn--delete" (click)="remove(p)" title="Eliminar">
+            <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            Eliminar
+          </button>
         </div>
       </div>
     } @empty {
       @if (!showForm()) {
-        <div class="perito-empty">
-          <svg lucideUserCheck [size]="28" class="perito-empty-icon" aria-hidden="true"></svg>
-          <p class="perito-empty-title">No hay peritos registrados</p>
-          <p class="perito-empty-hint">Crea el primero con el botón «Nuevo perito» para asignarle trámites.</p>
+        <div class="mon-empty">
+          <p class="mon-empty-title">No hay peritos registrados</p>
+          <p class="mon-empty-hint">Crea el primero con el botón «Nuevo perito» para asignarle trámites.</p>
         </div>
       }
     }
