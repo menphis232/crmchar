@@ -88,65 +88,103 @@ import { SocketService } from '../core/socket.service';
       line-height: 1;
     }
     .notification-dropdown {
-      position: absolute; top: 100%; right: -50px; width: 340px;
-      background: #141414;
-      border: 1px solid rgba(255,255,255,0.12);
-      border-top: 2px solid rgba(255,255,255,0.35);
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      width: min(340px, calc(100vw - 24px));
+      background: #fff;
+      border: 1px solid #e6e9ef;
       border-radius: 12px;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.65);
-      z-index: 9999; margin-top: 10px;
-      display: flex; flex-direction: column; max-height: 420px;
+      box-shadow: 0 12px 32px rgba(50, 51, 56, 0.16);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      max-height: min(420px, 70vh);
       overflow: hidden;
+      font-family: Figtree, system-ui, sans-serif;
     }
     .nd-header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      background: #0d0d0d;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e6e9ef;
+      background: #f7f8fa;
     }
     .nd-header h4 {
-      margin: 0; color: #ffffff; font-family: var(--f-display);
-      font-size: 11px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      margin: 0;
+      color: #323338;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0;
+      text-transform: none;
     }
     .btn-link {
-      background: none; border: none; color: rgba(255,255,255,0.45); cursor: pointer;
-      font-size: 11px; font-weight: 600; font-family: var(--f-display);
-      text-decoration: none; transition: color 0.2s;
+      background: none;
+      border: none;
+      color: #0073ea;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: Figtree, system-ui, sans-serif;
+      text-decoration: none;
+      white-space: nowrap;
+      padding: 0;
     }
-    .btn-link:hover { color: #ffffff; }
+    .btn-link:hover { color: #0060c2; text-decoration: underline; }
     .nd-body {
-      overflow-y: auto; flex: 1; text-align: left;
-      scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.15) transparent;
+      overflow-y: auto;
+      flex: 1;
+      text-align: left;
+      background: #fff;
+      scrollbar-width: thin;
+      scrollbar-color: #c5c7d0 transparent;
     }
     .nd-body::-webkit-scrollbar { width: 6px; }
-    .nd-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+    .nd-body::-webkit-scrollbar-thumb { background: #c5c7d0; border-radius: 3px; }
     .nd-empty {
-      padding: 28px 20px; text-align: center;
-      color: rgba(255,255,255,0.40); font-size: 13px; font-family: var(--f-display);
+      padding: 28px 20px;
+      text-align: center;
+      color: #676879;
+      font-size: 13px;
+      font-family: Figtree, system-ui, sans-serif;
     }
     .nd-item {
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-      cursor: pointer; transition: background 0.2s;
+      padding: 12px 14px;
+      border-bottom: 1px solid #eef0f4;
+      cursor: pointer;
+      transition: background 0.15s;
     }
     .nd-item:last-child { border-bottom: none; }
-    .nd-item:hover { background: rgba(255,255,255,0.04); }
+    .nd-item:hover { background: #f8fbff; }
     .nd-item.unread {
-      border-left: 3px solid rgba(255,255,255,0.65);
-      background: rgba(255,255,255,0.03);
-      padding-left: 13px;
+      border-left: 3px solid #0073ea;
+      background: #f8fbff;
+      padding-left: 11px;
     }
     .nd-title {
-      font-weight: 700; font-size: 13px; color: #ffffff;
-      margin-bottom: 4px; font-family: var(--f-display); line-height: 1.35;
+      font-weight: 700;
+      font-size: 13px;
+      color: #323338;
+      margin-bottom: 4px;
+      font-family: Figtree, system-ui, sans-serif;
+      line-height: 1.35;
     }
     .nd-body-text {
-      font-size: 12px; color: rgba(255,255,255,0.50);
-      margin-bottom: 6px; line-height: 1.5; font-family: var(--f-display);
+      font-size: 12px;
+      color: #676879;
+      margin-bottom: 6px;
+      line-height: 1.5;
+      font-family: Figtree, system-ui, sans-serif;
     }
     .nd-date {
-      font-size: 10px; color: rgba(255,255,255,0.32);
-      text-align: right; font-family: var(--f-display); letter-spacing: 0.02em;
+      font-size: 11px;
+      color: #9ca0ad;
+      text-align: right;
+      font-family: Figtree, system-ui, sans-serif;
+      letter-spacing: 0;
     }
   `]
 })
