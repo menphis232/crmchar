@@ -116,7 +116,7 @@
   font-weight: 500 !important;
 }
 
-/* Buscador Monday: chip gris sobre topbar blanca (contraste claro) */
+/* Buscador Monday: UN solo chip (icono + input + kbd). Sin caja interna. */
 :host.panel-datta .mon-top-search {
   flex: 1 1 auto;
   max-width: 520px;
@@ -127,13 +127,12 @@
   gap: 10px;
   height: 36px;
   max-height: 36px;
-  padding: 0 12px 0 14px;
+  padding: 0 10px 0 12px;
   border-radius: 8px;
-  background: #eceff5 !important;
-  background-color: #eceff5 !important;
-  border: 1px solid #d0d4de !important;
+  background: #f0f1f5 !important;
+  background-color: #f0f1f5 !important;
+  border: 1px solid #c5c7d0 !important;
   color: var(--mon-muted) !important;
-  -webkit-text-fill-color: var(--mon-muted);
   font-size: 14px;
   line-height: 1;
   box-shadow: none !important;
@@ -142,16 +141,16 @@
 }
 
 :host.panel-datta .mon-top-search:hover {
-  background: #e4e7ef !important;
-  background-color: #e4e7ef !important;
-  border-color: #c5c7d0 !important;
+  background: #e8eaef !important;
+  background-color: #e8eaef !important;
+  border-color: #b6bac6 !important;
 }
 
 :host.panel-datta .mon-top-search:focus-within {
   border-color: var(--mon-primary) !important;
   background: #fff !important;
   background-color: #fff !important;
-  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.16) !important;
+  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.18) !important;
 }
 
 :host.panel-datta .mon-top-search svg {
@@ -159,41 +158,65 @@
   stroke: currentColor !important;
   flex-shrink: 0;
   opacity: 1;
+  pointer-events: none;
 }
 
-:host.panel-datta .mon-top-search input,
-:host.panel-datta .mon-top-search input[type='search'] {
-  flex: 1;
+/*
+  Especificidad >= reglas globales de input (muchos :not()).
+  Sin esto el input pinta su propia caja blanca → “caja dentro de caja”.
+*/
+:host.panel-datta .mon-top-search > .mon-top-search-input,
+:host.panel-datta .mon-top-search > input.mon-top-search-input,
+:host.panel-datta .mon-top-search > input[type='search'].mon-top-search-input,
+:host.panel-datta .mon-top-search > input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']) {
+  flex: 1 1 auto !important;
   width: auto !important;
-  min-width: 0;
-  height: 100% !important;
-  border: none !important;
+  min-width: 0 !important;
+  height: 22px !important;
+  min-height: 0 !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
   border-radius: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
   background: transparent !important;
   background-color: transparent !important;
   color: var(--mon-text) !important;
   -webkit-text-fill-color: var(--mon-text) !important;
-  caret-color: var(--mon-text) !important;
-  outline: none;
+  caret-color: var(--mon-primary) !important;
   font-size: 14px !important;
+  font-weight: 500 !important;
   font-family: var(--f-ui) !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-shadow: none !important;
+  line-height: 22px !important;
   color-scheme: light !important;
-  appearance: none;
-  -webkit-appearance: none;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }
 
-:host.panel-datta .mon-top-search input::-webkit-search-decoration,
-:host.panel-datta .mon-top-search input::-webkit-search-cancel-button,
-:host.panel-datta .mon-top-search input::-webkit-search-results-button {
-  -webkit-appearance: none;
-  appearance: none;
+:host.panel-datta .mon-top-search > .mon-top-search-input:focus,
+:host.panel-datta .mon-top-search > input.mon-top-search-input:focus,
+:host.panel-datta .mon-top-search > input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):focus {
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
 }
 
-:host.panel-datta .mon-top-search input::placeholder,
-:host.panel-datta .mon-top-search input[type='search']::placeholder {
+:host.panel-datta .mon-top-search > .mon-top-search-input::-webkit-search-decoration,
+:host.panel-datta .mon-top-search > .mon-top-search-input::-webkit-search-cancel-button,
+:host.panel-datta .mon-top-search > .mon-top-search-input::-webkit-search-results-button,
+:host.panel-datta .mon-top-search > input[type='search']::-webkit-search-decoration,
+:host.panel-datta .mon-top-search > input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: none !important;
+}
+
+:host.panel-datta .mon-top-search > .mon-top-search-input::placeholder,
+:host.panel-datta .mon-top-search > input.mon-top-search-input::placeholder {
   color: #7b7e8f !important;
   -webkit-text-fill-color: #7b7e8f !important;
   opacity: 1 !important;
@@ -207,10 +230,15 @@
   line-height: 1;
   padding: 3px 6px;
   border-radius: 4px;
-  background: #fff !important;
+  background: rgba(255, 255, 255, 0.85) !important;
   border: 1px solid #c5c7d0 !important;
   color: #676879 !important;
   -webkit-text-fill-color: #676879;
+  pointer-events: none;
+}
+
+:host.panel-datta .mon-top-search:focus-within kbd {
+  background: #f0f1f5 !important;
 }
 
 /* ── Sidebar ── */
@@ -564,10 +592,10 @@
 }
 
 /* ── Forms ── */
-:host.panel-datta .dash-container input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+:host.panel-datta .dash-container input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not(.mon-top-search-input),
 :host.panel-datta .dash-container textarea,
 :host.panel-datta .dash-container select,
-:host.panel-datta ::ng-deep input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']),
+:host.panel-datta ::ng-deep input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not(.mon-top-search-input),
 :host.panel-datta ::ng-deep textarea,
 :host.panel-datta ::ng-deep select {
   border-radius: 8px !important;
@@ -885,16 +913,17 @@
   color: var(--mon-text) !important;
 }
 
-/* Inputs: anular negro + -webkit-text-fill blanco del tema oscuro */
-:host.panel-datta input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']),
+/* Inputs: anular negro + -webkit-text-fill blanco del tema oscuro.
+   Excluye .mon-top-search-input para no pintar la caja blanca interna. */
+:host.panel-datta input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not(.mon-top-search-input),
 :host.panel-datta textarea,
 :host.panel-datta select,
-:host.panel-datta .dash-container input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']),
-:host.panel-datta .dash-card input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']),
-:host.panel-datta .form-group input,
+:host.panel-datta .dash-container input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not(.mon-top-search-input),
+:host.panel-datta .dash-card input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not(.mon-top-search-input),
+:host.panel-datta .form-group input:not(.mon-top-search-input),
 :host.panel-datta .form-group textarea,
 :host.panel-datta .form-group select,
-:host.panel-datta ::ng-deep input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']),
+:host.panel-datta ::ng-deep input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']):not(.mon-top-search-input),
 :host.panel-datta ::ng-deep textarea,
 :host.panel-datta ::ng-deep select {
   background: #fff !important;
@@ -919,12 +948,12 @@
   opacity: 1 !important;
 }
 
-:host.panel-datta input:focus,
+:host.panel-datta input:not(.mon-top-search-input):focus,
 :host.panel-datta textarea:focus,
 :host.panel-datta select:focus,
-:host.panel-datta .dash-container input:focus,
-:host.panel-datta .dash-card input:focus,
-:host.panel-datta ::ng-deep input:focus,
+:host.panel-datta .dash-container input:not(.mon-top-search-input):focus,
+:host.panel-datta .dash-card input:not(.mon-top-search-input):focus,
+:host.panel-datta ::ng-deep input:not(.mon-top-search-input):focus,
 :host.panel-datta ::ng-deep textarea:focus,
 :host.panel-datta ::ng-deep select:focus {
   border-color: var(--mon-primary) !important;
@@ -1045,17 +1074,19 @@
 }
 
 :host.panel-datta .mon-top-search {
-  background: #eceff5 !important;
-  background-color: #eceff5 !important;
-  border: 1px solid #d0d4de !important;
+  background: #f0f1f5 !important;
+  background-color: #f0f1f5 !important;
+  border: 1px solid #c5c7d0 !important;
   box-shadow: none !important;
 }
 
-:host.panel-datta .mon-top-search input,
-:host.panel-datta .mon-top-search input[type='search'] {
+:host.panel-datta .mon-top-search > .mon-top-search-input,
+:host.panel-datta .mon-top-search > input.mon-top-search-input,
+:host.panel-datta .mon-top-search > input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='range']):not([type='file']):not([type='hidden']):not([type='submit']):not([type='button']):not([type='reset']) {
   background: transparent !important;
   background-color: transparent !important;
-  border: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
   width: auto !important;
   padding: 0 !important;
@@ -1067,6 +1098,7 @@
   background: #fff !important;
   background-color: #fff !important;
   border-color: var(--mon-primary) !important;
+  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.18) !important;
 }
 
 :host.panel-datta .panel-welcome {

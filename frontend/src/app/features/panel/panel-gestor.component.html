@@ -10,10 +10,20 @@
       <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
     </a>
   }
-  <label class="mon-top-search" aria-label="Buscar">
+  <label class="mon-top-search" for="gestor-global-search">
     <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-    <input type="search" placeholder="Busca lo que quieras..." [(ngModel)]="globalSearch" (keyup.enter)="runGlobalSearch()" />
-    <kbd>Ctrl K</kbd>
+    <input
+      #globalSearchInput
+      id="gestor-global-search"
+      class="mon-top-search-input"
+      type="search"
+      name="globalSearch"
+      autocomplete="off"
+      placeholder="Busca lo que quieras..."
+      [(ngModel)]="globalSearch"
+      (keydown.enter)="runGlobalSearch()"
+    />
+    <kbd aria-hidden="true">Ctrl K</kbd>
   </label>
   <div class="dash-user">
     <app-theme-switch />

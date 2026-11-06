@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject, DestroyRef, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -212,6 +212,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   globalSearch = '';
+  @ViewChild('globalSearchInput') globalSearchInput?: ElementRef<HTMLInputElement>;
   filterStage = '';
   bio = '';
   profileName = '';
@@ -1653,13 +1654,40 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     return 'Buenas noches';
   }
 
+  @HostListener('document:keydown', ['$event'])
+  onGlobalSearchHotkey(ev: KeyboardEvent) {
+    if (!(ev.ctrlKey || ev.metaKey) || (ev.key !== 'k' && ev.key !== 'K')) return;
+    const target = ev.target as HTMLElement | null;
+    if (target?.tagName === 'TEXTAREA' || target?.isContentEditable) return;
+    ev.preventDefault();
+    this.focusGlobalSearch();
+  }
+
+  focusGlobalSearch() {
+    const el = this.globalSearchInput?.nativeElement;
+    if (!el) return;
+    el.focus();
+    el.select();
+  }
+
   runGlobalSearch() {
     const q = this.globalSearch.trim();
-    if (!q) return;
+    if (!q) {
+      this.focusGlobalSearch();
+      return;
+    }
     this.searchQuery = q;
+    this.isMobileMenuOpen.set(false);
     if (this.hasPerm('pipeline')) {
-      this.setTab('pipeline');
-      this.isMobileMenuOpen.set(false);
+      if (this.tab() === 'pipeline') {
+        this.loadDeals();
+      } else {
+        this.setTab('pipeline');
+      }
+      return;
+    }
+    if (this.hasPerm('clientes')) {
+      this.setTab('clientes');
     }
   }
 
