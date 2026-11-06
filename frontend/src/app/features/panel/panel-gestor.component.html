@@ -518,8 +518,10 @@
                       <button type="button" class="mon-link-btn" (click)="openServiceDetail(s)">Ver detalles</button>
                     </td>
                     <td class="col-actions">
-                      <button type="button" class="mon-tool-btn" (click)="startEditService(s)">Editar</button>
-                      <button type="button" class="mon-tool-btn mon-tool-btn--danger" (click)="deleteService(s.id)">Eliminar</button>
+                      <div class="svc-actions">
+                        <button type="button" class="mon-tool-btn" (click)="startEditService(s)">Editar</button>
+                        <button type="button" class="mon-tool-btn mon-tool-btn--danger" (click)="deleteService(s.id)">Eliminar</button>
+                      </div>
                     </td>
                   </tr>
                 }

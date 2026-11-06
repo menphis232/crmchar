@@ -5,14 +5,12 @@ import { AnalyticsTrackerService } from './core/analytics-tracker.service';
 import { OneSignalService } from './core/onesignal.service';
 import { AuthService } from './core/auth.service';
 import { ColorModeService } from './core/color-mode.service';
-import { PwaInstallPromptComponent } from './shared/pwa-install-prompt.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, PwaInstallPromptComponent],
+  imports: [RouterOutlet],
   template: `
     <router-outlet />
-    <app-pwa-install-prompt />
   `,
 })
 export class AppComponent implements OnInit {

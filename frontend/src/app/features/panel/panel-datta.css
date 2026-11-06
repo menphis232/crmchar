@@ -1581,6 +1581,10 @@
   color: #323338 !important;
   font-family: Figtree, system-ui, sans-serif !important;
   box-shadow: none !important;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
 }
 
 :host.panel-datta .mon-services-board .mon-board-head {
@@ -1665,7 +1669,11 @@
 
 :host.panel-datta .mon-services-board .mon-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 :host.panel-datta .mon-services-board .mon-table,
@@ -1675,7 +1683,7 @@
   table-layout: fixed !important;
   border-collapse: separate !important;
   border-spacing: 0 !important;
-  min-width: 720px;
+  min-width: 640px;
 }
 
 :host.panel-datta .mon-services-board .mon-table thead {
@@ -1738,15 +1746,16 @@
 }
 :host.panel-datta .mon-services-board .mon-table th:nth-child(2),
 :host.panel-datta .mon-services-board .mon-table td:nth-child(2) {
-  width: 34% !important;
+  width: auto !important;
+  min-width: 0 !important;
 }
 :host.panel-datta .mon-services-board .mon-table th:nth-child(3),
 :host.panel-datta .mon-services-board .mon-table td:nth-child(3) {
-  width: 18% !important;
+  width: 110px !important;
   white-space: nowrap !important;
 }
 :host.panel-datta .mon-services-board .col-num {
-  width: 12% !important;
+  width: 96px !important;
   text-align: right !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap !important;
@@ -1754,12 +1763,23 @@
 }
 :host.panel-datta .mon-services-board .mon-table th:nth-child(5),
 :host.panel-datta .mon-services-board .mon-table td:nth-child(5) {
-  width: 14% !important;
+  width: 110px !important;
 }
 :host.panel-datta .mon-services-board .col-actions {
-  width: 150px !important;
-  white-space: nowrap !important;
+  width: 168px !important;
+  white-space: normal !important;
   text-align: right !important;
+  overflow: visible !important;
+  display: table-cell !important;
+  padding-right: 8px !important;
+}
+
+:host.panel-datta .mon-services-board .svc-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  max-width: 100%;
 }
 
 :host.panel-datta .mon-services-board .mon-deal-name {
@@ -1869,16 +1889,20 @@
 :host.panel-datta .mon-services-board .mon-tool-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
   border: 1px solid #e6e9ef;
   border-radius: 8px;
   background: #fff !important;
   color: #323338 !important;
   -webkit-text-fill-color: #323338 !important;
-  padding: 6px 10px;
-  font: 600 12px Figtree, system-ui, sans-serif;
+  padding: 6px 8px;
+  font: 600 11px Figtree, system-ui, sans-serif;
   cursor: pointer;
-  margin-left: 4px;
+  margin: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 :host.panel-datta .mon-services-board .mon-tool-btn:hover {
