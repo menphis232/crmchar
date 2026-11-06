@@ -788,7 +788,7 @@ import { formatMoney } from '../../shared/format-amount.util';
     .btn-add-method:disabled { opacity: .4; cursor: not-allowed; }
 
     /* ── MODAL ── */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(50, 51, 56, 0.55); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 4000; padding: 20px; }
     .modal-box { background: #fff; border: 1px solid rgba(255,255,255,0.12); border-radius: 18px; width: 480px; max-width: 100%; display: flex; flex-direction: column; box-shadow: 0 24px 80px rgba(0,0,0,.6); animation: slideUp .2s ease; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px 24px 0; }

@@ -124,7 +124,10 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
 
 @Component({
   selector: 'app-panel-gestor',
-  host: { class: 'panel-datta' },
+  host: {
+    class: 'panel-datta',
+    '[class.sidebar-collapsed]': 'sidebarCollapsed()',
+  },
   standalone: true,
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
@@ -269,6 +272,17 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   newAutomation = { name: '', trigger_event: 'stage_change', trigger_stage: '', trigger_delay_days: 3, action_type: 'send_email', action_content: '' };
   readonly automationVariables = AUTOMATION_VARIABLES;
   isMobileMenuOpen = signal(false);
+  sidebarCollapsed = signal(
+    typeof localStorage !== 'undefined' && localStorage.getItem('crm_sidebar_collapsed') === '1'
+  );
+
+  toggleSidebar() {
+    const next = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(next);
+    try {
+      localStorage.setItem('crm_sidebar_collapsed', next ? '1' : '0');
+    } catch { /* ignore */ }
+  }
 
   crmStages: CrmStageConfig[] = [];
 

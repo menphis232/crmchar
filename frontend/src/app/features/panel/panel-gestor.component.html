@@ -1,4 +1,16 @@
 <nav class="dash-nav">
+  <button
+    type="button"
+    class="mon-sidebar-toggle desktop-only"
+    (click)="toggleSidebar()"
+    [attr.aria-label]="sidebarCollapsed() ? 'Expandir menú' : 'Recoger menú'"
+    [attr.aria-expanded]="!sidebarCollapsed()"
+    [title]="sidebarCollapsed() ? 'Expandir menú' : 'Recoger menú'"
+  >
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path d="M3 12h18M3 6h18M3 18h18"/>
+    </svg>
+  </button>
   @if (auth.user()?.logo_url) {
     <a routerLink="/gestores" class="dash-logo dash-logo-dealer">
       <span class="dash-logo-frame">
