@@ -342,15 +342,15 @@
       }
     }
 
-    <!-- ── PIPELINE ── -->
+    <!-- ── ACUERDOS (tabla Monday + pipeline kanban) ── -->
     @if (tab() === 'pipeline' && crmDashboard(); as crm) {
-      <div class="dash-card kanban-wrap">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideFunnel [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Acuerdos
-        </h2>
-        <p class="card-desc">Sigue cada trámite desde el primer contacto hasta el cierre.</p>
-        <div class="pipeline-filters">
+      <app-crm-deals-board
+        [deals]="deals()"
+        [stageLabels]="crm.stageLabels"
+        (dealSelect)="selectedDealId.set($event.id)"
+        (addDeal)="openManualLeadForm()"
+      >
+        <div class="pipeline-filters mon-pipeline-filters">
           <div class="pipeline-filter-field pipeline-filter-search">
             <label for="gestor-pipeline-search">Buscar</label>
             <input id="gestor-pipeline-search" [(ngModel)]="searchQuery" placeholder="Contacto o trámite..." (keyup.enter)="loadDeals()">
@@ -383,7 +383,7 @@
           (stagesChange)="onStagesChange($event)"
           (dealDelete)="onDealDelete($event)"
         />
-      </div>
+      </app-crm-deals-board>
     }
 
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
