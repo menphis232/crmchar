@@ -259,6 +259,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   isAiLoading = signal(false);
   message = signal('');
   editingServiceId: string | null = null;
+  serviceDetailModal = signal<GestorService | null>(null);
   serviceForm = { name: '', timeEstimate: '', price: null as number | null, imageUrl: '' };
   serviceDocs: QuoteCheckItem[] = [];
   serviceIncludesList: QuoteCheckItem[] = [];
@@ -1435,6 +1436,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     setTimeout(() => {
       document.getElementById('service-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 50);
+  }
+
+  openServiceDetail(s: GestorService) {
+    this.serviceDetailModal.set(s);
+  }
+
+  closeServiceDetail() {
+    this.serviceDetailModal.set(null);
   }
 
   saveService() {

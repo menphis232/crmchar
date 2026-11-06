@@ -503,33 +503,7 @@
                       }
                     </td>
                     <td>
-                      <details class="service-requisitos-panel">
-                        <summary>Ver detalles</summary>
-                        <div class="service-requisitos-body">
-                          <p class="service-requisitos-heading">Documentos requeridos</p>
-                          <ul class="service-requisitos-list">
-                            @for (doc of serviceRequirements(s); track doc) {
-                              <li>{{ doc }}</li>
-                            }
-                          </ul>
-                          @if (serviceIncludes(s).length) {
-                            <p class="service-requisitos-heading">Qué incluye</p>
-                            <ul class="service-requisitos-list">
-                              @for (item of serviceIncludes(s); track item) {
-                                <li>{{ item }}</li>
-                              }
-                            </ul>
-                          }
-                          @if (serviceBonus(s).length) {
-                            <p class="service-requisitos-heading">Bonus</p>
-                            <ul class="service-requisitos-list">
-                              @for (item of serviceBonus(s); track item) {
-                                <li>{{ item }}</li>
-                              }
-                            </ul>
-                          }
-                        </div>
-                      </details>
+                      <button type="button" class="mon-link-btn" (click)="openServiceDetail(s)">Ver detalles</button>
                     </td>
                     <td class="col-actions">
                       <button type="button" class="mon-tool-btn" (click)="startEditService(s)">Editar</button>
@@ -1542,6 +1516,74 @@
           <a class="btn-copy" [href]="access.whatsappUrl" target="_blank" rel="noopener">Enviar por WhatsApp</a>
         }
         <button type="button" class="btn-ghost" (click)="clientAccessNotice.set(null)">Cerrar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (serviceDetailModal(); as svc) {
+  <div class="modal-overlay mon-svc-detail-overlay" (click)="closeServiceDetail()" role="presentation">
+    <div class="modal-content mon-svc-detail-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" [attr.aria-labelledby]="'svc-detail-title'">
+      <button type="button" class="modal-close" (click)="closeServiceDetail()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+
+      <div class="mon-svc-detail-head">
+        @if (svc.imageUrl) {
+          <img class="mon-svc-detail-thumb" [src]="svc.imageUrl" alt="">
+        }
+        <div>
+          <h2 class="mon-svc-detail-title" id="svc-detail-title">{{ svc.name }}</h2>
+          <div class="mon-svc-detail-meta">
+            <span>
+              <svg lucideClock [size]="14" [strokeWidth]="2" aria-hidden="true"></svg>
+              {{ svc.timeEstimate || '—' }}
+            </span>
+            <span class="mon-svc-detail-price">
+              @if (hasServicePrice(svc)) {
+                ${{ svc.price | number }} MXN
+              } @else {
+                Precio por definir
+              }
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mon-svc-detail-section">
+        <h3>Documentos requeridos</h3>
+        <ul>
+          @for (doc of serviceRequirements(svc); track doc) {
+            <li>{{ doc }}</li>
+          }
+        </ul>
+      </div>
+
+      @if (serviceIncludes(svc).length) {
+        <div class="mon-svc-detail-section">
+          <h3>Qué incluye</h3>
+          <ul>
+            @for (item of serviceIncludes(svc); track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (serviceBonus(svc).length) {
+        <div class="mon-svc-detail-section">
+          <h3>Bonus</h3>
+          <ul>
+            @for (item of serviceBonus(svc); track item) {
+              <li>{{ item }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <div class="mon-svc-detail-actions">
+        <button type="button" class="mon-tool-btn" (click)="closeServiceDetail()">Cerrar</button>
+        <button type="button" class="mon-btn-primary" (click)="closeServiceDetail(); startEditService(svc)">Editar servicio</button>
       </div>
     </div>
   </div>
