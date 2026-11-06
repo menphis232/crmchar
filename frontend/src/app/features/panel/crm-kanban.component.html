@@ -52,7 +52,7 @@
             [class.editable-hint]="editable()"
             (dblclick)="startEdit(stage.id, $event)"
             [title]="editable() ? 'Arrastra para mover · Doble clic para renombrar' : ''"
-          >{{ stage.label }}</span>
+          >{{ cleanLabel(stage.label) }}</span>
         }
 
         @if (editable()) {
@@ -165,7 +165,7 @@
               (change)="onSelectStage(deal, $event)"
             >
               @for (s of selectableStages(deal); track s.id) {
-                <option [value]="s.id" [selected]="s.id === deal.stage">{{ s.label }}</option>
+                <option [value]="s.id" [selected]="s.id === deal.stage">{{ cleanLabel(s.label) }}</option>
               }
             </select>
 

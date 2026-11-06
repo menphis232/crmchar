@@ -1250,11 +1250,152 @@
   font-weight: 700 !important;
 }
 
-:host.panel-datta .pipeline-filters {
+:host.panel-datta .pipeline-filters,
+:host.panel-datta .mon-pipeline-filters {
+  display: grid !important;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(140px, 220px) auto auto !important;
+  gap: 12px !important;
+  align-items: end !important;
   background: #fff !important;
   border: 1px solid var(--mon-border) !important;
   border-left: 3px solid var(--mon-primary) !important;
+  border-radius: 10px !important;
   color: var(--mon-text) !important;
+  padding: 14px 16px !important;
+  margin-bottom: 14px !important;
+}
+
+:host.panel-datta .pipeline-filters .pipeline-filter-field label {
+  color: var(--mon-muted) !important;
+  font: 600 12px Figtree, system-ui, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+:host.panel-datta .pipeline-filters input,
+:host.panel-datta .pipeline-filters select {
+  background: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  color: var(--mon-text) !important;
+  -webkit-text-fill-color: var(--mon-text) !important;
+  border-radius: 8px !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+}
+
+:host.panel-datta .pipeline-filters .mon-tool-btn,
+:host.panel-datta .pipeline-filters .pipeline-filter-btn {
+  background: #fff !important;
+  border: 1px solid var(--mon-border) !important;
+  color: var(--mon-text) !important;
+  border-radius: 8px !important;
+  font: 600 13px Figtree, system-ui, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+:host.panel-datta .pipeline-filters .mon-btn-primary,
+:host.panel-datta .pipeline-filters .btn-nuevo-lead {
+  background: var(--mon-primary) !important;
+  border-color: var(--mon-primary) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Embudo Acuerdos — anular dark ::ng-deep del gestor */
+:host.panel-datta ::ng-deep .kanban-hint,
+:host.panel-datta ::ng-deep .kanban-scroll-hint {
+  background: #f7f8fa !important;
+  color: var(--mon-muted) !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 8px !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-col {
+  flex: 0 0 260px !important;
+  background: #f0f1f5 !important;
+  border: 1px solid var(--mon-border) !important;
+  border-top: 3px solid var(--mon-primary) !important;
+  border-radius: 10px !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-col.drag-over {
+  border-color: var(--mon-primary) !important;
+  background: var(--mon-primary-soft) !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-col-header {
+  color: var(--mon-text) !important;
+  border-bottom: 1px solid var(--mon-border) !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: 13px !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-col-header span:first-child,
+:host.panel-datta ::ng-deep .col-title-text {
+  color: var(--mon-text) !important;
+  font-weight: 700 !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-count {
+  background: #fff !important;
+  color: var(--mon-muted) !important;
+  border: 1px solid var(--mon-border) !important;
+  border-radius: 999px !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-card {
+  background: #fff !important;
+  border: 1px solid var(--mon-border) !important;
+  border-left: 3px solid var(--mon-primary) !important;
+  border-radius: 8px !important;
+  color: var(--mon-text) !important;
+  box-shadow: 0 1px 3px rgba(50, 51, 56, 0.06) !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 115, 234, 0.1) !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-card-top strong,
+:host.panel-datta ::ng-deep .kanban-contact,
+:host.panel-datta ::ng-deep .kanban-value {
+  color: var(--mon-text) !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-meta,
+:host.panel-datta ::ng-deep .kanban-days,
+:host.panel-datta ::ng-deep .kanban-select-label {
+  color: var(--mon-muted) !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-empty {
+  border: 1px dashed #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #9ca0ad !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-assignee {
+  color: var(--mon-primary) !important;
+  background: var(--mon-primary-soft) !important;
+  border-color: #b3dbfd !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta ::ng-deep .col-action-btn {
+  color: #9ca0ad !important;
+}
+
+:host.panel-datta ::ng-deep .col-action-btn.active {
+  color: #c77700 !important;
+  background: #fff4e5 !important;
+}
+
+:host.panel-datta ::ng-deep .kanban-card-delete {
+  color: #c5c7d0 !important;
 }
 
 :host.panel-datta ::selection {

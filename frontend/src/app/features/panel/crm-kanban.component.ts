@@ -50,9 +50,18 @@ export interface KanbanStage extends CrmStageConfig {}
     .col-header-draggable:active { cursor: grabbing; }
     .col-title-text {
       flex: 1;
+      min-width: 0;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      white-space: normal;
+      text-transform: none;
+      letter-spacing: -0.01em;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #323338;
     }
     .col-title-text.editable-hint { cursor: grab; }
     .col-title-text.editable-hint:hover { opacity: 0.80; }
@@ -76,104 +85,83 @@ export interface KanbanStage extends CrmStageConfig {}
     .kanban-col.col-drag-over-right { border-right: 3px solid #0073ea !important; }
     .kanban-col.col-dragging        { opacity: 0.40; }
 
-    /* ── Add column modal ── */
+    /* ── Add column modal (Monday light) ── */
     .add-col-overlay {
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.72);
+      background: rgba(50, 51, 56, 0.45);
       display: flex; align-items: center; justify-content: center;
       z-index: 1000;
       backdrop-filter: blur(4px);
     }
     .add-col-modal {
-      background: #0d0d0d;
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 18px;
-      padding: 32px 28px 24px;
+      background: #fff;
+      border: 1px solid #e6e9ef;
+      border-radius: 12px;
+      padding: 28px 24px 20px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.80);
+      box-shadow: 0 16px 48px rgba(50, 51, 56, 0.18);
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
+      font-family: Figtree, system-ui, sans-serif;
     }
     .add-col-modal h3 {
       margin: 0;
-      color: #ffffff;
-      font-family: var(--f-display);
-      font-size: 17px;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      color: #323338;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      text-transform: none;
     }
     .add-col-modal p {
       margin: 0;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
       font-size: 13px;
-      font-family: var(--f-ui);
       line-height: 1.5;
     }
     .add-col-input {
-      background: #111 !important;
-      border: 1px solid rgba(255,255,255,0.18) !important;
-      color: #fff !important;
-      -webkit-text-fill-color: #fff !important;
-      border-radius: 10px !important;
-      font-size: 15px !important;
-      font-family: var(--f-ui) !important;
-      padding: 12px 14px !important;
+      background: #fff !important;
+      border: 1px solid #c5c7d0 !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border-radius: 8px !important;
+      font-size: 14px !important;
+      font-family: Figtree, system-ui, sans-serif !important;
+      padding: 11px 12px !important;
       width: 100% !important;
       box-sizing: border-box !important;
       outline: none !important;
-      transition: border-color 0.2s !important;
     }
-    .add-col-input:focus { border-color: rgba(255,255,255,0.50) !important; }
-    .add-col-input::placeholder { color: rgba(255,255,255,0.28) !important; }
-    .add-col-actions {
-      display: flex;
-      gap: 10px;
-      justify-content: flex-end;
+    .add-col-input:focus {
+      border-color: #0073ea !important;
+      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.15) !important;
     }
+    .add-col-input::placeholder { color: #9ca0ad !important; }
+    .add-col-actions { display: flex; gap: 10px; justify-content: flex-end; }
     .btn-add-col-cancel {
-      background: var(--btn-outline-bg, transparent);
-      border: var(--btn-border-w, 1px) solid var(--btn-outline-border, #fff);
-      color: var(--btn-outline-color, #fff);
-      font-family: var(--f-display);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      padding: 9px 18px;
-      border-radius: var(--btn-radius, 4px);
+      background: #fff;
+      border: 1px solid #e6e9ef;
+      color: #323338;
+      font: 600 13px Figtree, system-ui, sans-serif;
+      padding: 9px 14px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
     }
-    .btn-add-col-cancel:hover {
-      background: var(--btn-outline-hover-bg, #fff);
-      color: var(--btn-outline-hover-color, #000);
-      border-color: var(--btn-outline-hover-border, #fff);
-    }
+    .btn-add-col-cancel:hover { border-color: #0073ea; color: #0073ea; }
     .btn-add-col-confirm {
-      background: var(--btn-primary-bg, transparent);
-      border: var(--btn-border-w, 1px) solid var(--btn-primary-border, #fff);
-      color: var(--btn-primary-color, #fff);
-      font-family: var(--f-display);
-      font-size: 11px;
-      font-weight: 800;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
-      padding: 9px 20px;
-      border-radius: var(--btn-radius, 4px);
+      background: #0073ea;
+      border: 1px solid #0073ea;
+      color: #fff;
+      font: 600 13px Figtree, system-ui, sans-serif;
+      padding: 9px 16px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
-    .btn-add-col-confirm:hover {
-      background: var(--btn-primary-hover-bg, #fff);
-      color: var(--btn-primary-hover-color, #000);
-      border-color: var(--btn-primary-hover-border, #fff);
-    }
-    .btn-add-col-confirm:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-add-col-confirm:hover { background: #0060c2; }
+    .btn-add-col-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ── Add column button ── */
     .kanban-add-col {
       flex: 0 0 48px;
       display: flex;
@@ -182,40 +170,33 @@ export interface KanbanStage extends CrmStageConfig {}
       padding-top: 12px;
     }
     .btn-add-col {
-      background: transparent;
-      border: 1px dashed rgba(255,255,255,0.22);
-      color: rgba(255,255,255,0.45);
-      font-size: 22px;
+      background: #fff;
+      border: 1px dashed #c5c7d0;
+      color: #676879;
       width: 38px;
       height: 38px;
-      border-radius: 50%;
+      border-radius: 10px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: border-color 0.2s, color 0.2s, background 0.2s;
-      line-height: 1;
     }
-    .btn-add-col:hover {
-      border-color: rgba(255,255,255,0.60);
-      color: #ffffff;
-      background: rgba(255,255,255,0.06);
-    }
+    .btn-add-col:hover { border-color: #0073ea; color: #0073ea; background: #e5f4ff; }
+
     .kanban-card.payment-locked {
-      border-color: rgba(251, 191, 36, 0.45);
-      box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.15);
+      border-color: #ffd8a8;
+      box-shadow: inset 0 0 0 1px rgba(199, 119, 0, 0.08);
     }
     .kanban-payment-lock {
       display: block;
       margin-top: 6px;
-      font-size: 10px;
+      font-size: 11px;
       line-height: 1.35;
-      color: #fbbf24;
+      color: #c77700;
       font-weight: 600;
     }
-    .kanban-col-payment .kanban-col-header {
-      border-bottom-color: rgba(251, 191, 36, 0.35);
-    }
+    .kanban-col-payment { border-top-color: #fdab3d !important; }
+    .kanban-col-payment .kanban-col-header { border-bottom-color: #ffe8c2 !important; }
     .col-header-actions {
       display: flex;
       align-items: center;
@@ -226,21 +207,18 @@ export interface KanbanStage extends CrmStageConfig {}
     .col-action-btn {
       background: transparent;
       border: none;
-      color: rgba(255,255,255,0.35);
+      color: #9ca0ad;
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      line-height: 1;
-      transition: color 0.15s, background 0.15s;
     }
-    .col-action-btn:hover { color: #fff; background: rgba(255,255,255,0.10); }
-    .col-action-btn.active { color: #fbbf24; }
-    .col-action-btn.active:hover { color: #fcd34d; background: rgba(251,191,36,0.12); }
-    .col-action-btn.danger:hover { color: #f87171; background: rgba(248,113,113,0.12); }
-    .kanban-col-header { display: flex; align-items: center; gap: 4px; }
+    .col-action-btn:hover { color: #0073ea; background: #e5f4ff; }
+    .col-action-btn.active { color: #c77700; background: #fff4e5; }
+    .col-action-btn.danger:hover { color: #dc2626; background: #fee2e2; }
+    .kanban-col-header { display: flex; align-items: center; gap: 6px; }
 
     .kanban-card-top {
       display: flex;
@@ -257,28 +235,27 @@ export interface KanbanStage extends CrmStageConfig {}
     .kanban-card-delete {
       border: none;
       background: transparent;
-      color: rgba(255,255,255,0.28);
+      color: #c5c7d0;
       cursor: pointer;
       padding: 2px 4px;
       border-radius: 4px;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: color 0.15s, background 0.15s;
     }
-    .kanban-card-delete:hover {
-      color: #f87171;
-      background: rgba(248,113,113,0.12);
-    }
+    .kanban-card-delete:hover { color: #dc2626; background: #fee2e2; }
 
-    /* Monday light — columnas y tarjetas del embudo (Acuerdos) */
+    /* Monday light — embudo Acuerdos */
     .kanban-hint,
     .kanban-scroll-hint {
-      background: #fff !important;
+      background: #f7f8fa !important;
       color: #676879 !important;
       border: 1px solid #e6e9ef !important;
+      border-radius: 8px !important;
+      font-family: Figtree, system-ui, sans-serif !important;
     }
     .kanban-col {
+      flex: 0 0 260px !important;
       background: #f0f1f5 !important;
       border: 1px solid #e6e9ef !important;
       border-top: 3px solid #0073ea !important;
@@ -292,7 +269,12 @@ export interface KanbanStage extends CrmStageConfig {}
     .kanban-col-header {
       color: #323338 !important;
       border-bottom: 1px solid #e6e9ef !important;
-      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-family: Figtree, system-ui, sans-serif !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      font-size: 13px !important;
+      margin-bottom: 12px !important;
+      padding-bottom: 10px !important;
     }
     .kanban-col-header span:first-child { color: #323338 !important; font-weight: 700 !important; }
     .kanban-count {
@@ -300,6 +282,7 @@ export interface KanbanStage extends CrmStageConfig {}
       color: #676879 !important;
       border: 1px solid #e6e9ef !important;
       border-radius: 999px !important;
+      font-weight: 700 !important;
     }
     .kanban-card {
       background: #fff !important;
@@ -308,17 +291,21 @@ export interface KanbanStage extends CrmStageConfig {}
       border-radius: 8px !important;
       color: #323338 !important;
       box-shadow: 0 1px 3px rgba(50, 51, 56, 0.06) !important;
+      font-family: Figtree, system-ui, sans-serif !important;
     }
     .kanban-card:hover {
       border-left-color: #0073ea !important;
-      background: #fff !important;
       box-shadow: 0 4px 12px rgba(0, 115, 234, 0.1) !important;
       transform: translateY(-1px);
     }
     .kanban-empty {
-      border-color: #e6e9ef !important;
+      border: 1px dashed #c5c7d0 !important;
+      border-radius: 8px !important;
       color: #9ca0ad !important;
       background: transparent !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      font-family: Figtree, system-ui, sans-serif !important;
     }
     .kanban-col.drag-over .kanban-empty {
       border-color: #0073ea !important;
@@ -329,7 +316,52 @@ export interface KanbanStage extends CrmStageConfig {}
     .kanban-meta, .kanban-days { color: #676879 !important; }
     .kanban-value { color: #323338 !important; font-weight: 600 !important; }
     .kanban-card-top strong { color: #323338 !important; }
-    .kanban-stage-select { background-color: #fff !important; }
+    .kanban-assignee {
+      color: #0073ea !important;
+      background: #e5f4ff !important;
+      border-color: #b3dbfd !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      font-weight: 600 !important;
+    }
+    .kanban-perito-badge {
+      color: #676879 !important;
+      background: #f7f8fa !important;
+      border-color: #e6e9ef !important;
+    }
+    .kanban-perito-poliza {
+      color: #c77700 !important;
+      background: #fff4e5 !important;
+      text-transform: none !important;
+    }
+    .kanban-perito-poliza.paid {
+      color: #00854d !important;
+      background: #e7f8ef !important;
+    }
+    .kanban-next {
+      border-radius: 6px !important;
+      border-color: #e6e9ef !important;
+      color: #676879 !important;
+    }
+    .kanban-next:hover {
+      background: #0073ea !important;
+      border-color: #0073ea !important;
+      color: #fff !important;
+    }
+    .kanban-select-label {
+      display: block !important;
+      margin: 10px 0 4px !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      text-transform: none !important;
+      letter-spacing: 0 !important;
+      color: #676879 !important;
+    }
+    .kanban-stage-select {
+      background-color: #fff !important;
+      border-radius: 6px !important;
+      font-family: Figtree, system-ui, sans-serif !important;
+    }
     .kanban-stage-select option { background: #fff; }
   `],
 })
@@ -390,6 +422,13 @@ export class CrmKanbanComponent {
   }
 
   // ── helpers ──
+  cleanLabel(text: string): string {
+    return (text || '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  }
+
   dealsInStage(stage: string, stageIndex = 0) {
     const stageIds = new Set(this.stages());
     const inStage = this.deals().filter(d => d.stage === stage);
@@ -422,7 +461,7 @@ export class CrmKanbanComponent {
   }
 
   saveEdit(stageId: string) {
-    const newLabel = this.editingLabel().trim();
+    const newLabel = this.cleanLabel(this.editingLabel());
     if (newLabel) {
       this.localStages.update(list =>
         list.map(s => s.id === stageId ? { ...s, label: newLabel } : s)
@@ -495,7 +534,7 @@ export class CrmKanbanComponent {
   }
 
   confirmAddColumn() {
-    const label = this.newColLabel().trim();
+    const label = this.cleanLabel(this.newColLabel());
     if (!label) return;
     const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '') + '_' + Date.now();
     this.localStages.update(list => [...list, { id, label }]);

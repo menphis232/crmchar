@@ -17,7 +17,7 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
           <h2 class="mon-board-title">Acuerdos</h2>
           <div class="mon-board-tabs" role="tablist">
             <button type="button" role="tab" class="mon-board-tab" [class.active]="view() === 'tabla'" (click)="view.set('tabla')">Tabla principal</button>
-            <button type="button" role="tab" class="mon-board-tab" [class.active]="view() === 'pipeline'" (click)="view.set('pipeline')">Pipeline</button>
+            <button type="button" role="tab" class="mon-board-tab" [class.active]="view() === 'pipeline'" (click)="view.set('pipeline')">Embudo de venta</button>
           </div>
         </div>
         <div class="mon-board-actions">
@@ -36,13 +36,13 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
           </label>
           <button type="button" class="mon-tool-btn" (click)="view.set('pipeline')">
             <svg lucideFilter [size]="15" aria-hidden="true"></svg>
-            Ver pipeline
+            Ver embudo
           </button>
         </div>
 
         <div class="mon-insight">
           <div>
-            <strong>Salud del pipeline</strong>
+            <strong>Salud del embudo</strong>
             <p>{{ activeDeals().length }} acuerdos activos · {{ closedDeals().length }} cerrados</p>
           </div>
           <div class="mon-insight-stats">
@@ -349,7 +349,7 @@ export class CrmDealsBoardComponent {
   dealSelect = output<CrmDeal>();
   addDeal = output<void>();
 
-  view = signal<'tabla' | 'pipeline'>('tabla');
+  view = signal<'tabla' | 'pipeline'>('pipeline');
   search = signal('');
   collapsed = signal<Record<string, boolean>>({});
 
@@ -396,7 +396,11 @@ export class CrmDealsBoardComponent {
   }
 
   stageLabel(stage: string) {
-    return this.stageLabels()[stage] || stage;
+    const raw = this.stageLabels()[stage] || stage;
+    return (raw || '')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\uFE0F]/gu, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
   }
 
   stageColor(stage: string) {
