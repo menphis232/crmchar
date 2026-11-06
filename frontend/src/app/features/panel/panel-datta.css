@@ -2016,3 +2016,302 @@
     font-size: 20px !important;
   }
 }
+
+/* ── Automatizaciones Monday ── */
+:host.panel-datta .mon-automations-board,
+:host.panel-datta .mon-board.mon-automations-board {
+  background: #fff !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 12px !important;
+  padding: 20px 22px 24px !important;
+  color: #323338 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  box-shadow: none !important;
+  overflow: hidden;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+:host.panel-datta .mon-automations-board .mon-board-head {
+  margin-bottom: 16px;
+}
+
+:host.panel-datta .mon-automations-board .mon-board-title {
+  margin: 0 0 6px !important;
+  font-size: 24px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .mon-automations-board .mon-board-desc {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .automation-guide,
+:host.panel-datta .mon-automations-board .automation-guide {
+  margin: 0 0 18px !important;
+  padding: 14px 16px !important;
+  background: #e5f4ff !important;
+  border: 1px solid #b3dbfd !important;
+  border-left: 4px solid #0073ea !important;
+  border-radius: 10px !important;
+}
+
+:host.panel-datta .automation-guide h5,
+:host.panel-datta .mon-automations-board .automation-guide h5 {
+  margin: 0 0 10px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .automation-guide ol,
+:host.panel-datta .mon-automations-board .automation-guide ol {
+  margin: 0 !important;
+  padding-left: 18px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  font-size: 13px !important;
+  line-height: 1.55 !important;
+}
+
+:host.panel-datta .automation-guide strong {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+}
+
+:host.panel-datta .automation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+:host.panel-datta .automation-item,
+:host.panel-datta .mon-automations-board .automation-item {
+  background: #f7f8fa !important;
+  border: 1px solid #e6e9ef !important;
+  border-left: 4px solid #0073ea !important;
+  border-radius: 10px !important;
+  padding: 14px 16px !important;
+}
+
+:host.panel-datta .automation-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+:host.panel-datta .automation-item-header h4,
+:host.panel-datta .mon-automations-board .automation-item-header h4 {
+  margin: 0 !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .automation-item-meta,
+:host.panel-datta .mon-automations-board .automation-item-meta {
+  margin: 0 0 4px !important;
+  font-size: 13px !important;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  line-height: 1.45 !important;
+}
+
+:host.panel-datta .automation-item-meta strong,
+:host.panel-datta .mon-automations-board .automation-item-meta strong {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .automation-stage,
+:host.panel-datta .mon-automations-board .automation-stage {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+  font-weight: 600 !important;
+}
+
+:host.panel-datta .automation-empty {
+  margin: 4px 0 12px !important;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  font-size: 13px !important;
+}
+
+:host.panel-datta .mon-automations-board .mon-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  background: #fff !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 6px 10px;
+  font: 600 12px Figtree, system-ui, sans-serif;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+:host.panel-datta .mon-automations-board .mon-tool-btn--danger:hover {
+  border-color: #e2445c;
+  color: #e2445c !important;
+  -webkit-text-fill-color: #e2445c !important;
+  background: #fff0f1 !important;
+}
+
+:host.panel-datta .mon-automations-board .mon-auto-form {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #e6e9ef;
+}
+
+:host.panel-datta .mon-automations-board .mon-form-title {
+  margin: 0 0 14px !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .mon-automations-board .form-row,
+:host.panel-datta .form-row {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-bottom: 14px !important;
+  box-sizing: border-box !important;
+  flex-wrap: unset !important;
+}
+
+:host.panel-datta .mon-automations-board .form-group,
+:host.panel-datta .form-group {
+  flex: unset !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+:host.panel-datta .mon-automations-board .form-group label,
+:host.panel-datta .form-group label {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+:host.panel-datta .mon-automations-board .form-group input,
+:host.panel-datta .mon-automations-board .form-group select,
+:host.panel-datta .mon-automations-board .form-group textarea,
+:host.panel-datta .mon-automations-board textarea {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+}
+
+:host.panel-datta .automation-variables-label {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .automation-var-chip,
+:host.panel-datta .mon-automations-board .automation-var-chip {
+  background: #fff !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+}
+
+:host.panel-datta .automation-var-chip:hover {
+  border-color: #0073ea !important;
+  background: #f8fbff !important;
+}
+
+:host.panel-datta .automation-var-chip code {
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+}
+
+:host.panel-datta .automation-var-chip span {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .automation-preview,
+:host.panel-datta .mon-automations-board .automation-preview {
+  background: #f7f8fa !important;
+  border: 1px dashed #c5c7d0 !important;
+  border-radius: 8px !important;
+}
+
+:host.panel-datta .automation-preview-label {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .automation-preview p {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .mon-auto-form-actions {
+  margin-top: 16px;
+}
+
+:host.panel-datta .mon-automations-board .mon-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  background: #0073ea !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font: 600 14px Figtree, system-ui, sans-serif;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+:host.panel-datta .mon-automations-board .mon-btn-primary:hover {
+  background: #0060c2 !important;
+}
+
+@media (max-width: 720px) {
+  :host.panel-datta .mon-automations-board .form-row,
+  :host.panel-datta .form-row {
+    grid-template-columns: 1fr !important;
+  }
+  :host.panel-datta .mon-automations-board {
+    padding: 16px 14px !important;
+  }
+  :host.panel-datta .mon-automations-board .mon-board-title {
+    font-size: 20px !important;
+  }
+}

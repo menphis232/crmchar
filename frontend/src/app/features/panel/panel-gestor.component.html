@@ -1304,12 +1304,13 @@
 
     <!-- ── AUTOMATIZACIONES ── -->
     @if (tab() === 'automatizaciones') {
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideZap [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Automatizaciones de Embudo
-        </h2>
-        <p class="card-desc">Haz que el CRM trabaje por ti. Configura reglas para enviar correos automáticos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
+      <div class="mon-board mon-automations-board">
+        <header class="mon-board-head">
+          <div>
+            <h2 class="mon-board-title">Automatizaciones</h2>
+            <p class="mon-board-desc">Reglas para enviar correos cuando un trámite cambie de etapa o pase demasiado tiempo sin atención.</p>
+          </div>
+        </header>
 
         <div class="automation-guide">
           <h5>¿Cómo crear una automatización?</h5>
@@ -1327,7 +1328,7 @@
             <div class="automation-item">
               <div class="automation-item-header">
                 <h4>{{ auto.name }}</h4>
-                <button type="button" class="btn-delete small" (click)="deleteAutomation(auto.id)">Eliminar</button>
+                <button type="button" class="mon-tool-btn mon-tool-btn--danger" (click)="deleteAutomation(auto.id)">Eliminar</button>
               </div>
               <p class="automation-item-meta">
                 <strong>Trigger:</strong>
@@ -1339,18 +1340,18 @@
               </p>
             </div>
           } @empty {
-            <p class="automation-empty">No tienes automatizaciones activas. ¡Crea la primera para vender en automático!</p>
+            <p class="automation-empty">No tienes automatizaciones activas. Crea la primera para vender en automático.</p>
           }
         </div>
         
-        <hr class="divider">
-        <h4 class="section-sub">Nueva Automatización</h4>
+        <div class="mon-auto-form">
+        <h3 class="mon-form-title">Nueva automatización</h3>
         <div class="form-row">
-          <div class="form-group" style="flex:1;">
+          <div class="form-group">
             <label>Nombre de la regla</label>
             <input [(ngModel)]="newAutomation.name" placeholder="Ej: Pedir reseña en Google">
           </div>
-          <div class="form-group" style="flex:1;">
+          <div class="form-group">
             <label>Tipo de evento</label>
             <select [(ngModel)]="newAutomation.trigger_event">
               <option value="stage_change">Al mover trámite a esta etapa</option>
@@ -1360,7 +1361,7 @@
         </div>
         
         <div class="form-row">
-          <div class="form-group" style="flex:1;">
+          <div class="form-group">
             <label>Etapa objetivo</label>
             <select [(ngModel)]="newAutomation.trigger_stage">
               <option value="">— Selecciona una etapa —</option>
@@ -1370,7 +1371,7 @@
             </select>
           </div>
           @if (newAutomation.trigger_event === 'time_in_stage') {
-            <div class="form-group" style="flex:1;">
+            <div class="form-group">
               <label>Días a esperar</label>
               <input type="number" [(ngModel)]="newAutomation.trigger_delay_days" placeholder="3" min="1">
             </div>
@@ -1395,11 +1396,12 @@
           </div>
         </div>
         
-        <div style="margin-top:15px;">
-          <button type="button" class="btn-copy btn-with-icon" (click)="addAutomation()">
+        <div class="mon-auto-form-actions">
+          <button type="button" class="mon-btn-primary" (click)="addAutomation()">
             <svg lucidePlus [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
             Crear automatización
           </button>
+        </div>
         </div>
       </div>
     }
