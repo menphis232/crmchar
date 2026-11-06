@@ -241,6 +241,8 @@ export class PanelConcesionariaComponent implements OnInit {
 
   setTab(t: Tab) {
     this.tab.set(t);
+    this.selectedDealId.set(null);
+    this.selectedContactId.set(null);
     if (t === 'dashboard') { this.loadDashboard(); this.loadCrmSummary(); }
     if (t === 'pipeline') this.loadCrm();
     if (t === 'inventory' || t === 'edit') this.loadInventory();

@@ -364,6 +364,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   setTab(t: GestorTab) {
     this.tab.set(t);
+    // El panel del trámite/contacto es overlay: al salir de esa vista hay que cerrarlo.
+    this.selectedDealId.set(null);
+    this.selectedContactId.set(null);
     if (t === 'dashboard') {
       this.loadCrmSummary();
       this.loadVerificationAlerts();
