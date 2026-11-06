@@ -2,17 +2,17 @@
   <header class="clients-head">
     <div>
       <h2 class="card-title clients-title">
-        Directorio de clientes
+        Contactos
         @if (!isLoading()) {
           <span class="clients-total">{{ totalItems() }}</span>
         }
       </h2>
-      <p class="clients-desc">Quienes han solicitado trámites o diste de alta tú. Abre un cliente para ver sus vehículos y trámites.</p>
+      <p class="clients-desc">Clientes con trámites o dados de alta por ti. Abre uno para ver vehículos y acuerdos.</p>
     </div>
     @if (!showForm()) {
       <button type="button" class="clients-btn clients-btn--primary" (click)="openAddForm()">
         <svg lucidePlus [size]="15" aria-hidden="true"></svg>
-        Agregar cliente
+        Agregar contacto
       </button>
     }
   </header>
