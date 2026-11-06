@@ -72,18 +72,6 @@
       <span class="datta-brand-title">{{ profile()?.name || 'Panel gestoría' }}</span>
     </a>
     <p class="datta-nav-caption">Espacio de trabajo</p>
-    <div class="mobile-only sidebar-user-section">
-      <app-panel-user-menu
-        [name]="profile()?.name || auth.user()?.name || ''"
-        [email]="auth.user()?.email || ''"
-        [initials]="initials(profile()?.name || auth.user()?.name)"
-        [showBilling]="!auth.user()?.parent_id"
-        (logout)="auth.logout()"
-      />
-      <div style="flex:1;">
-        <strong>{{ profile()?.name || 'Gestor' }}</strong>
-      </div>
-    </div>
 
     @if (hasPerm('perfil')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'perfil'" (click)="setTab('perfil'); isMobileMenuOpen.set(false)">

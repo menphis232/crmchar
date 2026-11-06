@@ -314,12 +314,17 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  height: var(--mon-header);
-  padding: 0 16px;
+  min-height: var(--mon-header);
+  height: auto;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--mon-border);
   text-decoration: none;
   color: var(--mon-text) !important;
   flex-shrink: 0;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 :host.panel-datta .datta-brand-mark {
@@ -346,19 +351,23 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
   color: var(--mon-text) !important;
 }
 
 :host.panel-datta .datta-nav-caption {
-  margin: 16px 16px 6px;
+  margin: 14px 16px 8px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--mon-muted) !important;
+  flex-shrink: 0;
 }
 
 :host.panel-datta .dash-link {
@@ -1048,19 +1057,31 @@
   :host.panel-datta .dash-sidebar {
     transform: translateX(-105%);
     transition: transform 0.25s ease, width 0.2s ease;
-    width: min(88vw, 300px);
+    width: min(86vw, 300px) !important;
     top: 0 !important;
     bottom: 0 !important;
     height: 100vh !important;
     height: 100dvh !important;
     min-height: 100vh !important;
     min-height: 100dvh !important;
-    box-shadow: 8px 0 24px rgba(50, 51, 56, 0.12);
+    background: #fff !important;
+    box-shadow: 8px 0 28px rgba(50, 51, 56, 0.18);
     z-index: 220;
+    /* Evita tarjetas/dropdowns “cortados” contra el backdrop */
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
   }
 
   :host.panel-datta .dash-sidebar.mobile-open {
     transform: translateX(0);
+  }
+
+  :host.panel-datta .dash-sidebar .sidebar-user-section {
+    display: none !important;
+  }
+
+  :host.panel-datta .dash-sidebar ::ng-deep .avatar-dropdown {
+    display: none !important;
   }
 
   :host.panel-datta .dash-nav {
