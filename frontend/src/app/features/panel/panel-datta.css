@@ -1599,8 +1599,10 @@
 
 :host.panel-datta .mon-services-board .mon-service-form {
   margin-top: 20px;
-  padding-top: 18px;
+  padding: 18px 0 0;
   border-top: 1px solid #e6e9ef;
+  background: transparent !important;
+  color: #323338 !important;
 }
 
 :host.panel-datta .mon-services-board .mon-form-title {
@@ -1610,6 +1612,100 @@
   color: #323338 !important;
   -webkit-text-fill-color: #323338 !important;
   text-transform: none !important;
+}
+
+:host.panel-datta .mon-services-board .quote-checklist-block {
+  margin-bottom: 16px !important;
+  padding: 14px 16px !important;
+  background: #f7f8fa !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 10px !important;
+  overflow: visible !important;
+}
+
+:host.panel-datta .mon-services-board .quote-checklist-block h5 {
+  margin: 0 0 10px !important;
+  font-size: 12px !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .mon-services-board .quote-checklist-row {
+  display: grid !important;
+  grid-template-columns: 1fr 36px !important;
+  gap: 8px !important;
+  align-items: center !important;
+  margin-bottom: 8px !important;
+}
+
+:host.panel-datta .mon-services-board .quote-checklist-row input[type="text"] {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+  background-color: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
+  min-height: 40px !important;
+  box-shadow: none !important;
+}
+
+:host.panel-datta .mon-services-board .quote-item-remove {
+  border: 1px solid #e6e9ef !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .mon-services-board .quote-item-remove:hover {
+  background: #fff0f1 !important;
+  border-color: #e2445c !important;
+  color: #e2445c !important;
+  -webkit-text-fill-color: #e2445c !important;
+}
+
+:host.panel-datta .mon-services-board .deal-outline-btn,
+:host.panel-datta .mon-services-board label.deal-outline-btn {
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  font-weight: 600 !important;
+}
+
+:host.panel-datta .mon-services-board .deal-outline-btn:hover,
+:host.panel-datta .mon-services-board label.deal-outline-btn:hover {
+  background: #f5f6f8 !important;
+  border-color: #0073ea !important;
+  color: #0073ea !important;
+  -webkit-text-fill-color: #0073ea !important;
+}
+
+:host.panel-datta .mon-services-board .service-photo-preview {
+  border: 1px solid #e6e9ef !important;
+  background: #f7f8fa !important;
+}
+
+:host.panel-datta .mon-services-board .service-photo-preview--empty {
+  color: #9ca0ad !important;
+}
+
+:host.panel-datta .mon-services-board .service-photo-info label {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .mon-services-board .form-group label {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
 }
 
 :host.panel-datta .mon-services-board .mon-link-btn {

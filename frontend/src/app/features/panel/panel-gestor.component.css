@@ -1229,17 +1229,18 @@ app-crm-team {
 .quote-checklist-block {
   margin-bottom: 16px;
   padding: 14px 16px;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e6e9ef;
+  border-radius: 10px;
 }
 
 .quote-checklist-block h5 {
   margin: 0 0 10px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.50);
+  font-weight: 700;
+  color: #676879;
 }
 
 .quote-checklist-row {
@@ -1253,6 +1254,13 @@ app-crm-team {
 .quote-checklist-row input[type="text"] {
   width: 100%;
   box-sizing: border-box;
+  background: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
 }
 
 .quote-checklist-actions {
@@ -1267,15 +1275,17 @@ app-crm-team {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid #e6e9ef;
   border-radius: 8px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  background: #fff;
+  color: #676879;
   cursor: pointer;
 }
 
 .quote-item-remove:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #fff0f1;
+  border-color: #e2445c;
+  color: #e2445c;
 }
 
 .deal-outline-btn {
@@ -1283,16 +1293,19 @@ app-crm-team {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #c5c7d0;
   border-radius: 8px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 12px;
+  background: #fff;
+  color: #323338;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .deal-outline-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #f5f6f8;
+  border-color: #0073ea;
+  color: #0073ea;
 }
 
 .service-requisitos-panel summary::after {
@@ -1351,17 +1364,18 @@ app-crm-team {
 .quote-checklist-block {
   margin-bottom: 16px;
   padding: 14px 16px;
-  background: #111;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: #f7f8fa;
+  border: 1px solid #e6e9ef;
+  border-radius: 10px;
 }
 
 .quote-checklist-block h5 {
   margin: 0 0 10px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+  font-size: 12px;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.50);
+  font-weight: 700;
+  color: #676879;
 }
 
 .quote-checklist-row {
@@ -1375,6 +1389,13 @@ app-crm-team {
 .quote-checklist-row input[type="text"] {
   width: 100%;
   box-sizing: border-box;
+  background: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  padding: 10px 12px !important;
+  font-size: 14px !important;
 }
 
 .quote-checklist-actions {
@@ -1389,15 +1410,17 @@ app-crm-team {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid #e6e9ef;
   border-radius: 8px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.7);
+  background: #fff;
+  color: #676879;
   cursor: pointer;
 }
 
 .quote-item-remove:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #fff0f1;
+  border-color: #e2445c;
+  color: #e2445c;
 }
 
 .deal-outline-btn {
@@ -1405,16 +1428,19 @@ app-crm-team {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid #c5c7d0;
   border-radius: 8px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 12px;
+  background: #fff;
+  color: #323338;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .deal-outline-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: #f5f6f8;
+  border-color: #0073ea;
+  color: #0073ea;
 }
 
 /* Entrenar tu IA */
@@ -1510,14 +1536,15 @@ app-crm-team {
   flex-shrink: 0;
   border-radius: 10px;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid #e6e9ef;
+  background: #f7f8fa;
 }
 .service-photo-preview img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .service-photo-preview--empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: #9ca0ad;
   border-style: dashed;
 }
 .service-photo-info label[for='service-photo-input'] {
@@ -1525,6 +1552,7 @@ app-crm-team {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 4px;
+  color: #323338;
 }
 .service-photo-info .card-desc { margin: 0 0 10px; font-size: 12px; }
 .service-photo-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
