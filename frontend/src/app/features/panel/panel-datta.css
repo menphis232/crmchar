@@ -281,22 +281,33 @@
 }
 
 :host.panel-datta .dash-sidebar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  bottom: 0;
+  /* Anula sticky/align-self:flex-start de panel-dashboard (altura = contenido) */
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: auto !important;
+  bottom: 0 !important;
   width: var(--mon-sidebar);
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  max-height: none !important;
+  align-self: stretch !important;
   z-index: 180;
   transition: width 0.2s ease;
-  margin: 0;
-  padding: 0 0 24px;
+  margin: 0 !important;
+  padding: 0 0 24px !important;
   background: var(--mon-surface) !important;
   border-right: 1px solid var(--mon-border) !important;
-  border-radius: 0;
+  border-radius: 0 !important;
   overflow-y: auto;
   overflow-x: hidden;
-  gap: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0 !important;
   box-shadow: none !important;
+  box-sizing: border-box !important;
 }
 
 :host.panel-datta .datta-brand {
@@ -1036,8 +1047,14 @@
 
   :host.panel-datta .dash-sidebar {
     transform: translateX(-105%);
-    transition: transform 0.25s ease;
+    transition: transform 0.25s ease, width 0.2s ease;
     width: min(88vw, 300px);
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
     box-shadow: 8px 0 24px rgba(50, 51, 56, 0.12);
     z-index: 220;
   }
