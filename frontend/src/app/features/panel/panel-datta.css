@@ -63,65 +63,102 @@
   color: var(--mon-text) !important;
 }
 
-/* ── Topbar ── */
+/* ── Topbar ──
+   El CSS oscuro fuerza min-height:84px; el contenido solo reservaba 56px
+   → el main se metía debajo del header. Altura bloqueada aquí. */
 :host.panel-datta .dash-nav {
   position: fixed;
   top: 0;
   left: var(--mon-sidebar);
   right: 0;
   z-index: 1028;
-  height: var(--mon-header);
-  padding: 0 20px;
+  box-sizing: border-box !important;
+  height: var(--mon-header) !important;
+  min-height: var(--mon-header) !important;
+  max-height: var(--mon-header) !important;
+  padding: 0 20px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
   display: flex;
   align-items: center;
   gap: 16px;
+  overflow: visible;
   background: var(--mon-surface) !important;
   border-bottom: 1px solid var(--mon-border) !important;
-  box-shadow: none !important;
+  box-shadow: 0 1px 0 rgba(50, 51, 56, 0.04) !important;
 }
 
 :host.panel-datta .dash-logo,
 :host.panel-datta .client-home-logo {
-  display: none;
+  display: none !important;
 }
 
 :host.panel-datta .dash-user {
   margin-left: auto;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8px;
   color: var(--mon-muted) !important;
+  -webkit-text-fill-color: var(--mon-muted);
+  max-width: min(280px, 32vw);
 }
 
+:host.panel-datta .dash-user .panel-user-name,
+:host.panel-datta .dash-user ::ng-deep .panel-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 160px;
+  color: var(--mon-muted) !important;
+  -webkit-text-fill-color: var(--mon-muted) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+
+/* Buscador Monday: chip gris sobre topbar blanca (contraste claro) */
 :host.panel-datta .mon-top-search {
-  flex: 1;
-  max-width: 480px;
+  flex: 1 1 auto;
+  max-width: 520px;
+  min-width: 180px;
   margin: 0 auto;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   height: 36px;
-  padding: 0 14px;
+  max-height: 36px;
+  padding: 0 12px 0 14px;
   border-radius: 8px;
-  background: #f5f6f8 !important;
-  background-color: #f5f6f8 !important;
-  border: 1px solid var(--mon-border) !important;
+  background: #eceff5 !important;
+  background-color: #eceff5 !important;
+  border: 1px solid #d0d4de !important;
   color: var(--mon-muted) !important;
   -webkit-text-fill-color: var(--mon-muted);
   font-size: 14px;
+  line-height: 1;
+  box-shadow: none !important;
   color-scheme: light !important;
+  cursor: text;
+}
+
+:host.panel-datta .mon-top-search:hover {
+  background: #e4e7ef !important;
+  background-color: #e4e7ef !important;
+  border-color: #c5c7d0 !important;
 }
 
 :host.panel-datta .mon-top-search:focus-within {
   border-color: var(--mon-primary) !important;
   background: #fff !important;
   background-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.16) !important;
 }
 
 :host.panel-datta .mon-top-search svg {
-  color: var(--mon-muted) !important;
+  color: #676879 !important;
   stroke: currentColor !important;
   flex-shrink: 0;
+  opacity: 1;
 }
 
 :host.panel-datta .mon-top-search input,
@@ -129,7 +166,9 @@
   flex: 1;
   width: auto !important;
   min-width: 0;
+  height: 100% !important;
   border: none !important;
+  border-radius: 0 !important;
   background: transparent !important;
   background-color: transparent !important;
   color: var(--mon-text) !important;
@@ -137,26 +176,41 @@
   caret-color: var(--mon-text) !important;
   outline: none;
   font-size: 14px !important;
+  font-family: var(--f-ui) !important;
   padding: 0 !important;
+  margin: 0 !important;
   box-shadow: none !important;
   color-scheme: light !important;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+:host.panel-datta .mon-top-search input::-webkit-search-decoration,
+:host.panel-datta .mon-top-search input::-webkit-search-cancel-button,
+:host.panel-datta .mon-top-search input::-webkit-search-results-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 :host.panel-datta .mon-top-search input::placeholder,
 :host.panel-datta .mon-top-search input[type='search']::placeholder {
-  color: #9ca0ad !important;
-  -webkit-text-fill-color: #9ca0ad !important;
+  color: #7b7e8f !important;
+  -webkit-text-fill-color: #7b7e8f !important;
   opacity: 1 !important;
 }
 
 :host.panel-datta .mon-top-search kbd {
+  flex-shrink: 0;
+  font-family: var(--f-ui);
   font-size: 11px;
-  padding: 2px 6px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 3px 6px;
   border-radius: 4px;
   background: #fff !important;
-  border: 1px solid var(--mon-border) !important;
-  color: var(--mon-muted) !important;
-  -webkit-text-fill-color: var(--mon-muted);
+  border: 1px solid #c5c7d0 !important;
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879;
 }
 
 /* ── Sidebar ── */
@@ -165,8 +219,18 @@
   max-width: none;
   margin: 0;
   margin-left: var(--mon-sidebar);
-  padding: calc(var(--mon-header) + 20px) 28px 40px;
+  /* Misma altura real del header fijo (ya no 84px del tema oscuro) */
+  padding: calc(var(--mon-header) + 24px) 28px 40px;
   min-height: 100vh;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+:host.panel-datta .dash-main {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
 }
 
 :host.panel-datta .dash-sidebar {
@@ -348,19 +412,37 @@
   color: var(--mon-text) !important;
 }
 
-:host.panel-datta .panel-welcome,
+:host.panel-datta .panel-welcome {
+  margin: 0 0 14px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  color: var(--mon-muted) !important;
+  -webkit-text-fill-color: var(--mon-muted) !important;
+}
+
 :host.panel-datta .success-msg,
 :host.panel-datta .banner-msg {
-  color: var(--mon-text) !important;
+  margin: 0 0 16px !important;
+  padding: 12px 16px !important;
+  border-radius: 8px !important;
+  background: #fff6e5 !important;
+  background-color: #fff6e5 !important;
+  border: 1px solid #f0d9a8 !important;
+  color: #5c4813 !important;
+  -webkit-text-fill-color: #5c4813 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
 }
 
 /* Monday home greeting */
 :host.panel-datta .mon-home-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 8px;
+  margin: 4px 0 16px;
   flex-wrap: wrap;
 }
 
@@ -650,11 +732,20 @@
 @media (max-width: 991px) {
   :host.panel-datta .dash-nav {
     left: 0;
+    padding: 0 12px !important;
+    gap: 10px;
   }
 
   :host.panel-datta .dash-logo,
   :host.panel-datta .client-home-logo {
-    display: flex;
+    display: inline-flex !important;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  :host.panel-datta .dash-logo .dash-brand-logo,
+  :host.panel-datta .client-home-logo .dash-brand-logo {
+    max-height: 28px !important;
   }
 
   :host.panel-datta .datta-brand {
@@ -662,12 +753,21 @@
   }
 
   :host.panel-datta .mon-top-search {
-    display: none;
+    display: none !important;
+  }
+
+  :host.panel-datta .dash-user {
+    max-width: none;
+  }
+
+  :host.panel-datta .dash-user .panel-user-name,
+  :host.panel-datta .dash-user ::ng-deep .panel-user-name {
+    display: none !important;
   }
 
   :host.panel-datta .dash-container {
     margin-left: 0;
-    padding: calc(var(--mon-header) + 16px) 14px 24px;
+    padding: calc(var(--mon-header) + 20px) 14px 24px;
   }
 
   :host.panel-datta .dash-sidebar {
@@ -685,6 +785,15 @@
     grid-template-columns: 1fr;
   }
 
+  :host.panel-datta .mon-home-head {
+    align-items: stretch;
+  }
+
+  :host.panel-datta .mon-home-head .btn-nuevo-lead {
+    width: 100%;
+    justify-content: center;
+  }
+
   :host.panel-datta .mon-home-greet {
     font-size: 22px;
   }
@@ -692,13 +801,19 @@
 
 @media (max-width: 640px) {
   :host.panel-datta .dash-container {
-    padding: calc(var(--mon-header) + 12px) 12px 20px;
+    padding: calc(var(--mon-header) + 16px) 12px 20px;
   }
 
   :host.panel-datta .dash-card,
   :host.panel-datta ::ng-deep .dash-card {
     padding: 16px !important;
     border-radius: 10px !important;
+  }
+
+  :host.panel-datta .panel-welcome,
+  :host.panel-datta .success-msg,
+  :host.panel-datta .banner-msg {
+    font-size: 13px !important;
   }
 }
 
@@ -920,11 +1035,20 @@
   color: var(--mon-text);
 }
 
-/* Buscador topbar: reafirmar transparente (después de reglas globales de input) */
+/* Reafirmar shell: header fijo, buscador chip, banner legible */
+:host.panel-datta .dash-nav {
+  height: var(--mon-header) !important;
+  min-height: var(--mon-header) !important;
+  max-height: var(--mon-header) !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 :host.panel-datta .mon-top-search {
-  background: #f5f6f8 !important;
-  background-color: #f5f6f8 !important;
-  border: 1px solid var(--mon-border) !important;
+  background: #eceff5 !important;
+  background-color: #eceff5 !important;
+  border: 1px solid #d0d4de !important;
+  box-shadow: none !important;
 }
 
 :host.panel-datta .mon-top-search input,
@@ -945,6 +1069,20 @@
   border-color: var(--mon-primary) !important;
 }
 
+:host.panel-datta .panel-welcome {
+  color: var(--mon-muted) !important;
+  -webkit-text-fill-color: var(--mon-muted) !important;
+}
+
+:host.panel-datta .success-msg,
+:host.panel-datta .banner-msg {
+  background: #fff6e5 !important;
+  background-color: #fff6e5 !important;
+  border: 1px solid #f0d9a8 !important;
+  color: #5c4813 !important;
+  -webkit-text-fill-color: #5c4813 !important;
+}
+
 :host.panel-datta .btn-copy,
 :host.panel-datta .btn-nuevo-lead,
 :host.panel-datta ::ng-deep .btn-copy,
@@ -953,4 +1091,9 @@
   -webkit-text-fill-color: #fff !important;
   background: var(--mon-primary) !important;
   border-color: var(--mon-primary) !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  white-space: nowrap;
 }
