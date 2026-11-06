@@ -130,6 +130,34 @@
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1) !important;
 }
 
+/* Campanita visible en header Monday (antes stroke blanco = invisible) */
+:host.panel-datta .dash-user ::ng-deep .notification-btn {
+  color: #323338 !important;
+  border: 1px solid #e6e9ef !important;
+  background: #fff !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .notification-btn svg {
+  stroke: currentColor !important;
+  color: #323338 !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .notification-btn:hover {
+  color: #0073ea !important;
+  border-color: #0073ea !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .notification-btn:hover svg {
+  color: #0073ea !important;
+  stroke: currentColor !important;
+}
+
+:host.panel-datta .dash-user ::ng-deep .badge {
+  background: #e2445c !important;
+  color: #fff !important;
+  border: 2px solid #fff !important;
+}
+
 /* Buscador Monday: UN solo chip (icono + input + kbd). Sin caja interna. */
 :host.panel-datta .mon-top-search {
   flex: 1 1 auto;

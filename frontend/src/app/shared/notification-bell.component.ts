@@ -41,16 +41,51 @@ import { SocketService } from '../core/socket.service';
     </div>
   `,
   styles: [`
-    .notification-wrapper { position: relative; display: inline-block; margin-right: 15px; }
+    .notification-wrapper { position: relative; display: inline-flex; align-items: center; margin-right: 8px; }
     .notification-btn {
-      position: relative; font-size: 1.2rem; padding: 8px;
-      background: transparent; border: none; cursor: pointer; color: #ffffff;
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      background: transparent;
+      border: 1px solid #e6e9ef;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #323338;
+    }
+    .notification-btn:hover {
+      border-color: #0073ea;
+      color: #0073ea;
+      background: #f8fbff;
+    }
+    .notification-btn svg {
+      display: block;
+      stroke: currentColor;
+      flex-shrink: 0;
     }
     .badge {
-      position: absolute; top: 0; right: 0;
-      background: #ffffff; color: #000000;
-      font-size: 10px; font-weight: 800; border-radius: 999px;
-      padding: 2px 6px; pointer-events: none; font-family: var(--f-display);
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 16px;
+      height: 16px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #e2445c;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 0 4px;
+      pointer-events: none;
+      font-family: Figtree, system-ui, sans-serif;
+      border: 2px solid #fff;
+      box-sizing: border-box;
+      line-height: 1;
     }
     .notification-dropdown {
       position: absolute; top: 100%; right: -50px; width: 340px;
