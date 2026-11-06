@@ -1245,32 +1245,42 @@
 
     <!-- ── PLANTILLAS ── -->
     @if (tab() === 'plantillas') {
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideFileText [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Plantillas de mensaje
-        </h2>
-        <p class="card-desc">Crea respuestas rápidas para usar en el pipeline.</p>
-        @for (t of templates(); track t.id) {
-          <div class="block-editor">
-            <strong style="color:var(--gold);">{{ t.name }}</strong>
-            <span class="card-desc" style="flex:1;">{{ t.content }}</span>
-            <button class="btn-delete small" (click)="deleteTemplate(t.id)">Eliminar</button>
+      <div class="mon-board mon-templates-board">
+        <header class="mon-board-head">
+          <div>
+            <h2 class="mon-board-title">Plantillas de mensaje</h2>
+            <p class="mon-board-desc">Respuestas rápidas para usar en el pipeline.</p>
           </div>
-        } @empty {
-          <p class="empty">Sin plantillas. Crea la primera abajo.</p>
-        }
-        <hr class="divider">
-        <h4 class="section-sub">Nueva plantilla</h4>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label>Nombre</label>
-          <input [(ngModel)]="newTemplate.name" placeholder="Ej: Bienvenida">
+        </header>
+
+        <div class="tpl-list">
+          @for (t of templates(); track t.id) {
+            <div class="tpl-item">
+              <div class="tpl-item-body">
+                <strong class="tpl-name">{{ t.name }}</strong>
+                <p class="tpl-content">{{ t.content }}</p>
+              </div>
+              <button type="button" class="mon-tool-btn mon-tool-btn--danger" (click)="deleteTemplate(t.id)">Eliminar</button>
+            </div>
+          } @empty {
+            <p class="tpl-empty">Sin plantillas. Crea la primera abajo.</p>
+          }
         </div>
-        <div class="form-group" style="margin-bottom:16px;">
-          <label>Contenido (usa {{ '{{nombre}}' }} y {{ '{{titulo}}' }})</label>
-          <textarea [(ngModel)]="newTemplate.content" rows="3" placeholder="Hola [nombre], respecto a tu trámite..."></textarea>
+
+        <div class="mon-tpl-form">
+          <h3 class="mon-form-title">Nueva plantilla</h3>
+          <div class="form-group">
+            <label>Nombre</label>
+            <input [(ngModel)]="newTemplate.name" placeholder="Ej: Bienvenida">
+          </div>
+          <div class="form-group">
+            <label>Contenido (usa {{ '{{nombre}}' }} y {{ '{{titulo}}' }})</label>
+            <textarea [(ngModel)]="newTemplate.content" rows="4" placeholder="Hola {{ '{{' }}nombre{{ '}}' }}, respecto a tu trámite..."></textarea>
+          </div>
+          <div class="mon-tpl-form-actions">
+            <button type="button" class="mon-btn-primary" (click)="saveTemplate()">Crear plantilla</button>
+          </div>
         </div>
-        <button class="btn-copy" (click)="saveTemplate()">Crear plantilla</button>
       </div>
     }
 
