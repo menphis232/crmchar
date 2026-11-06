@@ -17,7 +17,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
     CommonModule, PeritoKanbanComponent, PeritoDealPanelComponent, PanelUserMenuComponent, LucideClipboardList,
   ],
   templateUrl: './panel-perito.component.html',
-  styleUrls: ['./panel-dashboard.css', './panel-datta.css', './panel-perito.component.css'],
+  styleUrls: ['./panel-dashboard.css', './panel-perito.component.css', './panel-datta.css'],
 })
 export class PanelPeritoComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;

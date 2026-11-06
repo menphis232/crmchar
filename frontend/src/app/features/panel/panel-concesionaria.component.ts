@@ -91,7 +91,7 @@ const AUTO_DOC_LABELS = [
   standalone: true,
   imports: [RouterLink, FormsModule, DecimalPipe, CrmKanbanComponent, CrmDealPanelComponent, CrmTodayInboxComponent, CrmContactPanelComponent, PdfDesignerComponent, PageBuilderComponent, NotificationBellComponent, ThemeSwitchComponent, FinancesComponent, PanelColorPaletteComponent, AiAssistantComponent, RichTextEditorComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, AmountTipDirective, CrmTeamComponent, ImageCropperModalComponent, LucideSettings, LucideBot, LucideLayoutDashboard, LucideFunnel, LucideList, LucideSquarePen, LucideStarCheck, LucideFileText, LucideLandmark, LucideUsers, LucideGrid2x2, LucideLink, LucideCar, LucideGlobe, LucideTrash2, LucideVideo, LucideFolderOpen, LucideSave, LucideStar, LucideCamera, LucideSearch, LucideMapPin, LucideTriangleAlert, LucidePlus, LucideX, LucideDownload, LucideGripVertical, LucideImage, LucidePaperclip, LucideLightbulb, LucideSparkles],
   templateUrl: './panel-concesionaria.component.html',
-  styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-datta.css', './panel-concesionaria.component.css'],
+  styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-concesionaria.component.css', './panel-datta.css'],
 })
 export class PanelConcesionariaComponent implements OnInit {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;

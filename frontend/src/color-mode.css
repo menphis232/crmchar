@@ -59,11 +59,12 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
 }
 
 /* Todo lo que pinta texto, fondo o borde dentro de las pantallas con tema */
+/* Paneles Monday (.panel-datta) se excluyen: ya tienen su propio sistema claro. */
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-nav,
-  app-panel-gestor,
+  app-panel-gestor:not(.panel-datta),
   app-panel-cliente,
-  app-panel-concesionaria,
+  app-panel-concesionaria:not(.panel-datta),
   app-gestores-list,
   app-gestor-detail,
   app-autos-list,
@@ -80,7 +81,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
 }
 
 /* Hover y estados activos: gris un poco más fuerte para que se note la selección */
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-gestores-list, app-nav)
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta), app-gestores-list, app-nav)
   :is(.dash-link.active, .dash-link:hover, .filters-list-item.active, .filters-tab.active, .page-btn.active, button:hover, a:hover) {
   background-color: #f3f3f3 !important;
   color: #3a3a3a !important;
@@ -164,15 +165,15 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, a
   box-shadow: 0 0 0 2px rgba(58, 58, 58, 0.25) !important;
 }
 
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria, app-panel-admin) .panel-user-name,
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .panel-welcome,
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .stat-label,
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .dash-link {
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta), app-panel-admin:not(.panel-datta)) .panel-user-name,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta)) .panel-welcome,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta)) .stat-label,
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta)) .dash-link {
   color: #4a4a4a !important;
   -webkit-text-fill-color: #4a4a4a !important;
 }
 
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor, app-panel-cliente, app-panel-concesionaria) .dash-link.active {
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(app-panel-gestor:not(.panel-datta), app-panel-cliente, app-panel-concesionaria:not(.panel-datta)) .dash-link.active {
   color: #1f1f1f !important;
   -webkit-text-fill-color: #1f1f1f !important;
   background-color: #f0f0f0 !important;
