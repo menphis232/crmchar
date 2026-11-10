@@ -9,6 +9,7 @@ import { ToastService } from '../../core/toast.service';
 import { OneSignalService } from '../../core/onesignal.service';
 import { UploadService, CHAT_ATTACHMENT_ACCEPT, KnowledgeService } from '../../core/api.service';
 import { PanelUserMenuComponent } from '../panel/panel-user-menu.component';
+import { ChangeCredentialsComponent } from '../panel/change-credentials.component';
 import { ThemeSwitchComponent } from '../../shared/theme-switch.component';
 import { AiAssistantComponent } from '../../shared/ai-assistant.component';
 import { io, Socket } from 'socket.io-client';
@@ -85,7 +86,7 @@ const CLIENT_TABS: ClientTab[] = [
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
-    PanelUserMenuComponent, ThemeSwitchComponent, AiAssistantComponent, VehicleMmySelectComponent,
+    PanelUserMenuComponent, ChangeCredentialsComponent, ThemeSwitchComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck,
     LucideMessageCircle, LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
@@ -141,6 +142,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   activeTab = signal<ClientTab>('dashboard');
   isMobileMenuOpen = signal(false);
+  credentialsOpen = signal(false);
   sidebarCollapsed = signal(
     typeof localStorage !== 'undefined' && localStorage.getItem('crm_cliente_sidebar_collapsed') === '1'
   );

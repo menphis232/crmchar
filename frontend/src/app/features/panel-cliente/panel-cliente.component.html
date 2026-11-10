@@ -929,28 +929,36 @@
     }
 
     @if (activeTab() === 'ajustes') {
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideUser [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Mi Perfil
-        </h2>
-        <p class="card-desc">Gestiona tu perfil y seguridad desde el menú de tu avatar (arriba a la derecha).</p>
-
-        <div class="client-settings-hint">
-          <svg lucideKeyRound [size]="18" aria-hidden="true"></svg>
-          <div>
-            <strong>Cambiar contraseña o correo</strong>
-            <p>Haz clic en tu avatar en la barra superior y elige «Cambiar contraseña / correo».</p>
-          </div>
+      <div class="mon-home-head">
+        <div>
+          <h1 class="mon-home-greet">Mi perfil</h1>
+          <p class="card-desc" style="margin:6px 0 0;">Datos de tu cuenta, foto y seguridad.</p>
         </div>
       </div>
 
       <div class="dash-card">
-        <h3 class="card-title card-title-with-icon" style="font-size:16px;">
-          <svg lucideUser [size]="16" aria-hidden="true"></svg>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideUser [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Información de cuenta
+        </h2>
+        <div class="client-info-row"><span>Nombre</span><strong>{{ auth.user()?.name }}</strong></div>
+        <div class="client-info-row"><span>Email</span><strong>{{ auth.user()?.email || '—' }}</strong></div>
+        <div class="client-info-row"><span>Rol</span><strong>Cliente</strong></div>
+
+        <div class="client-settings-actions">
+          <button type="button" class="btn-copy btn-with-icon" (click)="credentialsOpen.set(true)">
+            <svg lucideKeyRound [size]="16" aria-hidden="true"></svg>
+            Cambiar contraseña o correo
+          </button>
+        </div>
+      </div>
+
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideUser [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Foto de perfil
-        </h3>
-        <p class="card-desc">Opcional. Personaliza tu cuenta con una foto. Aparecerá en tu menú de usuario.</p>
+        </h2>
+        <p class="card-desc">Opcional. Aparece en tu menú de usuario.</p>
 
         <div class="client-avatar-row">
           <div class="client-avatar-preview">
@@ -962,7 +970,7 @@
           </div>
           <div class="client-avatar-actions">
             <input type="file" accept="image/*" hidden #avatarInput (change)="uploadAvatar($event)">
-            <button type="button" class="btn-copy" (click)="avatarInput.click()" [disabled]="avatarUploading()">
+            <button type="button" class="btn-copy btn-with-icon" (click)="avatarInput.click()" [disabled]="avatarUploading()">
               <svg lucideUpload [size]="14" aria-hidden="true"></svg>
               {{ avatarUploading() ? 'Subiendo...' : (auth.user()?.avatar_url ? 'Cambiar foto' : 'Subir foto') }}
             </button>
@@ -977,15 +985,15 @@
       </div>
 
       <div class="dash-card">
-        <h3 class="card-title card-title-with-icon" style="font-size:16px;">
-          <svg lucideBell [size]="16" aria-hidden="true"></svg>
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBell [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Notificaciones push
-        </h3>
+        </h2>
         <p class="card-desc">Recibe avisos de trámites y mensajes en tu teléfono (app instalada).</p>
         <p class="card-desc" style="margin-top:8px;">Estado: <strong>{{ oneSignal.statusLabel() }}</strong></p>
         <p class="card-desc" style="font-size:12px;">Dispositivo: {{ oneSignal.deviceHint() }}</p>
         @if (oneSignal.lastError()) {
-          <p class="banner-msg" style="color:#fbbf24;margin-top:8px;">{{ oneSignal.lastError() }}</p>
+          <p class="banner-msg" style="margin-top:8px;">{{ oneSignal.lastError() }}</p>
         }
         @if (!oneSignal.subscribed()) {
           <button type="button" class="btn-copy" style="margin-top:12px;" [disabled]="pushActivating()" (click)="activatePush()">
@@ -995,16 +1003,10 @@
           <p class="success-msg banner-msg" style="margin-top:12px;">Notificaciones activadas correctamente.</p>
         }
       </div>
+    }
 
-      <div class="dash-card">
-        <h3 class="card-title card-title-with-icon" style="font-size:16px;">
-          <svg lucideUser [size]="16" aria-hidden="true"></svg>
-          Información de Cuenta
-        </h3>
-        <div class="client-info-row"><span>Nombre</span><strong>{{ auth.user()?.name }}</strong></div>
-        <div class="client-info-row"><span>Email</span><strong>{{ auth.user()?.email }}</strong></div>
-        <div class="client-info-row"><span>Rol</span><strong>Cliente</strong></div>
-      </div>
+    @if (credentialsOpen()) {
+      <app-change-credentials (closed)="credentialsOpen.set(false)" />
     }
 
   </main>
