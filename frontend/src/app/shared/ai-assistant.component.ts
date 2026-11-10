@@ -121,16 +121,23 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
   highlightRect = signal<{ top: number; left: number; width: number; height: number } | null>(null);
   highlightActive = signal(false);
 
+  private clientFirstName(): string {
+    const full = (this.auth.user()?.name || '').trim();
+    return full.split(/\s+/)[0] || '';
+  }
+
   tourSteps = computed(() => {
     const steps = TOUR_STEPS[this.panelRole] || [];
     if (!steps.length) return steps;
     const name = this.assistantName();
+    const clientName = this.clientFirstName();
     return steps.map((step, index) => {
       if (index !== 0) return step;
       if (this.panelRole === 'cliente') {
+        const hello = clientName ? `¡Hola, ${clientName}!` : '¡Hola!';
         return {
           ...step,
-          speech: `¡Hola! Soy ${name}, tu asistente del panel. Te ayudo con tus trámites, documentos, vehículos y normativa vehicular.`,
+          speech: `${hello} Soy ${name}, tu asistente del panel. Te ayudo con tus trámites, documentos, vehículos y normativa vehicular.`,
         };
       }
       return {
@@ -199,7 +206,9 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
 
   private welcomeMessage() {
     if (this.panelRole === 'cliente') {
-      return `¡Hola! Soy ${this.assistantName()}, tu asistente del panel. Puedo ayudarte con trámites, normativa vehicular y también registrar, actualizar o eliminar vehículos, documentos y mensajes si me lo pides.`;
+      const clientName = this.clientFirstName();
+      const hello = clientName ? `¡Hola, ${clientName}!` : '¡Hola!';
+      return `${hello} Soy ${this.assistantName()}, tu asistente del panel. Puedo ayudarte con trámites, normativa vehicular y también registrar, actualizar o eliminar vehículos, documentos y mensajes si me lo pides.`;
     }
     return `¡Hola! Soy ${this.assistantName()}. Puedo guiarte en el panel y también crear, actualizar o eliminar registros (leads, finanzas, inventario, servicios, etc.) cuando me lo indiques.`;
   }

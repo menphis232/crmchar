@@ -156,7 +156,15 @@ router.post('/chat', authRequired, async (req, res) => {
         ? invoices.map(i => `- ${i.invoice_number} | ${i.deal_title} | $${Number(i.amount || 0).toLocaleString('es-MX')}`).join('\n')
         : '(Sin comprobantes)';
 
+      const clientName = (req.user.name || '').trim();
+      const clientFirstName = clientName.split(/\s+/)[0] || '';
       const systemPrompt = `Eres el Asistente Virtual del panel del cliente en Trámites Vehiculares de México.
+
+USUARIO CON EL QUE HABLAS:
+- Nombre completo: ${clientName || '(sin nombre en la cuenta)'}
+- Nombre para saludar: ${clientFirstName || 'el usuario'}
+- Email: ${req.user.email || '(sin email)'}
+Debes conocer y usar su nombre. Salúdalo por su nombre (ej. "Hola, ${clientFirstName || 'amigo'}") cuando inicies o retomes la conversación. No preguntes cómo se llama si ya lo tienes arriba.
 
 PRIORIDAD 1 — ACCIONES DEL PANEL:
 Cuando el usuario pida registrar, actualizar o eliminar algo en el panel (vehículos, documentos, mensajes, perfil), ejecuta la acción con los bloques al final de este mensaje.

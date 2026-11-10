@@ -74,6 +74,13 @@ export async function maybeAutoReplyClientChat(dealId, gestorUserId, clientUserI
     );
     if (!deal) return;
 
+    let clientAccount = null;
+    if (clientUserId) {
+      clientAccount = await get('SELECT name, email FROM users WHERE id = ? LIMIT 1', [clientUserId]);
+    }
+    const clientFullName = (clientAccount?.name || deal.contact_name || '').trim();
+    const clientFirstName = clientFullName.split(/\s+/)[0] || '';
+
     const messages = await query(
       `SELECT m.message, m.sender_id, m.is_ai_generated, u.role AS sender_role
        FROM chat_messages m
@@ -105,7 +112,12 @@ export async function maybeAutoReplyClientChat(dealId, gestorUserId, clientUserI
 Responde SIEMPRE en español mexicano, con tono profesional, cálido y conciso (máximo 3 párrafos cortos).
 NO inventes datos del trámite. Si no sabes algo, indica que el gestor confirmará pronto.
 NO uses bloques de acción ni JSON. Solo el texto de la respuesta al cliente.
-Trámite: ${deal.title || 'Sin título'} | Etapa: ${deal.stage || 'N/A'} | Cliente: ${deal.contact_name || 'Cliente'}
+Trámite: ${deal.title || 'Sin título'} | Etapa: ${deal.stage || 'N/A'}
+CLIENTE CON EL QUE HABLAS:
+- Nombre completo: ${clientFullName || 'Cliente'}
+- Nombre para saludar: ${clientFirstName || 'Cliente'}
+- Email: ${clientAccount?.email || '(no disponible)'}
+Debes conocer y usar su nombre. Dirígete a él/ella por su nombre (ej. "${clientFirstName || 'Cliente'}") de forma natural. No preguntes cómo se llama.
 ${customPrompt ? `\nInstrucciones del negocio:\n${customPrompt}` : ''}
 ${trainingText ? `\n${trainingText}` : ''}`;
 
