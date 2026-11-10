@@ -92,19 +92,21 @@ type Tab = 'password' | 'email';
   styles: [`
     .cc-overlay {
       position: fixed; inset: 0; z-index: 9000;
-      background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+      background: rgba(50, 51, 56, 0.42);
       display: flex; align-items: center; justify-content: center; padding: 16px;
     }
     .cc-modal {
-      background: #111; border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px; width: 100%; max-width: 420px;
-      overflow: hidden; font-family: 'Spartan', sans-serif;
+      background: #fff; border: 1px solid #e6e9ef;
+      border-radius: 12px; width: 100%; max-width: 420px;
+      overflow: hidden; font-family: Figtree, system-ui, sans-serif;
+      box-shadow: 0 16px 40px rgba(50, 51, 56, 0.18);
+      color: #323338;
     }
     .cc-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 18px 20px; border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: 18px 20px; border-bottom: 1px solid #e6e9ef;
     }
-    .cc-title { color: #fff; font-size: 15px; font-weight: 700; }
+    .cc-title { color: #323338; font-size: 16px; font-weight: 700; }
     .cc-title-with-icon, .cc-tab-with-icon {
       display: inline-flex;
       align-items: center;
@@ -112,42 +114,43 @@ type Tab = 'password' | 'email';
     }
     .cc-tab-with-icon { justify-content: center; }
     .cc-close {
-      background: transparent; border: none; color: rgba(255,255,255,.45);
+      background: transparent; border: none; color: #676879;
       font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px;
     }
-    .cc-close:hover { color: #fff; background: rgba(255,255,255,.08); }
+    .cc-close:hover { color: #323338; background: #f5f6f8; }
     .cc-tabs {
-      display: flex; border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; border-bottom: 1px solid #e6e9ef;
     }
     .cc-tab {
       flex: 1; padding: 12px; background: transparent; border: none;
-      color: rgba(255,255,255,.5); font-size: 12px; font-family: inherit;
+      color: #676879; font-size: 13px; font-family: inherit;
       cursor: pointer; font-weight: 600; transition: color .15s, background .15s;
       border-bottom: 2px solid transparent;
     }
-    .cc-tab:hover { color: rgba(255,255,255,.8); background: rgba(255,255,255,.04); }
-    .cc-tab--active { color: #fff; border-bottom-color: #fff; }
+    .cc-tab:hover { color: #323338; background: #f7f8fa; }
+    .cc-tab--active { color: #0073ea; border-bottom-color: #0073ea; }
     .cc-form {
       display: flex; flex-direction: column; gap: 10px; padding: 20px;
     }
-    .cc-hint { color: rgba(255,255,255,.5); font-size: 12px; margin: 0 0 4px; }
-    .cc-hint strong { color: rgba(255,255,255,.8); }
-    .cc-label { color: rgba(255,255,255,.7); font-size: 12px; font-weight: 600; margin-bottom: -4px; }
+    .cc-hint { color: #676879; font-size: 13px; margin: 0 0 4px; }
+    .cc-hint strong { color: #323338; }
+    .cc-label { color: #323338; font-size: 13px; font-weight: 600; margin-bottom: -4px; }
     .cc-input {
-      width: 100%; padding: 10px 12px; background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.12); border-radius: 8px;
-      color: #fff; font-size: 13px; font-family: inherit; box-sizing: border-box;
+      width: 100%; padding: 10px 12px; background: #fff;
+      border: 1px solid #e6e9ef; border-radius: 8px;
+      color: #323338; font-size: 14px; font-family: inherit; box-sizing: border-box;
       transition: border-color .15s;
     }
-    .cc-input:focus { outline: none; border-color: rgba(255,255,255,.35); }
-    .cc-error { color: #f87171; font-size: 12px; margin: 0; }
+    .cc-input::placeholder { color: #9ca0ad; }
+    .cc-input:focus { outline: none; border-color: #0073ea; box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.12); }
+    .cc-error { color: #e2445c; font-size: 12px; margin: 0; }
     .cc-submit {
-      margin-top: 6px; padding: 11px; border: none; border-radius: 8px;
-      background: #fff; color: #000; font-size: 13px; font-weight: 700;
-      font-family: inherit; cursor: pointer; transition: opacity .15s;
+      margin-top: 6px; padding: 11px; border: 1px solid #0073ea; border-radius: 8px;
+      background: #0073ea; color: #fff; font-size: 14px; font-weight: 600;
+      font-family: inherit; cursor: pointer; transition: background .15s;
     }
-    .cc-submit:hover:not(:disabled) { opacity: .88; }
-    .cc-submit:disabled { opacity: .4; cursor: not-allowed; }
+    .cc-submit:hover:not(:disabled) { background: #0060c2; }
+    .cc-submit:disabled { opacity: .45; cursor: not-allowed; }
   `],
 })
 export class ChangeCredentialsComponent {
