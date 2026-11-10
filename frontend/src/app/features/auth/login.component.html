@@ -97,7 +97,6 @@
           @if (mode() === 'login' && role() === 'perito') {
             <p class="auth-hint">¿Olvidaste tu contraseña? Pídele a tu gestoría que te asigne una nueva.</p>
           } @else if (mode() === 'login' && role() === 'cliente') {
-            <p class="auth-hint">Si tu usuario es un teléfono y olvidaste la clave, pídesela de nuevo a tu gestoría.</p>
             <div class="forgot-row">
               <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña de correo?</button>
             </div>
