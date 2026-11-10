@@ -1744,22 +1744,28 @@ select.client-wallet-input option {
   align-items: center;
   gap: 6px;
   max-width: calc(100% - 16px);
-  padding: 5px 9px;
+  padding: 6px 10px;
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  backdrop-filter: blur(6px);
-  color: #ffffff;
+  background: #fff;
+  border: 1px solid #d6ebff;
+  box-shadow: 0 2px 8px rgba(50, 51, 56, 0.12);
+  color: var(--mon-primary);
   pointer-events: none;
 }
 
+.wdoc-vehicle-chip svg {
+  flex-shrink: 0;
+  color: var(--mon-primary);
+}
+
 .wdoc-vehicle-chip--personal {
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 10px;
+  background: #f7f8fa;
+  border-color: var(--mon-border);
+  color: var(--mon-muted);
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .wdoc-vehicle-chip-text {
@@ -1770,24 +1776,24 @@ select.client-wallet-input option {
 }
 
 .wdoc-vehicle-chip-text strong {
-  font-size: 11px;
-  font-weight: 600;
-  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mon-text) !important;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .wdoc-vehicle-chip-text em {
-  font-size: 10px;
+  font-size: 11px;
   font-style: normal;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #ffffff;
+  color: var(--mon-muted) !important;
 }
 
 .wdoc-card--vehicle .wdoc-preview {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: #d6ebff;
 }
 
 .wdoc-associate-panel {
