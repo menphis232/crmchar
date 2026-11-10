@@ -127,90 +127,55 @@
     @if (activeTab() === 'dashboard') {
       <div class="client-dashboard">
 
-        <section class="client-hero">
-          <div class="client-hero-inner">
-            <div class="client-hero-intro">
-              <div class="client-hero-avatar" aria-hidden="true">
-                @if (auth.user()?.avatar_url) {
-                  <img [src]="auth.user()?.avatar_url" [alt]="auth.user()?.name || 'Avatar'" />
-                } @else {
-                  <span>{{ initials(auth.user()?.name) }}</span>
-                }
-              </div>
-              <div class="client-hero-copy">
-                <span class="client-hero-eyebrow">{{ todayMexicoLabel() }}</span>
-                <h1 class="client-hero-title">¡Hola, {{ auth.user()?.name }}!</h1>
-                <p class="client-hero-sub">Gestiona tus trámites, vehículos y documentos desde un solo lugar.</p>
-              </div>
-            </div>
-            <div class="client-hero-stats">
-              <button type="button" class="client-stat-card" (click)="setTab('tramites'); closeDeal()">
-                <div class="client-stat-top">
-                  <span class="client-stat-num">{{ totalDeals() }}</span>
-                  <span class="client-stat-icon" aria-hidden="true">
-                    <svg lucideClipboardList [size]="20" [strokeWidth]="1.75"></svg>
-                  </span>
-                </div>
-                <span class="client-stat-label">Total trámites</span>
-              </button>
-              <button type="button" class="client-stat-card client-stat-card--active" (click)="setTab('tramites'); closeDeal()">
-                <div class="client-stat-top">
-                  <span class="client-stat-num">{{ activeDeals() }}</span>
-                  <span class="client-stat-icon" aria-hidden="true">
-                    <svg lucideClock [size]="20" [strokeWidth]="1.75"></svg>
-                  </span>
-                </div>
-                <span class="client-stat-label">En proceso</span>
-              </button>
-              <button type="button" class="client-stat-card client-stat-card--done" (click)="setTab('historial')">
-                <div class="client-stat-top">
-                  <span class="client-stat-num">{{ completedDeals() }}</span>
-                  <span class="client-stat-icon" aria-hidden="true">
-                    <svg lucideCheck [size]="20" [strokeWidth]="1.75"></svg>
-                  </span>
-                </div>
-                <span class="client-stat-label">Completados</span>
-              </button>
-            </div>
+        <div class="mon-home-head">
+          <div>
+            <p class="mon-home-date">{{ todayLabel() }}</p>
+            <h1 class="mon-home-greet">{{ greetingLabel() }}, {{ firstName() }}</h1>
           </div>
-        </section>
+        </div>
 
-        <nav class="client-quick-actions" aria-label="Accesos rápidos">
-          <button type="button" class="client-quick-btn" (click)="setTab('tramites'); closeDeal()">
-            <span class="client-quick-icon"><svg lucideClipboardList [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
-            <span class="client-quick-text">
-              <strong>Mis Trámites</strong>
-              <small>Seguimiento en vivo</small>
-            </span>
-            @if (activeDeals() > 0) {
-              <span class="client-quick-badge">{{ activeDeals() }}</span>
-            }
-          </button>
-          <button type="button" class="client-quick-btn" (click)="setTab('vehiculos'); closeDeal()">
-            <span class="client-quick-icon"><svg lucideCar [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
-            <span class="client-quick-text">
-              <strong>Mis Vehículos</strong>
-              <small>Placas y engomado</small>
-            </span>
-            @if (vehicles().length > 0) {
-              <span class="client-quick-badge client-quick-badge--muted">{{ vehicles().length }}</span>
-            }
-          </button>
-          <button type="button" class="client-quick-btn" (click)="setTab('billetera'); closeDeal()">
-            <span class="client-quick-icon"><svg lucideWallet [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
-            <span class="client-quick-text">
+        <div class="dash-card">
+          <h2 class="card-title">Accesos</h2>
+          <nav class="mon-recent-grid client-access-grid" aria-label="Accesos rápidos">
+            <button type="button" class="mon-recent-card" (click)="setTab('tramites'); closeDeal()">
+              <strong>Mis trámites</strong>
+              <span>Seguimiento en vivo</span>
+              @if (activeDeals() > 0) {
+                <div class="mon-recent-foot">{{ activeDeals() }} en proceso</div>
+              }
+            </button>
+            <button type="button" class="mon-recent-card" (click)="setTab('vehiculos'); closeDeal()">
+              <strong>Mis vehículos</strong>
+              <span>Placas y engomado</span>
+              @if (vehicles().length > 0) {
+                <div class="mon-recent-foot">{{ vehicles().length }} registrados</div>
+              }
+            </button>
+            <button type="button" class="mon-recent-card" (click)="setTab('billetera'); closeDeal()">
               <strong>Billetera</strong>
-              <small>Documentos personales</small>
-            </span>
-          </button>
-          <button type="button" class="client-quick-btn" (click)="setTab('facturas'); closeDeal()">
-            <span class="client-quick-icon"><svg lucideReceipt [size]="20" [strokeWidth]="2" aria-hidden="true"></svg></span>
-            <span class="client-quick-text">
+              <span>Documentos personales</span>
+            </button>
+            <button type="button" class="mon-recent-card" (click)="setTab('facturas'); closeDeal()">
               <strong>Comprobantes</strong>
-              <small>Facturas de pago</small>
-            </span>
+              <span>Facturas de pago</span>
+            </button>
+          </nav>
+        </div>
+
+        <div class="stats-grid">
+          <button type="button" class="stat-box" (click)="setTab('tramites'); closeDeal()">
+            <div class="stat-num">{{ totalDeals() }}</div>
+            <div class="stat-label">Total trámites</div>
           </button>
-        </nav>
+          <button type="button" class="stat-box" (click)="setTab('tramites'); closeDeal()">
+            <div class="stat-num">{{ activeDeals() }}</div>
+            <div class="stat-label">En proceso</div>
+          </button>
+          <button type="button" class="stat-box" (click)="setTab('historial')">
+            <div class="stat-num">{{ completedDeals() }}</div>
+            <div class="stat-label">Completados</div>
+          </button>
+        </div>
 
         @if (blockedVehiclesToday().length) {
           <div class="dash-card hnc-alert-card">

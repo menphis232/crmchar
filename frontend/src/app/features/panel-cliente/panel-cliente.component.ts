@@ -35,7 +35,6 @@ import {
   LucideChevronLeft,
   LucideChevronRight,
   LucideClipboardList,
-  LucideClock,
   LucideFileText,
   LucideFolderOpen,
   LucideHistory,
@@ -86,7 +85,7 @@ const CLIENT_TABS: ClientTab[] = [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
     PanelUserMenuComponent, ThemeSwitchComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
-    LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck, LucideClock,
+    LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck,
     LucideMessageCircle, LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
     LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
@@ -265,6 +264,33 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   blockedVehiclesToday = computed(() => this.vehicleCirculation().filter(x => x.blockedToday));
 
   todayMexicoLabel = computed(() => getMexicoCityCalendar().weekdayLabel);
+
+  firstName(): string {
+    const full = (this.auth.user()?.name || 'Usuario').trim();
+    return full.split(/\s+/)[0] || 'Usuario';
+  }
+
+  todayLabel(): string {
+    return new Intl.DateTimeFormat('es-MX', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'America/Mexico_City',
+    }).format(new Date());
+  }
+
+  greetingLabel(): string {
+    const hour = Number(
+      new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        hour12: false,
+        timeZone: 'America/Mexico_City',
+      }).format(new Date()),
+    );
+    if (hour < 12) return 'Buenos días';
+    if (hour < 19) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
 
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
