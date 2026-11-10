@@ -1,46 +1,58 @@
-<nav class="dash-nav client-dash-nav">
-  <div class="dash-nav-side dash-nav-side--left">
-    @if (canGoBack()) {
-      <button
-        type="button"
-        class="mobile-only client-nav-back"
-        (click)="goBack()"
-        aria-label="Volver atrás"
-      >
-        <svg lucideArrowLeft [size]="22" [strokeWidth]="2.25" aria-hidden="true"></svg>
-      </button>
+<nav class="dash-nav">
+  <button
+    type="button"
+    class="mon-sidebar-toggle"
+    (click)="toggleSidebar()"
+    [attr.aria-label]="isMobileMenuOpen() || !sidebarCollapsed() ? 'Cerrar menú' : 'Abrir menú'"
+    [attr.aria-expanded]="isMobileMenuOpen() || !sidebarCollapsed()"
+    [title]="isMobileMenuOpen() ? 'Cerrar menú' : 'Menú'"
+  >
+    @if (isMobileMenuOpen()) {
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    } @else {
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M3 12h18M3 6h18M3 18h18"/>
+      </svg>
     }
-  </div>
+  </button>
 
   <button type="button" class="dash-logo client-home-logo" (click)="goHome()" aria-label="Ir al dashboard">
     <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
   </button>
 
-  <div class="dash-nav-side dash-nav-side--right dash-user">
-    <app-theme-switch />
-    <button class="mobile-only mobile-menu-toggle" (click)="isMobileMenuOpen.set(!isMobileMenuOpen())" aria-label="Menú">
-      @if (!isMobileMenuOpen()) {
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-      } @else {
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      }
+  @if (canGoBack()) {
+    <button
+      type="button"
+      class="mobile-only client-nav-back"
+      (click)="goBack()"
+      aria-label="Volver atrás"
+    >
+      <svg lucideArrowLeft [size]="20" [strokeWidth]="2.25" aria-hidden="true"></svg>
     </button>
-    <div class="desktop-only">
-      <app-panel-user-menu
-        [name]="auth.user()?.name || ''"
-        [email]="auth.user()?.email || ''"
-        [initials]="initials(auth.user()?.name)"
-        [avatarUrl]="auth.user()?.avatar_url || ''"
-        [showName]="true"
-        [showBilling]="false"
-        (logout)="logout()"
-      />
-    </div>
+  }
+
+  <div class="dash-user">
+    <app-theme-switch />
+    <app-panel-user-menu
+      [name]="auth.user()?.name || ''"
+      [email]="auth.user()?.email || ''"
+      [initials]="initials(auth.user()?.name)"
+      [avatarUrl]="auth.user()?.avatar_url || ''"
+      [showName]="false"
+      [showBilling]="false"
+      (logout)="logout()"
+    />
   </div>
 </nav>
 
+@if (isMobileMenuOpen()) {
+  <button type="button" class="mon-sidebar-backdrop" aria-label="Cerrar menú" (click)="isMobileMenuOpen.set(false)"></button>
+}
+
 <div class="dash-container">
-  <aside class="dash-sidebar client-sidebar" [class.mobile-open]="isMobileMenuOpen()">
+  <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
     <a class="datta-brand" href="javascript:void(0)" (click)="goHome()">
       <span class="datta-brand-mark">
         <img [src]="tvmLogo" alt="" />
@@ -48,20 +60,6 @@
       <span class="datta-brand-title">{{ auth.user()?.name || 'Mi panel' }}</span>
     </a>
     <p class="datta-nav-caption">Menú</p>
-    <div class="mobile-only sidebar-user-section">
-      <app-panel-user-menu
-        [name]="auth.user()?.name || ''"
-        [email]="auth.user()?.email || ''"
-        [initials]="initials(auth.user()?.name)"
-        [avatarUrl]="auth.user()?.avatar_url || ''"
-        [showBilling]="false"
-        (logout)="logout()"
-      />
-      <div style="flex:1; min-width:0;">
-        <strong>{{ auth.user()?.name }}</strong>
-        <div class="sidebar-role-label">Cliente</div>
-      </div>
-    </div>
 
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'ajustes'" (click)="setTab('ajustes')">
       <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>

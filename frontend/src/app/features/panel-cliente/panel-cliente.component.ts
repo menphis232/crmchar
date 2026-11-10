@@ -1,5 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed, effect, NgZone, ViewChild, ElementRef } from '@angular/core';
-import { ColorModeService } from '../../core/color-mode.service';
+import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
@@ -79,7 +78,10 @@ const CLIENT_TABS: ClientTab[] = [
 
 @Component({
   selector: 'app-panel-cliente',
-  host: { class: 'panel-datta' },
+  host: {
+    class: 'panel-datta',
+    '[class.sidebar-collapsed]': 'sidebarCollapsed()',
+  },
   standalone: true,
   imports: [
     CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
@@ -99,13 +101,6 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   readonly tvmLogo = TVM_LOGO_URL;
   /** Feed "Para ti" y Área de Conocimiento ocultos por ahora a pedido del negocio. */
   readonly showKnowledge = false;
-  private colorMode = inject(ColorModeService);
-  private darkBackgroundEffect = effect(() => {
-    if (this.colorMode.mode() === 'light') return;
-    document.documentElement.style.setProperty('--bg', '#000000');
-    document.documentElement.style.setProperty('--panel-bg', '#000000');
-    document.body.style.backgroundColor = '#000000';
-  });
   readonly walletCategories = [
     'INE / Identificación',
     'Licencia de conducir',
@@ -146,6 +141,21 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   activeTab = signal<ClientTab>('dashboard');
   isMobileMenuOpen = signal(false);
+  sidebarCollapsed = signal(
+    typeof localStorage !== 'undefined' && localStorage.getItem('crm_cliente_sidebar_collapsed') === '1'
+  );
+
+  toggleSidebar() {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 991px)').matches) {
+      this.isMobileMenuOpen.update((v) => !v);
+      return;
+    }
+    const next = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(next);
+    try {
+      localStorage.setItem('crm_cliente_sidebar_collapsed', next ? '1' : '0');
+    } catch { /* ignore */ }
+  }
   dealTab = signal<'chat' | 'docs' | 'factura'>('chat');
   /** Evita bucles al sincronizar tab/deal con la URL */
   private syncingFromUrl = false;

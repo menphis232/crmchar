@@ -1,46 +1,4 @@
-/* Tema oscuro — panel cliente (independiente de gestor / concesionaria) */
-
-:host {
-  display: block;
-  min-height: 100vh;
-  width: 100%;
-  background: #000 !important;
-  --client-surface: #000;
-  --client-surface-2: #000;
-  --text: #ffffff;
-  --mx-white: #ffffff;
-  --muted: #ffffff;
-  --brand-grey: #ffffff;
-  --bg: #000;
-  --surface: #000;
-  --border: rgba(255, 255, 255, 0.12);
-  --btn-primary-bg: transparent;
-  --btn-primary-color: #ffffff;
-  --btn-primary-border: #ffffff;
-  --btn-primary-hover-bg: #ffffff;
-  --btn-primary-hover-color: #000000;
-  --btn-primary-hover-border: #ffffff;
-  --btn-outline-bg: transparent;
-  --btn-outline-color: #ffffff;
-  --btn-outline-border: #ffffff;
-  --btn-outline-hover-bg: #ffffff;
-  --btn-outline-hover-color: #000000;
-  --btn-outline-hover-border: #ffffff;
-}
-
-.dash-nav-side {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.dash-nav-side--left {
-  justify-content: flex-start;
-}
-
-.dash-nav-side--right {
-  justify-content: flex-end;
-}
+/* Shell Monday: hereda panel-datta; aquí solo piezas propias del cliente */
 
 .client-home-logo {
   display: inline-flex;
@@ -56,119 +14,28 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   margin: 0;
   padding: 0;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: #fff;
+  border: 1px solid var(--mon-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--mon-text);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
-.client-nav-back:active {
-  background: rgba(255, 255, 255, 0.12);
+.client-nav-back:hover {
+  background: #f5f6f8;
+  border-color: var(--mon-primary);
+  color: var(--mon-primary);
 }
 
-@media (max-width: 900px) {
-  :host .client-dash-nav.dash-nav {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 8px;
-  }
-
-  :host .client-dash-nav .dash-nav-side--left {
-    justify-self: start;
-    min-width: 40px;
-    min-height: 40px;
-  }
-
-  :host .client-dash-nav .client-home-logo {
-    justify-self: center;
-    grid-column: 2;
-  }
-
-  :host .client-dash-nav .dash-nav-side--right {
-    justify-self: end;
-  }
-
+@media (max-width: 991px) {
   .client-nav-back.mobile-only {
     display: inline-flex !important;
   }
-}
-
-@media (min-width: 901px) {
-  :host .client-dash-nav.dash-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  :host .client-dash-nav .client-home-logo {
-    order: 0;
-    margin-right: auto;
-  }
-
-  :host .client-dash-nav .dash-nav-side--left {
-    display: none;
-  }
-}
-
-:host .dash-nav {
-  background: #000 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
-  position: relative;
-  z-index: 10;
-}
-
-.dash-container {
-  background: transparent !important;
-  flex: 1;
-  min-height: calc(100vh - var(--nav-h, 64px));
-  position: relative;
-  z-index: 1;
-}
-
-.dash-main {
-  background: transparent !important;
-}
-
-/* Sidebar cliente */
-.client-sidebar {
-  background: #000 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 0 !important;
-  padding: 14px 10px !important;
-}
-
-.client-sidebar .dash-link.active {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-left-color: #ffffff !important;
-  color: #fff !important;
-}
-
-.client-sidebar .dash-link:hover {
-  border-left-color: rgba(255, 255, 255, 0.55) !important;
-}
-
-.client-sidebar .kanban-count {
-  background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 999px;
-  font-size: 10px;
-  padding: 1px 7px;
-}
-
-.dash-link {
-  font-family: var(--f-display) !important;
-  font-size: 13px !important;
-  letter-spacing: 0.08em !important;
-  font-weight: 700 !important;
 }
 
 .dash-link-with-icon {
@@ -191,29 +58,6 @@
   opacity: 1;
 }
 
-.sidebar-role-label {
-  font-size: 11px;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-top: 2px;
-}
-
-.card-title,
-.card-title-with-icon {
-  font-family: var(--f-display) !important;
-  font-size: 20px !important;
-  letter-spacing: 0.08em !important;
-  font-weight: 400 !important;
-  color: #ffffff !important;
-}
-
-.card-desc {
-  font-family: var(--f-display) !important;
-  font-size: 14px !important;
-  color: #ffffff !important;
-}
-
 .card-title-with-icon {
   display: flex;
   align-items: center;
@@ -223,45 +67,6 @@
 .card-title-icon {
   flex-shrink: 0;
   opacity: 0.92;
-}
-
-.dash-card {
-  background: #000 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-top: 2px solid rgba(255, 255, 255, 0.28) !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
-
-.dash-container,
-.dash-main {
-  font-family: var(--f-display) !important;
-  font-size: 14px !important;
-  color: #ffffff;
-}
-
-.stat-box {
-  background: #000 !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-top: 2px solid rgba(255, 255, 255, 0.30) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
-  overflow: hidden !important;
-  min-width: 0 !important;
-}
-
-.stat-box:hover {
-  border-top-color: rgba(255, 255, 255, 0.55) !important;
-  transform: translateY(-3px);
-}
-
-.stat-num {
-  color: #ffffff !important;
-}
-
-.stat-label {
-  color: #ffffff !important;
-  letter-spacing: 0.14em !important;
 }
 
 .client-stat-click {
@@ -759,18 +564,17 @@
   padding: 0;
   border: none;
   background: none;
-  color: #ffffff;
+  color: var(--mon-primary);
   font-family: var(--f-ui);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
-  transition: color 0.2s;
 }
 
 .client-back-link:hover {
-  color: #fff;
+  color: #0060c2;
 }
 
 .client-detail {
