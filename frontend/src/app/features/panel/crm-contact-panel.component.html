@@ -5,7 +5,8 @@
     </div>
     <p class="contact-loading">Cargando ficha del cliente…</p>
   </div>
-} @else if (data(); as c360) {
+} @else if (data()) {
+  @if (data(); as c360) {
   <div class="deal-page contact-page">
     <div class="deal-page-toolbar">
       <button type="button" class="deal-back-btn" (click)="closed.emit()">← Volver a contactos</button>
@@ -332,5 +333,6 @@
         </div>
       </div>
     </div>
+  }
   }
 }

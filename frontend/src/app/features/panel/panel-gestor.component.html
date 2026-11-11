@@ -180,9 +180,9 @@
         (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
         (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
       />
-    } @else if (selectedContactId(); as contactId) {
+    } @else if (selectedContactId()) {
       <app-crm-contact-panel
-        [contactId]="contactId"
+        [contactId]="selectedContactId()"
         [stageLabels]="crmDashboard()?.stageLabels ?? {}"
         (closed)="selectedContactId.set(null)"
         (openDeal)="openDeal($event); setTab('pipeline')"
