@@ -200,13 +200,21 @@ export async function generateQuotePdf(deal, quote, orgUser, res) {
       doc.fillColor(BLACK).fontSize(20).text('COTIZACIÓN FORMAL', { align: 'left' });
       
       doc.moveDown(0.5);
-      const quoteDate = new Date(quote.created_at).toLocaleDateString('es-MX');
-      const validUntil = new Date(quote.valid_until).toLocaleDateString('es-MX');
+      const createdAt = quote.created_at ? new Date(quote.created_at) : new Date();
+      const validAt = quote.valid_until ? new Date(quote.valid_until) : new Date();
+      const quoteDate = Number.isNaN(createdAt.getTime())
+        ? new Date().toLocaleDateString('es-MX')
+        : createdAt.toLocaleDateString('es-MX');
+      const validUntil = Number.isNaN(validAt.getTime())
+        ? quoteDate
+        : validAt.toLocaleDateString('es-MX');
+      const folioRaw = String(quote.id || 'cotizacion');
+      const folio = (folioRaw.includes('-') ? folioRaw.split('-').pop() : folioRaw).toUpperCase();
       
       doc
         .fontSize(10)
         .fillColor(GRAY)
-        .text(`Folio: ${quote.id.split('-')[0].toUpperCase()}`)
+        .text(`Folio: C-${folio}`)
         .text(`Fecha: ${quoteDate}`)
         .text(`Válida hasta: ${validUntil}`);
 

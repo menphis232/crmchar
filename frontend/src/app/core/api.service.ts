@@ -259,6 +259,21 @@ export class CrmService {
   downloadQuotePdf(quoteId: string) {
     return this.http.get(`${this.base}/quotes/${quoteId}/pdf`, { responseType: 'blob' });
   }
+  downloadAdhocQuotePdf(data: {
+    clientName: string;
+    clientPhone?: string;
+    clientEmail?: string;
+    title: string;
+    total: number;
+    validDays?: number;
+    includes?: { text: string; checked: boolean }[];
+    requirements?: { text: string; checked: boolean }[];
+    bonus?: { text: string; checked: boolean }[];
+    downPayment?: number;
+    termMonths?: number;
+  }) {
+    return this.http.post(`${this.base}/quotes/adhoc-pdf`, data, { responseType: 'blob' });
+  }
   sendQuote(quoteId: string) {
     return this.http.post<{ emailed: boolean; notified: boolean; pdfUrl: string; whatsappUrl: string | null }>(
       `${this.base}/quotes/${quoteId}/send`,

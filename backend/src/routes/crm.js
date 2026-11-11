@@ -1946,6 +1946,86 @@ router.patch('/quotes/:id', async (req, res) => {
   }
 });
 
+/** Cotización ad-hoc: PDF sin trámite ni contacto registrado (desde Plantilla PDF). */
+router.post('/quotes/adhoc-pdf', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const {
+      clientName,
+      clientPhone,
+      clientEmail,
+      title,
+      total,
+      validDays = 7,
+      includes,
+      requirements,
+      bonus,
+      downPayment,
+      termMonths,
+    } = req.body || {};
+
+    const name = String(clientName || '').trim();
+    const dealTitle = String(title || '').trim();
+    if (!name) return res.status(400).json({ error: 'Indica el nombre del cliente' });
+    if (!dealTitle) return res.status(400).json({ error: 'Indica el trámite o vehículo' });
+
+    const amount = Number(total);
+    if (!Number.isFinite(amount) || amount < 0) {
+      return res.status(400).json({ error: 'El monto no es válido' });
+    }
+
+    const days = Math.min(90, Math.max(1, Number(validDays) || 7));
+    const created = new Date();
+    const validUntil = new Date(created);
+    validUntil.setDate(validUntil.getDate() + days);
+
+    const toChecklist = (val) => {
+      if (!Array.isArray(val)) return [];
+      return val
+        .map((item) => {
+          if (typeof item === 'string') return { text: item.trim(), checked: true };
+          return { text: String(item?.text || '').trim(), checked: item?.checked !== false };
+        })
+        .filter((item) => item.text);
+    };
+
+    const user = await get('SELECT name, email, logo_url, pdf_settings, role FROM users WHERE id = ?', [uid]);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+    if (user.pdf_settings && typeof user.pdf_settings === 'string') {
+      try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch { /* ok */ }
+    }
+
+    const folio = uuid().slice(0, 8);
+    const deal = {
+      title: dealTitle,
+      contact_name: name,
+      contact_phone: String(clientPhone || '').trim(),
+      contact_email: String(clientEmail || '').trim(),
+      estimated_value: amount,
+      down_payment: Number(downPayment) || 0,
+      trade_in_value: 0,
+      term_months: Number(termMonths) || 0,
+    };
+    const quote = {
+      id: `adhoc-${folio}`,
+      created_at: created.toISOString(),
+      valid_until: validUntil.toISOString(),
+      total: amount,
+      items: [],
+      includes_list: toChecklist(includes),
+      requirements_list: toChecklist(requirements),
+      bonus_list: toChecklist(bonus),
+    };
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="cotizacion_${folio}.pdf"`);
+    await generateQuotePdf(deal, quote, user, res);
+  } catch (err) {
+    console.error(err);
+    if (!res.headersSent) res.status(500).json({ error: 'Error al generar la cotización PDF' });
+  }
+});
+
 router.get('/quotes/:id/pdf', async (req, res) => {
   try {
     const uid = req.orgId;

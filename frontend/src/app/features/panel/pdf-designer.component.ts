@@ -1,9 +1,9 @@
 import { Component, OnInit, signal, inject, computed } from '@angular/core';
 import { CdkDragDrop, moveItemInArray, DragDropModule } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DecimalPipe } from '@angular/common';
 import { AuthService } from '../../core/auth.service';
-import { UploadService } from '../../core/api.service';
+import { CrmService, UploadService } from '../../core/api.service';
 import { ColorPickerComponent } from '../../shared/color-picker.component';
 import { TVM_LOGO_URL } from '../../shared/brand.constants';
 import { ImageCropperModalComponent, CropResult } from '../../shared/image-cropper-modal.component';
@@ -12,6 +12,7 @@ import {
   DEFAULT_QUOTE_BONUS,
   DEFAULT_QUOTE_INCLUDES,
   DEFAULT_QUOTE_REQUIREMENTS,
+  checklistToPayload,
 } from '../../shared/quote-checklist.utils';
 
 export interface PdfBlockDef {
@@ -77,19 +78,28 @@ function normalizeLayout(layout: string[], role?: string): string[] {
   return filtered;
 }
 
+function linesToList(text: string): string[] {
+  return String(text || '')
+    .split(/\r?\n/)
+    .map((line) => line.replace(/^[\s•\-–—*✓]+\s*/, '').trim())
+    .filter(Boolean);
+}
+
 @Component({
   selector: 'app-pdf-designer',
   standalone: true,
-  imports: [DragDropModule, FormsModule, CommonModule, ColorPickerComponent, ImageCropperModalComponent],
+  imports: [DragDropModule, FormsModule, CommonModule, DecimalPipe, ColorPickerComponent, ImageCropperModalComponent],
   templateUrl: './pdf-designer.component.html',
   styleUrl: './pdf-designer.component.css'
 })
 export class PdfDesignerComponent implements OnInit {
   auth = inject(AuthService);
   uploadService = inject(UploadService);
+  crm = inject(CrmService);
 
   readonly tvmLogoUrl = TVM_LOGO_URL;
 
+  mode = signal<'crear' | 'diseno'>('crear');
   isGestor = computed(() => this.auth.user()?.role === 'gestor');
 
   blocks = signal<PdfBlockDef[]>([...CONCESIONARIA_BLOCKS]);
@@ -101,7 +111,21 @@ export class PdfDesignerComponent implements OnInit {
   readonly pdfLogoOutputMax = 512;
   isSaving = signal(false);
   isUploadingLogo = signal(false);
+  isDownloading = signal(false);
   message = signal('');
+
+  // Cotización ad-hoc (sin cliente registrado)
+  draftClientName = signal('');
+  draftClientPhone = signal('');
+  draftClientEmail = signal('');
+  draftTitle = signal('');
+  draftTotal = signal<number | null>(null);
+  draftValidDays = signal(7);
+  draftDownPayment = signal<number | null>(null);
+  draftTermMonths = signal<number | null>(null);
+  draftIncludesText = signal(DEFAULT_QUOTE_INCLUDES.join('\n'));
+  draftRequirementsText = signal(DEFAULT_QUOTE_REQUIREMENTS.join('\n'));
+  draftBonusText = signal(DEFAULT_QUOTE_BONUS.join('\n'));
 
   previewLogoUrl = computed(() => {
     return this.pdfLogoUrl()
@@ -115,12 +139,51 @@ export class PdfDesignerComponent implements OnInit {
     return 'tvm';
   });
 
-  readonly previewIncludes = DEFAULT_QUOTE_INCLUDES.slice(0, 5);
-  readonly previewRequirements = DEFAULT_QUOTE_REQUIREMENTS.slice(0, 4);
-  readonly previewBonus = DEFAULT_QUOTE_BONUS;
+  previewClientName = computed(() => this.draftClientName().trim() || 'Juan Pérez');
+  previewClientPhone = computed(() => this.draftClientPhone().trim() || '555-123-4567');
+  previewClientEmail = computed(() => this.draftClientEmail().trim() || 'juan@ejemplo.com');
+  previewTitle = computed(() =>
+    this.draftTitle().trim()
+      || (this.isGestor() ? 'Cambio de propietario — Morelos' : 'Volkswagen Jetta 2024 - Comfortline'),
+  );
+  previewTotal = computed(() => {
+    const n = Number(this.draftTotal());
+    return Number.isFinite(n) && n >= 0 ? n : (this.isGestor() ? 4500 : 350000);
+  });
+  previewDownPayment = computed(() => {
+    const n = Number(this.draftDownPayment());
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  });
+  previewTermMonths = computed(() => {
+    const n = Number(this.draftTermMonths());
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  });
+  previewFinanceAmount = computed(() =>
+    Math.max(0, this.previewTotal() - this.previewDownPayment()),
+  );
+  previewIncludes = computed(() => {
+    const lines = linesToList(this.draftIncludesText());
+    return lines.length ? lines : DEFAULT_QUOTE_INCLUDES.slice(0, 5);
+  });
+  previewRequirements = computed(() => {
+    const lines = linesToList(this.draftRequirementsText());
+    return lines.length ? lines : DEFAULT_QUOTE_REQUIREMENTS.slice(0, 4);
+  });
+  previewBonus = computed(() => {
+    const lines = linesToList(this.draftBonusText());
+    return lines.length ? lines : DEFAULT_QUOTE_BONUS;
+  });
+  previewFolio = computed(() => 'C-BORRADOR');
+  previewDate = computed(() => new Date().toLocaleDateString('es-MX'));
+  previewValidUntil = computed(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + (Number(this.draftValidDays()) || 7));
+    return d.toLocaleDateString('es-MX');
+  });
 
   ngOnInit() {
     this.loadSettings();
+    this.loadQuoteTemplates();
   }
 
   loadSettings() {
@@ -152,6 +215,17 @@ export class PdfDesignerComponent implements OnInit {
     } else {
       this.footerText.set(defaultFooterForRole(user.role));
     }
+  }
+
+  loadQuoteTemplates() {
+    this.crm.getQuoteTemplates().subscribe({
+      next: (tpl) => {
+        if (tpl.includes?.length) this.draftIncludesText.set(tpl.includes.join('\n'));
+        if (tpl.requirements?.length) this.draftRequirementsText.set(tpl.requirements.join('\n'));
+        if (tpl.bonus?.length) this.draftBonusText.set(tpl.bonus.join('\n'));
+      },
+      error: () => { /* se quedan los defaults */ },
+    });
   }
 
   drop(event: CdkDragDrop<PdfBlockDef[]>) {
@@ -222,6 +296,78 @@ export class PdfDesignerComponent implements OnInit {
         this.isSaving.set(false);
         this.message.set('Error al guardar la plantilla');
       }
+    });
+  }
+
+  downloadAdhocPdf() {
+    const clientName = this.draftClientName().trim();
+    const title = this.draftTitle().trim();
+    const total = Number(this.draftTotal());
+
+    if (!clientName) {
+      this.message.set('Escribe el nombre del cliente para descargar.');
+      this.mode.set('crear');
+      return;
+    }
+    if (!title) {
+      this.message.set(this.isGestor() ? 'Escribe el trámite.' : 'Escribe el vehículo.');
+      this.mode.set('crear');
+      return;
+    }
+    if (!Number.isFinite(total) || total < 0) {
+      this.message.set('Indica un monto válido.');
+      this.mode.set('crear');
+      return;
+    }
+
+    const includes = checklistToPayload(
+      linesToList(this.draftIncludesText()).map((text, i) => ({ id: `i-${i}`, text, checked: true })),
+    );
+    const requirements = checklistToPayload(
+      linesToList(this.draftRequirementsText()).map((text, i) => ({ id: `r-${i}`, text, checked: true })),
+    );
+    const bonus = checklistToPayload(
+      linesToList(this.draftBonusText()).map((text, i) => ({ id: `b-${i}`, text, checked: true })),
+    );
+
+    this.isDownloading.set(true);
+    this.message.set('');
+    this.crm.downloadAdhocQuotePdf({
+      clientName,
+      clientPhone: this.draftClientPhone().trim() || undefined,
+      clientEmail: this.draftClientEmail().trim() || undefined,
+      title,
+      total,
+      validDays: Number(this.draftValidDays()) || 7,
+      includes: this.isGestor() ? includes : undefined,
+      requirements: this.isGestor() ? requirements : undefined,
+      bonus: this.isGestor() ? bonus : undefined,
+      downPayment: !this.isGestor() ? (Number(this.draftDownPayment()) || 0) : undefined,
+      termMonths: !this.isGestor() ? (Number(this.draftTermMonths()) || 0) : undefined,
+    }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `cotizacion-${clientName.replace(/\s+/g, '-').slice(0, 24)}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.isDownloading.set(false);
+        this.message.set('PDF descargado. Ya lo puedes enviar por WhatsApp o correo.');
+        setTimeout(() => this.message.set(''), 4000);
+      },
+      error: async (err) => {
+        this.isDownloading.set(false);
+        let msg = 'No se pudo generar el PDF';
+        try {
+          const text = await err?.error?.text?.();
+          if (text) {
+            const parsed = JSON.parse(text);
+            if (parsed?.error) msg = parsed.error;
+          }
+        } catch { /* ignore */ }
+        this.message.set(msg);
+      },
     });
   }
 }
