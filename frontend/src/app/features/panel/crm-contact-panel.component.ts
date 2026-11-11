@@ -306,6 +306,113 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       max-width: 100%;
       border-radius: 8px;
     }
+    .mon-access-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      background: rgba(50, 51, 56, 0.45);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .mon-access-modal {
+      position: relative;
+      width: min(440px, 100%);
+      background: #fff;
+      border: 1px solid #e6e9ef;
+      border-radius: 12px;
+      padding: 28px 24px 22px;
+      box-shadow: 0 16px 48px rgba(50, 51, 56, 0.18);
+      color: #323338;
+      font-family: 'Figtree', system-ui, sans-serif;
+    }
+    .mon-access-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+    }
+    .mon-access-eyebrow {
+      margin: 0 0 6px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #9ca0ad;
+    }
+    .mon-access-title {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 700;
+      color: #323338;
+    }
+    .mon-access-desc {
+      margin: 0 0 16px;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #676879;
+    }
+    .mon-access-creds {
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      background: #f7f8fa;
+      border: 1px solid #e6e9ef;
+      border-radius: 10px;
+    }
+    .mon-access-row { display: grid; gap: 2px; }
+    .mon-access-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #676879;
+    }
+    .mon-access-value { font-size: 16px; color: #323338; font-weight: 700; }
+    .mon-access-value--mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: 0.04em;
+    }
+    .mon-access-hint {
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #676879;
+    }
+    .mon-access-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .mon-access-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 14px;
+      border: 1px solid #c5c7d0;
+      border-radius: 8px;
+      background: #fff;
+      color: #323338;
+      font-family: 'Figtree', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .mon-access-btn:hover:not(:disabled) { border-color: #0073ea; color: #0073ea; }
+    .mon-access-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .mon-access-btn--primary {
+      background: #0073ea;
+      border-color: #0073ea;
+      color: #fff;
+    }
+    .mon-access-btn--primary:hover:not(:disabled) {
+      background: #0060c2;
+      border-color: #0060c2;
+      color: #fff;
+    }
   `],
 })
 export class CrmContactPanelComponent {
@@ -319,6 +426,14 @@ export class CrmContactPanelComponent {
   data = signal<CrmContact360 | null>(null);
   loading = signal(false);
   isSaving = signal(false);
+  isCreatingAccess = signal(false);
+  clientAccessNotice = signal<{
+    created: boolean;
+    login: string;
+    password?: string | null;
+    emailed?: boolean;
+    whatsappUrl?: string | null;
+  } | null>(null);
   isAddingVehicle = signal(false);
   uploadingVehicleId = signal<string | null>(null);
   previewDoc = signal<CrmContactVehicleDocument | null>(null);
@@ -421,6 +536,34 @@ export class CrmContactPanelComponent {
         this.toast.error('Error al guardar el cliente');
       },
     });
+  }
+
+  createClientAccess(reset = false) {
+    const id = this.contactId();
+    if (!id) return;
+    this.isCreatingAccess.set(true);
+    this.crmService.createContactClientAccess(id, reset).subscribe({
+      next: (access) => {
+        this.isCreatingAccess.set(false);
+        this.clientAccessNotice.set(access);
+      },
+      error: (e) => {
+        this.isCreatingAccess.set(false);
+        this.toast.error(e.error?.error || 'No se pudo crear el usuario');
+      },
+    });
+  }
+
+  copyClientAccess() {
+    const access = this.clientAccessNotice();
+    if (!access) return;
+    const lines = [`Usuario: ${access.login}`];
+    if (access.password) lines.push(`Contraseña: ${access.password}`);
+    lines.push('Portal: https://central.tramitesvehicularesdemexico.com/login/cliente');
+    navigator.clipboard?.writeText(lines.join('\n')).then(
+      () => this.toast.success('Clave copiada'),
+      () => this.toast.warning('No se pudo copiar. Anótala de la ventana.'),
+    );
   }
 
   addVehicle() {

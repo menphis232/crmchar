@@ -276,6 +276,17 @@ export class CrmService {
       whatsappUrl?: string | null;
     }>(`${this.base}/deals/${dealId}/client-access`, { reset });
   }
+  createContactClientAccess(contactId: string, reset = false) {
+    return this.http.post<{
+      created: boolean;
+      login: string;
+      password?: string | null;
+      phone?: string | null;
+      email?: string | null;
+      emailed?: boolean;
+      whatsappUrl?: string | null;
+    }>(`${this.base}/contacts/${contactId}/client-access`, { reset });
+  }
 
   // Phase 3.2: Documents
   getDocuments(dealId: string) {

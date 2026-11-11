@@ -146,12 +146,6 @@
                 WhatsApp
               </a>
             }
-            @if (!isConcesionaria()) {
-              <button type="button" class="deal-outline-btn" style="margin-top:8px;align-self:flex-start;" (click)="createClientAccess(false)" [disabled]="isCreatingAccess()">
-                {{ isCreatingAccess() ? 'Preparando…' : 'Usuario / clave del cliente' }}
-              </button>
-              <p class="card-desc" style="margin:6px 0 0;max-width:36ch;">Si no mandaste la clave al crear el trámite, aquí puedes ver el usuario o generar una nueva.</p>
-            }
           </div>
         </div>
 

@@ -1271,6 +1271,45 @@ router.patch('/contacts/:id', async (req, res) => {
   }
 });
 
+router.post('/contacts/:id/client-access', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id, name, email, phone, whatsapp FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+
+    const phoneRaw = contact.phone || contact.whatsapp || '';
+    if (phoneRaw && !normalizeMxPhone(phoneRaw) && !contact.email) {
+      return res.status(400).json({ error: 'El teléfono del cliente debe tener 10 dígitos' });
+    }
+
+    const latestDeal = await get(
+      'SELECT title FROM crm_deals WHERE contact_id = ? AND user_id = ? ORDER BY updated_at DESC LIMIT 1',
+      [contact.id, req.orgId],
+    );
+    const gestor = await get('SELECT name FROM gestores WHERE user_id = ?', [req.orgId]);
+    const access = await ensureClientUser({
+      clientName: contact.name,
+      clientEmail: contact.email,
+      clientPhone: phoneRaw,
+      gestorUserId: req.orgId,
+      gestorName: gestor?.name,
+      serviceName: latestDeal?.title || 'Trámite vehicular',
+      resetPassword: !!req.body?.reset,
+    });
+    if (!access) {
+      return res.status(400).json({ error: 'Agrega un teléfono de 10 dígitos o un correo para crear el usuario' });
+    }
+    res.json(access);
+  } catch (err) {
+    console.error('contact client-access:', err);
+    res.status(500).json({ error: err.message || 'No se pudo crear el acceso del cliente' });
+  }
+});
+
 router.delete('/contacts/:id', async (req, res) => {
   try {
     if (isConcesionariaStaff(req.user)) {

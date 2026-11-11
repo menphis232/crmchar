@@ -71,6 +71,18 @@
         </div>
 
         <div class="deal-section">
+          <h4>Usuario y clave del portal</h4>
+          <p class="card-desc">
+            Aquí creas o regeneras el acceso del cliente. La clave no se puede consultar después: si no la enviaste, genera una nueva y mándala por WhatsApp.
+          </p>
+          <div class="contact-actions">
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="createClientAccess(false)" [disabled]="isCreatingAccess()">
+              {{ isCreatingAccess() ? 'Preparando…' : 'Usuario / clave del cliente' }}
+            </button>
+          </div>
+        </div>
+
+        <div class="deal-section">
           <h4>Vehículos ({{ vehicleCount() }})</h4>
           <p class="card-desc">Placas, estado y color de engomado para saber cuándo les toca verificar.</p>
 
@@ -335,4 +347,53 @@
     </div>
   }
   }
+}
+
+@if (clientAccessNotice(); as access) {
+  <div class="mon-access-overlay" (click)="clientAccessNotice.set(null)">
+    <div class="mon-access-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <button type="button" class="deal-panel-close mon-access-close" (click)="clientAccessNotice.set(null)" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="mon-access-eyebrow">Portal del cliente</p>
+      <h3 class="mon-access-title">Usuario y clave</h3>
+      <p class="mon-access-desc">
+        @if (access.created) {
+          Cuenta nueva. Copia la clave o ábrela en WhatsApp para mandársela.
+        } @else if (access.password) {
+          Clave nueva. La anterior ya no sirve.
+        } @else {
+          Este cliente ya tenía usuario. La clave no cambió.
+        }
+        @if (access.emailed) { También se envió por correo. }
+      </p>
+      <div class="mon-access-creds">
+        <div class="mon-access-row">
+          <span class="mon-access-label">Usuario</span>
+          <strong class="mon-access-value">{{ access.login }}</strong>
+        </div>
+        @if (access.password) {
+          <div class="mon-access-row">
+            <span class="mon-access-label">Contraseña</span>
+            <strong class="mon-access-value mon-access-value--mono">{{ access.password }}</strong>
+          </div>
+        }
+      </div>
+      <p class="mon-access-hint">
+        La contraseña no se puede consultar después. Si no la enviaste, pulsa <strong>Nueva clave</strong> aquí mismo.
+      </p>
+      <div class="mon-access-actions">
+        <button type="button" class="mon-access-btn" (click)="copyClientAccess()">Copiar</button>
+        @if (!access.password) {
+          <button type="button" class="mon-access-btn" (click)="createClientAccess(true)" [disabled]="isCreatingAccess()">
+            {{ isCreatingAccess() ? 'Generando…' : 'Nueva clave' }}
+          </button>
+        }
+        @if (access.whatsappUrl) {
+          <a class="mon-access-btn mon-access-btn--primary" [href]="access.whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
+        }
+        <button type="button" class="mon-access-btn" (click)="clientAccessNotice.set(null)">Cerrar</button>
+      </div>
+    </div>
+  </div>
 }

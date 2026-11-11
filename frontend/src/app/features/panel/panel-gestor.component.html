@@ -1533,13 +1533,13 @@
       </div>
 
       <p class="mon-access-hint">
-        La contraseña no se puede consultar después (va cifrada). Si cierras sin enviarla, abre el trámite y usa
-        <strong>Usuario / clave del cliente</strong> → <strong>Nueva clave</strong>.
+        La contraseña no se puede consultar después (va cifrada). Si cierras sin enviarla, ve a
+        <strong>Contactos</strong>, abre al cliente y usa <strong>Usuario / clave del cliente</strong> → <strong>Nueva clave</strong>.
       </p>
 
       <div class="mon-access-actions">
         <button type="button" class="mon-access-btn" (click)="copyClientAccess()">Copiar</button>
-        @if (!access.password && access.dealId) {
+        @if (!access.password && access.contactId) {
           <button type="button" class="mon-access-btn" (click)="regenerateClientAccess()" [disabled]="regeneratingClientAccess()">
             {{ regeneratingClientAccess() ? 'Generando…' : 'Nueva clave' }}
           </button>
