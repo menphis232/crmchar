@@ -1417,28 +1417,37 @@ export class CrmDealPanelComponent implements OnDestroy {
         error: () => {},
       });
     }
-    this.crmService.getDeal(id).subscribe(d => {
-      this.deal.set(d);
-      this.estimatedValue = d.estimatedValue || 0;
-      this.internalNotes = d.internalNotes || '';
-      this.lostReason = d.lostReason || '';
-      this.assignedToModel = d.assignedTo || '';
-      this.peritoIdModel = d.peritoId || '';
-      if (this.quoteOpenDealId !== id) {
-        this.quoteOpenDealId = id;
-        this.dealView.set('resumen');
-        this.quoteOpen.set(d.paymentStatus !== 'paid');
-      }
+    this.crmService.getDeal(id).subscribe({
+      next: (d) => {
+        // Evita que una respuesta vieja pise el trámite recién abierto (qty>1 / clic rápido).
+        if (this.dealId() !== id) return;
+        this.deal.set(d);
+        this.estimatedValue = Number(d.estimatedValue) || 0;
+        this.internalNotes = d.internalNotes || '';
+        this.lostReason = d.lostReason || '';
+        this.assignedToModel = d.assignedTo || '';
+        this.peritoIdModel = d.peritoId || '';
+        if (this.quoteOpenDealId !== id) {
+          this.quoteOpenDealId = id;
+          this.dealView.set('resumen');
+          this.quoteOpen.set(d.paymentStatus !== 'paid');
+        }
 
-      this.loadDocuments(id);
-      this.loadMessages(id);
-      if (d.paymentStatus === 'paid' || this.paymentWatchDealId !== id) {
-        this.stopPaymentWatch();
-      }
-      if (!this.isConcesionaria()) {
-        this.loadQuote(id);
-        if (d.contact?.id) this.loadContactProfile(d.contact.id);
-      }
+        this.loadDocuments(id);
+        this.loadMessages(id);
+        if (d.paymentStatus === 'paid' || this.paymentWatchDealId !== id) {
+          this.stopPaymentWatch();
+        }
+        if (!this.isConcesionaria()) {
+          this.loadQuote(id);
+          if (d.contact?.id) this.loadContactProfile(d.contact.id);
+        }
+      },
+      error: () => {
+        if (this.dealId() !== id) return;
+        this.toast.error('No se pudo abrir el trámite');
+        this.closed.emit();
+      },
     });
   }
 

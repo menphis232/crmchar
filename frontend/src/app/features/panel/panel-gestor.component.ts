@@ -321,6 +321,16 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     return qty > 1 ? `Crear ${qty} trámites` : 'Crear trámite';
   }
 
+  get manualLeadTotalLabel(): string {
+    const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
+    const unit = Number(this.manualLead.estimatedValue);
+    if (!Number.isFinite(unit) || unit <= 0 || this.manualLead.estimatedValue === '') return '';
+    const total = unit * qty;
+    return qty > 1
+      ? `$${unit.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} × ${qty} = $${total.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} MXN`
+      : `$${unit.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} MXN`;
+  }
+
   constructor(
     public auth: AuthService,
     private gestoresService: GestoresService,
@@ -868,11 +878,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     }
     const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
     this.manualLead.quantity = qty;
-    this.savingManualLead.set(true);
 
-    const estimatedValue = this.manualLead.estimatedValue !== ''
-      ? Number(this.manualLead.estimatedValue)
-      : undefined;
+    const unitRaw = this.manualLead.estimatedValue === '' ? NaN : Number(this.manualLead.estimatedValue);
+    const estimatedValue = Number.isFinite(unitRaw) && unitRaw >= 0 ? unitRaw : undefined;
+    if (qty > 1 && (estimatedValue === undefined || estimatedValue <= 0)) {
+      this.toast.warning('Indica el precio unitario: se usará en cada trámite para poder registrar el pago.');
+      return;
+    }
+    this.savingManualLead.set(true);
     const baseTitle = this.manualLead.title.trim() || this.manualLead.serviceName.trim() || 'Trámite manual';
     const payloadBase = {
       clientName: this.manualLead.clientName.trim(),
@@ -887,7 +900,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
     const createOne = (index: number) => {
       const title = qty > 1 ? `${baseTitle} (${index}/${qty})` : baseTitle;
-      return this.crmService.createDeal({ ...payloadBase, title });
+      // Misma copia del payload por trámite (precio unitario independiente en cada uno).
+      return this.crmService.createDeal({ ...payloadBase, estimatedValue, title });
     };
 
     const run = async () => {

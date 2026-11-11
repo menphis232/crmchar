@@ -128,7 +128,7 @@
     }
   </aside>
 
-  <main class="dash-main" [class.is-deal-page]="!!selectedDealId()">
+  <main class="dash-main" [class.is-deal-page]="!!selectedDealId() || !!selectedContactId()">
     @if (selectedDealId(); as dealId) {
       <app-crm-deal-panel
         [dealId]="dealId"
@@ -145,11 +145,18 @@
         (deleted)="onDealDeleted()"
         (deliveryUploadDismissed)="promptDeliveryUploadDealId.set(null)"
         (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
-        (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
+        (openContact)="openClientContact($event)"
+      />
+    } @else if (selectedContactId()) {
+      <app-crm-contact-panel
+        [contactId]="selectedContactId()"
+        [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+        (closed)="selectedContactId.set(null)"
+        (openDeal)="openDeal($event)"
       />
     }
 
-    <div class="dash-main-flow" [hidden]="!!selectedDealId()">
+    <div class="dash-main-flow" [hidden]="!!selectedDealId() || !!selectedContactId()">
     @if (panelTheme().welcomeMessage) {
       <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
     }
@@ -287,21 +294,14 @@
           [deals]="deals()"
           [showValue]="true"
           [editable]="true"
-          (dealSelect)="selectedDealId.set($event.id)"
+          (dealSelect)="openDeal($event.id)"
+          (contactSelect)="openClientContact($event)"
           (stageChange)="onStageChange($event)"
           (stagesChange)="onStagesChange($event)"
           (dealDelete)="onDealDelete($event)"
         />
       </div>
 
-      @if (!selectedDealId() && selectedContactId()) {
-        <app-crm-contact-panel
-          [contactId]="selectedContactId()"
-          [stageLabels]="crm.stageLabels"
-          (closed)="selectedContactId.set(null)"
-          (openDeal)="openDeal($event)"
-        />
-      }
     }
 
     <!-- ── INVENTARIO ── -->

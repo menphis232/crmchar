@@ -328,6 +328,19 @@ export interface KanbanStage extends CrmStageConfig {}
       background: rgba(0, 115, 234, 0.04) !important;
     }
     .kanban-contact { color: #323338 !important; }
+    button.kanban-contact-btn {
+      color: #0073ea !important;
+      background: transparent !important;
+      border: none !important;
+      padding: 0 !important;
+      cursor: pointer !important;
+      text-align: left !important;
+      font: inherit !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      display: block !important;
+    }
+    button.kanban-contact-btn:hover { text-decoration: underline !important; }
     .kanban-meta, .kanban-days { color: #676879 !important; }
     .kanban-value { color: #323338 !important; font-weight: 600 !important; }
     .kanban-card-top strong { color: #323338 !important; }
@@ -390,6 +403,7 @@ export class CrmKanbanComponent {
   paymentStageEditable = input(false);
 
   dealSelect   = output<CrmDeal>();
+  contactSelect = output<string>();
   stageChange  = output<{ deal: CrmDeal; stage: string; fromDrag?: boolean }>();
   stagesChange = output<KanbanStage[]>();
   dealDelete   = output<CrmDeal>();
@@ -421,7 +435,10 @@ export class CrmKanbanComponent {
 
   constructor() {
     if (isPlatformBrowser(this.platformId)) {
-      this.isTouchDevice.set('ontouchstart' in window || navigator.maxTouchPoints > 0);
+      // Laptops táctiles reportan ontouchstart aunque usen mouse; pointer:coarse es más fiable.
+      const coarse = typeof window.matchMedia === 'function'
+        && window.matchMedia('(pointer: coarse)').matches;
+      this.isTouchDevice.set(coarse);
     }
     // Sync localStages from inputs whenever they change
     effect(() => {
@@ -683,7 +700,16 @@ export class CrmKanbanComponent {
   }
 
   onCardClickIfDesktop(deal: CrmDeal) {
-    if (!this.isTouchDevice()) this.onCardClick(deal);
+    // Siempre abrir: en táctil fino también; el botón "Ver detalle" sigue como refuerzo.
+    this.onCardClick(deal);
+  }
+
+  openContact(deal: CrmDeal, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const id = deal.contact?.id;
+    if (!id) return;
+    this.contactSelect.emit(id);
   }
 
   onSelectStage(deal: CrmDeal, event: Event) {

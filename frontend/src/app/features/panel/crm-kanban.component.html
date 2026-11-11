@@ -118,7 +118,16 @@
               </div>
             </div>
 
-            <span class="kanban-contact">{{ deal.contact?.name }}</span>
+            @if (deal.contact?.id) {
+              <button
+                type="button"
+                class="kanban-contact kanban-contact-btn"
+                title="Abrir ficha del cliente"
+                (click)="openContact(deal, $event)"
+              >{{ deal.contact?.name }}</button>
+            } @else {
+              <span class="kanban-contact">{{ deal.contact?.name }}</span>
+            }
 
             @if (deal.contact?.phone || deal.contact?.email) {
               <span class="kanban-meta">{{ deal.contact?.phone || deal.contact?.email }}</span>

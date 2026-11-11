@@ -535,12 +535,14 @@ export class CrmContactPanelComponent {
     this.data.set(null);
     this.crmService.getContact(id).subscribe({
       next: (d) => {
+        if (this.contactId() !== id) return;
         const payload = { ...d, vehicles: d.vehicles || [] };
         this.data.set(payload);
         this.syncFormFromContact(payload);
         this.loading.set(false);
       },
       error: () => {
+        if (this.contactId() !== id) return;
         this.loading.set(false);
         this.toast.error('No se pudo abrir la ficha del cliente');
         this.closed.emit();
