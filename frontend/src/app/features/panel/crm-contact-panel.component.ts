@@ -17,8 +17,98 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
   standalone: true,
   imports: [FormsModule, DatePipe, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
   templateUrl: './crm-contact-panel.component.html',
-  styleUrls: ['./panel-dashboard.css', './crm-side-panel.theme.css'],
+  styleUrls: ['./panel-dashboard.css'],
   styles: [`
+    :host {
+      display: block;
+      width: 100%;
+      min-width: 0;
+      --mon-primary: #0073ea;
+      --brand-black: #323338;
+      --brand-white: #ffffff;
+      --surface: #ffffff;
+      --muted: #676879;
+      --gold: #0073ea;
+      color-scheme: light;
+      font-family: 'Figtree', system-ui, sans-serif;
+      color: #323338;
+    }
+    .deal-page {
+      display: block;
+      width: 100%;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 0 48px;
+      box-sizing: border-box;
+    }
+    .deal-page-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 0 12px;
+    }
+    .deal-back-btn {
+      border: none;
+      background: transparent;
+      color: #0073ea;
+      font-family: 'Figtree', system-ui, sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+    .deal-back-btn:hover { text-decoration: underline; }
+    .contact-loading {
+      margin: 24px 0;
+      color: #676879;
+      font-size: 14px;
+    }
+    .deal-panel {
+      position: static !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: #323338 !important;
+      overflow: visible !important;
+      display: block !important;
+      animation: none !important;
+      padding: 0 !important;
+    }
+    .deal-panel-header {
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
+      border-radius: 12px !important;
+      color: #323338 !important;
+    }
+    .deal-panel-eyebrow {
+      color: #676879 !important;
+      margin: 0 0 4px;
+    }
+    .deal-panel-header h3 { color: #323338 !important; }
+    .deal-panel-body {
+      background: transparent !important;
+      color: #323338 !important;
+      overflow: visible !important;
+      padding: 8px 0 0 !important;
+    }
+    .deal-section {
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
+      border-radius: 12px !important;
+      padding: 16px 18px !important;
+      margin-bottom: 12px !important;
+    }
+    .deal-section h4 {
+      color: #676879 !important;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px !important;
+    }
+    .card-desc { color: #676879 !important; }
     .contact-form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -32,20 +122,25 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       letter-spacing: 0.08em;
       text-transform: uppercase;
       margin-bottom: 4px;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
     }
     .contact-form-grid input,
     .contact-form-grid select,
     .contact-form-grid textarea {
       width: 100%;
       box-sizing: border-box;
+      background: #fff;
+      border: 1px solid #c5c7d0;
+      border-radius: 8px;
+      color: #323338;
+      padding: 8px 10px;
     }
     .vehicle-card {
-      border: 1px solid rgba(255,255,255,0.10);
+      border: 1px solid #e6e9ef;
       border-radius: 12px;
       padding: 12px;
       margin-bottom: 10px;
-      background: #141414;
+      background: #f7f8fa;
     }
     .vehicle-card-top {
       display: flex;
@@ -57,22 +152,23 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
     .vehicle-plate {
       font-weight: 700;
       letter-spacing: 0.06em;
-      color: var(--gold);
+      color: #0073ea;
     }
     .vehicle-mmy {
       margin: 0;
       font-size: 13px;
-      color: rgba(255,255,255,0.7);
+      color: #676879;
     }
     .verification-badge {
       font-size: 11px;
       padding: 3px 8px;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.15);
+      border: 1px solid #c5c7d0;
+      background: #fff;
     }
-    .verification-badge.due { border-color: rgba(255,180,80,0.5); color: #ffc966; }
-    .verification-badge.soon { border-color: rgba(200,169,74,0.5); color: var(--gold); }
-    .verification-badge.overdue { border-color: rgba(255,100,100,0.5); color: #ff9b9b; }
+    .verification-badge.due { border-color: #fdab3d; color: #c87d0c; }
+    .verification-badge.soon { border-color: #0073ea; color: #0073ea; }
+    .verification-badge.overdue { border-color: #e2445c; color: #e2445c; }
     .vehicle-form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -80,7 +176,17 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
     }
     @media (max-width: 640px) { .vehicle-form-grid { grid-template-columns: 1fr; } }
     .vehicle-form-grid .full { grid-column: 1 / -1; }
-    .vehicle-form-grid input[type="date"] { color-scheme: dark; }
+    .vehicle-form-grid input,
+    .vehicle-form-grid select,
+    .vehicle-form-grid textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #fff;
+      border: 1px solid #c5c7d0;
+      border-radius: 8px;
+      color: #323338;
+      padding: 8px 10px;
+    }
     .engomado-dot {
       display: inline-block;
       width: 10px;
@@ -88,7 +194,7 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       border-radius: 50%;
       margin-right: 6px;
       vertical-align: middle;
-      border: 1px solid rgba(255,255,255,0.25);
+      border: 1px solid rgba(0,0,0,0.15);
     }
     .engomado-dot.amarillo { background: #f5d547; }
     .engomado-dot.rosa { background: #e879a8; }
@@ -99,14 +205,14 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
     .vehicle-docs {
       margin-top: 12px;
       padding-top: 12px;
-      border-top: 1px solid rgba(255,255,255,0.08);
+      border-top: 1px solid #e6e9ef;
     }
     .vehicle-docs h5 {
       margin: 0 0 8px;
       font-size: 11px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.45);
+      color: #676879;
     }
     .vehicle-doc-row {
       display: flex;
@@ -114,18 +220,18 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       align-items: center;
       gap: 8px;
       padding: 8px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
+      border-bottom: 1px solid #e6e9ef;
     }
     .vehicle-doc-row:last-child { border-bottom: none; }
     .vehicle-doc-name {
       flex: 1;
       min-width: 120px;
       font-size: 13px;
-      color: rgba(255,255,255,0.85);
+      color: #323338;
     }
     .vehicle-doc-label {
       font-size: 11px;
-      color: var(--gold);
+      color: #0073ea;
       display: block;
     }
     .vehicle-doc-actions {
@@ -174,6 +280,7 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      color: #fff;
     }
     .doc-preview-header {
       display: flex;
@@ -210,6 +317,7 @@ export class CrmContactPanelComponent {
   updated = output<void>();
 
   data = signal<CrmContact360 | null>(null);
+  loading = signal(false);
   isSaving = signal(false);
   isAddingVehicle = signal(false);
   uploadingVehicleId = signal<string | null>(null);
@@ -256,14 +364,28 @@ export class CrmContactPanelComponent {
     effect(() => {
       const id = this.contactId();
       if (id) this.load(id);
-      else this.data.set(null);
+      else {
+        this.data.set(null);
+        this.loading.set(false);
+      }
     });
   }
 
   private load(id: string) {
-    this.crmService.getContact(id).subscribe(d => {
-      this.data.set({ ...d, vehicles: d.vehicles || [] });
-      this.syncFormFromContact({ ...d, vehicles: d.vehicles || [] });
+    this.loading.set(true);
+    this.data.set(null);
+    this.crmService.getContact(id).subscribe({
+      next: (d) => {
+        const payload = { ...d, vehicles: d.vehicles || [] };
+        this.data.set(payload);
+        this.syncFormFromContact(payload);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.toast.error('No se pudo abrir la ficha del cliente');
+        this.closed.emit();
+      },
     });
   }
 
@@ -493,9 +615,4 @@ export class CrmContactPanelComponent {
     });
   }
 
-  onOverlayClick(event: MouseEvent) {
-    if ((event.target as HTMLElement).classList.contains('deal-panel-overlay')) {
-      this.closed.emit();
-    }
-  }
 }

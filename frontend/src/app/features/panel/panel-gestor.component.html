@@ -162,7 +162,7 @@
     </a>
   </aside>
 
-  <main class="dash-main" [class.is-deal-page]="!!selectedDealId()">
+  <main class="dash-main" [class.is-deal-page]="!!selectedDealId() || !!selectedContactId()">
     @if (selectedDealId(); as dealId) {
       <app-crm-deal-panel
         [dealId]="dealId"
@@ -180,9 +180,17 @@
         (shippingUploadDismissed)="promptShippingUploadDealId.set(null)"
         (openContact)="selectedContactId.set($event); selectedDealId.set(null)"
       />
+    } @else if (selectedContactId(); as contactId) {
+      <app-crm-contact-panel
+        [contactId]="contactId"
+        [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+        (closed)="selectedContactId.set(null)"
+        (openDeal)="openDeal($event); setTab('pipeline')"
+        (updated)="loadVerificationAlerts()"
+      />
     }
 
-    <div class="dash-main-flow" [hidden]="!!selectedDealId()">
+    <div class="dash-main-flow" [hidden]="!!selectedDealId() || !!selectedContactId()">
     @if (panelTheme().welcomeMessage) {
       <p class="panel-welcome">{{ panelTheme().welcomeMessage }}</p>
     }
@@ -1406,16 +1414,6 @@
     }
     </div><!-- /dash-main-flow -->
   </main>
-
-  @if (!selectedDealId() && selectedContactId(); as contactId) {
-    <app-crm-contact-panel
-      [contactId]="contactId"
-      [stageLabels]="crmDashboard()?.stageLabels ?? {}"
-      (closed)="selectedContactId.set(null)"
-      (openDeal)="openDeal($event); setTab('pipeline')"
-      (updated)="loadVerificationAlerts()"
-    />
-  }
 </div>
 
 @if (showManualLeadForm()) {

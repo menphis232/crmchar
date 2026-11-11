@@ -423,6 +423,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   openClientContact(contactId: string) {
     this.selectedDealId.set(null);
     this.selectedContactId.set(contactId);
+    if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   private scheduleAiInsights() {

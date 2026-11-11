@@ -1,7 +1,20 @@
-@if (data(); as c360) {
-  <div class="deal-panel-overlay" (click)="onOverlayClick($event)">
-    <div class="deal-panel contact-360" (click)="$event.stopPropagation()">
+@if (loading()) {
+  <div class="deal-page contact-page">
+    <div class="deal-page-toolbar">
+      <button type="button" class="deal-back-btn" (click)="closed.emit()">← Volver a contactos</button>
+    </div>
+    <p class="contact-loading">Cargando ficha del cliente…</p>
+  </div>
+} @else if (data(); as c360) {
+  <div class="deal-page contact-page">
+    <div class="deal-page-toolbar">
+      <button type="button" class="deal-back-btn" (click)="closed.emit()">← Volver a contactos</button>
+      <button type="button" class="deal-panel-close" (click)="closed.emit()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+    </div>
 
+    <div class="deal-panel contact-360">
       <div class="deal-panel-header">
         <div style="flex:1;min-width:0;">
           <p class="deal-panel-eyebrow">Ficha de cliente</p>
@@ -10,9 +23,6 @@
             {{ vehicleCount() }} auto{{ vehicleCount() === 1 ? '' : 's' }} registrado{{ vehicleCount() === 1 ? '' : 's' }}
           </p>
         </div>
-        <button type="button" class="deal-panel-close" (click)="closed.emit()" aria-label="Cerrar">
-          <svg lucideX [size]="18" aria-hidden="true"></svg>
-        </button>
       </div>
 
       <div class="deal-panel-body">
