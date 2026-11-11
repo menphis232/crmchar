@@ -201,7 +201,51 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
     .engomado-dot.rojo { background: #e74c3c; }
     .engomado-dot.verde { background: #27ae60; }
     .engomado-dot.azul { background: #3498db; }
-    .contact-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .contact-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+      align-items: center;
+    }
+    .contact-actions .deal-outline-btn,
+    .deal-panel .deal-outline-btn,
+    button.deal-outline-btn {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      min-height: 40px !important;
+      padding: 10px 16px !important;
+      box-sizing: border-box !important;
+      background: #fff !important;
+      color: #323338 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border: 1px solid #c5c7d0 !important;
+      border-radius: 8px !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+      line-height: 1.2 !important;
+      cursor: pointer !important;
+      white-space: nowrap;
+    }
+    .contact-actions .deal-outline-btn:hover:not(:disabled),
+    button.deal-outline-btn:hover:not(:disabled) {
+      background: #f5f6f8 !important;
+      border-color: #0073ea !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
+    }
+    .contact-actions .deal-outline-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    .contact-actions .btn-with-icon svg {
+      flex-shrink: 0;
+    }
     .vehicle-docs {
       margin-top: 12px;
       padding-top: 12px;

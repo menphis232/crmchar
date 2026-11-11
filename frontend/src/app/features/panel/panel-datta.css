@@ -998,6 +998,13 @@
 
 :host.panel-datta ::ng-deep .deal-outline-btn,
 :host.panel-datta ::ng-deep button.deal-outline-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  padding: 10px 16px !important;
+  box-sizing: border-box !important;
   background: #fff !important;
   color: var(--mon-text) !important;
   -webkit-text-fill-color: var(--mon-text) !important;
@@ -1005,6 +1012,9 @@
   border-radius: 8px !important;
   text-transform: none !important;
   letter-spacing: 0 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
 }
 
 :host.panel-datta ::ng-deep .deal-tab-hint,
