@@ -655,17 +655,18 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       display: flex !important;
       flex-direction: column !important;
       gap: 8px !important;
-      color: rgba(255,255,255,0.40) !important;
-      font-size: 11px !important;
-      letter-spacing: 0.16em !important;
+      color: #676879 !important;
+      font-size: 12px !important;
+      letter-spacing: 0.04em !important;
       text-transform: uppercase !important;
       font-weight: 700 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
     }
     .deal-payment-status strong {
-      font-family: var(--f-display) !important;
-      font-size: 14px !important;
-      letter-spacing: 0.10em !important;
-      font-weight: 800 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-size: 13px !important;
+      letter-spacing: 0.04em !important;
+      font-weight: 700 !important;
       display: inline-flex !important;
       align-items: center !important;
       gap: 6px !important;
@@ -675,34 +676,55 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       text-transform: uppercase !important;
     }
     .deal-payment-status strong.pending {
-      color: #fbbf24 !important;
-      background: rgba(251,191,36,0.10) !important;
-      border: 1px solid rgba(251,191,36,0.22) !important;
+      color: #c87d0c !important;
+      background: #fff8e6 !important;
+      border: 1px solid #fdab3d !important;
     }
     .deal-payment-status strong.paid {
-      color: #4ade80 !important;
-      background: rgba(74,222,128,0.10) !important;
-      border: 1px solid rgba(74,222,128,0.22) !important;
+      color: #037f4c !important;
+      background: #e6f6ef !important;
+      border: 1px solid #00c875 !important;
     }
     .deal-payment-status .btn-ghost.small,
     .deal-payment-status .btn-copy.small {
-      width: 100% !important;
+      display: inline-flex !important;
+      align-items: center !important;
       justify-content: center !important;
-      padding: 11px 18px !important;
-      font-size: 11px !important;
-      letter-spacing: 0.14em !important;
-      text-transform: uppercase !important;
-      border-radius: 999px !important;
-      color: rgba(255,255,255,0.80) !important;
-      border: 1px solid rgba(255,255,255,0.25) !important;
-      background: transparent !important;
-      font-family: var(--f-display) !important;
-      font-weight: 700 !important;
-    }
-    .deal-payment-status .btn-ghost.small:hover {
-      background: #e6e9ef !important;
+      gap: 8px !important;
+      width: 100% !important;
+      min-height: 42px !important;
+      padding: 10px 18px !important;
+      box-sizing: border-box !important;
+      font-size: 13px !important;
+      letter-spacing: 0 !important;
+      text-transform: none !important;
+      border-radius: 8px !important;
       color: #323338 !important;
-      border-color: #676879 !important;
+      -webkit-text-fill-color: #323338 !important;
+      border: 1px solid #c5c7d0 !important;
+      background: #fff !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+    }
+    .deal-payment-status .btn-ghost.small:hover:not(:disabled),
+    .deal-payment-status .btn-copy.small:hover:not(:disabled) {
+      background: #f5f6f8 !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
+      border-color: #0073ea !important;
+    }
+    .deal-payment-status .btn-copy.small {
+      background: #0073ea !important;
+      border-color: #0073ea !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
+    .deal-payment-status .btn-copy.small:hover:not(:disabled) {
+      background: #0060c2 !important;
+      border-color: #0060c2 !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
     }
     .deal-payment-link-box {
       margin-top: 14px !important;
@@ -712,8 +734,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       border-radius: 12px !important;
     }
     .deal-payment-link-label {
-      color: rgba(255,255,255,0.50) !important;
-      font-family: var(--f-display) !important;
+      color: #676879 !important;
+      font-family: 'Figtree', system-ui, sans-serif !important;
       font-size: 12px !important;
       margin-bottom: 10px !important;
     }
