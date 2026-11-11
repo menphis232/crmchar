@@ -211,7 +211,7 @@ app-gestor-showcase-gallery {
 .service-item--photo { padding: 14px 18px 14px 14px; align-items: center; }
 .service-photo {
   width: 120px;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
   object-fit: cover;
   border-radius: 8px;
   flex-shrink: 0;

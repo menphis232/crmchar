@@ -342,6 +342,36 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
   }
 });
 
+// /order debe ir antes de /:id para que Express no trate "order" como id
+router.put('/me/services/order', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const { order } = req.body;
+    if (!Array.isArray(order) || order.length === 0) {
+      return res.status(400).json({ error: 'Orden de servicios inválido.' });
+    }
+
+    const existing = await query('SELECT id FROM gestor_services WHERE gestor_id = ?', [row.id]);
+    const existingIds = new Set(existing.map(s => String(s.id)));
+    const uniqueOrder = [...new Set(order.map(id => String(id)))];
+    if (uniqueOrder.length !== existing.length || uniqueOrder.some(id => !existingIds.has(id))) {
+      return res.status(400).json({ error: 'La lista de servicios no coincide con tu catálogo.' });
+    }
+
+    for (let i = 0; i < uniqueOrder.length; i++) {
+      await run('UPDATE gestor_services SET sort_order = ? WHERE id = ? AND gestor_id = ?', [i, uniqueOrder[i], row.id]);
+    }
+
+    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
+    res.json({ ok: true, services });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al reordenar servicios' });
+  }
+});
+
 router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
@@ -373,35 +403,6 @@ router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiv
     });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar servicio' });
-  }
-});
-
-router.put('/me/services/order', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
-  try {
-    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
-    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
-
-    const { order } = req.body;
-    if (!Array.isArray(order) || order.length === 0) {
-      return res.status(400).json({ error: 'Orden de servicios inválido.' });
-    }
-
-    const existing = await query('SELECT id FROM gestor_services WHERE gestor_id = ?', [row.id]);
-    const existingIds = new Set(existing.map(s => s.id));
-    const uniqueOrder = [...new Set(order.map(id => String(id)))];
-    if (uniqueOrder.length !== existing.length || uniqueOrder.some(id => !existingIds.has(id))) {
-      return res.status(400).json({ error: 'La lista de servicios no coincide con tu catálogo.' });
-    }
-
-    for (let i = 0; i < uniqueOrder.length; i++) {
-      await run('UPDATE gestor_services SET sort_order = ? WHERE id = ? AND gestor_id = ?', [i, uniqueOrder[i], row.id]);
-    }
-
-    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
-    res.json({ ok: true, services });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al reordenar servicios' });
   }
 });
 
