@@ -68,13 +68,17 @@ export async function finalizeDealPayment(dealId, {
 
   const existingInvoice = await get('SELECT * FROM deal_invoices WHERE deal_id = ?', [dealId]);
   if (existingInvoice) {
-    if (deal.payment_status !== 'paid') {
+    const invoiceAmount = Number(existingInvoice.amount || deal.estimated_value || 0);
+    if (deal.payment_status !== 'paid' || (invoiceAmount > 0 && Number(deal.estimated_value || 0) !== invoiceAmount)) {
       if (shouldKeepStage) {
-        await run("UPDATE crm_deals SET payment_status = 'paid' WHERE id = ?", [dealId]);
+        await run(
+          "UPDATE crm_deals SET payment_status = 'paid', estimated_value = COALESCE(NULLIF(?, 0), estimated_value) WHERE id = ?",
+          [invoiceAmount, dealId],
+        );
       } else {
         await run(
-          "UPDATE crm_deals SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW() WHERE id = ?",
-          [dealId],
+          "UPDATE crm_deals SET payment_status = 'paid', estimated_value = COALESCE(NULLIF(?, 0), estimated_value), stage = 'completado', stage_changed_at = NOW() WHERE id = ?",
+          [invoiceAmount, dealId],
         );
       }
       const refreshed = await get('SELECT stage FROM crm_deals WHERE id = ?', [dealId]);
@@ -100,17 +104,18 @@ export async function finalizeDealPayment(dealId, {
   if (shouldKeepStage) {
     await run(
       `UPDATE crm_deals
-       SET payment_status = 'paid', mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
+       SET payment_status = 'paid', estimated_value = ?,
+           mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
        WHERE id = ?`,
-      [mpOrderId, dealId],
+      [paidAmount, mpOrderId, dealId],
     );
   } else {
     await run(
       `UPDATE crm_deals
-       SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW(),
+       SET payment_status = 'paid', estimated_value = ?, stage = 'completado', stage_changed_at = NOW(),
            mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
        WHERE id = ?`,
-      [mpOrderId, dealId],
+      [paidAmount, mpOrderId, dealId],
     );
   }
 

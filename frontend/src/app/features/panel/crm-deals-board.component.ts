@@ -43,11 +43,11 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
         <div class="mon-insight">
           <div>
             <strong>Salud del embudo</strong>
-            <p>{{ activeDeals().length }} acuerdos activos · {{ closedDeals().length }} cerrados</p>
+            <p>{{ pendingDeals().length }} pendientes de cobro · {{ collectedDeals().length }} cobrados</p>
           </div>
           <div class="mon-insight-stats">
-            <span>Valor activo <b>\${{ activeTotal() | number:'1.0-0' }}</b></span>
-            <span>Cerrado <b>\${{ closedTotal() | number:'1.0-0' }}</b></span>
+            <span>Valor pendiente <b>\${{ pendingTotal() | number:'1.0-0' }}</b></span>
+            <span>Cobrado <b>\${{ collectedTotal() | number:'1.0-0' }}</b></span>
           </div>
         </div>
 
@@ -382,6 +382,17 @@ export class CrmDealsBoardComponent {
   );
   lostDeals = computed(() => this.filteredDeals().filter((d) => d.stage === 'perdido'));
 
+  /** Pendientes de cobro: siguen en embudo y aún no pagados. */
+  pendingDeals = computed(() =>
+    this.activeDeals().filter((d) => d.paymentStatus !== 'paid'),
+  );
+  /** Cobrados: pagados o cerrados ganados (alineado con ingresos reales). */
+  collectedDeals = computed(() =>
+    this.filteredDeals().filter(
+      (d) => d.paymentStatus === 'paid' || d.stage === 'completado' || d.stage === 'vendido',
+    ),
+  );
+
   groups = computed(() => {
     const list: { id: string; label: string; color: string; items: CrmDeal[] }[] = [];
     const active = this.activeDeals();
@@ -395,8 +406,8 @@ export class CrmDealsBoardComponent {
     return list;
   });
 
-  activeTotal = computed(() => this.groupTotal(this.activeDeals()));
-  closedTotal = computed(() => this.groupTotal(this.closedDeals()));
+  pendingTotal = computed(() => this.groupTotal(this.pendingDeals()));
+  collectedTotal = computed(() => this.groupTotal(this.collectedDeals()));
 
   groupTotal(items: CrmDeal[]) {
     return items.reduce((s, d) => s + Number(d.estimatedValue || 0), 0);
