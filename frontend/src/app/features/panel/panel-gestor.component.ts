@@ -299,7 +299,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     password?: string | null;
     emailed?: boolean;
     whatsappUrl?: string | null;
+    dealId?: string | null;
   } | null>(null);
+  regeneratingClientAccess = signal(false);
   manualLeadServices = signal<{ name: string; price: number | null }[]>([]);
   manualLead = {
     clientName: '',
@@ -827,6 +829,24 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     );
   }
 
+  regenerateClientAccess() {
+    const access = this.clientAccessNotice();
+    const dealId = access?.dealId;
+    if (!dealId) return;
+    this.regeneratingClientAccess.set(true);
+    this.crmService.createClientAccess(dealId, true).subscribe({
+      next: (next) => {
+        this.regeneratingClientAccess.set(false);
+        this.clientAccessNotice.set({ ...next, dealId });
+        this.toast.success('Clave nueva lista para enviar');
+      },
+      error: (e) => {
+        this.regeneratingClientAccess.set(false);
+        this.toast.error(e.error?.error || 'No se pudo generar una clave nueva');
+      },
+    });
+  }
+
   onManualLeadServiceChange() {
     const service = this.manualLeadServices().find(s => s.name === this.manualLead.serviceName);
     if (!service) return;
@@ -865,13 +885,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
           whatsappUrl?: string | null;
         } }).clientAccess;
         if (access?.login) {
-          this.clientAccessNotice.set(access as {
-            created: boolean;
-            login: string;
-            password?: string | null;
-            emailed?: boolean;
-            whatsappUrl?: string | null;
-          });
+          this.clientAccessNotice.set({ ...access, dealId: deal.id });
           this.toast.success(access.password ? 'Trámite creado. Ya tienes la clave del cliente.' : 'Trámite creado. Este cliente ya tenía usuario.');
         } else if (!this.manualLead.clientPhone.trim() && !this.manualLead.clientEmail.trim()) {
           this.toast.success('Trámite registrado. Sin teléfono ni correo no se creó usuario.');

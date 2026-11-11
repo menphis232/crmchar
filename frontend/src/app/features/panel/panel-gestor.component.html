@@ -1501,15 +1501,16 @@
 }
 
 @if (clientAccessNotice(); as access) {
-  <div class="modal-overlay" (click)="clientAccessNotice.set(null)">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-overlay mon-access-overlay" (click)="clientAccessNotice.set(null)">
+    <div class="modal-content mon-access-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="client-access-title">
       <button type="button" class="modal-close" (click)="clientAccessNotice.set(null)" aria-label="Cerrar">
         <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
-      <h2 class="card-title" style="margin-bottom:8px;">Usuario del cliente</h2>
-      <p class="card-desc" style="margin-bottom:16px;">
+      <p class="mon-access-eyebrow">Portal del cliente</p>
+      <h2 id="client-access-title" class="card-title mon-access-title">Usuario del cliente</h2>
+      <p class="card-desc mon-access-desc">
         @if (access.created) {
-          Se creó la cuenta. Mándale estos datos por WhatsApp.
+          Se creó la cuenta. Copia los datos o mándalos por WhatsApp ahora.
         } @else if (access.password) {
           Se generó una clave nueva. La anterior ya no sirve.
         } @else {
@@ -1517,16 +1518,36 @@
         }
         @if (access.emailed) { También se envió por correo. }
       </p>
-      <p><strong>Usuario:</strong> {{ access.login }}</p>
-      @if (access.password) {
-        <p><strong>Contraseña:</strong> {{ access.password }}</p>
-      }
-      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:16px; flex-wrap:wrap;">
-        <button type="button" class="btn-ghost" (click)="copyClientAccess()">Copiar</button>
-        @if (access.whatsappUrl) {
-          <a class="btn-copy" [href]="access.whatsappUrl" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+
+      <div class="mon-access-creds">
+        <div class="mon-access-row">
+          <span class="mon-access-label">Usuario</span>
+          <strong class="mon-access-value">{{ access.login }}</strong>
+        </div>
+        @if (access.password) {
+          <div class="mon-access-row">
+            <span class="mon-access-label">Contraseña</span>
+            <strong class="mon-access-value mon-access-value--mono">{{ access.password }}</strong>
+          </div>
         }
-        <button type="button" class="btn-ghost" (click)="clientAccessNotice.set(null)">Cerrar</button>
+      </div>
+
+      <p class="mon-access-hint">
+        La contraseña no se puede consultar después (va cifrada). Si cierras sin enviarla, abre el trámite y usa
+        <strong>Usuario / clave del cliente</strong> → <strong>Nueva clave</strong>.
+      </p>
+
+      <div class="mon-access-actions">
+        <button type="button" class="mon-access-btn" (click)="copyClientAccess()">Copiar</button>
+        @if (!access.password && access.dealId) {
+          <button type="button" class="mon-access-btn" (click)="regenerateClientAccess()" [disabled]="regeneratingClientAccess()">
+            {{ regeneratingClientAccess() ? 'Generando…' : 'Nueva clave' }}
+          </button>
+        }
+        @if (access.whatsappUrl) {
+          <a class="mon-access-btn mon-access-btn--primary" [href]="access.whatsappUrl" target="_blank" rel="noopener">Enviar por WhatsApp</a>
+        }
+        <button type="button" class="mon-access-btn" (click)="clientAccessNotice.set(null)">Cerrar</button>
       </div>
     </div>
   </div>

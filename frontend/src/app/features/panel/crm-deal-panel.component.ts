@@ -768,8 +768,8 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       position: fixed;
       inset: 0;
       z-index: 12000;
-      background: rgba(0,0,0,0.82);
-      backdrop-filter: blur(8px);
+      background: rgba(50, 51, 56, 0.45);
+      backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -780,22 +780,24 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       width: min(440px, 100%);
       background: #fff;
       border: 1px solid #e6e9ef;
-      border-radius: 20px;
+      border-radius: 12px;
       padding: 28px 24px 22px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.65);
-      font-family: var(--f-display);
+      box-shadow: 0 16px 48px rgba(50, 51, 56, 0.18);
+      font-family: 'Figtree', system-ui, sans-serif;
+      color: #323338;
     }
     .pay-method-close {
       position: absolute;
       top: 14px;
       right: 14px;
-      background: transparent;
-      border: none;
+      background: #f5f6f8;
+      border: 1px solid #e6e9ef;
+      border-radius: 8px;
       color: #676879;
       cursor: pointer;
       padding: 6px;
     }
-    .pay-method-close:hover { color: #fff; }
+    .pay-method-close:hover { color: #e2445c; border-color: #e2445c; background: #fff0f1; }
     .pay-method-eyebrow {
       margin: 0 0 6px;
       font-size: 10px;
@@ -807,14 +809,39 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       margin: 0 0 8px;
       font-size: 22px;
       font-weight: 700;
-      color: #fff;
+      color: #323338;
     }
     .pay-method-desc {
-      margin: 0 0 22px;
+      margin: 0 0 16px;
       font-size: 13px;
       line-height: 1.55;
-      color: rgba(255,255,255,0.50);
+      color: #676879;
     }
+    .mon-access-creds {
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px;
+      margin: 0 0 14px;
+      background: #f7f8fa;
+      border: 1px solid #e6e9ef;
+      border-radius: 10px;
+    }
+    .mon-access-row { display: grid; gap: 2px; }
+    .mon-access-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #676879;
+    }
+    .mon-access-value { font-size: 16px; color: #323338; font-weight: 700; }
+    .mon-access-value--mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: 0.04em; }
+    .mon-access-hint {
+      margin: 0 0 16px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #676879;
+    }
+    .mon-access-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
     .pay-method-grid {
       display: grid;
       gap: 12px;
@@ -854,23 +881,26 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     .pay-method-card--stripe:hover { border-color: rgba(99,102,241,0.55); }
     .pay-method-card--mp:hover { border-color: rgba(0,158,227,0.55); }
     .pay-method-cancel {
-      width: 100%;
-      margin-top: 16px;
-      padding: 12px;
-      background: transparent;
-      border: 1px solid #e6e9ef;
-      border-radius: 999px;
-      color: #676879;
-      font-family: var(--f-display);
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
+      width: auto;
+      margin-top: 0;
+      min-height: 40px;
+      padding: 0 14px;
+      background: #fff;
+      border: 1px solid #c5c7d0;
+      border-radius: 8px;
+      color: #323338;
+      font-family: 'Figtree', system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
       cursor: pointer;
     }
     .pay-method-cancel:hover {
-      color: #fff;
-      border-color: rgba(255,255,255,0.3);
+      color: #0073ea;
+      border-color: #0073ea;
     }
+    .pay-method-cancel:disabled { opacity: 0.5; cursor: not-allowed; }
     .deal-value-row { background: transparent !important; }
 
     /* Docs + file cards */

@@ -148,8 +148,9 @@
             }
             @if (!isConcesionaria()) {
               <button type="button" class="deal-outline-btn" style="margin-top:8px;align-self:flex-start;" (click)="createClientAccess(false)" [disabled]="isCreatingAccess()">
-                {{ isCreatingAccess() ? 'Creando usuario...' : 'Crear usuario y mandar clave' }}
+                {{ isCreatingAccess() ? 'Preparando…' : 'Usuario / clave del cliente' }}
               </button>
+              <p class="card-desc" style="margin:6px 0 0;max-width:36ch;">Si no mandaste la clave al crear el trámite, aquí puedes ver el usuario o generar una nueva.</p>
             }
           </div>
         </div>
@@ -824,8 +825,8 @@
 }
 
 @if (clientAccessNotice(); as access) {
-  <div class="pay-method-overlay" (click)="clientAccessNotice.set(null)">
-    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+  <div class="pay-method-overlay mon-access-overlay" (click)="clientAccessNotice.set(null)">
+    <div class="pay-method-modal mon-access-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
       <button type="button" class="pay-method-close" (click)="clientAccessNotice.set(null)" aria-label="Cerrar">
         <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
@@ -841,14 +842,27 @@
         }
         @if (access.emailed) { También se envió por correo. }
       </p>
-      <p><strong>Usuario:</strong> {{ access.login }}</p>
-      @if (access.password) {
-        <p><strong>Contraseña:</strong> {{ access.password }}</p>
-      }
-      <div class="register-payment-actions">
+      <div class="mon-access-creds">
+        <div class="mon-access-row">
+          <span class="mon-access-label">Usuario</span>
+          <strong class="mon-access-value">{{ access.login }}</strong>
+        </div>
+        @if (access.password) {
+          <div class="mon-access-row">
+            <span class="mon-access-label">Contraseña</span>
+            <strong class="mon-access-value mon-access-value--mono">{{ access.password }}</strong>
+          </div>
+        }
+      </div>
+      <p class="mon-access-hint">
+        La contraseña no se puede consultar después. Si no la enviaste, pulsa <strong>Nueva clave</strong> y mándala otra vez.
+      </p>
+      <div class="register-payment-actions mon-access-actions">
         <button type="button" class="pay-method-cancel" (click)="copyClientAccess()">Copiar</button>
         @if (!access.password) {
-          <button type="button" class="pay-method-cancel" (click)="createClientAccess(true)" [disabled]="isCreatingAccess()">Nueva clave</button>
+          <button type="button" class="pay-method-cancel" (click)="createClientAccess(true)" [disabled]="isCreatingAccess()">
+            {{ isCreatingAccess() ? 'Generando…' : 'Nueva clave' }}
+          </button>
         }
         @if (access.whatsappUrl) {
           <a class="btn-copy small" [href]="access.whatsappUrl" target="_blank" rel="noopener">WhatsApp</a>
