@@ -2293,6 +2293,91 @@
   color: #e2445c !important;
 }
 
+/* Modal Nuevo trámite manual — Monday light */
+.mon-lead-overlay.modal-overlay {
+  background: rgba(50, 51, 56, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 4100 !important;
+}
+
+.mon-lead-modal.modal-content {
+  background: #fff !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 48px rgba(50, 51, 56, 0.18) !important;
+  color: #323338 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  max-width: 640px !important;
+  padding: 28px 28px 22px !important;
+}
+
+.mon-lead-title {
+  margin: 0 0 8px !important;
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  text-transform: none !important;
+}
+
+.mon-lead-desc {
+  margin: 0 0 20px !important;
+  color: #676879 !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+}
+
+.mon-lead-field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #676879 !important;
+}
+
+.mon-lead-modal .form-group label {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  text-transform: none !important;
+}
+
+.mon-lead-modal .form-group input,
+.mon-lead-modal .form-group select,
+.mon-lead-modal .form-group textarea {
+  background: #fff !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+}
+
+.mon-lead-modal .modal-close {
+  background: #f5f6f8 !important;
+  border: 1px solid #e6e9ef !important;
+  color: #676879 !important;
+  border-radius: 8px !important;
+}
+
+.mon-lead-modal .modal-close:hover {
+  background: #fff0f1 !important;
+  border-color: #e2445c !important;
+  color: #e2445c !important;
+}
+
+.mon-lead-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
 /* Modal acceso cliente */
 .mon-access-overlay.modal-overlay {
   z-index: 4100 !important;

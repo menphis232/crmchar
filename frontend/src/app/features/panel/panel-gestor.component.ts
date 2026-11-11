@@ -312,8 +312,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     title: '',
     message: '',
     estimatedValue: '' as string | number,
+    quantity: 1 as string | number,
     stage: 'nuevo',
   };
+
+  get manualLeadQtyLabel(): string {
+    const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
+    return qty > 1 ? `Crear ${qty} trámites` : 'Crear trámite';
+  }
 
   constructor(
     public auth: AuthService,
@@ -799,6 +805,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       title: '',
       message: '',
       estimatedValue: '',
+      quantity: 1,
       stage: 'nuevo',
     };
     const services = this.profile()?.services?.map(s => ({ name: s.name, price: s.price })) ?? [];
@@ -859,46 +866,74 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.toast.warning('El nombre del cliente es obligatorio');
       return;
     }
+    const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
+    this.manualLead.quantity = qty;
     this.savingManualLead.set(true);
+
     const estimatedValue = this.manualLead.estimatedValue !== ''
       ? Number(this.manualLead.estimatedValue)
       : undefined;
-    this.crmService.createDeal({
+    const baseTitle = this.manualLead.title.trim() || this.manualLead.serviceName.trim() || 'Trámite manual';
+    const payloadBase = {
       clientName: this.manualLead.clientName.trim(),
       clientEmail: this.manualLead.clientEmail.trim() || undefined,
       clientPhone: this.manualLead.clientPhone.trim() || undefined,
       serviceName: this.manualLead.serviceName || undefined,
       location: this.manualLead.location.trim() || undefined,
-      title: this.manualLead.title.trim() || undefined,
       message: this.manualLead.message.trim() || undefined,
       estimatedValue,
       stage: this.manualLead.stage || 'nuevo',
-    }).subscribe({
-      next: (deal) => {
-        this.savingManualLead.set(false);
-        this.showManualLeadForm.set(false);
-        const access = (deal as { clientAccess?: {
-          created: boolean;
-          login: string;
-          password?: string | null;
-          emailed?: boolean;
-          whatsappUrl?: string | null;
-        } }).clientAccess;
-        if (access?.login) {
-          this.clientAccessNotice.set({ ...access, contactId: deal.contactId || deal.contact?.id || null });
-          this.toast.success(access.password ? 'Trámite creado. Ya tienes la clave del cliente.' : 'Trámite creado. Este cliente ya tenía usuario.');
-        } else if (!this.manualLead.clientPhone.trim() && !this.manualLead.clientEmail.trim()) {
-          this.toast.success('Trámite registrado. Sin teléfono ni correo no se creó usuario.');
-        } else {
-          this.toast.success('Trámite registrado');
-        }
-        this.loadCrm();
-        this.openDeal(deal.id);
-      },
-      error: (e) => {
-        this.savingManualLead.set(false);
-        this.toast.error(e.error?.error || 'Error al crear trámite');
-      },
+    };
+
+    const createOne = (index: number) => {
+      const title = qty > 1 ? `${baseTitle} (${index}/${qty})` : baseTitle;
+      return this.crmService.createDeal({ ...payloadBase, title });
+    };
+
+    const run = async () => {
+      let firstAccess: {
+        created: boolean;
+        login: string;
+        password?: string | null;
+        emailed?: boolean;
+        whatsappUrl?: string | null;
+      } | null = null;
+      let contactId: string | null = null;
+      let lastDealId: string | null = null;
+
+      for (let i = 1; i <= qty; i++) {
+        const deal = await new Promise<any>((resolve, reject) => {
+          createOne(i).subscribe({ next: resolve, error: reject });
+        });
+        lastDealId = deal.id;
+        contactId = deal.contactId || deal.contact?.id || contactId;
+        const access = deal.clientAccess;
+        if (access?.login && !firstAccess) firstAccess = access;
+      }
+
+      this.savingManualLead.set(false);
+      this.showManualLeadForm.set(false);
+      if (firstAccess?.login) {
+        this.clientAccessNotice.set({ ...firstAccess, contactId });
+      }
+      if (qty > 1) {
+        this.toast.success(`${qty} trámites creados para ${payloadBase.clientName}.`);
+      } else if (firstAccess?.password) {
+        this.toast.success('Trámite creado. Ya tienes la clave del cliente.');
+      } else if (firstAccess?.login) {
+        this.toast.success('Trámite creado. Este cliente ya tenía usuario.');
+      } else if (!payloadBase.clientPhone && !payloadBase.clientEmail) {
+        this.toast.success('Trámite registrado. Sin teléfono ni correo no se creó usuario.');
+      } else {
+        this.toast.success('Trámite registrado');
+      }
+      this.loadCrm();
+      if (lastDealId) this.openDeal(lastDealId);
+    };
+
+    run().catch((e) => {
+      this.savingManualLead.set(false);
+      this.toast.error(e?.error?.error || 'Error al crear trámite');
     });
   }
 

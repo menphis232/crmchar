@@ -1417,13 +1417,13 @@
 </div>
 
 @if (showManualLeadForm()) {
-  <div class="modal-overlay" (click)="closeManualLeadForm()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+  <div class="modal-overlay mon-lead-overlay" (click)="closeManualLeadForm()">
+    <div class="modal-content mon-lead-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="manual-lead-title">
       <button type="button" class="modal-close" (click)="closeManualLeadForm()" aria-label="Cerrar">
         <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
-      <h2 class="card-title" style="margin-bottom:8px;">+ Nuevo trámite manual</h2>
-      <p class="card-desc" style="margin-bottom:20px;">Registra un cliente con su trámite. Con teléfono se crea su usuario y te damos la clave para mandársela por WhatsApp. Con correo, también se la enviamos por email.</p>
+      <h2 id="manual-lead-title" class="card-title mon-lead-title">+ Nuevo trámite manual</h2>
+      <p class="card-desc mon-lead-desc">Registra un cliente con su trámite. Con teléfono se crea su usuario y te damos la clave para mandársela por WhatsApp. Con correo, también se la enviamos por email.</p>
 
       <div class="form-row">
         <div class="form-group">
@@ -1458,6 +1458,11 @@
       </div>
       <div class="form-row">
         <div class="form-group">
+          <label for="gl-qty">Cantidad</label>
+          <input id="gl-qty" type="number" min="1" max="50" step="1" [(ngModel)]="manualLead.quantity" placeholder="1">
+          <p class="mon-lead-field-hint">Ej. 3 preventas del mismo cliente = 3 trámites.</p>
+        </div>
+        <div class="form-group">
           <label for="gl-location">Estado</label>
           <select id="gl-location" [(ngModel)]="manualLead.location">
             <option value="">— Seleccionar estado —</option>
@@ -1466,6 +1471,8 @@
             }
           </select>
         </div>
+      </div>
+      <div class="form-row">
         @if (crmDashboard(); as crm) {
           <div class="form-group">
             <label for="gl-stage">Etapa inicial</label>
@@ -1476,11 +1483,9 @@
             </select>
           </div>
         }
-      </div>
-      <div class="form-row">
         <div class="form-group">
           <label for="gl-title">Título del trámite</label>
-          <input id="gl-title" [(ngModel)]="manualLead.title" placeholder="Ej. Cambio de propietario">
+          <input id="gl-title" [(ngModel)]="manualLead.title" placeholder="Ej. Preventa 2027">
         </div>
       </div>
       <div class="form-row">
@@ -1490,10 +1495,10 @@
         </div>
       </div>
 
-      <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:8px;">
-        <button type="button" class="btn-ghost" (click)="closeManualLeadForm()">Cancelar</button>
-        <button type="button" class="btn-copy" (click)="saveManualLead()" [disabled]="savingManualLead()">
-          {{ savingManualLead() ? 'Guardando...' : 'Crear trámite' }}
+      <div class="mon-lead-actions">
+        <button type="button" class="mon-access-btn" (click)="closeManualLeadForm()">Cancelar</button>
+        <button type="button" class="mon-access-btn mon-access-btn--primary" (click)="saveManualLead()" [disabled]="savingManualLead()">
+          {{ savingManualLead() ? 'Guardando…' : (manualLeadQtyLabel) }}
         </button>
       </div>
     </div>
