@@ -68,6 +68,20 @@
   color: #93c5fd;
 }
 
+.dp-reviews-embed {
+  max-width: 720px;
+  margin: 12px auto 28px;
+  min-height: 120px;
+}
+
+.dp-reviews-embed iframe {
+  width: 100%;
+  min-height: 420px;
+  border: 0;
+  border-radius: 12px;
+  background: #fff;
+}
+
 .dp-reviews-summary {
   font-family: var(--f-ui);
   font-size: 13px;

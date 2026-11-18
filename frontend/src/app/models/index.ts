@@ -318,6 +318,7 @@ export interface Gestor {
   googleReviewCount?: number | null;
   googleMapsUrl?: string | null;
   googleSyncError?: string | null;
+  googleReviewsEmbed?: string | null;
 }
 
 export interface GestorService {

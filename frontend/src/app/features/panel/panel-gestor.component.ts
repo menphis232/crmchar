@@ -606,6 +606,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.profileBannerUrl = p.bannerUrl || '';
       this.googlePlaceId = p.googlePlaceId || '';
       this.googleMapsUrl = p.googleMapsUrl || null;
+      this.googleReviewsEmbed = p.googleReviewsEmbed || '';
       const embed = toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
@@ -1058,6 +1059,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   reviewStarSlots = [1, 2, 3, 4, 5];
   googlePlaceId = '';
   googleMapsUrl: string | null = null;
+  googleReviewsEmbed = '';
   syncingGoogleReviews = signal(false);
   isUploadingGallery = false;
   galleryCropQueue = signal<File[]>([]);
@@ -1156,11 +1158,13 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       bannerUrl: this.profileBannerUrl || undefined,
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
       googlePlaceId: this.googlePlaceId.trim() || null,
+      googleReviewsEmbed: this.googleReviewsEmbed.trim() || null,
     }).subscribe({
       next: p => {
         this.publicSlug = p.slug || '';
         this.googlePlaceId = p.googlePlaceId || this.googlePlaceId;
         this.googleMapsUrl = p.googleMapsUrl || this.googleMapsUrl;
+        this.googleReviewsEmbed = p.googleReviewsEmbed ?? this.googleReviewsEmbed;
         this.profile.set({ ...this.profile()!, ...p, slug: p.slug || '', name: name || p.name });
         this.auth.getMe().subscribe({
           next: (res) => {

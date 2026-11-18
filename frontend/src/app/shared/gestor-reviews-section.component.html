@@ -8,7 +8,11 @@
     }
   </div>
 
-  @if ((reviewCount ?? 0) > 0) {
+  @if (googleReviewsEmbed) {
+    <div class="dp-reviews-embed" #embedHost></div>
+  }
+
+  @if ((reviewCount ?? 0) > 0 && !googleReviewsEmbed) {
     <div class="dp-reviews-summary-block">
       <div class="dp-reviews-score">{{ rating | number:'1.1-1' }}</div>
       <div class="dp-reviews-summary-meta">
@@ -23,7 +27,7 @@
     </div>
   }
 
-  @if (reviews.length) {
+  @if (!googleReviewsEmbed && reviews.length) {
     <ul class="dp-reviews-list">
       @for (r of reviews; track r.id) {
         <li class="dp-review-item">
@@ -43,13 +47,13 @@
         </li>
       }
     </ul>
-  } @else if (googleMapsUrl) {
+  } @else if (!googleReviewsEmbed && googleMapsUrl && !reviews.length) {
     <p class="dp-reviews-empty">
-      Las reseñas de Google se sincronizan cuando el servidor tiene Places API configurada.
-      Mientras tanto puedes
-      <a [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">verlas en Google Maps</a>.
+      Puedes ver las reseñas en
+      <a [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">Google Maps</a>,
+      pegar un widget gratis en el panel, o publicarlas manualmente.
     </p>
-  } @else {
+  } @else if (!googleReviewsEmbed && !reviews.length) {
     <p class="dp-reviews-empty">Aún no hay reseñas.</p>
   }
 </section>

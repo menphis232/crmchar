@@ -1338,6 +1338,25 @@ async function migrate() {
       console.log('Migración v64 (Google Place ID / reseñas) aplicada.');
     }
 
+    const v65Path = path.join(__dirname, '..', 'sql', 'migration-v65-google-reviews-embed.sql');
+    if (fs.existsSync(v65Path)) {
+      const v65 = fs.readFileSync(v65Path, 'utf8');
+      const conn65 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v65.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn65.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn65.end();
+      console.log('Migración v65 (Google reviews embed) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

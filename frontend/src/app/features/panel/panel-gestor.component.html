@@ -896,24 +896,36 @@
             Reseñas de clientes
           </h3>
           <p class="card-desc" style="margin-bottom:16px; font-size:12px;">
-            Conecta tu ficha de Google Maps con el Place ID para traer reseñas automáticamente.
-            También puedes publicar reseñas manuales. Promedio actual: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
+            Google Cloud (Places API) no suele estar disponible desde Venezuela. Usa un widget gratis o reseñas manuales.
+            Promedio actual: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
           </p>
 
           <div class="form-group" style="margin-bottom:12px;">
-            <label>Google Place ID</label>
+            <label>Widget de reseñas Google (recomendado)</label>
+            <textarea
+              [(ngModel)]="googleReviewsEmbed"
+              rows="4"
+              placeholder="Pega aquí el código embed (iframe o script) de Famewall, WidgetPop, Elfsight, etc."
+              style="font-family:monospace; font-size:12px;"
+            ></textarea>
+            <p class="card-desc" style="margin-top:6px; font-size:11px;">
+              Crea el widget gratis en
+              <a href="https://famewall.io/google-review-widget/" target="_blank" rel="noopener noreferrer">Famewall</a>
+              o
+              <a href="https://widgetpop.com/google-reviews-widget" target="_blank" rel="noopener noreferrer">WidgetPop</a>
+              (buscas el negocio, copias el código y lo pegas aquí). No necesitas API key de Google.
+            </p>
+          </div>
+
+          <div class="form-group" style="margin-bottom:12px;">
+            <label>Google Place ID (opcional, solo para el botón “Ver en Google”)</label>
             <input [(ngModel)]="googlePlaceId" placeholder="Ej: ChIJsbBkGrH_0YUR0L_ilErdMKU" style="font-family:monospace;">
             <p class="card-desc" style="margin-top:6px; font-size:11px;">
-              Búscalo en el
-              <a href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder" target="_blank" rel="noopener noreferrer">Place ID Finder</a>.
               TVM: <code>ChIJsbBkGrH_0YUR0L_ilErdMKU</code>
             </p>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
-            <button type="button" class="btn-copy" (click)="saveProfile()">Guardar Place ID</button>
-            <button type="button" class="deal-outline-btn" [disabled]="syncingGoogleReviews()" (click)="syncGoogleReviews()">
-              {{ syncingGoogleReviews() ? 'Sincronizando...' : 'Sincronizar desde Google' }}
-            </button>
+            <button type="button" class="btn-copy" (click)="saveProfile()">Guardar reseñas / Place ID</button>
             @if (googleMapsUrl) {
               <a class="deal-outline-btn" [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a>
             }

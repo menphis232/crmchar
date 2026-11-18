@@ -276,6 +276,7 @@ function gestorRow(row) {
     googleRating: row.google_rating != null ? Number(row.google_rating) : null,
     googleReviewCount: row.google_review_count != null ? Number(row.google_review_count) : null,
     googleMapsUrl: mapsUrlForPlace(row.google_place_id),
+    googleReviewsEmbed: row.google_reviews_embed || null,
   };
 }
 
@@ -346,7 +347,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages, googlePlaceId } = req.body;
+    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages, googlePlaceId, googleReviewsEmbed } = req.body;
 
     // Teléfono y WhatsApp son el mismo dato en el panel; mantener ambas columnas sincronizadas.
     const contactPhone = phone !== undefined ? phone : whatsapp;
@@ -400,6 +401,13 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
          WHERE user_id = ?`,
         [nextPlaceId, placeChanged ? 1 : 0, placeChanged ? 1 : 0, placeChanged ? 1 : 0, placeChanged ? 1 : 0, req.user.id],
       );
+    }
+
+    if (googleReviewsEmbed !== undefined) {
+      const embed = googleReviewsEmbed == null ? null : String(googleReviewsEmbed).trim() || null;
+      // Limitar tamaño para evitar payloads enormes
+      const safeEmbed = embed && embed.length > 20000 ? embed.slice(0, 20000) : embed;
+      await run('UPDATE gestores SET google_reviews_embed = ? WHERE user_id = ?', [safeEmbed, req.user.id]);
     }
 
     if (name !== undefined && name !== null && String(name).trim()) {
@@ -693,6 +701,7 @@ router.get('/:slugOrId', async (req, res) => {
       googleReviewCount: googlePayload.googleReviewCount,
       googleMapsUrl: googlePayload.googleMapsUrl,
       googleSyncError: googlePayload.googleSyncError,
+      googleReviewsEmbed: row.google_reviews_embed || null,
     });
   } catch (err) {
     console.error(err);
