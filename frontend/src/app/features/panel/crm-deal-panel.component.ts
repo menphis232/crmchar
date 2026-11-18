@@ -2496,7 +2496,7 @@ export class CrmDealPanelComponent implements OnDestroy {
     const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
     upload$.subscribe({
       next: (res) => {
-        const fileName = res.fileName || file.name;
+        const fileName = file.name;
         const fileUrl = res.url;
         this.crmService.addContactVehicleDocument(vehicleId, {
           fileName,
