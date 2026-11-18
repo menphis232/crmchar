@@ -20,6 +20,42 @@ import {
 } from '../services/googlePlaces.js';
 const router = Router();
 
+/** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
+const CLIENT_PROMO_BANNER_SLUGS = String(
+  process.env.CLIENT_PROMO_BANNER_GESTOR_SLUG || 'tramites-vehiculares-de-mexico',
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+function orgOwnerId(user) {
+  return user?.parent_id || user?.id;
+}
+
+async function getGestorOwnedByUser(user) {
+  return get('SELECT * FROM gestores WHERE user_id = ?', [orgOwnerId(user)]);
+}
+
+function canManageClientPromoBanner(gestorRow) {
+  return !!(gestorRow?.slug && CLIENT_PROMO_BANNER_SLUGS.includes(gestorRow.slug));
+}
+
+function parseSiteSettingsRow(row) {
+  if (!row) return { pageKey: 'panel-cliente' };
+  const s = typeof row.settings === 'string' ? JSON.parse(row.settings) : (row.settings || {});
+  return { pageKey: row.page_key, ...s };
+}
+
+function clientPromoBannerFromSettings(settings) {
+  return {
+    promoBannerEnabled: !!settings?.promoBannerEnabled,
+    promoBannerImage: settings?.promoBannerImage || '',
+    promoBannerLink: settings?.promoBannerLink || '',
+    promoBannerTitle: settings?.promoBannerTitle || '',
+    promoBannerAlt: settings?.promoBannerAlt || '',
+  };
+}
+
 const GESTOR_SERVICES_SELECT = `
   SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus, image_url as imageUrl
   FROM gestor_services WHERE gestor_id = ?
@@ -335,10 +371,87 @@ router.get('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
       SELECT id, client_name as clientName, service_name as serviceName, location, status, created_at as createdAt
       FROM solicitudes WHERE gestor_id = ? ORDER BY created_at DESC`, [row.id]);
 
-    res.json({ ...gestorRow(row), services, solicitudes, publicUrl: `/gestores/${row.slug}` });
+    res.json({
+      ...gestorRow(row),
+      services,
+      solicitudes,
+      publicUrl: `/gestores/${row.slug}`,
+      canManageClientPromoBanner: canManageClientPromoBanner(row),
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar perfil' });
+  }
+});
+
+router.get('/me/client-promo-banner', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const gestor = await getGestorOwnedByUser(req.user);
+    if (!gestor) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
+    const allowed = canManageClientPromoBanner(gestor);
+    if (!allowed) {
+      return res.json({ canManage: false, ...clientPromoBannerFromSettings({}) });
+    }
+    const row = await get('SELECT * FROM site_settings WHERE page_key = ?', ['panel-cliente']);
+    const settings = parseSiteSettingsRow(row);
+    res.json({ canManage: true, ...clientPromoBannerFromSettings(settings) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar banner del cliente' });
+  }
+});
+
+router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const gestor = await getGestorOwnedByUser(req.user);
+    if (!gestor) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
+    if (!canManageClientPromoBanner(gestor)) {
+      return res.status(403).json({
+        error: 'Solo la consultoría Trámites Vehiculares de México puede gestionar este banner',
+      });
+    }
+
+    const existing = await get('SELECT * FROM site_settings WHERE page_key = ?', ['panel-cliente']);
+    const current = parseSiteSettingsRow(existing);
+    const next = {
+      ...current,
+      pageKey: undefined,
+      updatedAt: undefined,
+      promoBannerEnabled: req.body.promoBannerEnabled !== undefined
+        ? !!req.body.promoBannerEnabled
+        : !!current.promoBannerEnabled,
+      promoBannerImage: req.body.promoBannerImage !== undefined
+        ? String(req.body.promoBannerImage || '').trim()
+        : (current.promoBannerImage || ''),
+      promoBannerLink: req.body.promoBannerLink !== undefined
+        ? String(req.body.promoBannerLink || '').trim()
+        : (current.promoBannerLink || ''),
+      promoBannerTitle: req.body.promoBannerTitle !== undefined
+        ? String(req.body.promoBannerTitle || '').trim()
+        : (current.promoBannerTitle || ''),
+      promoBannerAlt: req.body.promoBannerAlt !== undefined
+        ? String(req.body.promoBannerAlt || '').trim()
+        : (current.promoBannerAlt || ''),
+    };
+    delete next.pageKey;
+    delete next.updatedAt;
+
+    if (existing) {
+      await run('UPDATE site_settings SET settings = ? WHERE page_key = ?', [
+        JSON.stringify(next),
+        'panel-cliente',
+      ]);
+    } else {
+      await run('INSERT INTO site_settings (page_key, settings) VALUES (?, ?)', [
+        'panel-cliente',
+        JSON.stringify(next),
+      ]);
+    }
+
+    res.json({ canManage: true, ...clientPromoBannerFromSettings(next) });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar banner del cliente' });
   }
 });
 

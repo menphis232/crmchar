@@ -615,6 +615,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.googlePlaceId = p.googlePlaceId || '';
       this.googleMapsUrl = p.googleMapsUrl || null;
       this.googleReviewsEmbed = p.googleReviewsEmbed || '';
+      this.canManageClientPromoBanner.set(!!p.canManageClientPromoBanner);
+      if (p.canManageClientPromoBanner) this.loadClientPromoBanner();
       const embed = toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
@@ -1080,6 +1082,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   isUploadingLogo = false;
   isUploadingBanner = false;
   bannerCropFile = signal<File | null>(null);
+  canManageClientPromoBanner = signal(false);
+  clientPromoBannerEnabled = true;
+  clientPromoBannerImage = '';
+  clientPromoBannerLink = '';
+  clientPromoBannerTitle = '';
+  clientPromoBannerAlt = '';
+  isUploadingClientPromoBanner = false;
+  isSavingClientPromoBanner = false;
   gestorGalleryImages: string[] = [];
   gestorReviews = signal<GestorReview[]>([]);
   gestorReviewsRating = signal(0);
@@ -1159,6 +1169,67 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   clearBanner() {
     this.profileBannerUrl = '';
     this.saveProfile();
+  }
+
+  loadClientPromoBanner() {
+    this.gestoresService.getClientPromoBanner().subscribe({
+      next: (b) => {
+        this.canManageClientPromoBanner.set(!!b.canManage);
+        if (!b.canManage) return;
+        this.clientPromoBannerEnabled = !!b.promoBannerEnabled;
+        this.clientPromoBannerImage = b.promoBannerImage || '';
+        this.clientPromoBannerLink = b.promoBannerLink || '';
+        this.clientPromoBannerTitle = b.promoBannerTitle || '';
+        this.clientPromoBannerAlt = b.promoBannerAlt || '';
+      },
+      error: () => this.canManageClientPromoBanner.set(false),
+    });
+  }
+
+  onClientPromoBannerSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.isUploadingClientPromoBanner = true;
+    this.uploadService.uploadFile(file).subscribe({
+      next: (res) => {
+        this.clientPromoBannerImage = res.url;
+        this.isUploadingClientPromoBanner = false;
+        input.value = '';
+        this.saveClientPromoBanner();
+      },
+      error: () => {
+        this.isUploadingClientPromoBanner = false;
+        input.value = '';
+        this.toast.error('No se pudo subir la imagen del banner');
+      },
+    });
+  }
+
+  clearClientPromoBannerImage() {
+    this.clientPromoBannerImage = '';
+    this.saveClientPromoBanner();
+  }
+
+  saveClientPromoBanner() {
+    if (!this.canManageClientPromoBanner()) return;
+    this.isSavingClientPromoBanner = true;
+    this.gestoresService.updateClientPromoBanner({
+      promoBannerEnabled: this.clientPromoBannerEnabled,
+      promoBannerImage: this.clientPromoBannerImage,
+      promoBannerLink: this.clientPromoBannerLink.trim(),
+      promoBannerTitle: this.clientPromoBannerTitle.trim(),
+      promoBannerAlt: this.clientPromoBannerAlt.trim(),
+    }).subscribe({
+      next: () => {
+        this.isSavingClientPromoBanner = false;
+        this.toast.success('Banner del panel cliente guardado');
+      },
+      error: (e) => {
+        this.isSavingClientPromoBanner = false;
+        this.toast.error(e.error?.error || 'No se pudo guardar el banner');
+      },
+    });
   }
 
   private toOptionalCount(value: number | ''): number | undefined {

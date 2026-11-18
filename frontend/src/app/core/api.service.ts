@@ -26,6 +26,32 @@ export class GestoresService {
   getBySlug(slug: string) { return this.http.get<Gestor>(`${this.base}/${slug}`); }
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
+  getClientPromoBanner() {
+    return this.http.get<{
+      canManage: boolean;
+      promoBannerEnabled: boolean;
+      promoBannerImage: string;
+      promoBannerLink: string;
+      promoBannerTitle: string;
+      promoBannerAlt: string;
+    }>(`${this.base}/me/client-promo-banner`);
+  }
+  updateClientPromoBanner(data: {
+    promoBannerEnabled?: boolean;
+    promoBannerImage?: string;
+    promoBannerLink?: string;
+    promoBannerTitle?: string;
+    promoBannerAlt?: string;
+  }) {
+    return this.http.put<{
+      canManage: boolean;
+      promoBannerEnabled: boolean;
+      promoBannerImage: string;
+      promoBannerLink: string;
+      promoBannerTitle: string;
+      promoBannerAlt: string;
+    }>(`${this.base}/me/client-promo-banner`, data);
+  }
   syncGoogleReviews() {
     return this.http.post<{
       ok: boolean;

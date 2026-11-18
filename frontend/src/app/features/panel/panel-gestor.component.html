@@ -718,6 +718,48 @@
           </div>
         </div>
 
+        @if (canManageClientPromoBanner()) {
+          <div class="form-group" style="margin-bottom:24px;padding:16px;border:1px solid rgba(0,115,234,0.25);border-radius:12px;background:rgba(0,115,234,0.04);">
+            <h3 style="margin:0 0 6px;font-size:15px;">Banner del panel del cliente</h3>
+            <p class="card-desc" style="font-size:12px;margin:0 0 12px;">
+              Solo esta consultoría puede publicarlo. Se muestra arriba en el perfil de los clientes.
+            </p>
+            <label class="inline-check" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+              <input type="checkbox" [(ngModel)]="clientPromoBannerEnabled" (ngModelChange)="saveClientPromoBanner()">
+              Mostrar banner a los clientes
+            </label>
+            @if (clientPromoBannerImage) {
+              <img [src]="clientPromoBannerImage" alt="Banner clientes" class="gestor-banner-preview" style="margin-bottom:10px;">
+            }
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+              <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event)" #clientPromoInput style="display:none">
+              <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoInput.click()" [disabled]="isUploadingClientPromoBanner">
+                <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                {{ clientPromoBannerImage ? 'Cambiar imagen' : 'Subir imagen' }}
+              </button>
+              @if (isUploadingClientPromoBanner) { <span class="card-desc">Subiendo...</span> }
+              @if (clientPromoBannerImage && !isUploadingClientPromoBanner) {
+                <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage()">Quitar imagen</button>
+              }
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Título (si no hay imagen)</label>
+              <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. Promoción de verificación" (change)="saveClientPromoBanner()">
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Link al hacer clic (opcional)</label>
+              <input [(ngModel)]="clientPromoBannerLink" placeholder="/gestores o https://..." (change)="saveClientPromoBanner()">
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Texto alternativo</label>
+              <input [(ngModel)]="clientPromoBannerAlt" placeholder="Promoción" (change)="saveClientPromoBanner()">
+            </div>
+            <button type="button" class="btn-copy small" (click)="saveClientPromoBanner()" [disabled]="isSavingClientPromoBanner">
+              {{ isSavingClientPromoBanner ? 'Guardando...' : 'Guardar banner de clientes' }}
+            </button>
+          </div>
+        }
+
         <div class="form-group" style="margin-bottom:20px;">
           <label>Logo de la Empresa</label>
           <p class="card-desc" style="font-size:12px; margin-bottom:8px;">Cuadrado {{ gestorLogoSizeLabel }}. Se muestra en círculo en tu página pública, panel y PDF.</p>

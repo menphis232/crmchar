@@ -50,28 +50,11 @@
       </div>
 
       @if (pageKey === 'panel-cliente') {
-        <h3 class="section-sub">Banner promocional (arriba del perfil)</h3>
-        <p class="card-desc">Se muestra arriba en el panel del cliente. Sube una imagen ancha (recomendado 1200×280).</p>
-        <label class="inline-check" style="margin-bottom:10px;">
-          <input type="checkbox" [ngModel]="!!t.promoBannerEnabled" (ngModelChange)="update('promoBannerEnabled', $event)">
-          Mostrar banner
-        </label>
-        <div class="form-group">
-          <label>Título (si no hay imagen)</label>
-          <input [ngModel]="t.promoBannerTitle || ''" (ngModelChange)="update('promoBannerTitle', $event)" placeholder="Ej. Promoción de verificación">
-        </div>
-        <div class="form-group">
-          <label>URL de la imagen</label>
-          <input [ngModel]="t.promoBannerImage || ''" (ngModelChange)="update('promoBannerImage', $event)" placeholder="https://...">
-        </div>
-        <div class="form-group">
-          <label>Link al hacer clic (opcional)</label>
-          <input [ngModel]="t.promoBannerLink || ''" (ngModelChange)="update('promoBannerLink', $event)" placeholder="/gestores o https://...">
-        </div>
-        <div class="form-group">
-          <label>Texto alternativo</label>
-          <input [ngModel]="t.promoBannerAlt || ''" (ngModelChange)="update('promoBannerAlt', $event)" placeholder="Promoción">
-        </div>
+        <h3 class="section-sub">Banner promocional</h3>
+        <p class="card-desc">
+          Este banner lo gestiona únicamente la consultoría
+          <strong>Trámites Vehiculares de México</strong> desde su panel (Perfil → Banner del panel del cliente).
+        </p>
       }
 
       <h3 class="section-sub">Bloques personalizados</h3>

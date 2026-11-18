@@ -319,6 +319,8 @@ export interface Gestor {
   reviews?: GestorReview[];
   solicitudes?: Solicitud[];
   publicUrl?: string;
+  /** Solo consultoría TVM: puede editar el banner del panel cliente */
+  canManageClientPromoBanner?: boolean;
   googlePlaceId?: string | null;
   googleRating?: number | null;
   googleReviewCount?: number | null;
