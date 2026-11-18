@@ -70,16 +70,25 @@
 
 .dp-reviews-embed {
   max-width: 720px;
-  margin: 12px auto 28px;
+  margin: 8px auto 8px;
   min-height: 120px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .dp-reviews-embed iframe {
   width: 100%;
-  min-height: 420px;
-  border: 0;
-  border-radius: 12px;
-  background: #fff;
+  min-height: 640px;
+  border: 0 !important;
+  border-radius: 0;
+  background: transparent !important;
+  display: block;
+}
+
+/* Cuando hay widget externo, el título propio queda como el de antes */
+.dp-reviews--embed .dp-reviews-head {
+  margin-bottom: 18px;
 }
 
 .dp-reviews-summary {

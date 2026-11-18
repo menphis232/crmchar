@@ -41,11 +41,15 @@ export class GestorReviewsSectionComponent implements OnChanges {
     // y re-ejecutar scripts (innerHTML solo no los corre).
     host.innerHTML = html;
     host.querySelectorAll('iframe').forEach((iframe) => {
-      iframe.style.width = iframe.style.width || '100%';
-      iframe.style.minHeight = iframe.style.minHeight || iframe.style.height || '640px';
-      iframe.style.border = iframe.style.border || '0';
-      iframe.style.borderRadius = iframe.style.borderRadius || '12px';
-      iframe.style.display = iframe.style.display || 'block';
+      iframe.style.width = '100%';
+      iframe.style.minHeight = iframe.style.height || '640px';
+      iframe.style.height = iframe.style.height || '640px';
+      iframe.style.border = '0';
+      iframe.style.borderRadius = '0';
+      iframe.style.background = 'transparent';
+      iframe.style.display = 'block';
+      iframe.setAttribute('allowtransparency', 'true');
+      iframe.setAttribute('color-scheme', 'dark');
     });
     host.querySelectorAll('script').forEach((oldScript) => {
       const s = document.createElement('script');
