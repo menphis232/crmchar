@@ -549,6 +549,13 @@ export class CrmClientsDirectoryComponent implements OnInit {
     return (c.tramites || '').split(', ')[0] || '';
   }
 
+  plateChipTitle(v: { plate: string; engomado: string | null; state?: string | null }): string {
+    const parts = [v.plate];
+    if (v.state) parts.push(v.state);
+    parts.push(v.engomado ? `Engomado ${engomadoLabel(v.engomado)}` : 'Sin engomado');
+    return parts.join(' · ');
+  }
+
   openAddForm() {
     this.editingId.set(null);
     this.form = emptyForm();

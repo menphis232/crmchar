@@ -80,8 +80,8 @@
         <option [value]="c.id">{{ c.label }}</option>
       }
     </select>
-    <select aria-label="Filtrar por estado" [ngModel]="filterEstado()" (ngModelChange)="filterEstado.set($event); onFilterChange()">
-      <option value="">Todos los estados</option>
+    <select aria-label="Filtrar por estado de placas" [ngModel]="filterEstado()" (ngModelChange)="filterEstado.set($event); onFilterChange()">
+      <option value="">Cualquier estado de placas</option>
       @for (st of mexicoStates; track st) {
         <option [value]="st">{{ st }}</option>
       }
@@ -168,9 +168,9 @@
                     @if (c.vehicles?.length) {
                       <div class="client-vehicles">
                         @for (v of c.vehicles!.slice(0, 3); track v.plate) {
-                          <span class="plate-chip" [title]="v.engomado ? 'Engomado ' + engomadoLabel(v.engomado) : 'Sin engomado'">
+                          <span class="plate-chip" [title]="plateChipTitle(v)">
                             <span class="engomado-dot" [attr.data-color]="v.engomado || 'none'" aria-hidden="true"></span>
-                            {{ v.plate }}
+                            {{ v.plate }}@if (v.state) { · {{ v.state }} }
                           </span>
                         }
                         @if (c.vehicles!.length > 3) {

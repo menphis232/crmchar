@@ -1085,7 +1085,10 @@ router.get('/contacts', async (req, res) => {
     }
 
     if (estado) {
-      where.push('c.residence_state = ?');
+      where.push(`EXISTS (
+        SELECT 1 FROM contact_vehicles cvs
+        WHERE cvs.contact_id = c.id AND cvs.state = ?
+      )`);
       params.push(estado);
     }
 
@@ -1124,7 +1127,7 @@ router.get('/contacts', async (req, res) => {
         COUNT(DISTINCT cv.id) as vehicleCount,
         GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates,
         GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
-        GROUP_CONCAT(DISTINCT CONCAT(cv.plate, '|', COALESCE(cv.engomado_color, '')) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
+        GROUP_CONCAT(DISTINCT CONCAT(cv.plate, '|', COALESCE(cv.engomado_color, ''), '|', COALESCE(cv.state, '')) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
         GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
       LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?${dealJoinAccess.sql}
@@ -1149,8 +1152,8 @@ router.get('/contacts', async (req, res) => {
         engomados: r.engomados ? r.engomados.split(',').filter(Boolean) : [],
         vehicles: r.vehicleSummary
           ? r.vehicleSummary.split(';;').filter(Boolean).map((v) => {
-            const [plate, engomado] = v.split('|');
-            return { plate, engomado: engomado || null };
+            const [plate, engomado, state] = v.split('|');
+            return { plate, engomado: engomado || null, state: state || null };
           })
           : [],
         tramites: r.tramites || undefined,
