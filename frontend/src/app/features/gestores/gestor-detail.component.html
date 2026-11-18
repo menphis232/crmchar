@@ -58,57 +58,74 @@
                     <div class="services-list" style="margin-bottom: 40px;">
                       @for (s of g.services; track s.id) {
                         <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
-                          @if (s.imageUrl) {
-                            <div class="service-photo-wrap">
-                              <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                          <div class="service-top">
+                            @if (s.imageUrl) {
+                              <div class="service-photo-wrap">
+                                <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                              </div>
+                            }
+                            <div class="service-main">
+                              <div class="service-name">{{ s.name }}</div>
+                              <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                             </div>
-                          }
-                          <div class="service-main">
-                            <div class="service-name">{{ s.name }}</div>
-                            <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
-                            <details class="service-requisitos" (click)="$event.stopPropagation()">
-                              <summary>Ver detalles</summary>
-                              <div class="service-requisitos-body">
-                                <p class="service-requisitos-heading">Documentos requeridos</p>
+                            <div class="service-side">
+                              @if (b.data.showPrices) {
+                                <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
+                                  @if (hasServicePrice(s)) {
+                                    ${{ s.price | number }} <span>MXN</span>
+                                  } @else {
+                                    Precio por definir
+                                  }
+                                </div>
+                              }
+                              <button type="button" class="service-ask" (click)="$event.stopPropagation(); askAboutService(s)">
+                                <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg>
+                                Preguntar a la IA
+                              </button>
+                            </div>
+                          </div>
+                          <details class="service-requisitos" (click)="$event.stopPropagation()">
+                            <summary>Ver detalles</summary>
+                            <div class="service-requisitos-body">
+                              <section class="service-panel service-panel--docs">
+                                <p class="service-requisitos-heading">
+                                  <svg lucideFileText [size]="14" aria-hidden="true"></svg>
+                                  Documentos requeridos
+                                </p>
                                 <ul class="service-requisitos-list">
                                   @for (doc of serviceRequirements(s); track doc) {
                                     <li>{{ doc }}</li>
                                   }
                                 </ul>
-                                @if (serviceIncludes(s).length) {
-                                  <p class="service-requisitos-heading">Qué incluye</p>
+                              </section>
+                              @if (serviceIncludes(s).length) {
+                                <section class="service-panel service-panel--includes">
+                                  <p class="service-requisitos-heading">
+                                    <svg lucideCircleCheck [size]="14" aria-hidden="true"></svg>
+                                    Qué incluye
+                                  </p>
                                   <ul class="service-requisitos-list">
                                     @for (item of serviceIncludes(s); track item) {
                                       <li>{{ item }}</li>
                                     }
                                   </ul>
-                                }
-                                @if (serviceBonus(s).length) {
-                                  <p class="service-requisitos-heading">Bonus</p>
+                                </section>
+                              }
+                              @if (serviceBonus(s).length) {
+                                <section class="service-panel service-panel--bonus">
+                                  <p class="service-requisitos-heading">
+                                    <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                                    Bonus
+                                  </p>
                                   <ul class="service-requisitos-list">
                                     @for (item of serviceBonus(s); track item) {
                                       <li>{{ item }}</li>
                                     }
                                   </ul>
-                                }
-                              </div>
-                            </details>
-                          </div>
-                          <div class="service-side">
-                            @if (b.data.showPrices) {
-                              <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
-                                @if (hasServicePrice(s)) {
-                                  ${{ s.price | number }} <span>MXN</span>
-                                } @else {
-                                  Precio por definir
-                                }
-                              </div>
-                            }
-                            <button type="button" class="service-ask" (click)="$event.stopPropagation(); askAboutService(s)">
-                              <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg>
-                              Preguntar a la IA
-                            </button>
-                          </div>
+                                </section>
+                              }
+                            </div>
+                          </details>
                         </div>
                       }
                     </div>
@@ -283,55 +300,72 @@
           <div class="services-list">
             @for (s of g.services; track s.id) {
               <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
-                @if (s.imageUrl) {
-                  <div class="service-photo-wrap">
-                    <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                <div class="service-top">
+                  @if (s.imageUrl) {
+                    <div class="service-photo-wrap">
+                      <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                    </div>
+                  }
+                  <div class="service-main">
+                    <div class="service-name">{{ s.name }}</div>
+                    <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
                   </div>
-                }
-                <div class="service-main">
-                  <div class="service-name">{{ s.name }}</div>
-                  <div class="service-time"><svg lucideClock [size]="14" class="service-time-icon" aria-hidden="true"></svg>{{ s.timeEstimate }}</div>
-                  <details class="service-requisitos" (click)="$event.stopPropagation()">
-                    <summary>Ver detalles</summary>
-                    <div class="service-requisitos-body">
-                      <p class="service-requisitos-heading">Documentos requeridos</p>
+                  <div class="service-side">
+                    <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
+                      @if (hasServicePrice(s)) {
+                        ${{ s.price | number }} <span>MXN</span>
+                      } @else {
+                        Precio por definir
+                      }
+                    </div>
+                    <button type="button" class="service-ask" (click)="$event.stopPropagation(); askAboutService(s)">
+                      <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg>
+                      Preguntar a la IA
+                    </button>
+                  </div>
+                </div>
+                <details class="service-requisitos" (click)="$event.stopPropagation()">
+                  <summary>Ver detalles</summary>
+                  <div class="service-requisitos-body">
+                    <section class="service-panel service-panel--docs">
+                      <p class="service-requisitos-heading">
+                        <svg lucideFileText [size]="14" aria-hidden="true"></svg>
+                        Documentos requeridos
+                      </p>
                       <ul class="service-requisitos-list">
                         @for (doc of serviceRequirements(s); track doc) {
                           <li>{{ doc }}</li>
                         }
                       </ul>
-                      @if (serviceIncludes(s).length) {
-                        <p class="service-requisitos-heading">Qué incluye</p>
+                    </section>
+                    @if (serviceIncludes(s).length) {
+                      <section class="service-panel service-panel--includes">
+                        <p class="service-requisitos-heading">
+                          <svg lucideCircleCheck [size]="14" aria-hidden="true"></svg>
+                          Qué incluye
+                        </p>
                         <ul class="service-requisitos-list">
                           @for (item of serviceIncludes(s); track item) {
                             <li>{{ item }}</li>
                           }
                         </ul>
-                      }
-                      @if (serviceBonus(s).length) {
-                        <p class="service-requisitos-heading">Bonus</p>
+                      </section>
+                    }
+                    @if (serviceBonus(s).length) {
+                      <section class="service-panel service-panel--bonus">
+                        <p class="service-requisitos-heading">
+                          <svg lucideSparkles [size]="14" aria-hidden="true"></svg>
+                          Bonus
+                        </p>
                         <ul class="service-requisitos-list">
                           @for (item of serviceBonus(s); track item) {
                             <li>{{ item }}</li>
                           }
                         </ul>
-                      }
-                    </div>
-                  </details>
-                </div>
-                <div class="service-side">
-                  <div class="service-price" [class.service-price-tbd]="!hasServicePrice(s)">
-                    @if (hasServicePrice(s)) {
-                      ${{ s.price | number }} <span>MXN</span>
-                    } @else {
-                      Precio por definir
+                      </section>
                     }
                   </div>
-                  <button type="button" class="service-ask" (click)="$event.stopPropagation(); askAboutService(s)">
-                    <svg lucideMessageCircle [size]="15" aria-hidden="true"></svg>
-                    Preguntar a la IA
-                  </button>
-                </div>
+                </details>
               </div>
             }
           </div>
