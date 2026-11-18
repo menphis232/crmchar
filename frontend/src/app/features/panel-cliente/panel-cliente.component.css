@@ -1993,8 +1993,45 @@ select.client-wallet-input option {
   color: var(--mon-muted);
 }
 
+.client-vehicle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .client-vehicle-delete {
   color: var(--mon-red) !important;
+}
+
+.client-vehicle-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+.client-vehicle-fact {
+  min-width: 0;
+}
+
+.client-vehicle-fact dt {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--mon-muted);
+}
+
+.client-vehicle-fact dd {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--mon-text);
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .client-vehicle-form {
@@ -2142,6 +2179,7 @@ select.client-wallet-input option {
 }
 
 @media (max-width: 640px) {
+  .client-vehicle-facts,
   .client-vehicle-form {
     grid-template-columns: 1fr;
   }

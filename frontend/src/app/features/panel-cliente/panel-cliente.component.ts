@@ -45,6 +45,7 @@ import {
   LucideMessageCircle,
   LucidePaperclip,
   LucideSearch,
+  LucidePencil,
   LucideTrash2,
   LucideUpload,
   LucideUser,
@@ -90,7 +91,7 @@ const CLIENT_TABS: ClientTab[] = [
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck,
     LucideMessageCircle, LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
-    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePlus,
+    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePencil, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
     LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideBell,
   ],
@@ -219,6 +220,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   vehiclesLoading = signal(false);
   showAddVehicleForm = signal(false);
   isAddingVehicle = signal(false);
+  /** Vehículo en modo edición; null = solo lectura. */
+  editingVehicleId = signal<string | null>(null);
   newPlate = '';
   newMake = '';
   newModel = '';
@@ -245,6 +248,27 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   tenenciaLabel(value?: string | null): string {
     return this.tenenciaOptions.find(o => o.value === value)?.label || '';
+  }
+
+  engomadoLabel(value?: string | null): string {
+    return this.engomadoColors.find(o => o.value === value)?.label || '';
+  }
+
+  isEditingVehicle(v: CrmContactVehicle): boolean {
+    return this.editingVehicleId() === v.id;
+  }
+
+  startEditVehicle(v: CrmContactVehicle) {
+    this.editingVehicleId.set(v.id);
+  }
+
+  doneEditVehicle() {
+    this.editingVehicleId.set(null);
+  }
+
+  vehicleFact(value?: string | number | null): string {
+    if (value == null || value === '') return '—';
+    return String(value);
   }
 
   messages = signal<any[]>([]);
@@ -705,6 +729,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (!confirm('¿Eliminar este vehículo de tu perfil?')) return;
     this.http.delete(`${environment.apiUrl}/client/vehicles/${v.id}`).subscribe({
       next: () => {
+        if (this.editingVehicleId() === v.id) this.editingVehicleId.set(null);
         this.loadVehicles();
         this.toast.success('Vehículo eliminado', 'Listo');
       },

@@ -708,7 +708,7 @@
                   <p class="client-vehicle-plate">{{ v.plate }}</p>
                   <div class="client-vehicle-tags">
                     @if (v.engomadoColor) {
-                      <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ v.engomadoColor }}</span>
+                      <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ engomadoLabel(v.engomadoColor) || v.engomadoColor }}</span>
                     }
                     @if (v.tenenciaStatus) {
                       <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia {{ v.tenenciaYear || currentYear }}: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
@@ -718,53 +718,106 @@
                     }
                   </div>
                 </div>
-                <button type="button" class="btn-ghost small client-vehicle-delete" (click)="removeVehicle(v)">
-                  <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
-                  Quitar
-                </button>
-              </div>
-              <div class="client-vehicle-form">
-                <app-vehicle-mmy-select
-                  class="client-vehicle-form-mmy"
-                  [make]="v.make || ''"
-                  (makeChange)="updateClientVehicle(v, 'make', $event)"
-                  [submodel]="v.model || ''"
-                  (submodelChange)="updateClientVehicle(v, 'model', $event)"
-                  [year]="v.year ?? null"
-                  (yearChange)="updateClientVehicle(v, 'year', $event)"
-                />
-                <div>
-                  <label>Estado (placas)</label>
-                  <select [ngModel]="v.state || ''" (ngModelChange)="updateClientVehicle(v, 'state', $event)">
-                    <option value="">—</option>
-                    @for (st of mexicoStates; track st) {
-                      <option [value]="st">{{ st }}</option>
-                    }
-                  </select>
-                </div>
-                <div>
-                  <label>Engomado</label>
-                  <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateClientVehicle(v, 'engomadoColor', $event)">
-                    <option value="">—</option>
-                    @for (c of engomadoColors; track c.value) {
-                      <option [value]="c.value">{{ c.label }}</option>
-                    }
-                  </select>
-                </div>
-                <div>
-                  <label>Vencimiento póliza de seguro</label>
-                  <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateClientVehicle(v, 'insuranceExpiry', $event)">
-                </div>
-                <div>
-                  <label>Refrendo / tenencia {{ currentYear }}</label>
-                  <select [ngModel]="v.tenenciaStatus || ''" (ngModelChange)="updateClientVehicle(v, 'tenenciaStatus', $event)">
-                    <option value="">—</option>
-                    @for (t of tenenciaOptions; track t.value) {
-                      <option [value]="t.value">{{ t.label }}</option>
-                    }
-                  </select>
+                <div class="client-vehicle-actions">
+                  @if (isEditingVehicle(v)) {
+                    <button type="button" class="btn-copy small" (click)="doneEditVehicle()">
+                      <svg lucideCheck [size]="12" aria-hidden="true"></svg>
+                      Listo
+                    </button>
+                  } @else {
+                    <button type="button" class="btn-ghost small" (click)="startEditVehicle(v)">
+                      <svg lucidePencil [size]="12" aria-hidden="true"></svg>
+                      Editar
+                    </button>
+                  }
+                  <button type="button" class="btn-ghost small client-vehicle-delete" (click)="removeVehicle(v)">
+                    <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                    Quitar
+                  </button>
                 </div>
               </div>
+
+              @if (isEditingVehicle(v)) {
+                <div class="client-vehicle-form">
+                  <app-vehicle-mmy-select
+                    class="client-vehicle-form-mmy"
+                    [make]="v.make || ''"
+                    (makeChange)="updateClientVehicle(v, 'make', $event)"
+                    [submodel]="v.model || ''"
+                    (submodelChange)="updateClientVehicle(v, 'model', $event)"
+                    [year]="v.year ?? null"
+                    (yearChange)="updateClientVehicle(v, 'year', $event)"
+                  />
+                  <div>
+                    <label>Estado (placas)</label>
+                    <select [ngModel]="v.state || ''" (ngModelChange)="updateClientVehicle(v, 'state', $event)">
+                      <option value="">—</option>
+                      @for (st of mexicoStates; track st) {
+                        <option [value]="st">{{ st }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label>Engomado</label>
+                    <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateClientVehicle(v, 'engomadoColor', $event)">
+                      <option value="">—</option>
+                      @for (c of engomadoColors; track c.value) {
+                        <option [value]="c.value">{{ c.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label>Vencimiento póliza de seguro</label>
+                    <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateClientVehicle(v, 'insuranceExpiry', $event)">
+                  </div>
+                  <div>
+                    <label>Refrendo / tenencia {{ currentYear }}</label>
+                    <select [ngModel]="v.tenenciaStatus || ''" (ngModelChange)="updateClientVehicle(v, 'tenenciaStatus', $event)">
+                      <option value="">—</option>
+                      @for (t of tenenciaOptions; track t.value) {
+                        <option [value]="t.value">{{ t.label }}</option>
+                      }
+                    </select>
+                  </div>
+                </div>
+              } @else {
+                <dl class="client-vehicle-facts">
+                  <div class="client-vehicle-fact">
+                    <dt>Marca</dt>
+                    <dd>{{ vehicleFact(v.make) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Submarca</dt>
+                    <dd>{{ vehicleFact(v.model) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Año</dt>
+                    <dd>{{ vehicleFact(v.year) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Estado (placas)</dt>
+                    <dd>{{ vehicleFact(v.state) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Engomado</dt>
+                    <dd>{{ vehicleFact(engomadoLabel(v.engomadoColor) || v.engomadoColor) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Vencimiento póliza</dt>
+                    <dd>
+                      @if (v.insuranceExpiry) {
+                        {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Tenencia {{ currentYear }}</dt>
+                    <dd>{{ vehicleFact(tenenciaLabel(v.tenenciaStatus)) }}</dd>
+                  </div>
+                </dl>
+              }
 
               <div class="client-vehicle-docs">
                 <h4 class="client-vehicle-docs-title">Documentos del vehículo</h4>
