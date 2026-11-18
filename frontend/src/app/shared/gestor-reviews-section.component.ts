@@ -37,24 +37,16 @@ export class GestorReviewsSectionComponent implements OnChanges {
     host.innerHTML = '';
     if (!html) return;
 
-    // Preferir iframe si viene en el código (más seguro y suele bastar)
-    const iframeSrc = html.match(/<iframe[^>]+src=["']([^"']+)["']/i)?.[1];
-    if (iframeSrc && /^https?:\/\//i.test(iframeSrc)) {
-      const iframe = document.createElement('iframe');
-      iframe.src = iframeSrc;
-      iframe.title = 'Reseñas de Google';
-      iframe.loading = 'lazy';
-      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
-      iframe.style.width = '100%';
-      iframe.style.minHeight = '420px';
-      iframe.style.border = '0';
-      iframe.style.borderRadius = '12px';
-      host.appendChild(iframe);
-      return;
-    }
-
-    // Widget con script (Famewall / WidgetPop / Elfsight): inyectar y re-ejecutar scripts
+    // Inyectar HTML completo (iframe + script de WidgetPop/Famewall/Elfsight)
+    // y re-ejecutar scripts (innerHTML solo no los corre).
     host.innerHTML = html;
+    host.querySelectorAll('iframe').forEach((iframe) => {
+      iframe.style.width = iframe.style.width || '100%';
+      iframe.style.minHeight = iframe.style.minHeight || iframe.style.height || '640px';
+      iframe.style.border = iframe.style.border || '0';
+      iframe.style.borderRadius = iframe.style.borderRadius || '12px';
+      iframe.style.display = iframe.style.display || 'block';
+    });
     host.querySelectorAll('script').forEach((oldScript) => {
       const s = document.createElement('script');
       for (const attr of Array.from(oldScript.attributes)) {
