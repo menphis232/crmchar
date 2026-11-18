@@ -476,7 +476,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
 
   const cleanPhone = clientPhone?.trim() ? normalizeMxPhone(clientPhone) : null;
   if (clientPhone?.trim() && !cleanPhone) {
-    throw new Error('El teléfono debe tener 10 dígitos');
+    throw new Error('Teléfono inválido. Usa 10 dígitos de México o número internacional con lada (ej. +1 312 555 0100)');
   }
 
   const clientAccess = await ensureClientUser({

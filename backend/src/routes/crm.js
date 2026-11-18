@@ -1283,7 +1283,7 @@ router.post('/contacts/:id/client-access', async (req, res) => {
 
     const phoneRaw = contact.phone || contact.whatsapp || '';
     if (phoneRaw && !normalizeMxPhone(phoneRaw) && !contact.email) {
-      return res.status(400).json({ error: 'El teléfono del cliente debe tener 10 dígitos' });
+      return res.status(400).json({ error: 'Teléfono inválido. Usa 10 dígitos de México o número internacional con lada' });
     }
 
     const latestDeal = await get(
@@ -1301,7 +1301,7 @@ router.post('/contacts/:id/client-access', async (req, res) => {
       resetPassword: !!req.body?.reset,
     });
     if (!access) {
-      return res.status(400).json({ error: 'Agrega un teléfono de 10 dígitos o un correo para crear el usuario' });
+      return res.status(400).json({ error: 'Agrega un teléfono válido (México o internacional con lada) o un correo para crear el usuario' });
     }
     res.json(access);
   } catch (err) {
@@ -2675,7 +2675,7 @@ router.post('/deals/:id/client-access', async (req, res) => {
 
     const phoneRaw = deal.contact_phone || deal.contact_whatsapp || '';
     if (phoneRaw && !normalizeMxPhone(phoneRaw) && !deal.contact_email) {
-      return res.status(400).json({ error: 'El teléfono del cliente debe tener 10 dígitos' });
+      return res.status(400).json({ error: 'Teléfono inválido. Usa 10 dígitos de México o número internacional con lada' });
     }
     const gestor = await get('SELECT name FROM gestores WHERE user_id = ?', [req.orgId]);
     const access = await ensureClientUser({
@@ -2688,7 +2688,7 @@ router.post('/deals/:id/client-access', async (req, res) => {
       resetPassword: !!req.body?.reset,
     });
     if (!access) {
-      return res.status(400).json({ error: 'Agrega un teléfono de 10 dígitos o un correo para crear el usuario' });
+      return res.status(400).json({ error: 'Agrega un teléfono válido (México o internacional con lada) o un correo para crear el usuario' });
     }
     res.json(access);
   } catch (err) {
