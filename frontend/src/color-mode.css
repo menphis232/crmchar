@@ -193,52 +193,78 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) .deal-panel-overlay {
   background: rgba(92, 92, 92, 0.28) !important;
 }
 
-/* Perfil público de gestoría: la portada se ve completa arriba, el logo monta el borde
-   y el nombre queda sobre blanco. --hero-cut es el centro vertical del logo. */
+/* Perfil público de gestoría en claro: portada con fade suave, logo oscuro legible
+   sobre el banner y nombre sobre blanco. --hero-cut = altura visible de portada. */
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
-  --hero-cut: 260px;
-  padding-top: 150px !important;
-  background-color: #ececec !important;
+  --hero-cut: 220px;
+  padding-top: 120px !important;
+  background-color: #fff !important;
   background-size: cover !important;
   background-position: center top !important;
-  border-bottom: 1px solid #e6e6e6 !important;
+  border-bottom: 1px solid #e8e8e8 !important;
+  overflow: hidden !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header::before {
-  background: linear-gradient(to bottom, transparent 0, transparent var(--hero-cut), #fff var(--hero-cut)) !important;
+  /* Fade suave: no corta la portada a la mitad del logo */
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 42%,
+    rgba(255, 255, 255, 0.72) 72%,
+    #fff 100%
+  ) !important;
+  z-index: 1 !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-banner {
-  height: var(--hero-cut) !important;
+  height: 280px !important;
   opacity: 1 !important;
+  object-fit: cover !important;
+  object-position: center top !important;
 }
 
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header *:not(.profile-img) {
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-info {
   background-color: transparent !important;
-}
-
-html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-info {
-  padding-bottom: 32px !important;
+  padding-top: 24px !important;
+  padding-bottom: 28px !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img.profile-img-initial {
-  background-color: #f3f3f3 !important;
-  color: #6b6b6b !important;
+  background-color: #111 !important;
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
-  background-color: #fff !important;
-  border: 5px solid #fff !important;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+  /* Fondo oscuro: logos blancos/claros se leen; anillo gris sobre portada y blanco */
+  background-color: #0a0a0a !important;
+  border: 3px solid #fff !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.08),
+    0 14px 36px rgba(0, 0, 0, 0.28) !important;
+  object-fit: contain !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-name {
-  color: #4a4a4a !important;
+  color: #2f2f2f !important;
   text-wrap: balance;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-location {
   color: #6b6b6b !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-stats .ps-item {
+  background: #f6f6f6 !important;
+  border-color: #e0e0e0 !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-stats .ps-val {
+  color: #2f2f2f !important;
+}
+
+html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-stats .ps-lbl {
+  color: #7a7a7a !important;
 }
 
 /* Acción principal: en negro es blanco sólido; en claro se invierte a gris sólido */
@@ -255,11 +281,14 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail :is(.
 
 @media (max-width: 768px) {
   html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
-    --hero-cut: calc(var(--nav-h) + 129px);
-    padding-top: calc(var(--nav-h) + 64px) !important;
+    --hero-cut: 160px;
+    padding-top: calc(var(--nav-h) + 48px) !important;
+  }
+  html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-banner {
+    height: 200px !important;
   }
   html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
-    border-width: 4px !important;
+    border-width: 3px !important;
   }
 }
 
