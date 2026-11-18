@@ -230,6 +230,15 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   newEngomado = '';
   newInsuranceExpiry = '';
   newTenencia = '';
+  newVerificationHologram = '';
+  newNextVerificationDate = '';
+  readonly hologramOptions = [
+    { value: '00', label: '00' },
+    { value: '0', label: '0' },
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: 'exento', label: 'Exento' },
+  ];
   readonly mexicoStates = MEXICO_STATES;
   readonly formatVehicleLabel = formatVehicleLabel;
   readonly engomadoColors = [
@@ -252,6 +261,11 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   engomadoLabel(value?: string | null): string {
     return this.engomadoColors.find(o => o.value === value)?.label || '';
+  }
+
+  hologramLabel(value?: string | null): string {
+    if (!value) return '';
+    return this.hologramOptions.find(o => o.value === value)?.label || String(value);
   }
 
   isEditingVehicle(v: CrmContactVehicle): boolean {
@@ -285,7 +299,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   vehicleCirculation = computed(() => {
     return this.vehicles().map(v => {
       const rule = ruleForPlate(v.plate);
-      const check = checkCirculationToday(v.plate);
+      const check = checkCirculationToday(v.plate, v.verificationHologram);
       return {
         vehicle: v,
         displayName: vehicleDisplayName(v),
@@ -682,6 +696,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       engomadoColor: this.newEngomado || undefined,
       insuranceExpiry: this.newInsuranceExpiry || undefined,
       tenenciaStatus: this.newTenencia || undefined,
+      verificationHologram: this.newVerificationHologram || undefined,
+      nextVerificationDate: this.newNextVerificationDate || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
@@ -715,6 +731,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.newEngomado = '';
     this.newInsuranceExpiry = '';
     this.newTenencia = '';
+    this.newVerificationHologram = '';
+    this.newNextVerificationDate = '';
   }
 
   updateClientVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {

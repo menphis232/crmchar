@@ -13,6 +13,27 @@ const MONTH_NAMES = [
 ];
 
 export const ENGOMADO_COLORS = ['amarillo', 'rosa', 'rojo', 'verde', 'azul'];
+export const VERIFICATION_HOLOGRAMS = ['00', '0', '1', '2', 'exento'];
+
+export function normalizeVerificationHologram(value) {
+  if (value == null || value === '') return null;
+  const raw = String(value).trim().toLowerCase();
+  if (raw === 'exento') return 'exento';
+  if (raw === '00' || raw === '0' || raw === '1' || raw === '2') return raw;
+  return null;
+}
+
+export function normalizeNextVerificationDate(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
+export function formatDateOnly(value) {
+  if (!value) return null;
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
 
 export function plateLastDigit(plate) {
   const cleaned = String(plate || '').replace(/\s/g, '').toUpperCase();
@@ -68,13 +89,11 @@ export function vehicleRowWithVerification(row) {
     state: row.state,
     engomadoColor: row.engomado_color,
     vehicleNotes: row.vehicle_notes,
-    insuranceExpiry: row.insurance_expiry
-      ? (row.insurance_expiry instanceof Date
-          ? row.insurance_expiry.toISOString().slice(0, 10)
-          : String(row.insurance_expiry).slice(0, 10))
-      : null,
+    insuranceExpiry: formatDateOnly(row.insurance_expiry),
     tenenciaStatus: row.tenencia_2026 || null,
     tenenciaYear: row.tenencia_year != null ? Number(row.tenencia_year) : null,
+    verificationHologram: row.verification_hologram || null,
+    nextVerificationDate: formatDateOnly(row.next_verification_date),
     verificationMonth: verification.month,
     verificationStatus: verification.status,
     verificationLabel: verification.label,

@@ -28,7 +28,13 @@ import {
   parseJsonArray,
   syncUserQuoteTemplates,
 } from '../crm/quote-defaults.js';
-import { ENGOMADO_COLORS, getVerificationInfo, vehicleRowWithVerification } from '../crm/verification-utils.js';
+import {
+  ENGOMADO_COLORS,
+  getVerificationInfo,
+  normalizeNextVerificationDate,
+  normalizeVerificationHologram,
+  vehicleRowWithVerification,
+} from '../crm/verification-utils.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
@@ -1402,7 +1408,10 @@ router.delete('/contacts/:id', async (req, res) => {
 router.post('/contacts/:id/vehicles', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes, make, model, year, insuranceExpiry, tenenciaStatus } = req.body;
+    const {
+      plate, state, engomadoColor, vehicleNotes, make, model, year,
+      insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+    } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
 
     const pipeline = pipelineForRole(req.user.role);
@@ -1412,8 +1421,11 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
     const tenenciaVal = ['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null;
     const id = uuid();
     await run(`
-      INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes, insurance_expiry, tenencia_2026, tenencia_year)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO contact_vehicles (
+        id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes,
+        insurance_expiry, tenencia_2026, tenencia_year, verification_hologram, next_verification_date
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.params.id, uid,
       String(plate).trim().toUpperCase(),
@@ -1426,6 +1438,8 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
       insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null,
       tenenciaVal,
       tenenciaVal ? new Date().getFullYear() : null,
+      normalizeVerificationHologram(verificationHologram),
+      normalizeNextVerificationDate(nextVerificationDate),
     ]);
 
     const row = await get('SELECT * FROM contact_vehicles WHERE id = ?', [id]);
@@ -1439,7 +1453,10 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
 router.patch('/contact-vehicles/:id', async (req, res) => {
   try {
     const uid = req.orgId;
-    const { plate, state, engomadoColor, vehicleNotes, make, model, year, insuranceExpiry, tenenciaStatus } = req.body;
+    const {
+      plate, state, engomadoColor, vehicleNotes, make, model, year,
+      insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+    } = req.body;
     const insExpiry = insuranceExpiry !== undefined
       ? (insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null)
       : undefined;
@@ -1447,6 +1464,12 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       ? (['si', 'no', 'pendiente'].includes(tenenciaStatus) ? tenenciaStatus : null)
       : undefined;
     const tenenciaYear = tenencia !== undefined ? (tenencia ? new Date().getFullYear() : null) : undefined;
+    const hologram = verificationHologram !== undefined
+      ? normalizeVerificationHologram(verificationHologram)
+      : undefined;
+    const nextVerDate = nextVerificationDate !== undefined
+      ? normalizeNextVerificationDate(nextVerificationDate)
+      : undefined;
     const result = await run(`
       UPDATE contact_vehicles SET
         plate = COALESCE(?, plate),
@@ -1459,6 +1482,8 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
         insurance_expiry = ${insExpiry !== undefined ? '?' : 'insurance_expiry'},
         tenencia_2026 = ${tenencia !== undefined ? '?' : 'tenencia_2026'},
         tenencia_year = ${tenenciaYear !== undefined ? '?' : 'tenencia_year'},
+        verification_hologram = ${hologram !== undefined ? '?' : 'verification_hologram'},
+        next_verification_date = ${nextVerDate !== undefined ? '?' : 'next_verification_date'},
         updated_at = NOW()
       WHERE id = ? AND user_id = ?
     `, [
@@ -1472,6 +1497,8 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       ...(insExpiry !== undefined ? [insExpiry] : []),
       ...(tenencia !== undefined ? [tenencia] : []),
       ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
+      ...(hologram !== undefined ? [hologram] : []),
+      ...(nextVerDate !== undefined ? [nextVerDate] : []),
       req.params.id,
       uid,
     ]);

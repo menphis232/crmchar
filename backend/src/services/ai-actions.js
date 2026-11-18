@@ -50,8 +50,25 @@ async function clientOwnsVehicle(email, vehicleId) {
   );
 }
 
+function normalizeAiHologram(value) {
+  if (value == null || value === '') return null;
+  const raw = String(value).trim().toLowerCase();
+  if (raw === 'exento') return 'exento';
+  if (raw === '00' || raw === '0' || raw === '1' || raw === '2') return raw;
+  return null;
+}
+
+function normalizeAiDate(value) {
+  if (value == null || value === '') return null;
+  const s = String(value).trim().slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+
 async function createClientVehicle(user, data) {
-  const { plate, make, model, year, state, engomadoColor, vehicleNotes, insuranceExpiry, tenenciaStatus } = data;
+  const {
+    plate, make, model, year, state, engomadoColor, vehicleNotes,
+    insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+  } = data;
   if (!plate?.trim()) throw new Error('Falta la placa');
   if (!make?.trim() || !model?.trim() || year == null || year === '') {
     throw new Error('Faltan marca, submarca o año');
@@ -66,19 +83,24 @@ async function createClientVehicle(user, data) {
   const tenenciaYear = tenencia ? new Date().getFullYear() : null;
   const validEngomado = ['amarillo', 'rosa', 'rojo', 'verde', 'azul'];
   const engomado = validEngomado.includes(engomadoColor) ? engomadoColor : null;
+  const hologram = normalizeAiHologram(verificationHologram);
+  const nextVerDate = normalizeAiDate(nextVerificationDate);
 
   let firstId = null;
   for (const contact of contacts) {
     const id = uuid();
     await run(
-      `INSERT INTO contact_vehicles (id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes, insurance_expiry, tenencia_2026, tenencia_year)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO contact_vehicles (
+         id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes,
+         insurance_expiry, tenencia_2026, tenencia_year, verification_hologram, next_verification_date
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, contact.id, contact.user_id,
         String(plate).trim().toUpperCase(),
         make.trim(), model.trim(), Number(year),
         state || null, engomado, vehicleNotes || null,
-        insExpiry, tenencia, tenenciaYear,
+        insExpiry, tenencia, tenenciaYear, hologram, nextVerDate,
       ],
     );
     if (!firstId) firstId = id;
@@ -97,7 +119,7 @@ IMPORTANTE — REGISTRAR VEHÍCULO EN "MIS VEHÍCULOS":
 Esto es guardar el auto en el panel del cliente, NO es un trámite de REPUVE ni alta vehicular.
 Campos del formulario real del panel:
   OBLIGATORIOS: plate (placa), make (marca), model (submarca/modelo), year (año)
-  OPCIONALES (no preguntes si el usuario no los menciona): state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente)
+  OPCIONALES (no preguntes si el usuario no los menciona): state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente), verificationHologram (00|0|1|2|exento), nextVerificationDate (fecha YYYY-MM-DD)
 NUNCA pidas para registrar en el panel: NIV, VIN, número de serie, factura, tarjeta de circulación, CURP, RFC ni documentos físicos.
 NUNCA inventes ni sugieras una marca/modelo/año/placa de ejemplo (nada de "Nissan Sentra 2020" ni placas ficticias). Usa solo los datos que el usuario diga, o pregunta por los que falten.
 Si el usuario ya dio marca, modelo, año y placa, ejecuta [CREATE_VEHICLE] de inmediato sin más preguntas.
@@ -113,7 +135,7 @@ NO subas archivos (documentos con archivo requieren subirlos manualmente en el p
 
 **Actualizar vehículo** (solo campos del formulario; vehicle_id del listado)
 [UPDATE_VEHICLE]
-{ "vehicle_id": "uuid", "plate": "NUEVA", "make": "...", "model": "...", "year": 2021, "state": "...", "engomadoColor": "verde", "insuranceExpiry": "2026-06-01", "tenenciaStatus": "pendiente" }
+{ "vehicle_id": "uuid", "plate": "NUEVA", "make": "...", "model": "...", "year": 2021, "state": "...", "engomadoColor": "verde", "insuranceExpiry": "2026-06-01", "tenenciaStatus": "pendiente", "verificationHologram": "1", "nextVerificationDate": "2026-05-15" }
 [/UPDATE_VEHICLE]
 
 **Eliminar vehículo**
@@ -493,6 +515,12 @@ export async function processAiActions(reply, ctx) {
       ? (['si', 'no', 'pendiente'].includes(data.tenenciaStatus) ? data.tenenciaStatus : null)
       : undefined;
     const tenenciaYear = tenencia !== undefined ? (tenencia ? new Date().getFullYear() : null) : undefined;
+    const hologram = data.verificationHologram !== undefined
+      ? normalizeAiHologram(data.verificationHologram)
+      : undefined;
+    const nextVerDate = data.nextVerificationDate !== undefined
+      ? normalizeAiDate(data.nextVerificationDate)
+      : undefined;
     await run(
       `UPDATE contact_vehicles cv
        JOIN contacts c ON c.id = cv.contact_id
@@ -502,6 +530,8 @@ export async function processAiActions(reply, ctx) {
            cv.insurance_expiry = ${insExpiry !== undefined ? '?' : 'cv.insurance_expiry'},
            cv.tenencia_2026 = ${tenencia !== undefined ? '?' : 'cv.tenencia_2026'},
            cv.tenencia_year = ${tenenciaYear !== undefined ? '?' : 'cv.tenencia_year'},
+           cv.verification_hologram = ${hologram !== undefined ? '?' : 'cv.verification_hologram'},
+           cv.next_verification_date = ${nextVerDate !== undefined ? '?' : 'cv.next_verification_date'},
            cv.updated_at = NOW()
        WHERE LOWER(c.email) = LOWER(?) AND UPPER(cv.plate) = UPPER(?)`,
       [
@@ -513,6 +543,8 @@ export async function processAiActions(reply, ctx) {
         ...(insExpiry !== undefined ? [insExpiry] : []),
         ...(tenencia !== undefined ? [tenencia] : []),
         ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
+        ...(hologram !== undefined ? [hologram] : []),
+        ...(nextVerDate !== undefined ? [nextVerDate] : []),
         user.email, plateKey,
       ],
     );

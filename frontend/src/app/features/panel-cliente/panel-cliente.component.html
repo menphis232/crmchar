@@ -781,6 +781,19 @@
                       }
                     </select>
                   </div>
+                  <div>
+                    <label>Holograma de verificación</label>
+                    <select [ngModel]="v.verificationHologram || ''" (ngModelChange)="updateClientVehicle(v, 'verificationHologram', $event)">
+                      <option value="">—</option>
+                      @for (h of hologramOptions; track h.value) {
+                        <option [value]="h.value">{{ h.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div>
+                    <label>Fecha de próxima verificación</label>
+                    <input type="date" [ngModel]="v.nextVerificationDate || ''" (ngModelChange)="updateClientVehicle(v, 'nextVerificationDate', $event)">
+                  </div>
                 </div>
               } @else {
                 <dl class="client-vehicle-facts">
@@ -817,6 +830,20 @@
                   <div class="client-vehicle-fact">
                     <dt>Tenencia {{ currentYear }}</dt>
                     <dd>{{ vehicleFact(tenenciaLabel(v.tenenciaStatus)) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Holograma de verificación</dt>
+                    <dd>{{ vehicleFact(hologramLabel(v.verificationHologram)) }}</dd>
+                  </div>
+                  <div class="client-vehicle-fact">
+                    <dt>Fecha de próxima verificación</dt>
+                    <dd>
+                      @if (v.nextVerificationDate) {
+                        {{ v.nextVerificationDate | date:'dd/MM/yyyy' }}
+                      } @else {
+                        —
+                      }
+                    </dd>
                   </div>
                 </dl>
               }
@@ -971,6 +998,19 @@
                     <option [value]="t.value">{{ t.label }}</option>
                   }
                 </select>
+              </div>
+              <div>
+                <label>Holograma de verificación</label>
+                <select class="client-wallet-input" [(ngModel)]="newVerificationHologram">
+                  <option value="">—</option>
+                  @for (h of hologramOptions; track h.value) {
+                    <option [value]="h.value">{{ h.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Fecha de próxima verificación</label>
+                <input type="date" class="client-wallet-input" [(ngModel)]="newNextVerificationDate">
               </div>
             </div>
             <button type="button" class="btn-copy client-vehicle-add-btn" (click)="addVehicle()" [disabled]="isAddingVehicle()">

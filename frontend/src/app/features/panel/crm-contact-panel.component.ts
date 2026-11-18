@@ -517,6 +517,8 @@ export class CrmContactPanelComponent {
   newVehicleNotes = '';
   newInsuranceExpiry = '';
   newTenencia = '';
+  newVerificationHologram = '';
+  newNextVerificationDate = '';
 
   readonly mexicoStates = MEXICO_STATES;
   readonly engomadoColors = ENGOMADO_COLORS;
@@ -526,6 +528,13 @@ export class CrmContactPanelComponent {
     { value: 'si', label: 'Sí, pagada' },
     { value: 'no', label: 'No pagada' },
     { value: 'pendiente', label: 'Pendiente' },
+  ];
+  readonly hologramOptions = [
+    { value: '00', label: '00' },
+    { value: '0', label: '0' },
+    { value: '1', label: '1' },
+    { value: '2', label: '2' },
+    { value: 'exento', label: 'Exento' },
   ];
   readonly currentYear = new Date().getFullYear();
 
@@ -646,6 +655,8 @@ export class CrmContactPanelComponent {
       vehicleNotes: this.newVehicleNotes.trim() || undefined,
       insuranceExpiry: this.newInsuranceExpiry || undefined,
       tenenciaStatus: this.newTenencia || undefined,
+      verificationHologram: this.newVerificationHologram || undefined,
+      nextVerificationDate: this.newNextVerificationDate || undefined,
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
@@ -658,6 +669,8 @@ export class CrmContactPanelComponent {
         this.newVehicleNotes = '';
         this.newInsuranceExpiry = '';
         this.newTenencia = '';
+        this.newVerificationHologram = '';
+        this.newNextVerificationDate = '';
         this.toast.success('Vehículo agregado');
         this.load(id);
         this.updated.emit();

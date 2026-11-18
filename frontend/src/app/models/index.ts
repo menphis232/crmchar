@@ -401,6 +401,8 @@ export interface CrmContactVehicle {
   insuranceExpiry?: string | null;
   tenenciaStatus?: 'si' | 'no' | 'pendiente' | string | null;
   tenenciaYear?: number | null;
+  verificationHologram?: string | null;
+  nextVerificationDate?: string | null;
   verificationMonth?: number | null;
   verificationStatus?: 'due' | 'soon' | 'overdue' | 'ok' | 'unknown';
   verificationLabel?: string;

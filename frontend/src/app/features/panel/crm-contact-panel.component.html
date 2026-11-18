@@ -153,6 +153,19 @@
                     <p class="card-desc" style="margin-top:4px;">Registrado para {{ v.tenenciaYear }}</p>
                   }
                 </div>
+                <div>
+                  <label>Holograma de verificación</label>
+                  <select [ngModel]="v.verificationHologram || ''" (ngModelChange)="updateVehicle(v, 'verificationHologram', $event)">
+                    <option value="">—</option>
+                    @for (h of hologramOptions; track h.value) {
+                      <option [value]="h.value">{{ h.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Fecha de próxima verificación</label>
+                  <input type="date" [ngModel]="v.nextVerificationDate || ''" (ngModelChange)="updateVehicle(v, 'nextVerificationDate', $event)">
+                </div>
                 <div class="full">
                   <label>Notas adicionales</label>
                   <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Color, versión, observaciones...">
@@ -264,6 +277,19 @@
                     <option [value]="t.value">{{ t.label }}</option>
                   }
                 </select>
+              </div>
+              <div>
+                <label>Holograma de verificación</label>
+                <select [(ngModel)]="newVerificationHologram">
+                  <option value="">—</option>
+                  @for (h of hologramOptions; track h.value) {
+                    <option [value]="h.value">{{ h.label }}</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label>Fecha de próxima verificación</label>
+                <input type="date" [(ngModel)]="newNextVerificationDate">
               </div>
               <div>
                 <label>Notas adicionales</label>

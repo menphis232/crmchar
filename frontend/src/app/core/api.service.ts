@@ -211,6 +211,8 @@ export class CrmService {
     vehicleNotes?: string;
     insuranceExpiry?: string | null;
     tenenciaStatus?: string | null;
+    verificationHologram?: string | null;
+    nextVerificationDate?: string | null;
   }) {
     return this.http.post<CrmContactVehicle>(`${this.base}/contacts/${contactId}/vehicles`, data);
   }
@@ -224,6 +226,8 @@ export class CrmService {
     vehicleNotes: string;
     insuranceExpiry: string | null;
     tenenciaStatus: string | null;
+    verificationHologram: string | null;
+    nextVerificationDate: string | null;
   }>) {
     return this.http.patch<CrmContactVehicle>(`${this.base}/contact-vehicles/${vehicleId}`, data);
   }
