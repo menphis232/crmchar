@@ -144,12 +144,12 @@
               </picture>
               @if (clientPromoBanner()?.promoBannerTitle) {
                 <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
-                  <span class="client-promo-banner-title">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+                  <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
                 </div>
               }
             </div>
           } @else if (clientPromoBanner()?.promoBannerTitle) {
-            <div class="client-promo-banner-fallback" [ngStyle]="{ color: clientPromoBanner()?.promoBannerTitleColor || '#fff', textAlign: clientPromoBanner()?.promoBannerTitleAlign || 'center' }">
+            <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
               <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
             </div>
           }
@@ -169,12 +169,12 @@
               </picture>
               @if (clientPromoBanner()?.promoBannerTitle) {
                 <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
-                  <span class="client-promo-banner-title">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+                  <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
                 </div>
               }
             </div>
           } @else if (clientPromoBanner()?.promoBannerTitle) {
-            <div class="client-promo-banner-fallback" [ngStyle]="{ color: clientPromoBanner()?.promoBannerTitleColor || '#fff', textAlign: clientPromoBanner()?.promoBannerTitleAlign || 'center' }">
+            <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
               <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
             </div>
           }

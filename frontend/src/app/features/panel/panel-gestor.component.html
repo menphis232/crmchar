@@ -773,7 +773,7 @@
               <div class="form-group" style="margin:0;">
                 <label>Color del texto</label>
                 <div style="display:flex;align-items:center;gap:8px;">
-                  <input type="color" [(ngModel)]="clientPromoBannerTitleColor" (change)="saveClientPromoBanner()" style="width:42px;height:34px;padding:0;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;">
+                  <input type="color" [(ngModel)]="clientPromoBannerTitleColor" (ngModelChange)="saveClientPromoBanner()" style="width:42px;height:34px;padding:0;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;">
                   <input type="text" [(ngModel)]="clientPromoBannerTitleColor" (change)="saveClientPromoBanner()" placeholder="#ffffff" style="flex:1;">
                 </div>
               </div>

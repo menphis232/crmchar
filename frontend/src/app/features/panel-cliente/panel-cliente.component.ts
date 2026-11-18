@@ -178,17 +178,23 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     };
     const align = b?.promoBannerTitleAlign || 'center';
     const valign = b?.promoBannerTitleVAlign || 'center';
+    const color = b?.promoBannerTitleColor || '#ffffff';
+    const fontSize = sizeMap[b?.promoBannerTitleSize || 'md'] || sizeMap['md'];
     const justify =
       align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
     const items =
       valign === 'top' ? 'flex-start' : valign === 'bottom' ? 'flex-end' : 'center';
     return {
-      color: b?.promoBannerTitleColor || '#ffffff',
-      fontSize: sizeMap[b?.promoBannerTitleSize || 'md'] || sizeMap['md'],
+      // CSS vars + !important en CSS (panel-datta pisa color/-webkit-text-fill)
+      '--promo-title-color': color,
+      '--promo-title-size': fontSize,
+      color,
+      webkitTextFillColor: color,
+      fontSize,
       justifyContent: justify,
       alignItems: items,
       textAlign: align as 'left' | 'center' | 'right',
-    };
+    } as Record<string, string>;
   });
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
