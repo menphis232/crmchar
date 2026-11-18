@@ -722,7 +722,7 @@
           <div class="form-group" style="margin-bottom:24px;padding:16px;border:1px solid rgba(0,115,234,0.25);border-radius:12px;background:rgba(0,115,234,0.04);">
             <h3 style="margin:0 0 6px;font-size:15px;">Banner del panel del cliente</h3>
             <p class="card-desc" style="font-size:12px;margin:0 0 12px;">
-              Solo esta consultoría puede publicarlo. Recorta una versión desktop y otra móvil; el título va debajo, nunca encima de la imagen.
+              Solo esta consultoría puede publicarlo. Recorta desktop y móvil; el título se muestra encima del banner (puedes centrarlo y ajustar color/tamaño).
             </p>
             <label class="inline-check" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
               <input type="checkbox" [(ngModel)]="clientPromoBannerEnabled" (ngModelChange)="saveClientPromoBanner()">
@@ -766,8 +766,41 @@
             @if (isUploadingClientPromoBanner) { <p class="card-desc" style="margin:0 0 12px;">Subiendo imagen recortada...</p> }
 
             <div class="form-group" style="margin-bottom:10px;">
-              <label>Título (debajo del banner; o solo si no hay imagen)</label>
-              <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. Promoción de verificación" (change)="saveClientPromoBanner()">
+              <label>Título (sobre el banner)</label>
+              <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. ¿Necesitas un trámite vehicular?" (change)="saveClientPromoBanner()">
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;">
+              <div class="form-group" style="margin:0;">
+                <label>Color del texto</label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                  <input type="color" [(ngModel)]="clientPromoBannerTitleColor" (change)="saveClientPromoBanner()" style="width:42px;height:34px;padding:0;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;">
+                  <input type="text" [(ngModel)]="clientPromoBannerTitleColor" (change)="saveClientPromoBanner()" placeholder="#ffffff" style="flex:1;">
+                </div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Tamaño</label>
+                <select [(ngModel)]="clientPromoBannerTitleSize" (ngModelChange)="saveClientPromoBanner()">
+                  @for (opt of clientPromoTitleSizeOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Alineación horizontal</label>
+                <select [(ngModel)]="clientPromoBannerTitleAlign" (ngModelChange)="saveClientPromoBanner()">
+                  <option value="left">Izquierda</option>
+                  <option value="center">Centro</option>
+                  <option value="right">Derecha</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Posición vertical</label>
+                <select [(ngModel)]="clientPromoBannerTitleVAlign" (ngModelChange)="saveClientPromoBanner()">
+                  <option value="top">Arriba</option>
+                  <option value="center">Medio</option>
+                  <option value="bottom">Abajo</option>
+                </select>
+              </div>
             </div>
             <div class="form-group" style="margin-bottom:10px;">
               <label>Link al hacer clic (opcional)</label>

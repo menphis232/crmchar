@@ -175,6 +175,10 @@ export interface SiteSettings {
   promoBannerImageMobile?: string;
   promoBannerLink?: string;
   promoBannerTitle?: string;
+  promoBannerTitleColor?: string;
+  promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
+  promoBannerTitleAlign?: 'left' | 'center' | 'right';
+  promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
   promoBannerAlt?: string;
 }
 

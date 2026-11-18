@@ -1096,7 +1096,17 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   clientPromoBannerImageMobile = '';
   clientPromoBannerLink = '';
   clientPromoBannerTitle = '';
+  clientPromoBannerTitleColor = '#ffffff';
+  clientPromoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl' = 'md';
+  clientPromoBannerTitleAlign: 'left' | 'center' | 'right' = 'center';
+  clientPromoBannerTitleVAlign: 'top' | 'center' | 'bottom' = 'center';
   clientPromoBannerAlt = '';
+  clientPromoTitleSizeOptions: Array<{ value: 'sm' | 'md' | 'lg' | 'xl'; label: string }> = [
+    { value: 'sm', label: 'Pequeño' },
+    { value: 'md', label: 'Mediano' },
+    { value: 'lg', label: 'Grande' },
+    { value: 'xl', label: 'Muy grande' },
+  ];
   clientPromoCropTarget = signal<'desktop' | 'mobile' | null>(null);
   clientPromoCropFile = signal<File | null>(null);
   isUploadingClientPromoBanner = false;
@@ -1192,6 +1202,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.clientPromoBannerImageMobile = b.promoBannerImageMobile || '';
         this.clientPromoBannerLink = b.promoBannerLink || '';
         this.clientPromoBannerTitle = b.promoBannerTitle || '';
+        this.clientPromoBannerTitleColor = b.promoBannerTitleColor || '#ffffff';
+        this.clientPromoBannerTitleSize = b.promoBannerTitleSize || 'md';
+        this.clientPromoBannerTitleAlign = b.promoBannerTitleAlign || 'center';
+        this.clientPromoBannerTitleVAlign = b.promoBannerTitleVAlign || 'center';
         this.clientPromoBannerAlt = b.promoBannerAlt || '';
       },
       error: () => this.canManageClientPromoBanner.set(false),
@@ -1255,6 +1269,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       promoBannerImageMobile: this.clientPromoBannerImageMobile,
       promoBannerLink: this.clientPromoBannerLink.trim(),
       promoBannerTitle: this.clientPromoBannerTitle.trim(),
+      promoBannerTitleColor: this.clientPromoBannerTitleColor,
+      promoBannerTitleSize: this.clientPromoBannerTitleSize,
+      promoBannerTitleAlign: this.clientPromoBannerTitleAlign,
+      promoBannerTitleVAlign: this.clientPromoBannerTitleVAlign,
       promoBannerAlt: this.clientPromoBannerAlt.trim(),
     }).subscribe({
       next: () => {

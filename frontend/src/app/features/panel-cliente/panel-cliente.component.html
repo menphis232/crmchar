@@ -132,20 +132,24 @@
           [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
         >
           @if (clientPromoDesktopImage() || clientPromoMobileImage()) {
-            <picture>
-              @if (clientPromoMobileImage()) {
-                <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+            <div class="client-promo-banner-media">
+              <picture>
+                @if (clientPromoMobileImage()) {
+                  <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+                }
+                <img
+                  [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
+                  [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+                />
+              </picture>
+              @if (clientPromoBanner()?.promoBannerTitle) {
+                <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
+                  <span class="client-promo-banner-title">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+                </div>
               }
-              <img
-                [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
-                [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
-              />
-            </picture>
-            @if (clientPromoBanner()?.promoBannerTitle) {
-              <div class="client-promo-banner-caption">{{ clientPromoBanner()?.promoBannerTitle }}</div>
-            }
+            </div>
           } @else if (clientPromoBanner()?.promoBannerTitle) {
-            <div class="client-promo-banner-fallback">
+            <div class="client-promo-banner-fallback" [ngStyle]="{ color: clientPromoBanner()?.promoBannerTitleColor || '#fff', textAlign: clientPromoBanner()?.promoBannerTitleAlign || 'center' }">
               <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
             </div>
           }
@@ -153,20 +157,24 @@
       } @else {
         <div class="client-promo-banner client-promo-banner--nolink" [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'">
           @if (clientPromoDesktopImage() || clientPromoMobileImage()) {
-            <picture>
-              @if (clientPromoMobileImage()) {
-                <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+            <div class="client-promo-banner-media">
+              <picture>
+                @if (clientPromoMobileImage()) {
+                  <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+                }
+                <img
+                  [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
+                  [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+                />
+              </picture>
+              @if (clientPromoBanner()?.promoBannerTitle) {
+                <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
+                  <span class="client-promo-banner-title">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+                </div>
               }
-              <img
-                [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
-                [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
-              />
-            </picture>
-            @if (clientPromoBanner()?.promoBannerTitle) {
-              <div class="client-promo-banner-caption">{{ clientPromoBanner()?.promoBannerTitle }}</div>
-            }
+            </div>
           } @else if (clientPromoBanner()?.promoBannerTitle) {
-            <div class="client-promo-banner-fallback">
+            <div class="client-promo-banner-fallback" [ngStyle]="{ color: clientPromoBanner()?.promoBannerTitleColor || '#fff', textAlign: clientPromoBanner()?.promoBannerTitleAlign || 'center' }">
               <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
             </div>
           }

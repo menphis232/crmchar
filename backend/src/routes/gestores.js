@@ -46,6 +46,30 @@ function parseSiteSettingsRow(row) {
   return { pageKey: row.page_key, ...s };
 }
 
+function normalizePromoBannerTitleColor(value, fallback = '#ffffff') {
+  const raw = String(value || '').trim();
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
+  return fallback;
+}
+
+function normalizePromoBannerTitleSize(value, fallback = 'md') {
+  const allowed = new Set(['sm', 'md', 'lg', 'xl']);
+  const raw = String(value || '').trim().toLowerCase();
+  return allowed.has(raw) ? raw : fallback;
+}
+
+function normalizePromoBannerTitleAlign(value, fallback = 'center') {
+  const allowed = new Set(['left', 'center', 'right']);
+  const raw = String(value || '').trim().toLowerCase();
+  return allowed.has(raw) ? raw : fallback;
+}
+
+function normalizePromoBannerTitleVAlign(value, fallback = 'center') {
+  const allowed = new Set(['top', 'center', 'bottom']);
+  const raw = String(value || '').trim().toLowerCase();
+  return allowed.has(raw) ? raw : fallback;
+}
+
 function clientPromoBannerFromSettings(settings) {
   const desktop =
     settings?.promoBannerImageDesktop
@@ -59,6 +83,10 @@ function clientPromoBannerFromSettings(settings) {
     promoBannerImageMobile: mobile,
     promoBannerLink: settings?.promoBannerLink || '',
     promoBannerTitle: settings?.promoBannerTitle || '',
+    promoBannerTitleColor: normalizePromoBannerTitleColor(settings?.promoBannerTitleColor),
+    promoBannerTitleSize: normalizePromoBannerTitleSize(settings?.promoBannerTitleSize),
+    promoBannerTitleAlign: normalizePromoBannerTitleAlign(settings?.promoBannerTitleAlign),
+    promoBannerTitleVAlign: normalizePromoBannerTitleVAlign(settings?.promoBannerTitleVAlign),
     promoBannerAlt: settings?.promoBannerAlt || '',
   };
 }
@@ -448,6 +476,18 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
       promoBannerTitle: req.body.promoBannerTitle !== undefined
         ? String(req.body.promoBannerTitle || '').trim()
         : (current.promoBannerTitle || ''),
+      promoBannerTitleColor: req.body.promoBannerTitleColor !== undefined
+        ? normalizePromoBannerTitleColor(req.body.promoBannerTitleColor)
+        : normalizePromoBannerTitleColor(current.promoBannerTitleColor),
+      promoBannerTitleSize: req.body.promoBannerTitleSize !== undefined
+        ? normalizePromoBannerTitleSize(req.body.promoBannerTitleSize)
+        : normalizePromoBannerTitleSize(current.promoBannerTitleSize),
+      promoBannerTitleAlign: req.body.promoBannerTitleAlign !== undefined
+        ? normalizePromoBannerTitleAlign(req.body.promoBannerTitleAlign)
+        : normalizePromoBannerTitleAlign(current.promoBannerTitleAlign),
+      promoBannerTitleVAlign: req.body.promoBannerTitleVAlign !== undefined
+        ? normalizePromoBannerTitleVAlign(req.body.promoBannerTitleVAlign)
+        : normalizePromoBannerTitleVAlign(current.promoBannerTitleVAlign),
       promoBannerAlt: req.body.promoBannerAlt !== undefined
         ? String(req.body.promoBannerAlt || '').trim()
         : (current.promoBannerAlt || ''),

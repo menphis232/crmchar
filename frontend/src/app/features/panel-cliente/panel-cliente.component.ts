@@ -149,6 +149,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     promoBannerImageMobile?: string;
     promoBannerLink?: string;
     promoBannerTitle?: string;
+    promoBannerTitleColor?: string;
+    promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
+    promoBannerTitleAlign?: 'left' | 'center' | 'right';
+    promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
     promoBannerAlt?: string;
   } | null>(null);
   clientPromoDesktopImage = computed(() => {
@@ -163,6 +167,28 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     const b = this.clientPromoBanner();
     if (!b?.promoBannerEnabled) return false;
     return !!(this.clientPromoDesktopImage() || this.clientPromoMobileImage() || b.promoBannerTitle);
+  });
+  clientPromoTitleOverlayStyle = computed(() => {
+    const b = this.clientPromoBanner();
+    const sizeMap: Record<string, string> = {
+      sm: '14px',
+      md: '18px',
+      lg: '24px',
+      xl: '32px',
+    };
+    const align = b?.promoBannerTitleAlign || 'center';
+    const valign = b?.promoBannerTitleVAlign || 'center';
+    const justify =
+      align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
+    const items =
+      valign === 'top' ? 'flex-start' : valign === 'bottom' ? 'flex-end' : 'center';
+    return {
+      color: b?.promoBannerTitleColor || '#ffffff',
+      fontSize: sizeMap[b?.promoBannerTitleSize || 'md'] || sizeMap['md'],
+      justifyContent: justify,
+      alignItems: items,
+      textAlign: align as 'left' | 'center' | 'right',
+    };
   });
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
@@ -428,6 +454,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       promoBannerImageMobile?: string;
       promoBannerLink?: string;
       promoBannerTitle?: string;
+      promoBannerTitleColor?: string;
+      promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
+      promoBannerTitleAlign?: 'left' | 'center' | 'right';
+      promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
       promoBannerAlt?: string;
     }>(`${environment.apiUrl}/site/panel-cliente`).subscribe({
       next: (cfg) => this.clientPromoBanner.set(cfg || null),

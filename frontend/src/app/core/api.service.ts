@@ -35,6 +35,10 @@ export class GestoresService {
       promoBannerImageMobile: string;
       promoBannerLink: string;
       promoBannerTitle: string;
+      promoBannerTitleColor: string;
+      promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
+      promoBannerTitleAlign: 'left' | 'center' | 'right';
+      promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
       promoBannerAlt: string;
     }>(`${this.base}/me/client-promo-banner`);
   }
@@ -45,6 +49,10 @@ export class GestoresService {
     promoBannerImageMobile?: string;
     promoBannerLink?: string;
     promoBannerTitle?: string;
+    promoBannerTitleColor?: string;
+    promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
+    promoBannerTitleAlign?: 'left' | 'center' | 'right';
+    promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
     promoBannerAlt?: string;
   }) {
     return this.http.put<{
@@ -55,6 +63,10 @@ export class GestoresService {
       promoBannerImageMobile: string;
       promoBannerLink: string;
       promoBannerTitle: string;
+      promoBannerTitleColor: string;
+      promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
+      promoBannerTitleAlign: 'left' | 'center' | 'right';
+      promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
       promoBannerAlt: string;
     }>(`${this.base}/me/client-promo-banner`, data);
   }

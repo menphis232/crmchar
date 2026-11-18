@@ -12,6 +12,12 @@
   color: inherit;
 }
 
+.client-promo-banner-media {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
 .client-promo-banner picture,
 .client-promo-banner img {
   display: block;
@@ -25,13 +31,22 @@
   object-position: center;
 }
 
-.client-promo-banner-caption {
-  padding: 10px 14px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--mon-text, #323338);
-  background: #fff;
-  border-top: 1px solid var(--mon-border, #e6e9ef);
+.client-promo-banner-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  padding: 16px 20px;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.client-promo-banner-title {
+  display: block;
+  max-width: 92%;
+  font-weight: 700;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 12px rgba(0, 0, 0, 0.25);
+  word-break: break-word;
 }
 
 .client-promo-banner-fallback {
@@ -49,6 +64,10 @@
 @media (max-width: 640px) {
   .client-promo-banner img {
     aspect-ratio: 2 / 1;
+  }
+
+  .client-promo-banner-overlay {
+    padding: 12px 14px;
   }
 }
 
