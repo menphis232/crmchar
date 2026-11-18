@@ -939,29 +939,12 @@
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
           <svg lucideUser [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Información de cuenta
+          Mi perfil
         </h2>
-        <div class="client-info-row"><span>Nombre</span><strong>{{ auth.user()?.name }}</strong></div>
-        <div class="client-info-row"><span>Email</span><strong>{{ auth.user()?.email || '—' }}</strong></div>
-        <div class="client-info-row"><span>Rol</span><strong>Cliente</strong></div>
+        <p class="card-desc">Actualiza tu foto, nombre, teléfono y tipo de perfil.</p>
 
-        <div class="client-settings-actions">
-          <button type="button" class="btn-copy btn-with-icon" (click)="credentialsOpen.set(true)">
-            <svg lucideKeyRound [size]="16" aria-hidden="true"></svg>
-            Cambiar contraseña o correo
-          </button>
-        </div>
-      </div>
-
-      <div class="dash-card">
-        <h2 class="card-title card-title-with-icon">
-          <svg lucideUser [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
-          Foto de perfil
-        </h2>
-        <p class="card-desc">Opcional. Aparece en tu menú de usuario.</p>
-
-        <div class="client-avatar-row">
-          <div class="client-avatar-preview">
+        <div class="client-avatar-row client-avatar-row--large">
+          <div class="client-avatar-preview client-avatar-preview--lg">
             @if (auth.user()?.avatar_url) {
               <img [src]="auth.user()?.avatar_url" alt="Foto de perfil" />
             } @else {
@@ -981,6 +964,36 @@
               </button>
             }
           </div>
+        </div>
+
+        <div class="client-profile-form">
+          <div class="form-group">
+            <label for="client-profile-name">Nombre</label>
+            <input id="client-profile-name" type="text" [(ngModel)]="profileName" placeholder="Tu nombre o razón social">
+          </div>
+          <div class="form-group">
+            <label for="client-profile-phone">Teléfono / WhatsApp</label>
+            <input id="client-profile-phone" type="tel" [(ngModel)]="profilePhone" placeholder="55 1234 5678 o +1...">
+          </div>
+          <div class="form-group">
+            <label for="client-profile-type">Tipo de perfil</label>
+            <select id="client-profile-type" [(ngModel)]="profileType">
+              <option value="">— Seleccionar —</option>
+              <option value="fisica">Persona Física</option>
+              <option value="moral">Persona Moral</option>
+            </select>
+          </div>
+          <div class="client-info-row"><span>Email / usuario</span><strong>{{ auth.user()?.email || '—' }}</strong></div>
+          <button type="button" class="btn-copy" (click)="saveProfile()" [disabled]="profileSaving()">
+            {{ profileSaving() ? 'Guardando...' : 'Guardar perfil' }}
+          </button>
+        </div>
+
+        <div class="client-settings-actions">
+          <button type="button" class="btn-copy btn-with-icon" (click)="credentialsOpen.set(true)">
+            <svg lucideKeyRound [size]="16" aria-hidden="true"></svg>
+            Cambiar contraseña o correo
+          </button>
         </div>
       </div>
 

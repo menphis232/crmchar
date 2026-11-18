@@ -466,6 +466,7 @@ export class CrmContactPanelComponent {
   closed = output<void>();
   openDeal = output<string>();
   updated = output<void>();
+  createDeal = output<{ name: string; email?: string; phone?: string }>();
 
   data = signal<CrmContact360 | null>(null);
   loading = signal(false);
@@ -483,6 +484,10 @@ export class CrmContactPanelComponent {
   previewDoc = signal<CrmContactVehicleDocument | null>(null);
   labelingDocId = signal<string | null>(null);
   labelDraft = '';
+  walletDocs = signal<any[]>([]);
+  walletLoading = signal(false);
+  uploadingWallet = signal(false);
+  walletLabel = '';
 
   uploadLabelByVehicle: Record<string, string> = {};
 
@@ -540,6 +545,7 @@ export class CrmContactPanelComponent {
         this.data.set(payload);
         this.syncFormFromContact(payload);
         this.loading.set(false);
+        this.loadWallet(id);
       },
       error: () => {
         if (this.contactId() !== id) return;
@@ -677,6 +683,77 @@ export class CrmContactPanelComponent {
         this.updated.emit();
       },
       error: () => this.toast.error('Error al eliminar vehículo'),
+    });
+  }
+
+  loadWallet(contactId: string) {
+    this.walletLoading.set(true);
+    this.crmService.getContactWallet(contactId).subscribe({
+      next: (res) => {
+        if (this.contactId() !== contactId) return;
+        this.walletDocs.set(res.documents || []);
+        this.walletLoading.set(false);
+      },
+      error: () => {
+        if (this.contactId() !== contactId) return;
+        this.walletDocs.set([]);
+        this.walletLoading.set(false);
+      },
+    });
+  }
+
+  requestCreateDeal() {
+    const c = this.data()?.contact;
+    if (!c) return;
+    this.createDeal.emit({
+      name: c.name,
+      email: c.email || undefined,
+      phone: c.phone || c.whatsapp || undefined,
+    });
+  }
+
+  uploadWalletDocument(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+    const file = input.files[0];
+    const contactId = this.contactId();
+    if (!contactId) return;
+    const label = this.walletLabel.trim() || file.name.replace(/\.[^.]+$/, '');
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Sube un PDF o una imagen (JPG, PNG, WebP).');
+      input.value = '';
+      return;
+    }
+    this.uploadingWallet.set(true);
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
+      next: (res) => {
+        this.crmService.addContactWalletDocument(contactId, {
+          label,
+          fileUrl: res.url,
+          category: 'Otro',
+        }).subscribe({
+          next: () => {
+            this.uploadingWallet.set(false);
+            this.walletLabel = '';
+            input.value = '';
+            this.loadWallet(contactId);
+            this.toast.success('Documento agregado a la cartera del cliente');
+          },
+          error: (e) => {
+            this.uploadingWallet.set(false);
+            input.value = '';
+            this.toast.error(e.error?.error || 'No se pudo guardar en la cartera');
+          },
+        });
+      },
+      error: (e) => {
+        this.uploadingWallet.set(false);
+        input.value = '';
+        this.toast.error(e.error?.error || 'Error al subir el archivo');
+      },
     });
   }
 

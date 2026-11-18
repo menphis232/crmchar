@@ -278,7 +278,13 @@
         </div>
 
         <div class="deal-section">
-          <h4>Trámites ({{ c360.deals.length }})</h4>
+          <div class="deal-attach-header" style="margin-bottom:10px;">
+            <h4 style="margin:0;">Trámites ({{ c360.deals.length }})</h4>
+            <button type="button" class="deal-outline-btn btn-with-icon" (click)="requestCreateDeal()">
+              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+              Nuevo trámite
+            </button>
+          </div>
           @for (d of c360.deals; track d.id) {
             <button type="button" class="inbox-row" (click)="openDeal.emit(d.id)">
               <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
@@ -286,8 +292,41 @@
             </button>
           }
           @if (!c360.deals.length) {
-            <p class="card-desc">Sin trámites registrados.</p>
+            <p class="card-desc">Sin trámites. Usa «Nuevo trámite» para registrar uno con este contacto.</p>
           }
+        </div>
+
+        <div class="deal-section">
+          <h4>Cartera / documentos personales</h4>
+          <p class="card-desc">Sube documentos a la wallet del cliente (como si él los hubiera cargado).</p>
+          @if (walletLoading()) {
+            <p class="card-desc">Cargando…</p>
+          } @else if (walletDocs().length) {
+            <div class="quote-doc-list" style="margin-bottom:12px;">
+              @for (doc of walletDocs(); track doc.id) {
+                <div class="quote-doc-item">
+                  <div class="quote-doc-info">
+                    <strong>{{ doc.label }}</strong>
+                    <span class="card-desc">{{ doc.category || 'Otro' }}</span>
+                  </div>
+                  <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                </div>
+              }
+            </div>
+          } @else {
+            <p class="card-desc">Aún no hay documentos en su cartera.</p>
+          }
+          <div class="vehicle-upload-row">
+            <div style="flex:1;min-width:140px;">
+              <label style="font-size:11px;">Etiqueta</label>
+              <input type="text" [(ngModel)]="walletLabel" placeholder="Ej. Póliza, INE…">
+            </div>
+            <label class="deal-outline-btn btn-with-icon" [class.loading]="uploadingWallet()" style="cursor:pointer;margin:0;">
+              <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+              {{ uploadingWallet() ? 'Subiendo...' : 'Subir a cartera' }}
+              <input type="file" accept="image/*,.pdf,application/pdf" style="display:none" (change)="uploadWalletDocument($event)" [disabled]="uploadingWallet()">
+            </label>
+          </div>
         </div>
 
         @if (c360.tasks.length) {

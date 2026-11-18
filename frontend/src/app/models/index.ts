@@ -58,6 +58,7 @@ export interface User {
   slug?: string;
   description?: string;
   phone?: string;
+  profile_type?: 'fisica' | 'moral' | string | null;
   address?: string;
   map_embed_url?: string;
   crm_stages?: { id: string; label: string; isPayment?: boolean }[];

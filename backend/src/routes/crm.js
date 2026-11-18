@@ -37,7 +37,7 @@ import {
   dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
 } from '../crm/deal-access.js';
 import { PERITO_STAGE_LABELS, PERITO_SUCCESS_STAGE } from '../crm/perito-stages.js';
-import { normalizeMxPhone, peritoInternalEmail, whatsappMeUrl } from '../utils/phone.js';
+import { normalizeMxPhone, peritoInternalEmail, whatsappMeUrl, isInternalClientEmail } from '../utils/phone.js';
 import { getFrontendBase } from '../utils/frontend-url.js';
 import { sendEmail } from '../utils/mailer.js';
 
@@ -1526,6 +1526,86 @@ router.delete('/contact-vehicles/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar vehículo' });
+  }
+});
+
+/** Resuelve el usuario cliente ligado a un contacto (correo o teléfono). */
+async function resolveClientUserForContact(contact) {
+  const email = String(contact?.email || '').trim().toLowerCase();
+  if (email && !isInternalClientEmail(email)) {
+    const byEmail = await get("SELECT id, name, email, phone FROM users WHERE role = 'cliente' AND email = ?", [email]);
+    if (byEmail) return byEmail;
+  }
+  const phone = normalizeMxPhone(contact?.phone || contact?.whatsapp);
+  if (phone) {
+    return get("SELECT id, name, email, phone FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+  }
+  return null;
+}
+
+router.get('/contacts/:id/wallet', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id, name, email, phone, whatsapp FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+    const client = await resolveClientUserForContact(contact);
+    if (!client) return res.json({ clientUserId: null, documents: [] });
+    const docs = await query(
+      'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
+      [client.id],
+    );
+    res.json({ clientUserId: client.id, documents: docs });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar documentos del cliente' });
+  }
+});
+
+router.post('/contacts/:id/wallet', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const { label, category, fileUrl, notes } = req.body || {};
+    if (!label?.trim() || !fileUrl) {
+      return res.status(400).json({ error: 'Nombre y archivo requeridos' });
+    }
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id, name, email, phone, whatsapp FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+
+    let client = await resolveClientUserForContact(contact);
+    if (!client) {
+      const access = await ensureClientUser({
+        clientName: contact.name,
+        clientEmail: contact.email,
+        clientPhone: contact.phone || contact.whatsapp,
+        gestorUserId: req.orgId,
+        gestorName: null,
+        serviceName: 'Documentos',
+      });
+      if (!access?.userId) {
+        return res.status(400).json({ error: 'El contacto necesita teléfono o correo para guardar en su cartera' });
+      }
+      client = { id: access.userId };
+    }
+
+    const id = uuid();
+    await run(
+      `INSERT INTO client_wallet_documents (id, user_id, label, category, file_url, notes)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [id, client.id, label.trim(), category?.trim() || 'Otro', fileUrl, notes?.trim() || null],
+    );
+    const doc = await get('SELECT * FROM client_wallet_documents WHERE id = ?', [id]);
+    res.status(201).json(doc);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Error al guardar documento del cliente' });
   }
 });
 

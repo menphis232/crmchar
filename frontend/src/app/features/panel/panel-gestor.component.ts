@@ -818,6 +818,32 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       quantity: 1,
       stage: 'nuevo',
     };
+    this.prepareManualLeadServices();
+    this.showManualLeadForm.set(true);
+  }
+
+  openManualLeadFromContact(contact: { name: string; email?: string; phone?: string }) {
+    this.selectedContactId.set(null);
+    this.manualLead = {
+      clientName: contact.name || '',
+      clientEmail: contact.email || '',
+      clientPhone: contact.phone || '',
+      serviceName: '',
+      location: '',
+      title: '',
+      message: '',
+      estimatedValue: '',
+      quantity: 1,
+      stage: 'nuevo',
+    };
+    this.prepareManualLeadServices();
+    this.showManualLeadForm.set(true);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  private prepareManualLeadServices() {
     const services = this.profile()?.services?.map(s => ({ name: s.name, price: s.price })) ?? [];
     if (services.length) {
       this.manualLeadServices.set(services);
@@ -827,7 +853,6 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.manualLeadServices.set(p.services?.map(s => ({ name: s.name, price: s.price })) ?? []);
       });
     }
-    this.showManualLeadForm.set(true);
   }
 
   closeManualLeadForm() {

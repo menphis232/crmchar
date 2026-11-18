@@ -34,6 +34,7 @@
             @if (!isConcesionaria() && d.paymentStatus !== 'paid') {
               <button type="button" class="btn-copy small" (click)="setDealView('cotizacion')">Ir a cotización</button>
             }
+            <button type="button" class="deal-outline-btn" (click)="setDealView('docs')">Documentos / póliza</button>
             <button type="button" class="deal-outline-btn" (click)="setDealView('chat')">Abrir chat</button>
           </div>
         </div>
@@ -582,16 +583,19 @@
         <!-- DOCUMENTOS (Phase 3.2) -->
         <div class="deal-section deal-subsection deal-attach-section">
           <div class="deal-attach-header">
-            <h4>Documentos Adjuntos</h4>
-            <label class="deal-outline-btn btn-with-icon" [class.disabled]="isUploading()">
-              <input type="file" style="display:none" (change)="uploadDocument($event)" [disabled]="isUploading()">
-              <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-              {{ isUploading() ? 'Subiendo...' : 'Subir archivo' }}
-            </label>
+            <h4>Anexar documentos / póliza</h4>
           </div>
+          <p class="card-desc" style="margin:0 0 12px;">Sube facturas, pólizas, INE u otros archivos de este trámite.</p>
+
+          <label class="deal-delivery-upload-zone" [class.loading]="isUploading()">
+            <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadDocument($event)" [disabled]="isUploading()">
+            <svg lucidePlus [size]="28" aria-hidden="true"></svg>
+            <strong>{{ isUploading() ? 'Subiendo...' : 'Haz clic para anexar documento o póliza' }}</strong>
+            <span>JPG, PNG, WebP o PDF</span>
+          </label>
 
           @if (documents().length > 0) {
-            <div class="quote-doc-list">
+            <div class="quote-doc-list" style="margin-top:14px;">
               @for (doc of documents(); track doc.id) {
                 <div class="quote-doc-item">
                   <div class="quote-doc-info">
@@ -608,7 +612,7 @@
               }
             </div>
           } @else {
-            <p class="card-desc">No hay documentos adjuntos en este trámite.</p>
+            <p class="card-desc" style="margin-top:12px;">Aún no hay documentos anexados en este trámite.</p>
           }
         </div>
         }

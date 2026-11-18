@@ -336,7 +336,7 @@ router.post('/forgot-password', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, profile_type, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
@@ -426,12 +426,12 @@ router.patch('/me', authRequired, async (req, res) => {
       return res.status(403).json({ error: 'No tienes permiso para editar el perfil' });
     }
 
-    const { name, avatar_url, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, description, phone, address, map_embed_url, crm_stages } = req.body;
+    const { name, avatar_url, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, description, phone, profile_type, address, map_embed_url, crm_stages } = req.body;
     
     const sets = [];
     const params = [];
     
-    if (name !== undefined) { sets.push('name = ?'); params.push(name); }
+    if (name !== undefined) { sets.push('name = ?'); params.push(String(name || '').trim() || null); }
     if (logo_url !== undefined) { sets.push('logo_url = ?'); params.push(logo_url); }
     if (pdf_settings !== undefined) { sets.push('pdf_settings = ?'); params.push(JSON.stringify(pdf_settings)); }
     if (google_analytics_id !== undefined) { sets.push('google_analytics_id = ?'); params.push(google_analytics_id || null); }
@@ -467,7 +467,35 @@ router.patch('/me', authRequired, async (req, res) => {
       params.push(mins);
     }
     if (description !== undefined) { sets.push('description = ?'); params.push(description || null); }
-    if (phone !== undefined) { sets.push('phone = ?'); params.push(phone || null); }
+    if (phone !== undefined) {
+      const raw = String(phone || '').trim();
+      if (!raw) {
+        sets.push('phone = ?');
+        params.push(null);
+      } else {
+        const clean = normalizeMxPhone(raw);
+        if (!clean) {
+          return res.status(400).json({ error: 'Teléfono inválido. Usa 10 dígitos de México o número internacional con lada' });
+        }
+        if (req.user.role === 'cliente' || req.user.role === 'perito') {
+          const taken = await get(
+            'SELECT id FROM users WHERE phone = ? AND role = ? AND id != ?',
+            [clean, req.user.role, req.user.id],
+          );
+          if (taken) return res.status(409).json({ error: 'Ese teléfono ya pertenece a otra cuenta' });
+        }
+        sets.push('phone = ?');
+        params.push(clean);
+      }
+    }
+    if (profile_type !== undefined) {
+      const pt = String(profile_type || '').trim().toLowerCase();
+      if (pt && pt !== 'fisica' && pt !== 'moral') {
+        return res.status(400).json({ error: 'Tipo de perfil inválido' });
+      }
+      sets.push('profile_type = ?');
+      params.push(pt || null);
+    }
     if (address !== undefined) { sets.push('address = ?'); params.push(address || null); }
     if (map_embed_url !== undefined) { sets.push('map_embed_url = ?'); params.push(map_embed_url || null); }
     if (crm_stages !== undefined) {
@@ -487,7 +515,7 @@ router.patch('/me', authRequired, async (req, res) => {
       await run('UPDATE users SET avatar_url = ? WHERE id = ?', [avatar_url || null, req.user.id]);
     }
     
-    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, profile_type, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
     
     if (user.pdf_settings && typeof user.pdf_settings === 'string') {
       try { user.pdf_settings = JSON.parse(user.pdf_settings); } catch(e){}

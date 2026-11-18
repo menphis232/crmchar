@@ -211,6 +211,12 @@ export class CrmService {
   addContactVehicleDocument(vehicleId: string, data: { fileName: string; fileUrl: string; label?: string }) {
     return this.http.post<CrmContactVehicleDocument>(`${this.base}/contact-vehicles/${vehicleId}/documents`, data);
   }
+  getContactWallet(contactId: string) {
+    return this.http.get<{ clientUserId: string | null; documents: any[] }>(`${this.base}/contacts/${contactId}/wallet`);
+  }
+  addContactWalletDocument(contactId: string, data: { label: string; fileUrl: string; category?: string; notes?: string }) {
+    return this.http.post<any>(`${this.base}/contacts/${contactId}/wallet`, data);
+  }
   updateContactVehicleDocument(docId: string, label: string) {
     return this.http.patch<CrmContactVehicleDocument>(`${this.base}/contact-vehicle-documents/${docId}`, { label });
   }

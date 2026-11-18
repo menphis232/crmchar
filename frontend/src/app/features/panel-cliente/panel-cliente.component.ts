@@ -210,6 +210,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   avatarUploading = signal(false);
   pushActivating = signal(false);
+  profileName = '';
+  profilePhone = '';
+  profileType: '' | 'fisica' | 'moral' = '';
+  profileSaving = signal(false);
 
   vehicles = signal<CrmContactVehicle[]>([]);
   vehiclesLoading = signal(false);
@@ -306,7 +310,11 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
-    this.auth.getMe().subscribe({ error: () => {} });
+    this.auth.getMe().subscribe({
+      next: () => this.syncProfileForm(),
+      error: () => this.syncProfileForm(),
+    });
+    this.syncProfileForm();
     this.loadDashboard();
     this.loadInvoices();
     this.loadWallet();
@@ -814,6 +822,38 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       }).finally(() => {
         this.zone.run(() => this.pushActivating.set(false));
       });
+    });
+  }
+
+  syncProfileForm() {
+    const u = this.auth.user();
+    this.profileName = u?.name || '';
+    this.profilePhone = u?.phone || '';
+    const pt = String(u?.profile_type || '').toLowerCase();
+    this.profileType = pt === 'fisica' || pt === 'moral' ? pt : '';
+  }
+
+  saveProfile() {
+    const name = this.profileName.trim();
+    if (!name) {
+      this.toast.warning('Escribe tu nombre.', 'Datos incompletos');
+      return;
+    }
+    this.profileSaving.set(true);
+    this.auth.updateMe({
+      name,
+      phone: this.profilePhone.trim() || null,
+      profile_type: this.profileType || null,
+    }).subscribe({
+      next: () => {
+        this.profileSaving.set(false);
+        this.syncProfileForm();
+        this.toast.success('Perfil actualizado', 'Listo');
+      },
+      error: (e) => {
+        this.profileSaving.set(false);
+        this.toast.error(e.error?.error || 'No se pudo guardar el perfil', 'Error');
+      },
     });
   }
 

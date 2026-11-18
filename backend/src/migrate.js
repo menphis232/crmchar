@@ -1300,6 +1300,25 @@ async function migrate() {
       console.log('Migración v62 (staff chat channel) aplicada.');
     }
 
+    const v63Path = path.join(__dirname, '..', 'sql', 'migration-v63-profile-type.sql');
+    if (fs.existsSync(v63Path)) {
+      const v63 = fs.readFileSync(v63Path, 'utf8');
+      const conn63 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v63.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn63.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME'].includes(e.code)) throw e;
+        }
+      }
+      await conn63.end();
+      console.log('Migración v63 (profile type) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

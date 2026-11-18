@@ -187,6 +187,7 @@
         (closed)="selectedContactId.set(null)"
         (openDeal)="openDeal($event); setTab('pipeline')"
         (updated)="loadVerificationAlerts()"
+        (createDeal)="openManualLeadFromContact($event)"
       />
     }
 
