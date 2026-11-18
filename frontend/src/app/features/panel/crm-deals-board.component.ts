@@ -14,7 +14,7 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
     <div class="mon-board">
       <header class="mon-board-head">
         <div>
-          <h2 class="mon-board-title">Acuerdos</h2>
+          <h2 class="mon-board-title">Trámites</h2>
           <div class="mon-board-tabs" role="tablist">
             <button type="button" role="tab" class="mon-board-tab" [class.active]="view() === 'tabla'" (click)="view.set('tabla')">Tabla principal</button>
             <button type="button" role="tab" class="mon-board-tab" [class.active]="view() === 'pipeline'" (click)="view.set('pipeline')">Embudo de venta</button>
@@ -23,7 +23,7 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
         <div class="mon-board-actions">
           <button type="button" class="mon-btn-primary" (click)="addDeal.emit()">
             <svg lucidePlus [size]="16" aria-hidden="true"></svg>
-            Agregar acuerdo
+            Agregar trámite
           </button>
         </div>
       </header>
@@ -65,7 +65,7 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
                 <thead>
                   <tr>
                     <th class="col-check"></th>
-                    <th>Acuerdo</th>
+                    <th>Trámite</th>
                     <th>Etapa</th>
                     <th>Contacto</th>
                     <th>Teléfono</th>
@@ -108,7 +108,7 @@ const STAGE_COLORS = ['#579bfc', '#0073ea', '#a25ddc', '#fdab3d', '#00c875', '#e
                   </tr>
                 </tfoot>
               </table>
-              <button type="button" class="mon-add-row" (click)="addDeal.emit()">+ Agregar acuerdo</button>
+              <button type="button" class="mon-add-row" (click)="addDeal.emit()">+ Agregar trámite</button>
             }
           }
         </div>
@@ -399,7 +399,7 @@ export class CrmDealsBoardComponent {
     const closed = this.closedDeals();
     const lost = this.lostDeals();
     if (active.length || (!closed.length && !lost.length)) {
-      list.push({ id: 'activos', label: 'Acuerdos activos', color: '#0073ea', items: active });
+      list.push({ id: 'activos', label: 'Trámites activos', color: '#0073ea', items: active });
     }
     if (closed.length) list.push({ id: 'cerrados', label: 'Cerrados: ganados', color: '#00c875', items: closed });
     if (lost.length) list.push({ id: 'perdidos', label: 'Cerrados: perdidos', color: '#e2445c', items: lost });

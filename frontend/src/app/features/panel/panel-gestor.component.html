@@ -88,7 +88,7 @@
     @if (hasPerm('pipeline')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'pipeline'" (click)="setTab('pipeline'); isMobileMenuOpen.set(false)">
         <svg lucideFunnel [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-        Acuerdos
+        Trámites
         @if (crmDashboard()?.totals?.active) {
           <span class="kanban-count">{{ crmDashboard()!.totals!.active }}</span>
         }
@@ -222,7 +222,7 @@
         <div class="mon-recent-grid">
           @if (hasPerm('pipeline')) {
             <button type="button" class="mon-recent-card" (click)="setTab('pipeline')">
-              <strong>Acuerdos</strong>
+              <strong>Trámites</strong>
               <span>CRM · Embudo de trámites</span>
               <div class="mon-recent-foot">
                 <span class="mon-avatar">{{ initials(profile()?.name || auth.user()?.name) }}</span>

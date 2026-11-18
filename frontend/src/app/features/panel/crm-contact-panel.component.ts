@@ -491,6 +491,7 @@ export class CrmContactPanelComponent {
   labelingDocId = signal<string | null>(null);
   labelDraft = '';
   walletDocs = signal<any[]>([]);
+  deletingWalletDocId = signal<string | null>(null);
   walletLoading = signal(false);
   uploadingWallet = signal(false);
   walletLabel = '';
@@ -724,6 +725,24 @@ export class CrmContactPanelComponent {
         model: v.model,
         year: v.year,
       })),
+    });
+  }
+
+  deleteWalletDocument(doc: { id: string; label?: string }) {
+    const contactId = this.contactId();
+    if (!contactId || !doc?.id) return;
+    if (!confirm(`¿Eliminar «${doc.label || 'este documento'}» de la cartera del cliente?`)) return;
+    this.deletingWalletDocId.set(doc.id);
+    this.crmService.deleteContactWalletDocument(contactId, doc.id).subscribe({
+      next: () => {
+        this.deletingWalletDocId.set(null);
+        this.walletDocs.update((list) => list.filter((d) => d.id !== doc.id));
+        this.toast.success('Documento eliminado de la cartera');
+      },
+      error: (e) => {
+        this.deletingWalletDocId.set(null);
+        this.toast.error(e.error?.error || 'No se pudo eliminar el documento');
+      },
     });
   }
 

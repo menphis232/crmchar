@@ -239,6 +239,9 @@ export class CrmService {
   addContactWalletDocument(contactId: string, data: { label: string; fileUrl: string; category?: string; notes?: string }) {
     return this.http.post<any>(`${this.base}/contacts/${contactId}/wallet`, data);
   }
+  deleteContactWalletDocument(contactId: string, docId: string) {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/contacts/${contactId}/wallet/${docId}`);
+  }
   updateContactVehicleDocument(docId: string, label: string) {
     return this.http.patch<CrmContactVehicleDocument>(`${this.base}/contact-vehicle-documents/${docId}`, { label });
   }

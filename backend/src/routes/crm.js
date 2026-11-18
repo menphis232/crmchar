@@ -1642,6 +1642,30 @@ router.post('/contacts/:id/wallet', async (req, res) => {
   }
 });
 
+router.delete('/contacts/:id/wallet/:docId', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id, name, email, phone, whatsapp FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+    const client = await resolveClientUserForContact(contact);
+    if (!client) return res.status(404).json({ error: 'Documento no encontrado' });
+    const doc = await get(
+      'SELECT id FROM client_wallet_documents WHERE id = ? AND user_id = ?',
+      [req.params.docId, client.id],
+    );
+    if (!doc) return res.status(404).json({ error: 'Documento no encontrado' });
+    await run('DELETE FROM client_wallet_documents WHERE id = ?', [req.params.docId]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar documento de la cartera' });
+  }
+});
+
 router.get('/templates', async (req, res) => {
   try {
     await ensureDefaultTemplates(req.orgId, req.user.role);

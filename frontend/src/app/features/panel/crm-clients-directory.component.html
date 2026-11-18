@@ -7,7 +7,7 @@
           <span class="clients-total">{{ totalItems() }}</span>
         }
       </h2>
-      <p class="clients-desc">Clientes con trámites o dados de alta por ti. Abre uno para ver vehículos y acuerdos.</p>
+      <p class="clients-desc">Clientes con trámites o dados de alta por ti. Abre uno para ver vehículos y trámites.</p>
     </div>
     @if (!showForm()) {
       <button type="button" class="mon-btn-primary" (click)="openAddForm()">
@@ -100,7 +100,7 @@
             <th>Teléfono</th>
             <th>Email</th>
             <th>Vehículos</th>
-            <th>Acuerdos</th>
+            <th>Trámites</th>
             <th></th>
           </tr>
         </thead>
@@ -151,7 +151,7 @@
                 <th>Teléfono</th>
                 <th>Email</th>
                 <th>Vehículos</th>
-                <th>Acuerdos</th>
+                <th>Trámites</th>
                 <th class="col-actions"></th>
               </tr>
             </thead>
@@ -188,7 +188,7 @@
                         <span class="mon-muted deal-extra">+{{ (c.dealCount || 0) - 1 }} más</span>
                       }
                     } @else {
-                      <span class="status-pill status-pill--muted">Sin acuerdos</span>
+                      <span class="status-pill status-pill--muted">Sin trámites</span>
                     }
                   </td>
                   <td class="col-actions" (click)="$event.stopPropagation()">

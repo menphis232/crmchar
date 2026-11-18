@@ -480,7 +480,7 @@ export class CrmClientsDirectoryComponent implements OnInit {
     const idle = all.filter((c) => !((c.dealCount || 0) > 0 || !!c.tramites));
     const groups = [];
     if (active.length) groups.push({ id: 'activos', label: 'Contactos activos', color: '#00c875', items: active });
-    if (idle.length) groups.push({ id: 'inactivos', label: 'Contactos sin acuerdos', color: '#e2445c', items: idle });
+    if (idle.length) groups.push({ id: 'inactivos', label: 'Contactos sin trámites', color: '#e2445c', items: idle });
     if (!groups.length) groups.push({ id: 'todos', label: 'Contactos', color: '#0073ea', items: all });
     return groups;
   }

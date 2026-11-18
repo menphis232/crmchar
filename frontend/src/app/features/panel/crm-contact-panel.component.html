@@ -314,7 +314,20 @@
                     <strong>{{ doc.label }}</strong>
                     <span class="card-desc">{{ doc.category || 'Otro' }}</span>
                   </div>
-                  <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <a [href]="doc.file_url" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                    <button
+                      type="button"
+                      class="deal-outline-btn btn-with-icon"
+                      style="color:var(--mon-red,#e2445c);"
+                      [disabled]="deletingWalletDocId() === doc.id"
+                      (click)="deleteWalletDocument(doc)"
+                      title="Eliminar de la cartera"
+                    >
+                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                      {{ deletingWalletDocId() === doc.id ? 'Eliminando…' : 'Eliminar' }}
+                    </button>
+                  </div>
                 </div>
               }
             </div>
