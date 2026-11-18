@@ -131,12 +131,14 @@
                     </div>
                   }
 
-                  @if (b.type === 'reviews' && (g.reviews?.length || g.reviewCount)) {
+                  @if (b.type === 'reviews' && (g.reviews?.length || g.reviewCount || g.googlePlaceId)) {
                     <app-gestor-reviews-section
                       [title]="b.data.title || 'Reseñas de clientes'"
-                      [rating]="g.rating"
-                      [reviewCount]="g.reviewCount"
+                      [rating]="g.googleRating ?? g.rating"
+                      [reviewCount]="g.googleReviewCount ?? g.reviewCount"
                       [reviews]="g.reviews || []"
+                      [googleMapsUrl]="g.googleMapsUrl || null"
+                      [fromGoogle]="!!g.googlePlaceId"
                     />
                   }
 
@@ -374,12 +376,14 @@
             <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
           }
 
-          @if (g.reviews?.length || g.reviewCount) {
+          @if (g.reviews?.length || g.reviewCount || g.googlePlaceId) {
             <app-gestor-reviews-section
               title="Reseñas de clientes"
-              [rating]="g.rating"
-              [reviewCount]="g.reviewCount"
+              [rating]="g.googleRating ?? g.rating"
+              [reviewCount]="g.googleReviewCount ?? g.reviewCount"
               [reviews]="g.reviews || []"
+              [googleMapsUrl]="g.googleMapsUrl || null"
+              [fromGoogle]="!!g.googlePlaceId"
             />
           }
         </div>

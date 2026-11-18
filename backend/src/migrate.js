@@ -1319,6 +1319,25 @@ async function migrate() {
       console.log('Migración v63 (profile type) aplicada.');
     }
 
+    const v64Path = path.join(__dirname, '..', 'sql', 'migration-v64-google-place-id.sql');
+    if (fs.existsSync(v64Path)) {
+      const v64 = fs.readFileSync(v64Path, 'utf8');
+      const conn64 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v64.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn64.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn64.end();
+      console.log('Migración v64 (Google Place ID / reseñas) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

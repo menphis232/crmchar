@@ -14,6 +14,8 @@ export class GestorReviewsSectionComponent {
   @Input() reviewCount: number | undefined = 0;
   @Input() reviews: GestorReview[] = [];
   @Input() title = 'Reseñas de clientes';
+  @Input() googleMapsUrl: string | null = null;
+  @Input() fromGoogle = false;
 
   stars(rating: number) {
     const full = Math.max(0, Math.min(5, Math.round(rating)));

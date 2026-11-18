@@ -26,6 +26,19 @@ export class GestoresService {
   getBySlug(slug: string) { return this.http.get<Gestor>(`${this.base}/${slug}`); }
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
+  syncGoogleReviews() {
+    return this.http.post<{
+      ok: boolean;
+      googlePlaceId?: string | null;
+      googleRating?: number | null;
+      googleReviewCount?: number | null;
+      googleReviews?: GestorReview[];
+      googleMapsUrl?: string | null;
+      rating?: number;
+      reviewCount?: number;
+      error?: string;
+    }>(`${this.base}/me/google-reviews/sync`, {});
+  }
   addService(data: {
     name: string;
     timeEstimate: string;

@@ -480,6 +480,38 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     });
   }
 
+  syncGoogleReviews() {
+    if (!this.googlePlaceId.trim()) {
+      this.toast.error('Guarda primero el Place ID de Google.');
+      return;
+    }
+    this.syncingGoogleReviews.set(true);
+    // Persistir Place ID y luego forzar sync
+    this.gestoresService.updateProfile({ googlePlaceId: this.googlePlaceId.trim() }).subscribe({
+      next: (p) => {
+        this.googleMapsUrl = p.googleMapsUrl || null;
+        this.gestoresService.syncGoogleReviews().subscribe({
+          next: (res) => {
+            this.syncingGoogleReviews.set(false);
+            if (res.googleRating != null) this.gestorReviewsRating.set(res.googleRating);
+            if (res.googleReviewCount != null) this.gestorReviewsCount.set(res.googleReviewCount);
+            this.googleMapsUrl = res.googleMapsUrl || this.googleMapsUrl;
+            this.toast.success(`Google: ${res.googleReviewCount ?? 0} reseñas sincronizadas.`);
+            this.loadGestorReviews();
+          },
+          error: (err) => {
+            this.syncingGoogleReviews.set(false);
+            this.toast.error(err.error?.error || 'No se pudo sincronizar con Google.');
+          },
+        });
+      },
+      error: () => {
+        this.syncingGoogleReviews.set(false);
+        this.toast.error('No se pudo guardar el Place ID.');
+      },
+    });
+  }
+
   resetGestorReviewForm() {
     this.editingReviewId = null;
     this.gestorReviewForm = { author: '', rating: 5, comment: '', reviewDate: this.todayInputDate() };
@@ -572,6 +604,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.mapSearchQuery = p.address || '';
       this.gestorGalleryImages = [...(p.galleryImages || [])].slice(0, this.gestorGalleryMax);
       this.profileBannerUrl = p.bannerUrl || '';
+      this.googlePlaceId = p.googlePlaceId || '';
+      this.googleMapsUrl = p.googleMapsUrl || null;
       const embed = toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress);
       this.mapPreviewUrl.set(embed ? this.sanitizer.bypassSecurityTrustResourceUrl(embed) : null);
     });
@@ -1022,6 +1056,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   gestorReviewForm = { author: '', rating: 5, comment: '', reviewDate: '' };
   editingReviewId: string | null = null;
   reviewStarSlots = [1, 2, 3, 4, 5];
+  googlePlaceId = '';
+  googleMapsUrl: string | null = null;
+  syncingGoogleReviews = signal(false);
   isUploadingGallery = false;
   galleryCropQueue = signal<File[]>([]);
   galleryCropCurrentFile = signal<File | null>(null);
@@ -1118,9 +1155,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       photoUrl: this.profileLogoUrl || undefined,
       bannerUrl: this.profileBannerUrl || undefined,
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
+      googlePlaceId: this.googlePlaceId.trim() || null,
     }).subscribe({
       next: p => {
         this.publicSlug = p.slug || '';
+        this.googlePlaceId = p.googlePlaceId || this.googlePlaceId;
+        this.googleMapsUrl = p.googleMapsUrl || this.googleMapsUrl;
         this.profile.set({ ...this.profile()!, ...p, slug: p.slug || '', name: name || p.name });
         this.auth.getMe().subscribe({
           next: (res) => {

@@ -1,12 +1,24 @@
 <section class="dp-reviews">
-  <h2 class="dp-reviews-title">{{ title }}</h2>
+  <div class="dp-reviews-head">
+    <h2 class="dp-reviews-title">{{ title }}</h2>
+    @if (googleMapsUrl) {
+      <a class="dp-reviews-google-link" [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">
+        Ver en Google
+      </a>
+    }
+  </div>
 
   @if ((reviewCount ?? 0) > 0) {
     <div class="dp-reviews-summary-block">
       <div class="dp-reviews-score">{{ rating | number:'1.1-1' }}</div>
       <div class="dp-reviews-summary-meta">
         <div class="dp-reviews-stars-lg" [attr.aria-label]="rating + ' de 5'">{{ stars(rating) }}</div>
-        <p class="dp-reviews-summary">{{ reviewCount ?? 0 }} reseñas globales</p>
+        <p class="dp-reviews-summary">
+          {{ reviewCount ?? 0 }} reseñas
+          @if (fromGoogle) {
+            <span class="dp-reviews-badge">Google</span>
+          }
+        </p>
       </div>
     </div>
   }
@@ -18,14 +30,25 @@
           <div class="dp-review-header">
             <span class="dp-review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
             <span class="dp-review-author">{{ r.author }}</span>
+            @if (r.source === 'google') {
+              <span class="dp-reviews-badge dp-reviews-badge--sm">Google</span>
+            }
           </div>
           <p class="dp-review-text">{{ r.comment }}</p>
-          @if (r.createdAt) {
+          @if (r.relativeTime) {
+            <time class="dp-review-date">{{ r.relativeTime }}</time>
+          } @else if (r.createdAt) {
             <time class="dp-review-date">Reseña del {{ r.createdAt | date:'mediumDate' }}</time>
           }
         </li>
       }
     </ul>
+  } @else if (googleMapsUrl) {
+    <p class="dp-reviews-empty">
+      Las reseñas de Google se sincronizan cuando el servidor tiene Places API configurada.
+      Mientras tanto puedes
+      <a [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">verlas en Google Maps</a>.
+    </p>
   } @else {
     <p class="dp-reviews-empty">Aún no hay reseñas.</p>
   }

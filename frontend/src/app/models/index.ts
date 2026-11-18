@@ -313,6 +313,11 @@ export interface Gestor {
   reviews?: GestorReview[];
   solicitudes?: Solicitud[];
   publicUrl?: string;
+  googlePlaceId?: string | null;
+  googleRating?: number | null;
+  googleReviewCount?: number | null;
+  googleMapsUrl?: string | null;
+  googleSyncError?: string | null;
 }
 
 export interface GestorService {
@@ -332,6 +337,8 @@ export interface GestorReview {
   rating: number;
   comment: string;
   createdAt?: string;
+  source?: 'google' | 'manual' | string;
+  relativeTime?: string | null;
 }
 
 export interface Solicitud {

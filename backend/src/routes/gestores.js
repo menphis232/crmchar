@@ -11,6 +11,13 @@ import { getFrontendBase } from '../utils/frontend-url.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 import { aiTrainingPrompt } from '../utils/ai-training.js';
 import { slugify, uniqueGestorSlug } from '../utils/slug.js';
+import {
+  fetchPlaceDetails,
+  isStale,
+  mapsUrlForPlace,
+  parseCachedReviews,
+  placesApiKey,
+} from '../services/googlePlaces.js';
 const router = Router();
 
 const GESTOR_SERVICES_SELECT = `
@@ -163,6 +170,86 @@ async function recalcGestorReviewStats(gestorId) {
   return { rating: avg, reviewCount: cnt };
 }
 
+async function syncGoogleReviewsForGestor(row, { force = false } = {}) {
+  const placeId = (row.google_place_id || '').trim();
+  if (!placeId) {
+    return {
+      googlePlaceId: null,
+      googleRating: null,
+      googleReviewCount: null,
+      googleReviews: [],
+      googleMapsUrl: null,
+      googleSyncOk: false,
+      googleSyncError: null,
+    };
+  }
+
+  let rating = row.google_rating != null ? Number(row.google_rating) : null;
+  let reviewCount = row.google_review_count != null ? Number(row.google_review_count) : null;
+  let reviews = parseCachedReviews(row.google_reviews_json);
+  let syncError = null;
+  let synced = false;
+
+  if (force || isStale(row.google_reviews_synced_at)) {
+    if (!placesApiKey()) {
+      syncError = 'missing_api_key';
+    } else {
+      try {
+        const details = await fetchPlaceDetails(placeId);
+        if (details) {
+          rating = details.rating;
+          reviewCount = details.reviewCount;
+          reviews = details.reviews;
+          await run(
+            `UPDATE gestores SET
+              google_rating = ?,
+              google_review_count = ?,
+              google_reviews_json = ?,
+              google_reviews_synced_at = NOW()
+             WHERE id = ?`,
+            [rating, reviewCount, JSON.stringify(reviews), row.id],
+          );
+          synced = true;
+        }
+      } catch (err) {
+        console.error('[googlePlaces]', placeId, err.message);
+        syncError = err.code || err.message || 'sync_failed';
+      }
+    }
+  }
+
+  return {
+    googlePlaceId: placeId,
+    googleRating: rating,
+    googleReviewCount: reviewCount,
+    googleReviews: reviews,
+    googleMapsUrl: mapsUrlForPlace(placeId),
+    googleSyncOk: synced || (!syncError && reviews.length > 0),
+    googleSyncError: syncError,
+  };
+}
+
+function mergePublicReviews(manualReviews, googlePayload) {
+  const google = googlePayload?.googleReviews || [];
+  if (!google.length) return manualReviews || [];
+  // Preferir Google cuando hay Place ID sincronizado; las manuales van después.
+  const manual = (manualReviews || []).map((r) => ({ ...r, source: r.source || 'manual' }));
+  return [...google, ...manual];
+}
+
+function publicRating(row, googlePayload, manualStats) {
+  if (googlePayload?.googleRating != null) {
+    return {
+      rating: Number(googlePayload.googleRating),
+      reviewCount: googlePayload.googleReviewCount ?? manualStats.reviewCount ?? 0,
+    };
+  }
+  return {
+    rating: Number(row.rating) || 0,
+    reviewCount: row.review_count ?? manualStats.reviewCount ?? 0,
+  };
+}
+
 function gestorRow(row) {
   if (!row) return null;
   return {
@@ -185,6 +272,10 @@ function gestorRow(row) {
     address: row.address || null,
     mapEmbedUrl: row.map_embed_url || null,
     galleryImages: parseGalleryImages(row.gallery_images),
+    googlePlaceId: row.google_place_id || null,
+    googleRating: row.google_rating != null ? Number(row.google_rating) : null,
+    googleReviewCount: row.google_review_count != null ? Number(row.google_review_count) : null,
+    googleMapsUrl: mapsUrlForPlace(row.google_place_id),
   };
 }
 
@@ -255,7 +346,7 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages } = req.body;
+    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages, googlePlaceId } = req.body;
 
     // Teléfono y WhatsApp son el mismo dato en el panel; mantener ambas columnas sincronizadas.
     const contactPhone = phone !== undefined ? phone : whatsapp;
@@ -270,6 +361,10 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
         if (nextSlug !== row.slug) slugUpdate = nextSlug;
       }
     }
+
+    const nextPlaceId = googlePlaceId !== undefined
+      ? (String(googlePlaceId || '').trim() || null)
+      : undefined;
     
     const params = [
       name, location, state, bannerUrl, photoUrl, bio, contactWhatsapp, schedule, experienceYears, tramitesCount, contactPhone, address, mapEmbedUrl
@@ -292,6 +387,20 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
 
     updateSql += ' WHERE user_id = ?';
     await run(updateSql, params);
+
+    if (nextPlaceId !== undefined) {
+      const placeChanged = (row.google_place_id || null) !== nextPlaceId;
+      await run(
+        `UPDATE gestores SET
+          google_place_id = ?,
+          google_rating = IF(? = 1, NULL, google_rating),
+          google_review_count = IF(? = 1, NULL, google_review_count),
+          google_reviews_json = IF(? = 1, NULL, google_reviews_json),
+          google_reviews_synced_at = IF(? = 1, NULL, google_reviews_synced_at)
+         WHERE user_id = ?`,
+        [nextPlaceId, placeChanged ? 1 : 0, placeChanged ? 1 : 0, placeChanged ? 1 : 0, placeChanged ? 1 : 0, req.user.id],
+      );
+    }
 
     if (name !== undefined && name !== null && String(name).trim()) {
       await run('UPDATE users SET name = ? WHERE id = ?', [String(name).trim(), req.user.id]);
@@ -553,19 +662,74 @@ router.get('/:slugOrId', async (req, res) => {
     if (!services.length) {
       return res.status(404).json({ error: 'Gestor no encontrado' });
     }
-    const reviews = await query(
+    const manualReviews = await query(
       'SELECT id, author, rating, comment, created_at as createdAt FROM gestor_reviews WHERE gestor_id = ? ORDER BY created_at DESC LIMIT 20',
       [row.id]);
+
+    const googlePayload = await syncGoogleReviewsForGestor(row);
+    const ratingInfo = publicRating(row, googlePayload, {
+      reviewCount: manualReviews.length,
+    });
+    const reviews = mergePublicReviews(manualReviews, googlePayload);
 
     let pageBuilderConfig = row.page_builder_config;
     if (typeof pageBuilderConfig === 'string') {
       try { pageBuilderConfig = JSON.parse(pageBuilderConfig); } catch(e) { pageBuilderConfig = null; }
     }
 
-    res.json({ ...gestorRow(row), google_analytics_id: row.google_analytics_id, page_builder_config: pageBuilderConfig, chatbot_bg_color: row.chatbot_bg_color, chatbot_btn_color: row.chatbot_btn_color, chatbot_text_color: row.chatbot_text_color, services, reviews });
+    res.json({
+      ...gestorRow(row),
+      rating: ratingInfo.rating,
+      reviewCount: ratingInfo.reviewCount,
+      google_analytics_id: row.google_analytics_id,
+      page_builder_config: pageBuilderConfig,
+      chatbot_bg_color: row.chatbot_bg_color,
+      chatbot_btn_color: row.chatbot_btn_color,
+      chatbot_text_color: row.chatbot_text_color,
+      services,
+      reviews,
+      googlePlaceId: googlePayload.googlePlaceId,
+      googleRating: googlePayload.googleRating,
+      googleReviewCount: googlePayload.googleReviewCount,
+      googleMapsUrl: googlePayload.googleMapsUrl,
+      googleSyncError: googlePayload.googleSyncError,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar gestor' });
+  }
+});
+
+router.post('/me/google-reviews/sync', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+    if (!row.google_place_id) {
+      return res.status(400).json({ error: 'Primero guarda el Place ID de Google en tu perfil.' });
+    }
+    if (!placesApiKey()) {
+      return res.status(503).json({
+        error: 'Falta GOOGLE_PLACES_API_KEY en el servidor. Activa Places API en Google Cloud y agrégala al .env del backend.',
+        googlePlaceId: row.google_place_id,
+        googleMapsUrl: mapsUrlForPlace(row.google_place_id),
+      });
+    }
+    const googlePayload = await syncGoogleReviewsForGestor(row, { force: true });
+    if (googlePayload.googleSyncError && googlePayload.googleSyncError !== 'missing_api_key') {
+      return res.status(502).json({
+        error: 'Google no devolvió reseñas. Revisa el Place ID y que Places API esté habilitada.',
+        details: googlePayload.googleSyncError,
+      });
+    }
+    res.json({
+      ok: true,
+      ...googlePayload,
+      rating: googlePayload.googleRating ?? Number(row.rating) || 0,
+      reviewCount: googlePayload.googleReviewCount ?? row.review_count ?? 0,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al sincronizar reseñas de Google' });
   }
 });
 
