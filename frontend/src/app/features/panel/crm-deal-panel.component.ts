@@ -20,7 +20,7 @@ import {
   LucideBanknote,
 } from '@lucide/angular';
 import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
-import { CrmDeal, LOST_REASONS, MessageTemplate, CrmTeamMember, PeritoAssignOption } from '../../models';
+import { CrmDeal, CrmContactVehicleDocument, LOST_REASONS, MessageTemplate, CrmTeamMember, PeritoAssignOption } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -2282,6 +2282,20 @@ export class CrmDealPanelComponent implements OnDestroy {
   isUploadingQuote = signal(false);
 
   documents = signal<any[]>([]);
+  vehicleWalletLabel = '';
+  vehicleWalletDocs = computed(() => {
+    const d = this.deal();
+    if (!d?.vehicleId) return [] as CrmContactVehicleDocument[];
+    const v = (d.contactVehicles || []).find((x) => x.id === d.vehicleId);
+    return v?.documents || [];
+  });
+  assignedVehicleLabel = computed(() => {
+    const d = this.deal();
+    if (!d?.vehicleId) return '';
+    if (d.vehicleLabel || d.vehiclePlate) return d.vehicleLabel || d.vehiclePlate || '';
+    const v = (d.contactVehicles || []).find((x) => x.id === d.vehicleId);
+    return v ? this.vehicleOptionLabel(v) : '';
+  });
   deliveryDocuments = signal<any[]>([]);
   shippingDocuments = signal<any[]>([]);
   clientDocuments = signal<any[]>([]);
@@ -2462,29 +2476,86 @@ export class CrmDealPanelComponent implements OnDestroy {
     const d = this.deal();
     if (!d) return;
 
+    if (!d.vehicleId) {
+      this.toast.error('Asigna un vehículo al trámite para guardarlo en su cartera');
+      input.value = '';
+      return;
+    }
+
+    const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    const isImage = file.type.startsWith('image/');
+    if (!isPdf && !isImage) {
+      this.toast.error('Sube un PDF o una imagen (JPG, PNG, WebP).');
+      input.value = '';
+      return;
+    }
+
+    const vehicleId = d.vehicleId;
+    const label = this.vehicleWalletLabel.trim() || file.name.replace(/\.[^.]+$/, '');
     this.isUploading.set(true);
-    this.uploadService.uploadDocument(file).subscribe({
+    const upload$ = isPdf ? this.uploadService.uploadDocument(file) : this.uploadService.uploadFile(file);
+    upload$.subscribe({
       next: (res) => {
-        this.crmService.addDocument(d.id, {
-          fileName: res.fileName || file.name,
-          fileUrl: res.url,
-          docKind: 'attachment',
+        const fileName = res.fileName || file.name;
+        const fileUrl = res.url;
+        this.crmService.addContactVehicleDocument(vehicleId, {
+          fileName,
+          fileUrl,
+          label,
         }).subscribe({
           next: () => {
-            this.loadDocuments(d.id);
-            this.isUploading.set(false);
-            this.updated.emit();
+            this.crmService.addDocument(d.id, {
+              fileName,
+              fileUrl,
+              docKind: 'attachment',
+            }).subscribe({
+              next: () => {
+                this.vehicleWalletLabel = '';
+                input.value = '';
+                this.loadDeal(d.id);
+                this.loadDocuments(d.id);
+                this.isUploading.set(false);
+                this.toast.success(`Guardado en la cartera de ${this.assignedVehicleLabel() || 'este vehículo'}`);
+                this.updated.emit();
+              },
+              error: (e) => {
+                this.loadDeal(d.id);
+                this.isUploading.set(false);
+                this.toast.warning(e.error?.error || 'Quedó en la cartera del vehículo, pero no como adjunto del trámite');
+              },
+            });
           },
           error: (e) => {
-            this.toast.error(e.error?.error || 'Error al guardar el documento');
+            this.toast.error(e.error?.error || 'Error al guardar en la cartera del vehículo');
             this.isUploading.set(false);
+            input.value = '';
           },
         });
       },
       error: (e) => {
         this.toast.error(e.error?.error || 'Error al subir el documento');
         this.isUploading.set(false);
+        input.value = '';
       },
+    });
+  }
+
+  deleteVehicleWalletDoc(docId: string) {
+    const d = this.deal();
+    if (!d) return;
+    this.toast.confirmDelete('este documento de la cartera', {
+      title: '¿Eliminar de la cartera del vehículo?',
+      subtitle: 'Se quitará de la billetera del cliente para este auto.',
+    }).then((ok) => {
+      if (!ok) return;
+      this.crmService.deleteContactVehicleDocument(docId).subscribe({
+        next: () => {
+          this.loadDeal(d.id);
+          this.toast.success('Documento eliminado de la cartera');
+          this.updated.emit();
+        },
+        error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar'),
+      });
     });
   }
 

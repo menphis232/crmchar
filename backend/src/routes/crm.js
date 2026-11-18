@@ -672,11 +672,30 @@ router.get('/deals/:id', async (req, res) => {
     `, [req.params.id]);
 
     const contact = await get('SELECT * FROM contacts WHERE id = ?', [row.contact_id]);
-    const contactVehicles = await query(
+    const contactVehiclesRaw = await query(
       `SELECT id, plate, make, model, year, state, engomado_color AS engomadoColor
        FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY plate ASC`,
       [row.contact_id, uid],
     );
+    const vehicleIds = contactVehiclesRaw.map((v) => v.id);
+    const docsByVehicle = {};
+    if (vehicleIds.length) {
+      const placeholders = vehicleIds.map(() => '?').join(',');
+      const vDocs = await query(
+        `SELECT * FROM contact_vehicle_documents
+         WHERE vehicle_id IN (${placeholders}) AND user_id = ?
+         ORDER BY created_at DESC`,
+        [...vehicleIds, uid],
+      );
+      for (const doc of vDocs) {
+        if (!docsByVehicle[doc.vehicle_id]) docsByVehicle[doc.vehicle_id] = [];
+        docsByVehicle[doc.vehicle_id].push(vehicleDocumentRow(doc));
+      }
+    }
+    const contactVehicles = contactVehiclesRaw.map((v) => ({
+      ...v,
+      documents: docsByVehicle[v.id] || [],
+    }));
 
     res.json({
       ...dealRow(row),

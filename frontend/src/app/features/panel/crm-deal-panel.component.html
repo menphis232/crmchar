@@ -547,7 +547,7 @@
         }
 
         @if (dealView() === 'docs') {
-          <p class="deal-tab-hint">Archivos del cliente y adjuntos del trámite.</p>
+          <p class="deal-tab-hint">Cartera del vehículo asignado y adjuntos del trámite.</p>
           <!-- DOCUMENTOS DEL CLIENTE -->
         @if (!isConcesionaria()) {
         <div class="deal-section deal-subsection deal-subsection--ocr">
@@ -601,39 +601,78 @@
         </div>
         }
 
-        <!-- DOCUMENTOS (Phase 3.2) -->
+        <!-- DOCUMENTOS → cartera del vehículo del trámite -->
         <div class="deal-section deal-subsection deal-attach-section">
           <div class="deal-attach-header">
-            <h4>Anexar documentos / póliza</h4>
+            <h4>Cartera del vehículo</h4>
           </div>
-          <p class="card-desc" style="margin:0 0 12px;">Sube facturas, pólizas, INE u otros archivos de este trámite.</p>
+          @if (!d.vehicleId) {
+            <p class="card-desc" style="margin:0 0 12px;">
+              Asigna un vehículo arriba en <strong>Vehículo del trámite</strong> para subir documentos a la cartera de ese auto (no a la general).
+            </p>
+          } @else {
+            <p class="card-desc" style="margin:0 0 12px;">
+              Se guarda en la billetera del cliente para
+              <strong>{{ assignedVehicleLabel() }}</strong>.
+              Así Charveel distingue a qué auto pertenece cada archivo.
+            </p>
+            <input
+              type="text"
+              class="deal-vehicle-wallet-label"
+              [(ngModel)]="vehicleWalletLabel"
+              placeholder="Etiqueta (ej. Tarjeta de circulación, póliza…)"
+              style="width:100%;margin:0 0 10px;padding:10px 12px;border:1px solid var(--mon-border,#e6e9ef);border-radius:8px;font-size:13px;"
+            >
 
-          <label class="deal-delivery-upload-zone" [class.loading]="isUploading()">
-            <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadDocument($event)" [disabled]="isUploading()">
-            <svg lucidePlus [size]="28" aria-hidden="true"></svg>
-            <strong>{{ isUploading() ? 'Subiendo...' : 'Haz clic para anexar documento o póliza' }}</strong>
-            <span>JPG, PNG, WebP o PDF</span>
-          </label>
+            <label class="deal-delivery-upload-zone" [class.loading]="isUploading()">
+              <input type="file" style="display:none" accept="image/*,.pdf,application/pdf" (change)="uploadDocument($event)" [disabled]="isUploading()">
+              <svg lucidePlus [size]="28" aria-hidden="true"></svg>
+              <strong>{{ isUploading() ? 'Subiendo...' : 'Subir a la cartera de este vehículo' }}</strong>
+              <span>JPG, PNG, WebP o PDF</span>
+            </label>
+
+            @if (vehicleWalletDocs().length > 0) {
+              <div class="quote-doc-list" style="margin-top:14px;">
+                @for (doc of vehicleWalletDocs(); track doc.id) {
+                  <div class="quote-doc-item">
+                    <div class="quote-doc-info">
+                      <strong>{{ doc.label || doc.fileName }}</strong>
+                      <span class="card-desc">{{ doc.createdAt | date:'short' }}</span>
+                    </div>
+                    <div class="quote-doc-actions">
+                      <a [href]="doc.fileUrl" target="_blank" class="deal-outline-btn">Ver</a>
+                      <button type="button" class="deal-doc-delete" title="Eliminar de la cartera" (click)="deleteVehicleWalletDoc(doc.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="card-desc" style="margin-top:12px;">Aún no hay documentos en la cartera de este vehículo.</p>
+            }
+          }
 
           @if (documents().length > 0) {
-            <div class="quote-doc-list" style="margin-top:14px;">
-              @for (doc of documents(); track doc.id) {
-                <div class="quote-doc-item">
-                  <div class="quote-doc-info">
-                    <strong>{{ doc.file_name }}</strong>
-                    <span class="card-desc">{{ doc.created_at | date:'short' }}</span>
+            <div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--mon-border,#e6e9ef);">
+              <h4 style="margin:0 0 8px;font-size:13px;">Adjuntos del trámite</h4>
+              <div class="quote-doc-list">
+                @for (doc of documents(); track doc.id) {
+                  <div class="quote-doc-item">
+                    <div class="quote-doc-info">
+                      <strong>{{ doc.file_name }}</strong>
+                      <span class="card-desc">{{ doc.created_at | date:'short' }}</span>
+                    </div>
+                    <div class="quote-doc-actions">
+                      <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
+                      <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
+                        <svg lucideX [size]="14" aria-hidden="true"></svg>
+                      </button>
+                    </div>
                   </div>
-                  <div class="quote-doc-actions">
-                    <button type="button" class="deal-outline-btn" (click)="downloadDocument(doc)">Descargar</button>
-                    <button type="button" class="deal-doc-delete" title="Eliminar" (click)="deleteDocument(doc.id)">
-                      <svg lucideX [size]="14" aria-hidden="true"></svg>
-                    </button>
-                  </div>
-                </div>
-              }
+                }
+              </div>
             </div>
-          } @else {
-            <p class="card-desc" style="margin-top:12px;">Aún no hay documentos anexados en este trámite.</p>
           }
         </div>
         }

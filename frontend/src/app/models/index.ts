@@ -463,6 +463,7 @@ export interface CrmDeal {
     year?: number | null;
     state?: string | null;
     engomadoColor?: string | null;
+    documents?: CrmContactVehicleDocument[];
   }>;
   daysInStage?: number;
   activities?: CrmActivity[];
