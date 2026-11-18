@@ -94,7 +94,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       width: 100%;
       max-width: 960px;
       margin: 0 auto;
-      padding: 0 0 48px;
+      padding: 0 16px 48px;
       box-sizing: border-box;
     }
     .deal-page-toolbar {
@@ -144,7 +144,14 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
       padding: 8px 0 0 !important;
     }
     .deal-section { background: transparent !important; border-bottom: 1px solid #e6e9ef !important; }
-    .deal-subsection { background: #fff !important; border: 1px solid #e6e9ef !important; border-radius: 12px !important; margin-bottom: 8px !important; }
+    .deal-subsection {
+      background: #fff !important;
+      border: 1px solid #e6e9ef !important;
+      border-radius: 12px !important;
+      margin-bottom: 12px !important;
+      padding: 16px 20px !important;
+      box-sizing: border-box;
+    }
     .deal-subsection--ocr { background: #fff !important; border-color: #e6e9ef !important; }
     .deal-subsection--ocr h4 { color: #676879 !important; }
 
@@ -289,6 +296,10 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
     /* Sections */
     .deal-section { border-bottom: 1px solid #e6e9ef !important; padding: 18px 0 !important; }
+    .deal-section.deal-subsection {
+      border-bottom: none !important;
+      padding: 16px 20px !important;
+    }
     .deal-section h4 {
       color: #676879 !important;
       -webkit-text-fill-color: #676879 !important;
