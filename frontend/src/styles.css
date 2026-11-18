@@ -32,8 +32,8 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.5em;
 }
 
-/* ── SweetAlert2 Dark Theme Overrides ── */
-.swal2-popup {
+/* ── SweetAlert2 — oscuro solo fuera de tema light ── */
+html:not([data-theme='light']) .swal2-popup {
   background: #111111 !important;
   color: #ffffff !important;
   border: 1px solid rgba(255,255,255,0.1) !important;
@@ -41,7 +41,7 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--f-ui) !important;
 }
 
-.swal2-title {
+html:not([data-theme='light']) .swal2-title {
   color: #ffffff !important;
   font-size: 1.2rem !important;
   font-family: var(--f-display) !important;
@@ -49,12 +49,13 @@ h1, h2, h3, h4, h5, h6 {
   text-transform: uppercase !important;
 }
 
-.swal2-html-container, .swal2-content {
+html:not([data-theme='light']) .swal2-html-container,
+html:not([data-theme='light']) .swal2-content {
   color: #b0b0c0 !important;
   font-size: 0.95rem !important;
 }
 
-.swal2-confirm {
+html:not([data-theme='light']) .swal2-confirm {
   background: #000 !important;
   color: #fff !important;
   font-weight: 700 !important;
@@ -64,13 +65,69 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: 0.12em !important;
 }
 
-.swal2-cancel {
+html:not([data-theme='light']) .swal2-cancel {
   background: transparent !important;
   color: #fff !important;
   border: 1px solid #fff !important;
   border-radius: 4px !important;
   text-transform: uppercase !important;
   letter-spacing: 0.12em !important;
+}
+
+/* Tema claro: modal Monday blanca (sin depender de customClass JS) */
+html[data-theme='light'] .swal2-popup {
+  background: #ffffff !important;
+  color: #323338 !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 12px !important;
+  box-shadow: 0 16px 40px rgba(50, 51, 56, 0.16) !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  padding: 1.75em 1.5em 1.5em !important;
+}
+
+html[data-theme='light'] .swal2-title {
+  color: #323338 !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+
+html[data-theme='light'] .swal2-html-container,
+html[data-theme='light'] .swal2-content {
+  color: #676879 !important;
+  font-size: 0.95rem !important;
+}
+
+html[data-theme='light'] .swal2-confirm {
+  background: #e2445c !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  border-radius: 8px !important;
+  border: 1px solid #e2445c !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+html[data-theme='light'] .swal2-cancel {
+  background: #fff !important;
+  color: #323338 !important;
+  border: 1px solid #c5c7d0 !important;
+  border-radius: 8px !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-weight: 600 !important;
+}
+
+html[data-theme='light'] .swal-delete-sub {
+  color: #676879 !important;
+}
+
+html[data-theme='light'] .swal-delete-item {
+  background: #f7f8fa !important;
+  border: 1px solid #e6e9ef !important;
+  color: #323338 !important;
 }
 
 /* Toast styles */
@@ -119,6 +176,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Modal Monday light (paneles CRM) */
 .swal-monday-modal {
+  background: #ffffff !important;
+  color: #323338 !important;
   border: 1px solid #e6e9ef !important;
   border-radius: 12px !important;
   box-shadow: 0 16px 40px rgba(50, 51, 56, 0.16) !important;

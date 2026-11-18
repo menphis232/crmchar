@@ -21,7 +21,14 @@ export class ToastService {
 
   private isLightTheme(): boolean {
     if (typeof document === 'undefined') return false;
-    return document.documentElement.getAttribute('data-theme') === 'light';
+    const root = document.documentElement;
+    if (root.getAttribute('data-theme') === 'light') return true;
+    if (root.dataset['theme'] === 'light') return true;
+    try {
+      return localStorage.getItem('tvm-color-mode') === 'light';
+    } catch {
+      return false;
+    }
   }
 
   success(message: string, title = '¡Listo!') {
