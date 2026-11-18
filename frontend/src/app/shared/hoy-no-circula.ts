@@ -142,7 +142,7 @@ export function checkCirculationToday(
       blockedToday: blocked,
       reason: blocked
         ? `Parada de engomado ${rule.colorLabel}: no circula los ${rule.weekdayLabel}`
-        : `Hoy es ${cal.weekdayLabel}; su parada es ${rule.weekdayLabel}`,
+        : `Hoy es ${cal.weekdayLabel}; descansa los ${rule.weekdayLabel}`,
     };
   }
 
@@ -154,7 +154,7 @@ export function checkCirculationToday(
       blockedToday: false,
       reason: holo === '0'
         ? 'Holograma 0: puede circular los sábados'
-        : 'Sábado: indica holograma (1 o 2) para saber si aplica parada sabatina',
+        : 'Sábado: indica holograma (1 o 2) para saber si aplica descanso sabatino',
     };
   }
 
