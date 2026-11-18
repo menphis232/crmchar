@@ -39,6 +39,7 @@ export class GestoresService {
       promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
       promoBannerTitleAlign: 'left' | 'center' | 'right';
       promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
+      promoBannerTitlePlacement: 'overlay' | 'below';
       promoBannerAlt: string;
     }>(`${this.base}/me/client-promo-banner`);
   }
@@ -53,6 +54,7 @@ export class GestoresService {
     promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
     promoBannerTitleAlign?: 'left' | 'center' | 'right';
     promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
+    promoBannerTitlePlacement?: 'overlay' | 'below';
     promoBannerAlt?: string;
   }) {
     return this.http.put<{
@@ -67,6 +69,7 @@ export class GestoresService {
       promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
       promoBannerTitleAlign: 'left' | 'center' | 'right';
       promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
+      promoBannerTitlePlacement: 'overlay' | 'below';
       promoBannerAlt: string;
     }>(`${this.base}/me/client-promo-banner`, data);
   }

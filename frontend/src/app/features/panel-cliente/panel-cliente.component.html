@@ -1146,12 +1146,17 @@
               [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (clientPromoBanner()?.promoBannerTitle) {
+          @if (clientPromoBanner()?.promoBannerTitle && !clientPromoTitleBelow()) {
             <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
               <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
             </div>
           }
         </div>
+        @if (clientPromoBanner()?.promoBannerTitle && clientPromoTitleBelow()) {
+          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle()">
+            {{ clientPromoBanner()?.promoBannerTitle }}
+          </div>
+        }
       } @else if (clientPromoBanner()?.promoBannerTitle) {
         <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
           <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
@@ -1171,12 +1176,17 @@
               [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (clientPromoBanner()?.promoBannerTitle) {
+          @if (clientPromoBanner()?.promoBannerTitle && !clientPromoTitleBelow()) {
             <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
               <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
             </div>
           }
         </div>
+        @if (clientPromoBanner()?.promoBannerTitle && clientPromoTitleBelow()) {
+          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle()">
+            {{ clientPromoBanner()?.promoBannerTitle }}
+          </div>
+        }
       } @else if (clientPromoBanner()?.promoBannerTitle) {
         <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
           <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>

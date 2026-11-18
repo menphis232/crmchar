@@ -766,8 +766,15 @@
             @if (isUploadingClientPromoBanner) { <p class="card-desc" style="margin:0 0 12px;">Subiendo imagen recortada...</p> }
 
             <div class="form-group" style="margin-bottom:10px;">
-              <label>Título (sobre el banner)</label>
+              <label>Título</label>
               <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. ¿Necesitas un trámite vehicular?" (change)="saveClientPromoBanner()">
+            </div>
+            <div class="form-group" style="margin-bottom:10px;">
+              <label>Ubicación del título</label>
+              <select [(ngModel)]="clientPromoBannerTitlePlacement" (ngModelChange)="saveClientPromoBanner()">
+                <option value="overlay">Encima del banner</option>
+                <option value="below">Debajo del banner</option>
+              </select>
             </div>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;">
               <div class="form-group" style="margin:0;">
@@ -793,14 +800,16 @@
                   <option value="right">Derecha</option>
                 </select>
               </div>
-              <div class="form-group" style="margin:0;">
-                <label>Posición vertical</label>
-                <select [(ngModel)]="clientPromoBannerTitleVAlign" (ngModelChange)="saveClientPromoBanner()">
-                  <option value="top">Arriba</option>
-                  <option value="center">Medio</option>
-                  <option value="bottom">Abajo</option>
-                </select>
-              </div>
+              @if (clientPromoBannerTitlePlacement === 'overlay') {
+                <div class="form-group" style="margin:0;">
+                  <label>Posición vertical</label>
+                  <select [(ngModel)]="clientPromoBannerTitleVAlign" (ngModelChange)="saveClientPromoBanner()">
+                    <option value="top">Arriba</option>
+                    <option value="center">Medio</option>
+                    <option value="bottom">Abajo</option>
+                  </select>
+                </div>
+              }
             </div>
             <div class="form-group" style="margin-bottom:10px;">
               <label>Link al hacer clic (opcional)</label>

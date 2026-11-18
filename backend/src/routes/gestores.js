@@ -70,6 +70,12 @@ function normalizePromoBannerTitleVAlign(value, fallback = 'center') {
   return allowed.has(raw) ? raw : fallback;
 }
 
+function normalizePromoBannerTitlePlacement(value, fallback = 'overlay') {
+  const allowed = new Set(['overlay', 'below']);
+  const raw = String(value || '').trim().toLowerCase();
+  return allowed.has(raw) ? raw : fallback;
+}
+
 function clientPromoBannerFromSettings(settings) {
   const desktop =
     settings?.promoBannerImageDesktop
@@ -87,6 +93,7 @@ function clientPromoBannerFromSettings(settings) {
     promoBannerTitleSize: normalizePromoBannerTitleSize(settings?.promoBannerTitleSize),
     promoBannerTitleAlign: normalizePromoBannerTitleAlign(settings?.promoBannerTitleAlign),
     promoBannerTitleVAlign: normalizePromoBannerTitleVAlign(settings?.promoBannerTitleVAlign),
+    promoBannerTitlePlacement: normalizePromoBannerTitlePlacement(settings?.promoBannerTitlePlacement),
     promoBannerAlt: settings?.promoBannerAlt || '',
   };
 }
@@ -488,6 +495,9 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
       promoBannerTitleVAlign: req.body.promoBannerTitleVAlign !== undefined
         ? normalizePromoBannerTitleVAlign(req.body.promoBannerTitleVAlign)
         : normalizePromoBannerTitleVAlign(current.promoBannerTitleVAlign),
+      promoBannerTitlePlacement: req.body.promoBannerTitlePlacement !== undefined
+        ? normalizePromoBannerTitlePlacement(req.body.promoBannerTitlePlacement)
+        : normalizePromoBannerTitlePlacement(current.promoBannerTitlePlacement),
       promoBannerAlt: req.body.promoBannerAlt !== undefined
         ? String(req.body.promoBannerAlt || '').trim()
         : (current.promoBannerAlt || ''),

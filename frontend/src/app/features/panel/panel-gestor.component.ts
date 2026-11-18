@@ -1100,6 +1100,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   clientPromoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl' = 'md';
   clientPromoBannerTitleAlign: 'left' | 'center' | 'right' = 'center';
   clientPromoBannerTitleVAlign: 'top' | 'center' | 'bottom' = 'center';
+  clientPromoBannerTitlePlacement: 'overlay' | 'below' = 'overlay';
   clientPromoBannerAlt = '';
   clientPromoTitleSizeOptions: Array<{ value: 'sm' | 'md' | 'lg' | 'xl'; label: string }> = [
     { value: 'sm', label: 'Pequeño' },
@@ -1206,6 +1207,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.clientPromoBannerTitleSize = b.promoBannerTitleSize || 'md';
         this.clientPromoBannerTitleAlign = b.promoBannerTitleAlign || 'center';
         this.clientPromoBannerTitleVAlign = b.promoBannerTitleVAlign || 'center';
+        this.clientPromoBannerTitlePlacement = b.promoBannerTitlePlacement || 'overlay';
         this.clientPromoBannerAlt = b.promoBannerAlt || '';
       },
       error: () => this.canManageClientPromoBanner.set(false),
@@ -1273,6 +1275,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       promoBannerTitleSize: this.clientPromoBannerTitleSize,
       promoBannerTitleAlign: this.clientPromoBannerTitleAlign,
       promoBannerTitleVAlign: this.clientPromoBannerTitleVAlign,
+      promoBannerTitlePlacement: this.clientPromoBannerTitlePlacement,
       promoBannerAlt: this.clientPromoBannerAlt.trim(),
     }).subscribe({
       next: () => {

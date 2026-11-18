@@ -179,6 +179,7 @@ export interface SiteSettings {
   promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
   promoBannerTitleAlign?: 'left' | 'center' | 'right';
   promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
+  promoBannerTitlePlacement?: 'overlay' | 'below';
   promoBannerAlt?: string;
 }
 

@@ -153,8 +153,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
     promoBannerTitleAlign?: 'left' | 'center' | 'right';
     promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
+    promoBannerTitlePlacement?: 'overlay' | 'below';
     promoBannerAlt?: string;
   } | null>(null);
+  clientPromoTitleBelow = computed(() =>
+    (this.clientPromoBanner()?.promoBannerTitlePlacement || 'overlay') === 'below'
+  );
   clientPromoDesktopImage = computed(() => {
     const b = this.clientPromoBanner();
     return b?.promoBannerImageDesktop || b?.promoBannerImage || '';
@@ -464,6 +468,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
       promoBannerTitleAlign?: 'left' | 'center' | 'right';
       promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
+      promoBannerTitlePlacement?: 'overlay' | 'below';
       promoBannerAlt?: string;
     }>(`${environment.apiUrl}/site/panel-cliente`).subscribe({
       next: (cfg) => this.clientPromoBanner.set(cfg || null),

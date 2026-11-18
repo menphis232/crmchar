@@ -56,6 +56,19 @@
   word-break: break-word;
 }
 
+.client-promo-banner-caption {
+  display: block;
+  padding: 10px 14px;
+  font-weight: 700;
+  line-height: 1.25;
+  background: #fff;
+  border-top: 1px solid var(--mon-border, #e6e9ef);
+  color: var(--promo-title-color, #323338) !important;
+  -webkit-text-fill-color: var(--promo-title-color, #323338) !important;
+  font-size: var(--promo-title-size, 15px) !important;
+  text-shadow: none;
+}
+
 .client-promo-banner-fallback {
   padding: 18px 20px;
   background: linear-gradient(135deg, #0073ea 0%, #0060c2 100%);
