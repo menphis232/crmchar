@@ -896,24 +896,24 @@
             Reseñas de clientes
           </h3>
           <p class="card-desc" style="margin-bottom:16px; font-size:12px;">
-            Google Cloud (Places API) no suele estar disponible desde Venezuela. Usa un widget gratis o reseñas manuales.
+            Sin embed, la ficha muestra reseñas nativas de 10 en 10 (Google Places + manuales).
+            WidgetPop gratis solo permite 3 por widget; si pegas un embed, sustituye el listado nativo.
             Promedio actual: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
           </p>
 
           <div class="form-group" style="margin-bottom:12px;">
-            <label>Widget de reseñas Google (recomendado)</label>
+            <label>Widget embed (opcional — WidgetPop free = máx. 3)</label>
             <textarea
               [(ngModel)]="googleReviewsEmbed"
               rows="4"
-              placeholder="Pega aquí el código embed (iframe o script) de Famewall, WidgetPop, Elfsight, etc."
+              placeholder="Déjalo vacío para listado nativo (10 en 10). O pega embed de Famewall / WidgetPop / Elfsight."
               style="font-family:monospace; font-size:12px;"
             ></textarea>
             <p class="card-desc" style="margin-top:6px; font-size:11px;">
-              Crea el widget gratis en
+              Vacío = paginación nativa de 10. Widgets gratis suelen limitar cuántas se ven;
               <a href="https://famewall.io/google-review-widget/" target="_blank" rel="noopener noreferrer">Famewall</a>
-              o
-              <a href="https://widgetpop.com/google-reviews-widget" target="_blank" rel="noopener noreferrer">WidgetPop</a>
-              (buscas el negocio, copias el código y lo pegas aquí). No necesitas API key de Google.
+              /
+              <a href="https://widgetpop.com/google-reviews-widget" target="_blank" rel="noopener noreferrer">WidgetPop</a>.
             </p>
           </div>
 

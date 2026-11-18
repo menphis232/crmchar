@@ -17,15 +17,38 @@ export class GestorReviewsSectionComponent implements OnChanges {
   @Input() googleMapsUrl: string | null = null;
   @Input() fromGoogle = false;
   @Input() googleReviewsEmbed: string | null = null;
+  /** Reseñas visibles por página en el listado nativo (no aplica al iframe). */
+  @Input() pageSize = 10;
 
   @ViewChild('embedHost', { static: false }) embedHost?: ElementRef<HTMLDivElement>;
+
+  visibleCount = 10;
+
+  get visibleReviews(): GestorReview[] {
+    return (this.reviews || []).slice(0, this.visibleCount);
+  }
+
+  get hasMoreReviews(): boolean {
+    return (this.reviews || []).length > this.visibleCount;
+  }
+
+  get nextBatchSize(): number {
+    return Math.min(this.pageSize, Math.max(0, (this.reviews || []).length - this.visibleCount));
+  }
 
   stars(rating: number) {
     const full = Math.max(0, Math.min(5, Math.round(rating)));
     return '★'.repeat(full) + '☆'.repeat(5 - full);
   }
 
+  loadMore() {
+    this.visibleCount += this.pageSize;
+  }
+
   ngOnChanges() {
+    const size = Math.max(1, Number(this.pageSize) || 10);
+    this.pageSize = size;
+    this.visibleCount = size;
     // Diferir al siguiente tick para que el ViewChild exista si el @if acaba de montar el host
     queueMicrotask(() => this.mountEmbed());
   }

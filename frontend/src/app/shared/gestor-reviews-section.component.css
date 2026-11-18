@@ -172,6 +172,31 @@
   text-align: center;
 }
 
+.dp-reviews-more {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 4px;
+}
+
+.dp-reviews-more-btn {
+  font-family: var(--f-ui);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+}
+
+.dp-reviews-more-btn:hover {
+  border-color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .dp-review-text {
   font-family: var(--f-ui);
   font-size: 15px;

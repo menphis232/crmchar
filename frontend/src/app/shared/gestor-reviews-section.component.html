@@ -29,7 +29,7 @@
 
   @if (!googleReviewsEmbed && reviews.length) {
     <ul class="dp-reviews-list">
-      @for (r of reviews; track r.id) {
+      @for (r of visibleReviews; track r.id) {
         <li class="dp-review-item">
           <div class="dp-review-header">
             <span class="dp-review-stars" [attr.aria-label]="r.rating + ' de 5'">{{ stars(r.rating) }}</span>
@@ -47,6 +47,13 @@
         </li>
       }
     </ul>
+    @if (hasMoreReviews) {
+      <div class="dp-reviews-more">
+        <button type="button" class="dp-reviews-more-btn" (click)="loadMore()">
+          Ver {{ nextBatchSize }} más
+        </button>
+      </div>
+    }
   } @else if (!googleReviewsEmbed && googleMapsUrl && !reviews.length) {
     <p class="dp-reviews-empty">
       Puedes ver las reseñas en
