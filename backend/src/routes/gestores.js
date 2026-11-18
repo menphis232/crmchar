@@ -724,7 +724,7 @@ router.post('/me/google-reviews/sync', authRequired, requireRole('gestor'), requ
     res.json({
       ok: true,
       ...googlePayload,
-      rating: googlePayload.googleRating ?? Number(row.rating) || 0,
+      rating: googlePayload.googleRating ?? (Number(row.rating) || 0),
       reviewCount: googlePayload.googleReviewCount ?? row.review_count ?? 0,
     });
   } catch (err) {
