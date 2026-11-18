@@ -118,6 +118,10 @@
               </div>
             </div>
 
+            @if (deal.vehicleLabel || deal.vehiclePlate) {
+              <span class="kanban-vehicle" title="Vehículo del trámite">{{ deal.vehicleLabel || deal.vehiclePlate }}</span>
+            }
+
             @if (deal.contact?.id) {
               <button
                 type="button"

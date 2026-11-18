@@ -466,7 +466,13 @@ export class CrmContactPanelComponent {
   closed = output<void>();
   openDeal = output<string>();
   updated = output<void>();
-  createDeal = output<{ name: string; email?: string; phone?: string }>();
+  createDeal = output<{
+    name: string;
+    email?: string;
+    phone?: string;
+    contactId?: string;
+    vehicles?: Array<{ id: string; plate: string; make?: string | null; model?: string | null; year?: number | null }>;
+  }>();
 
   data = signal<CrmContact360 | null>(null);
   loading = signal(false);
@@ -703,12 +709,21 @@ export class CrmContactPanelComponent {
   }
 
   requestCreateDeal() {
-    const c = this.data()?.contact;
+    const data = this.data();
+    const c = data?.contact;
     if (!c) return;
     this.createDeal.emit({
       name: c.name,
       email: c.email || undefined,
       phone: c.phone || c.whatsapp || undefined,
+      contactId: c.id,
+      vehicles: (data?.vehicles || []).map((v) => ({
+        id: v.id,
+        plate: v.plate,
+        make: v.make,
+        model: v.model,
+        year: v.year,
+      })),
     });
   }
 

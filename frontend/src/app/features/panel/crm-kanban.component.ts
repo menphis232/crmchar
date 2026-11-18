@@ -327,6 +327,14 @@ export interface KanbanStage extends CrmStageConfig {}
       color: #0073ea !important;
       background: rgba(0, 115, 234, 0.04) !important;
     }
+    .kanban-vehicle {
+      display: block !important;
+      margin: 2px 0 4px !important;
+      font-size: 11px !important;
+      font-weight: 700 !important;
+      color: #0073ea !important;
+      line-height: 1.3 !important;
+    }
     .kanban-contact { color: #323338 !important; }
     button.kanban-contact-btn {
       color: #0073ea !important;

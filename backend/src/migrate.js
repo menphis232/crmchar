@@ -1357,6 +1357,25 @@ async function migrate() {
       console.log('Migración v65 (Google reviews embed) aplicada.');
     }
 
+    const v66Path = path.join(__dirname, '..', 'sql', 'migration-v66-deal-vehicle.sql');
+    if (fs.existsSync(v66Path)) {
+      const v66 = fs.readFileSync(v66Path, 'utf8');
+      const conn66 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v66.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn66.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn66.end();
+      console.log('Migración v66 (deal vehicle_id) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

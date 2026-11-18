@@ -1523,6 +1523,18 @@
           <label for="gl-title">Título del trámite</label>
           <input id="gl-title" [(ngModel)]="manualLead.title" placeholder="Ej. Preventa 2027">
         </div>
+        @if (manualLeadVehicles().length) {
+          <div class="form-group">
+            <label for="gl-vehicle">Vehículo</label>
+            <select id="gl-vehicle" [(ngModel)]="manualLead.vehicleId">
+              <option value="">Sin vehículo (asignar después)</option>
+              @for (v of manualLeadVehicles(); track v.id) {
+                <option [value]="v.id">{{ manualLeadVehicleLabel(v) }}</option>
+              }
+            </select>
+            <p class="mon-lead-field-hint">Así se distingue este trámite de otros del mismo cliente en el embudo.</p>
+          </div>
+        }
       </div>
       <div class="form-row">
         <div class="form-group" style="flex:1 1 100%;">

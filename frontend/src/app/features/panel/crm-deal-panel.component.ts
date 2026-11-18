@@ -184,6 +184,36 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
     }
     .deal-chip--paid { border-color: #00c875; color: #fff; background: #00c875; }
     .deal-chip--pending { color: #676879; background: #f5f6f8; }
+    .deal-chip--vehicle {
+      border-color: #b3dbfd;
+      color: #0073ea;
+      background: #e5f4ff;
+    }
+    .deal-vehicle-pick {
+      margin-top: 10px;
+      max-width: 420px;
+    }
+    .deal-vehicle-pick label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #676879;
+      margin-bottom: 4px;
+    }
+    .deal-vehicle-pick select {
+      width: 100%;
+      border: 1px solid #e6e9ef;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 13px;
+      color: #323338;
+      background: #fff;
+    }
+    .deal-vehicle-hint {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: #676879;
+    }
 
     .deal-tabs {
       display: flex;
@@ -2106,6 +2136,34 @@ export class CrmDealPanelComponent implements OnDestroy {
       error: (e) => {
         this.peritoIdModel = d.peritoId || '';
         this.toast.error(e.error?.error || 'Error al asignar perito');
+      },
+    });
+  }
+
+  vehicleOptionLabel(v: {
+    plate: string;
+    make?: string | null;
+    model?: string | null;
+    year?: number | null;
+  }): string {
+    const mmy = [v.make, v.model, v.year].filter((x) => x != null && x !== '').join(' ');
+    return mmy ? `${v.plate} · ${mmy}` : v.plate;
+  }
+
+  changeVehicle(vehicleId: string) {
+    const d = this.deal();
+    if (!d || this.isConcesionaria()) return;
+    const next = vehicleId || null;
+    if ((d.vehicleId || null) === next) return;
+    this.crmService.updateDeal(d.id, { vehicleId: next }).subscribe({
+      next: () => {
+        this.loadDeal(d.id);
+        this.toast.success(next ? 'Vehículo asociado al trámite' : 'Vehículo desasignado');
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.toast.error(e.error?.error || 'No se pudo asociar el vehículo');
+        this.loadDeal(d.id);
       },
     });
   }

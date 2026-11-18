@@ -12,6 +12,7 @@ import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
   createManualVentaDeal, createManualTramiteDeal, findOrCreateContact, ensureClientUser,
+  DEAL_VEHICLE_SELECT, DEAL_VEHICLE_JOIN,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -442,6 +443,7 @@ router.get('/deals', async (req, res) => {
              a.make, a.model,
              asg.name as assigned_to_name, clb.name as closed_by_name,
              per.name as perito_name,
+             ${DEAL_VEHICLE_SELECT},
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
@@ -450,6 +452,7 @@ router.get('/deals', async (req, res) => {
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
       LEFT JOIN users per ON per.id = d.perito_id
+      ${DEAL_VEHICLE_JOIN}
       WHERE d.user_id = ? AND d.deal_type = ?
     `;
     const params = [uid, dealType];
@@ -470,9 +473,9 @@ router.get('/deals', async (req, res) => {
       }
     }
     if (q) {
-      sql += ' AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR d.title LIKE ?)';
+      sql += ' AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR d.title LIKE ? OR cv.plate LIKE ? OR cv.make LIKE ? OR cv.model LIKE ?)';
       const term = `%${q}%`;
-      params.push(term, term, term, term);
+      params.push(term, term, term, term, term, term, term);
     }
     sql += ' ORDER BY d.updated_at DESC';
 
@@ -494,7 +497,7 @@ router.post('/deals', async (req, res) => {
     const uid = req.orgId;
     const {
       clientName, clientEmail, clientPhone, title, autoId, serviceName, location,
-      message, estimatedValue, stage,
+      message, estimatedValue, stage, vehicleId,
     } = req.body;
 
     if (!clientName?.trim()) {
@@ -538,6 +541,7 @@ router.post('/deals', async (req, res) => {
         location,
         message,
         estimatedValue,
+        vehicleId: vehicleId || null,
         stage: dealStage,
       });
       dealId = created.dealId;
@@ -550,11 +554,13 @@ router.post('/deals', async (req, res) => {
              c.whatsapp as contact_whatsapp,
              COALESCE(i.message, d.client_message) as client_message, i.reply as client_reply,
              a.make, a.model,
+             ${DEAL_VEHICLE_SELECT},
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
       LEFT JOIN auto_inquiries i ON d.ref_type = 'auto_inquiry' AND d.ref_id = i.id
       LEFT JOIN autos a ON d.auto_id = a.id
+      ${DEAL_VEHICLE_JOIN}
       WHERE d.id = ? AND d.user_id = ?
     `, [dealId, uid]);
 
@@ -640,6 +646,7 @@ router.get('/deals/:id', async (req, res) => {
              a.make, a.model,
              asg.name as assigned_to_name, clb.name as closed_by_name,
              per.name as perito_name,
+             ${DEAL_VEHICLE_SELECT},
              DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
       FROM crm_deals d
       JOIN contacts c ON c.id = d.contact_id
@@ -648,6 +655,7 @@ router.get('/deals/:id', async (req, res) => {
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
       LEFT JOIN users per ON per.id = d.perito_id
+      ${DEAL_VEHICLE_JOIN}
       WHERE d.id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
     `, [req.params.id, uid, dealType, ...access.params]);
 
@@ -664,10 +672,16 @@ router.get('/deals/:id', async (req, res) => {
     `, [req.params.id]);
 
     const contact = await get('SELECT * FROM contacts WHERE id = ?', [row.contact_id]);
+    const contactVehicles = await query(
+      `SELECT id, plate, make, model, year, state, engomado_color AS engomadoColor
+       FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY plate ASC`,
+      [row.contact_id, uid],
+    );
 
     res.json({
       ...dealRow(row),
       contact: contactRow(contact),
+      contactVehicles,
       activities,
       tasks: tasks.map(t => ({
         id: t.id,
@@ -744,7 +758,7 @@ router.patch('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
     const role = req.user.role;
-    const { stage, internalNotes, estimatedValue, lostReason, assignedTo, peritoId } = req.body;
+    const { stage, internalNotes, estimatedValue, lostReason, assignedTo, peritoId, vehicleId } = req.body;
 
     const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
@@ -835,6 +849,20 @@ router.patch('/deals/:id', async (req, res) => {
       }
     }
 
+    if (vehicleId !== undefined && role === 'gestor') {
+      if (vehicleId) {
+        const vehicle = await get(
+          'SELECT id FROM contact_vehicles WHERE id = ? AND contact_id = ? AND user_id = ?',
+          [vehicleId, deal.contact_id, uid],
+        );
+        if (!vehicle) return res.status(400).json({ error: 'Vehículo no válido para este cliente' });
+        sets.push('vehicle_id = ?');
+        params.push(vehicle.id);
+      } else {
+        sets.push('vehicle_id = NULL');
+      }
+    }
+
     // Registrar qué vendedor cerró el trámite (queda como histórico de desempeño)
     const wonStage = role === 'gestor' ? 'completado' : 'vendido';
     if (stage !== undefined && stage !== oldStage) {
@@ -884,11 +912,13 @@ router.patch('/deals/:id', async (req, res) => {
     }
 
     const updated = await get(`
-      SELECT d.*, asg.name as assigned_to_name, clb.name as closed_by_name, per.name as perito_name
+      SELECT d.*, asg.name as assigned_to_name, clb.name as closed_by_name, per.name as perito_name,
+             ${DEAL_VEHICLE_SELECT}
       FROM crm_deals d
       LEFT JOIN users asg ON asg.id = d.assigned_to
       LEFT JOIN users clb ON clb.id = d.closed_by
       LEFT JOIN users per ON per.id = d.perito_id
+      ${DEAL_VEHICLE_JOIN}
       WHERE d.id = ?
     `, [req.params.id]);
     res.json(dealRow(updated));
@@ -985,8 +1015,11 @@ router.get('/contacts/:id', async (req, res) => {
 
     const access = dealAccessFilter(req.user);
     const deals = await query(`
-      SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
-      FROM crm_deals d WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql} ORDER BY d.updated_at DESC
+      SELECT d.*, ${DEAL_VEHICLE_SELECT}, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
+      FROM crm_deals d
+      ${DEAL_VEHICLE_JOIN}
+      WHERE d.contact_id = ? AND d.user_id = ? AND d.deal_type = ?${access.sql}
+      ORDER BY d.updated_at DESC
     `, [req.params.id, uid, dealType, ...access.params]);
 
     if (isConcesionariaStaff(req.user) && deals.length === 0) {

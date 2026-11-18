@@ -445,6 +445,25 @@ export interface CrmDeal {
   clientReply?: string;
   make?: string;
   model?: string;
+  /** Vehículo del cliente asociado al trámite */
+  vehicleId?: string | null;
+  vehiclePlate?: string | null;
+  vehicleMake?: string | null;
+  vehicleModel?: string | null;
+  vehicleYear?: number | null;
+  vehicleState?: string | null;
+  vehicleEngomado?: string | null;
+  vehicleLabel?: string | null;
+  /** Lista de vehículos del contacto (GET deal) para el selector */
+  contactVehicles?: Array<{
+    id: string;
+    plate: string;
+    make?: string | null;
+    model?: string | null;
+    year?: number | null;
+    state?: string | null;
+    engomadoColor?: string | null;
+  }>;
   daysInStage?: number;
   activities?: CrmActivity[];
   tasks?: CrmTask[];

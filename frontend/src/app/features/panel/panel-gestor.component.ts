@@ -314,7 +314,15 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     estimatedValue: '' as string | number,
     quantity: 1 as string | number,
     stage: 'nuevo',
+    vehicleId: '' as string,
   };
+  manualLeadVehicles = signal<Array<{
+    id: string;
+    plate: string;
+    make?: string | null;
+    model?: string | null;
+    year?: number | null;
+  }>>([]);
 
   get manualLeadQtyLabel(): string {
     const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
@@ -852,13 +860,23 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       estimatedValue: '',
       quantity: 1,
       stage: 'nuevo',
+      vehicleId: '',
     };
+    this.manualLeadVehicles.set([]);
     this.prepareManualLeadServices();
     this.showManualLeadForm.set(true);
   }
 
-  openManualLeadFromContact(contact: { name: string; email?: string; phone?: string }) {
+  openManualLeadFromContact(contact: {
+    name: string;
+    email?: string;
+    phone?: string;
+    contactId?: string;
+    vehicles?: Array<{ id: string; plate: string; make?: string | null; model?: string | null; year?: number | null }>;
+  }) {
     this.selectedContactId.set(null);
+    const vehicles = contact.vehicles || [];
+    this.manualLeadVehicles.set(vehicles);
     this.manualLead = {
       clientName: contact.name || '',
       clientEmail: contact.email || '',
@@ -870,12 +888,23 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       estimatedValue: '',
       quantity: 1,
       stage: 'nuevo',
+      vehicleId: vehicles.length === 1 ? vehicles[0].id : '',
     };
     this.prepareManualLeadServices();
     this.showManualLeadForm.set(true);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+  }
+
+  manualLeadVehicleLabel(v: {
+    plate: string;
+    make?: string | null;
+    model?: string | null;
+    year?: number | null;
+  }): string {
+    const mmy = [v.make, v.model, v.year].filter((x) => x != null && x !== '').join(' ');
+    return mmy ? `${v.plate} · ${mmy}` : v.plate;
   }
 
   private prepareManualLeadServices() {
@@ -956,6 +985,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       message: this.manualLead.message.trim() || undefined,
       estimatedValue,
       stage: this.manualLead.stage || 'nuevo',
+      vehicleId: this.manualLead.vehicleId || undefined,
     };
 
     const createOne = (index: number) => {

@@ -453,6 +453,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     location,
     message,
     estimatedValue,
+    vehicleId = null,
     stage = 'nuevo',
   } = data;
 
@@ -510,12 +511,22 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     ],
   );
 
+  let resolvedVehicleId = null;
+  if (vehicleId) {
+    const vehicle = await get(
+      'SELECT id FROM contact_vehicles WHERE id = ? AND contact_id = ? AND user_id = ?',
+      [vehicleId, contact.id, gestorUserId],
+    );
+    if (!vehicle) throw new Error('Vehículo no válido para este cliente');
+    resolvedVehicleId = vehicle.id;
+  }
+
   const dealId = uuid();
   const trackingCode = crypto.randomBytes(4).toString('hex').toUpperCase();
   await run(
-    `INSERT INTO crm_deals (id, user_id, contact_id, deal_type, title, stage, ref_type, ref_id, tracking_code, stage_changed_at, estimated_value, client_message)
-     VALUES (?, ?, ?, 'tramite', ?, ?, 'solicitud', ?, ?, NOW(), ?, ?)`,
-    [dealId, gestorUserId, contact.id, dealTitle, stage, solicitudId, trackingCode, estValue, message?.trim() || null],
+    `INSERT INTO crm_deals (id, user_id, contact_id, vehicle_id, deal_type, title, stage, ref_type, ref_id, tracking_code, stage_changed_at, estimated_value, client_message)
+     VALUES (?, ?, ?, ?, 'tramite', ?, ?, 'solicitud', ?, ?, NOW(), ?, ?)`,
+    [dealId, gestorUserId, contact.id, resolvedVehicleId, dealTitle, stage, solicitudId, trackingCode, estValue, message?.trim() || null],
   );
 
   try {
@@ -556,6 +567,28 @@ export function contactRow(row) {
   };
 }
 
+/** Fragmento SELECT + JOIN para placa/MMY del vehículo del trámite (d.* ya trae vehicle_id). */
+export const DEAL_VEHICLE_SELECT = `
+  cv.plate AS vehicle_plate,
+  cv.make AS vehicle_make,
+  cv.model AS vehicle_model,
+  cv.year AS vehicle_year,
+  cv.state AS vehicle_state,
+  cv.engomado_color AS vehicle_engomado
+`;
+
+export const DEAL_VEHICLE_JOIN = `
+  LEFT JOIN contact_vehicles cv ON cv.id = d.vehicle_id
+`;
+
+function vehicleLabelFromRow(row) {
+  const plate = row.vehicle_plate || null;
+  const parts = [row.vehicle_make, row.vehicle_model, row.vehicle_year].filter((x) => x != null && x !== '');
+  const mmy = parts.join(' ');
+  if (plate && mmy) return `${plate} · ${mmy}`;
+  return plate || mmy || null;
+}
+
 export function dealRow(row) {
   if (!row) return null;
   return {
@@ -582,6 +615,14 @@ export function dealRow(row) {
     clientReply: row.client_reply,
     make: row.make,
     model: row.model,
+    vehicleId: row.vehicle_id || null,
+    vehiclePlate: row.vehicle_plate || null,
+    vehicleMake: row.vehicle_make || null,
+    vehicleModel: row.vehicle_model || null,
+    vehicleYear: row.vehicle_year != null ? Number(row.vehicle_year) : null,
+    vehicleState: row.vehicle_state || null,
+    vehicleEngomado: row.vehicle_engomado || null,
+    vehicleLabel: vehicleLabelFromRow(row),
     daysInStage: row.days_in_stage != null ? Number(row.days_in_stage) : 0,
     lostReason: row.lost_reason,
     firstResponseAt: row.first_response_at,

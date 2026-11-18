@@ -287,7 +287,12 @@
           </div>
           @for (d of c360.deals; track d.id) {
             <button type="button" class="inbox-row" (click)="openDeal.emit(d.id)">
-              <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
+              <span style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;flex:1;">
+                <span style="font-weight:600;color:var(--mx-white);">{{ d.title }}</span>
+                @if (d.vehicleLabel || d.vehiclePlate) {
+                  <span class="card-desc" style="margin:0;font-size:12px;">{{ d.vehicleLabel || d.vehiclePlate }}</span>
+                }
+              </span>
               <span class="status-badge">{{ stageLabels()[d.stage] || d.stage }}</span>
             </button>
           }

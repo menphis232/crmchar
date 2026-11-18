@@ -124,6 +124,7 @@ export class CrmService {
     message?: string;
     estimatedValue?: number;
     stage?: string;
+    vehicleId?: string | null;
   }) {
     return this.http.post<CrmDeal>(`${this.base}/deals`, data);
   }
@@ -131,7 +132,15 @@ export class CrmService {
     const context = options?.silent ? new HttpContext().set(SKIP_ERROR_TOAST, true) : undefined;
     return this.http.get<CrmDeal>(`${this.base}/deals/${id}`, context ? { context } : {});
   }
-  updateDeal(id: string, data: { stage?: string; internalNotes?: string; estimatedValue?: number; lostReason?: string; assignedTo?: string | null; peritoId?: string | null }) {
+  updateDeal(id: string, data: {
+    stage?: string;
+    internalNotes?: string;
+    estimatedValue?: number;
+    lostReason?: string;
+    assignedTo?: string | null;
+    peritoId?: string | null;
+    vehicleId?: string | null;
+  }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
   deleteDeal(id: string) {

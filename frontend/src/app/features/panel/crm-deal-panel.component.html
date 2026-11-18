@@ -29,7 +29,28 @@
                 {{ d.paymentStatus === 'paid' ? 'Pagado' : 'Pago pendiente' }}
               </span>
             }
+            @if (d.vehicleLabel || d.vehiclePlate) {
+              <span class="deal-chip deal-chip--vehicle">{{ d.vehicleLabel || d.vehiclePlate }}</span>
+            }
           </div>
+          @if (!isConcesionaria() && d.dealType === 'tramite') {
+            <div class="deal-vehicle-pick">
+              <label for="deal-vehicle-select">Vehículo del trámite</label>
+              <select
+                id="deal-vehicle-select"
+                [ngModel]="d.vehicleId || ''"
+                (ngModelChange)="changeVehicle($event)"
+              >
+                <option value="">Sin vehículo asignado</option>
+                @for (v of d.contactVehicles || []; track v.id) {
+                  <option [value]="v.id">{{ vehicleOptionLabel(v) }}</option>
+                }
+              </select>
+              @if (!(d.contactVehicles || []).length) {
+                <p class="deal-vehicle-hint">Agrega vehículos en la ficha del contacto para asociarlos aquí.</p>
+              }
+            </div>
+          }
           <div class="deal-quick-row">
             @if (!isConcesionaria() && d.paymentStatus !== 'paid') {
               <button type="button" class="btn-copy small" (click)="setDealView('cotizacion')">Ir a cotización</button>
