@@ -19,6 +19,11 @@ export class ToastService {
     },
   });
 
+  private isLightTheme(): boolean {
+    if (typeof document === 'undefined') return false;
+    return document.documentElement.getAttribute('data-theme') === 'light';
+  }
+
   success(message: string, title = '¡Listo!') {
     this.toast.fire({ icon: 'success', title, text: message });
   }
@@ -32,9 +37,9 @@ export class ToastService {
   }
 
   info(message: string, title = 'Info', onClick?: () => void) {
-    this.toast.fire({ 
-      icon: 'info', 
-      title, 
+    this.toast.fire({
+      icon: 'info',
+      title,
       text: message,
       didOpen: (toast) => {
         toast.addEventListener('mouseenter', Swal.stopTimer);
@@ -46,23 +51,28 @@ export class ToastService {
             onClick();
           });
         }
-      }
+      },
     });
   }
 
   async confirm(message: string, title = '¿Estás seguro?'): Promise<boolean> {
+    const light = this.isLightTheme();
     const result = await Swal.fire({
       title,
       text: message,
       icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: '#c8a94a',
-      cancelButtonColor: '#555',
       confirmButtonText: 'Sí, confirmar',
       cancelButtonText: 'Cancelar',
-      background: '#1a1a1a',
-      color: '#e2e2e2',
-      customClass: { popup: 'swal-dark-modal' },
+      confirmButtonColor: light ? '#0073ea' : '#c8a94a',
+      cancelButtonColor: light ? '#c5c7d0' : '#555',
+      background: light ? '#ffffff' : '#1a1a1a',
+      color: light ? '#323338' : '#e2e2e2',
+      customClass: {
+        popup: light ? 'swal-monday-modal' : 'swal-dark-modal',
+        confirmButton: light ? 'swal-btn-primary' : undefined,
+        cancelButton: light ? 'swal-btn-cancel-light' : undefined,
+      },
       reverseButtons: true,
     });
     return result.isConfirmed;
@@ -73,6 +83,7 @@ export class ToastService {
     subtitle?: string;
     confirmText?: string;
   }): Promise<boolean> {
+    const light = this.isLightTheme();
     const title = options?.title || '¿Eliminar del embudo?';
     const subtitle = options?.subtitle || 'Esta acción no se puede deshacer.';
     const safeLabel = this.escapeHtml(itemLabel);
@@ -86,14 +97,16 @@ export class ToastService {
       showCancelButton: true,
       confirmButtonText: options?.confirmText || 'Sí, eliminar',
       cancelButtonText: 'Cancelar',
-      confirmButtonColor: '#e63d2f',
-      cancelButtonColor: '#2a2a2a',
-      background: '#111111',
-      color: '#e8e8e8',
+      confirmButtonColor: '#e2445c',
+      cancelButtonColor: light ? '#c5c7d0' : '#2a2a2a',
+      background: light ? '#ffffff' : '#111111',
+      color: light ? '#323338' : '#e8e8e8',
       customClass: {
-        popup: 'swal-dark-modal swal-delete-modal',
+        popup: light
+          ? 'swal-monday-modal swal-delete-modal'
+          : 'swal-dark-modal swal-delete-modal',
         confirmButton: 'swal-btn-delete',
-        cancelButton: 'swal-btn-cancel',
+        cancelButton: light ? 'swal-btn-cancel-light' : 'swal-btn-cancel',
       },
       reverseButtons: true,
       focusCancel: true,

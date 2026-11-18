@@ -300,46 +300,54 @@ html[data-theme='light']:not(#tvm-light) .nav-wrapper.mobile-open {
   background: #fff !important;
 }
 
-/* Modales SweetAlert */
-html[data-theme='light'] .swal2-popup {
+/* Modales SweetAlert — refuerzo Monday light */
+html[data-theme='light'] .swal2-popup.swal-monday-modal {
   background: #fff !important;
-  color: #5c5c5c !important;
-  border: 1px solid #c5c5c5 !important;
+  color: #323338 !important;
+  border: 1px solid #e6e9ef !important;
 }
 
-html[data-theme='light'] .swal2-title,
-html[data-theme='light'] .swal2-html-container,
-html[data-theme='light'] .swal2-content {
-  color: #5c5c5c !important;
+html[data-theme='light'] .swal-monday-modal .swal2-title {
+  color: #323338 !important;
 }
 
-/* El tema oscuro de SweetAlert deja botones/textos en blanco; en claro quedan invisibles. */
-html[data-theme='light'] .swal2-confirm,
-html[data-theme='light'] .swal2-cancel,
-html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-confirm,
-html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-cancel {
-  color: #3a3a3a !important;
-  -webkit-text-fill-color: #3a3a3a !important;
-  border-color: #3a3a3a !important;
-  background: transparent !important;
+html[data-theme='light'] .swal-monday-modal .swal2-html-container,
+html[data-theme='light'] .swal-monday-modal .swal2-content {
+  color: #676879 !important;
 }
 
-html[data-theme='light'] .swal-delete-sub {
-  color: #6b6b6b !important;
+html[data-theme='light'] .swal-monday-modal .swal-delete-sub {
+  color: #676879 !important;
 }
 
-html[data-theme='light'] .swal-delete-item {
-  color: #3a3a3a !important;
-  background: #f3f3f3 !important;
-  border-color: #c5c5c5 !important;
+html[data-theme='light'] .swal-monday-modal .swal-delete-item {
+  color: #323338 !important;
+  background: #f7f8fa !important;
+  border-color: #e6e9ef !important;
 }
 
-html[data-theme='light'] .swal-btn-delete,
-html[data-theme='light'] .swal-dark-modal .swal2-styled.swal2-confirm.swal-btn-delete {
+html[data-theme='light'] .swal-monday-modal .swal2-styled.swal2-cancel,
+html[data-theme='light'] .swal-btn-cancel-light {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+  border-color: #c5c7d0 !important;
+  background: #fff !important;
+}
+
+html[data-theme='light'] .swal-monday-modal .swal2-styled.swal2-confirm.swal-btn-delete,
+html[data-theme='light'] .swal-btn-delete {
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
-  background: #e63d2f !important;
-  border-color: #e63d2f !important;
+  background: #e2445c !important;
+  border-color: #e2445c !important;
+}
+
+html[data-theme='light'] .swal-monday-modal .swal2-styled.swal2-confirm.swal-btn-primary,
+html[data-theme='light'] .swal-btn-primary {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background: #0073ea !important;
+  border-color: #0073ea !important;
 }
 
 app-theme-switch.theme-switch-mobile { display: none; }
