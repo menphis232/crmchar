@@ -699,24 +699,26 @@
           @for (v of vehicles(); track v.id) {
             <div class="client-vehicle-card">
               <div class="client-vehicle-head">
-                <div>
+                <div class="client-vehicle-head-main">
                   @if (v.make || v.model || v.year) {
                     <strong class="client-vehicle-name">{{ formatVehicleLabel(v) }}</strong>
                   } @else {
                     <strong class="client-vehicle-name">Mi vehículo</strong>
                   }
                   <p class="client-vehicle-plate">{{ v.plate }}</p>
-                  <div class="client-vehicle-tags">
-                    @if (v.engomadoColor) {
-                      <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">Engomado {{ engomadoLabel(v.engomadoColor) || v.engomadoColor }}</span>
-                    }
-                    @if (v.tenenciaStatus) {
-                      <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia {{ v.tenenciaYear || currentYear }}: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
-                    }
-                    @if (v.insuranceExpiry) {
-                      <span class="client-vehicle-tag">Seguro vence {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}</span>
-                    }
-                  </div>
+                  @if (isEditingVehicle(v) && (v.engomadoColor || v.tenenciaStatus || v.insuranceExpiry)) {
+                    <div class="client-vehicle-tags">
+                      @if (v.engomadoColor) {
+                        <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">{{ engomadoLabel(v.engomadoColor) || v.engomadoColor }}</span>
+                      }
+                      @if (v.tenenciaStatus) {
+                        <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
+                      }
+                      @if (v.insuranceExpiry) {
+                        <span class="client-vehicle-tag">Seguro {{ v.insuranceExpiry | date:'dd/MM/yy' }}</span>
+                      }
+                    </div>
+                  }
                 </div>
                 <div class="client-vehicle-actions">
                   @if (isEditingVehicle(v)) {
