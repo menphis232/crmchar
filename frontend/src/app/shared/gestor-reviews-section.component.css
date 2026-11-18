@@ -77,6 +77,11 @@
   box-shadow: none;
 }
 
+.dp-reviews-embed .sk-ww-google-reviews {
+  width: 100%;
+  min-height: 640px;
+}
+
 .dp-reviews-embed iframe {
   width: 100%;
   min-height: 640px;
