@@ -59,7 +59,9 @@
                       @for (s of g.services; track s.id) {
                         <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
                           @if (s.imageUrl) {
-                            <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                            <div class="service-photo-wrap">
+                              <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                            </div>
                           }
                           <div class="service-main">
                             <div class="service-name">{{ s.name }}</div>
@@ -282,7 +284,9 @@
             @for (s of g.services; track s.id) {
               <div class="service-item" [class.service-item--photo]="s.imageUrl" (click)="askAboutService(s)">
                 @if (s.imageUrl) {
-                  <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                  <div class="service-photo-wrap">
+                    <img class="service-photo" [src]="s.imageUrl" [alt]="s.name" loading="lazy">
+                  </div>
                 }
                 <div class="service-main">
                   <div class="service-name">{{ s.name }}</div>

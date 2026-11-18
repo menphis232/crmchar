@@ -1561,9 +1561,10 @@ app-crm-team {
 .service-photo-upload { cursor: pointer; }
 .service-photo-upload.is-busy { opacity: 0.6; cursor: wait; }
 .service-catalog-thumb {
-  width: 56px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   object-fit: cover;
+  object-position: center;
   border-radius: 6px;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.12);

@@ -209,13 +209,21 @@ app-gestor-showcase-gallery {
 }
 .service-item:hover { border-color: rgba(255, 255, 255, 0.32); background: rgba(255, 255, 255, 0.06); }
 .service-item--photo { padding: 14px 18px 14px 14px; align-items: center; }
-.service-photo {
-  width: 120px;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 8px;
+.service-photo-wrap {
+  width: 96px;
+  height: 96px;
   flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
   background: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.service-photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
 }
 .service-side {
   display: flex;
@@ -246,7 +254,7 @@ app-gestor-showcase-gallery {
 .service-ask:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 @media (max-width: 560px) {
   .service-item--photo { align-items: flex-start; }
-  .service-photo { width: 100%; }
+  .service-photo-wrap { width: 72px; height: 72px; }
   .service-side { width: 100%; flex-direction: row; justify-content: space-between; align-items: center; margin-left: 0; }
 }
 .service-main {
