@@ -72,7 +72,7 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) :is(
   app-dealer-profile,
   app-push-permission-prompt,
   app-pwa-install-prompt
-) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *, .panel-avatar, .panel-avatar *, .dash-logo-frame, .dash-logo-dealer .dash-brand-logo, .engomado-dot, .sk) {
+) *:not(img, svg, svg *, video, canvas, iframe, app-theme-switch, app-theme-switch *, .deal-panel-overlay, .card-banner-overlay, .skeleton-card, .skeleton-banner, .skeleton-avatar, .skeleton-line, .agent-banner-empty, .agent-img-empty, .chatbot-toggle, .chatbot-toggle *, .chatbot-header, .chatbot-header *, .btn-whatsapp, .btn-whatsapp *, .panel-avatar, .panel-avatar *, .dash-logo-frame, .dash-logo-dealer .dash-brand-logo, .engomado-dot, .sk, .profile-header, .profile-info, .profile-name, .profile-location, .profile-location-with-icon, .profile-hero-actions, .profile-img, .profile-img-initial) {
   background-color: #fff !important;
   color: #3a3a3a !important;
   border-color: #c5c5c5 !important;
@@ -193,32 +193,30 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) .deal-panel-overlay {
   background: rgba(92, 92, 92, 0.28) !important;
 }
 
-/* Perfil público de gestoría en claro: portada con fade suave, logo oscuro legible
-   sobre el banner y nombre sobre blanco. --hero-cut = altura visible de portada. */
+/* Perfil público de gestoría en claro: logo y nombre sobre la portada (sin caja blanca). */
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
-  --hero-cut: 220px;
   padding-top: 120px !important;
-  background-color: #fff !important;
+  background-color: transparent !important;
   background-size: cover !important;
   background-position: center top !important;
-  border-bottom: 1px solid #e8e8e8 !important;
+  border-bottom: none !important;
   overflow: hidden !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header::before {
-  /* Fade suave: no corta la portada a la mitad del logo */
+  /* Veladura oscura suave para legibilidad; no tapa la portada con blanco */
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.08) 42%,
-    rgba(255, 255, 255, 0.72) 72%,
-    #fff 100%
+    rgba(0, 0, 0, 0.18) 0%,
+    rgba(0, 0, 0, 0.28) 55%,
+    rgba(0, 0, 0, 0.42) 100%
   ) !important;
   z-index: 1 !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-banner {
-  height: 280px !important;
+  height: 100% !important;
+  min-height: 320px !important;
   opacity: 1 !important;
   object-fit: cover !important;
   object-position: center top !important;
@@ -226,8 +224,8 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .prof
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-info {
   background-color: transparent !important;
-  padding-top: 24px !important;
-  padding-bottom: 28px !important;
+  padding-top: 28px !important;
+  padding-bottom: 36px !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img.profile-img-initial {
@@ -236,22 +234,23 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .prof
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
-  /* Fondo oscuro: logos blancos/claros se leen; anillo gris sobre portada y blanco */
   background-color: #0a0a0a !important;
-  border: 3px solid #fff !important;
+  border: 3px solid rgba(255, 255, 255, 0.95) !important;
   box-shadow:
-    0 0 0 1px rgba(0, 0, 0, 0.08),
-    0 14px 36px rgba(0, 0, 0, 0.28) !important;
+    0 0 0 1px rgba(0, 0, 0, 0.12),
+    0 14px 36px rgba(0, 0, 0, 0.35) !important;
   object-fit: contain !important;
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-name {
-  color: #2f2f2f !important;
+  color: #fff !important;
   text-wrap: balance;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-location {
-  color: #6b6b6b !important;
+  color: rgba(255, 255, 255, 0.88) !important;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
 }
 
 html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-stats .ps-item {
@@ -281,11 +280,10 @@ html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail :is(.
 
 @media (max-width: 768px) {
   html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header {
-    --hero-cut: 160px;
     padding-top: calc(var(--nav-h) + 48px) !important;
   }
   html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-header .profile-banner {
-    height: 200px !important;
+    min-height: 240px !important;
   }
   html[data-theme='light']:not(#tvm-light):not(#tvm-light) app-gestor-detail .profile-img {
     border-width: 3px !important;
