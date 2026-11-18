@@ -2566,27 +2566,49 @@ export class CrmDealPanelComponent implements OnDestroy {
   }
 
   deleteDocument(docId: string) {
-    if (!confirm('¿Seguro que deseas eliminar este documento?')) return;
-    this.crmService.deleteDocument(docId).subscribe(() => {
-      const d = this.deal();
-      if (d) this.loadDocuments(d.id);
-      this.updated.emit();
+    const doc = this.documents().find((x) => x.id === docId);
+    const label = doc?.file_name || 'este documento';
+    void this.confirmAndDeleteDocument(docId, label);
+  }
+
+  private async confirmAndDeleteDocument(docId: string, label: string) {
+    const ok = await this.toast.confirmDelete(label, {
+      title: '¿Eliminar documento?',
+      subtitle: 'Se quitará de este trámite. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    this.crmService.deleteDocument(docId).subscribe({
+      next: () => {
+        const d = this.deal();
+        if (d) this.loadDocuments(d.id);
+        this.updated.emit();
+        this.toast.success('Documento eliminado');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar el documento'),
     });
   }
 
   applyOcrData(docId: string) {
     const d = this.deal();
     if (!d) return;
-    if (!confirm('¿Aplicar los datos extraídos a la Nota Interna?')) return;
-    
-    this.http.post<{success: boolean, notes: string}>(`${environment.apiUrl}/crm/deals/${d.id}/apply-ocr`, { documentId: docId }).subscribe({
+    void this.confirmAndApplyOcr(d.id, docId);
+  }
+
+  private async confirmAndApplyOcr(dealId: string, docId: string) {
+    const ok = await this.toast.confirm(
+      'Los datos extraídos se agregarán a la Nota Interna.',
+      '¿Aplicar datos OCR?',
+    );
+    if (!ok) return;
+    this.http.post<{success: boolean, notes: string}>(`${environment.apiUrl}/crm/deals/${dealId}/apply-ocr`, { documentId: docId }).subscribe({
       next: (res) => {
         this.internalNotes = res.notes;
-        this.loadDocuments(d.id);
+        this.loadDocuments(dealId);
         this.updated.emit();
-        alert('Datos aplicados correctamente');
+        this.toast.success('Datos aplicados correctamente');
       },
-      error: () => alert('Error al aplicar datos')
+      error: () => this.toast.error('Error al aplicar datos'),
     });
   }
 

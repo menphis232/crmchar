@@ -731,7 +731,16 @@ export class CrmContactPanelComponent {
   deleteWalletDocument(doc: { id: string; label?: string }) {
     const contactId = this.contactId();
     if (!contactId || !doc?.id) return;
-    if (!confirm(`¿Eliminar «${doc.label || 'este documento'}» de la cartera del cliente?`)) return;
+    void this.confirmAndDeleteWalletDocument(contactId, doc);
+  }
+
+  private async confirmAndDeleteWalletDocument(contactId: string, doc: { id: string; label?: string }) {
+    const ok = await this.toast.confirmDelete(doc.label || 'este documento', {
+      title: '¿Eliminar de la cartera?',
+      subtitle: 'Se quitará de la billetera del cliente. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
     this.deletingWalletDocId.set(doc.id);
     this.crmService.deleteContactWalletDocument(contactId, doc.id).subscribe({
       next: () => {
