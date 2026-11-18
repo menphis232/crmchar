@@ -722,28 +722,51 @@
           <div class="form-group" style="margin-bottom:24px;padding:16px;border:1px solid rgba(0,115,234,0.25);border-radius:12px;background:rgba(0,115,234,0.04);">
             <h3 style="margin:0 0 6px;font-size:15px;">Banner del panel del cliente</h3>
             <p class="card-desc" style="font-size:12px;margin:0 0 12px;">
-              Solo esta consultoría puede publicarlo. Se muestra arriba en el perfil de los clientes.
+              Solo esta consultoría puede publicarlo. Recorta una versión desktop y otra móvil; el título va debajo, nunca encima de la imagen.
             </p>
             <label class="inline-check" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
               <input type="checkbox" [(ngModel)]="clientPromoBannerEnabled" (ngModelChange)="saveClientPromoBanner()">
               Mostrar banner a los clientes
             </label>
-            @if (clientPromoBannerImage) {
-              <img [src]="clientPromoBannerImage" alt="Banner clientes" class="gestor-banner-preview" style="margin-bottom:10px;">
-            }
-            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-              <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event)" #clientPromoInput style="display:none">
-              <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoInput.click()" [disabled]="isUploadingClientPromoBanner">
-                <svg lucideCamera [size]="14" aria-hidden="true"></svg>
-                {{ clientPromoBannerImage ? 'Cambiar imagen' : 'Subir imagen' }}
-              </button>
-              @if (isUploadingClientPromoBanner) { <span class="card-desc">Subiendo...</span> }
-              @if (clientPromoBannerImage && !isUploadingClientPromoBanner) {
-                <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage()">Quitar imagen</button>
-              }
+
+            <div style="display:grid;gap:14px;margin-bottom:14px;">
+              <div>
+                <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Desktop · {{ clientPromoDesktopSizeLabel }} (3:1)</label>
+                @if (clientPromoBannerImageDesktop) {
+                  <img [src]="clientPromoBannerImageDesktop" alt="Banner desktop" class="gestor-banner-preview" style="margin-bottom:8px;">
+                }
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'desktop')" #clientPromoDesktopInput style="display:none">
+                  <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoDesktopInput.click()" [disabled]="isUploadingClientPromoBanner">
+                    <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                    {{ clientPromoBannerImageDesktop ? 'Recortar desktop' : 'Subir y recortar desktop' }}
+                  </button>
+                  @if (clientPromoBannerImageDesktop && !isUploadingClientPromoBanner) {
+                    <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('desktop')">Quitar desktop</button>
+                  }
+                </div>
+              </div>
+              <div>
+                <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Móvil · {{ clientPromoMobileSizeLabel }} (2:1)</label>
+                @if (clientPromoBannerImageMobile) {
+                  <img [src]="clientPromoBannerImageMobile" alt="Banner móvil" class="gestor-banner-preview" style="margin-bottom:8px;max-width:280px;">
+                }
+                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                  <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'mobile')" #clientPromoMobileInput style="display:none">
+                  <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoMobileInput.click()" [disabled]="isUploadingClientPromoBanner">
+                    <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                    {{ clientPromoBannerImageMobile ? 'Recortar móvil' : 'Subir y recortar móvil' }}
+                  </button>
+                  @if (clientPromoBannerImageMobile && !isUploadingClientPromoBanner) {
+                    <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('mobile')">Quitar móvil</button>
+                  }
+                </div>
+              </div>
             </div>
+            @if (isUploadingClientPromoBanner) { <p class="card-desc" style="margin:0 0 12px;">Subiendo imagen recortada...</p> }
+
             <div class="form-group" style="margin-bottom:10px;">
-              <label>Título (si no hay imagen)</label>
+              <label>Título (debajo del banner; o solo si no hay imagen)</label>
               <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. Promoción de verificación" (change)="saveClientPromoBanner()">
             </div>
             <div class="form-group" style="margin-bottom:10px;">
@@ -1093,6 +1116,16 @@
         mode="rect"
         (cropped)="onBannerCropConfirmed($event)"
         (cancelled)="onBannerCropCancelled()"
+      />
+    }
+
+    @if (clientPromoCropFile()) {
+      <app-image-cropper-modal
+        [imageFile]="clientPromoCropFile()!"
+        [aspect]="clientPromoCropTarget() === 'mobile' ? clientPromoMobileAspect : clientPromoDesktopAspect"
+        mode="rect"
+        (cropped)="onClientPromoCropConfirmed($event)"
+        (cancelled)="onClientPromoCropCancelled()"
       />
     }
 

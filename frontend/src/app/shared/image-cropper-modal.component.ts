@@ -126,6 +126,8 @@ export class ImageCropperModalComponent implements AfterViewInit, OnChanges, OnD
   ratioLabel = computed(() => {
     const a = this.aspect();
     if (Math.abs(a - 16 / 9) < 0.01) return '16:9';
+    if (Math.abs(a - 3 / 1) < 0.01)  return '3:1';
+    if (Math.abs(a - 2 / 1) < 0.01)  return '2:1';
     if (Math.abs(a - 3 / 2) < 0.01)  return '3:2';
     if (Math.abs(a - 4 / 3) < 0.01)  return '4:3';
     if (Math.abs(a - 1) < 0.01)      return '1:1';

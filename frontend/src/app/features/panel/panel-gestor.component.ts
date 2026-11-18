@@ -79,6 +79,10 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, GESTOR_SHARE_TAGLINE } from '../../sha
 import { getGestorOgImageUrl, getGestorPanelPreviewImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import {
+  CLIENT_PROMO_BANNER_DESKTOP_ASPECT,
+  CLIENT_PROMO_BANNER_DESKTOP_SIZE_LABEL,
+  CLIENT_PROMO_BANNER_MOBILE_ASPECT,
+  CLIENT_PROMO_BANNER_MOBILE_SIZE_LABEL,
   GESTOR_BANNER_ASPECT,
   GESTOR_BANNER_SIZE_LABEL,
   GESTOR_GALLERY_ASPECT,
@@ -143,6 +147,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly gestorLogoSizeLabel = GESTOR_LOGO_SIZE_LABEL;
   readonly gestorBannerAspect = GESTOR_BANNER_ASPECT;
   readonly gestorBannerSizeLabel = GESTOR_BANNER_SIZE_LABEL;
+  readonly clientPromoDesktopAspect = CLIENT_PROMO_BANNER_DESKTOP_ASPECT;
+  readonly clientPromoDesktopSizeLabel = CLIENT_PROMO_BANNER_DESKTOP_SIZE_LABEL;
+  readonly clientPromoMobileAspect = CLIENT_PROMO_BANNER_MOBILE_ASPECT;
+  readonly clientPromoMobileSizeLabel = CLIENT_PROMO_BANNER_MOBILE_SIZE_LABEL;
   readonly gestorGalleryAspect = GESTOR_GALLERY_ASPECT;
   readonly gestorGallerySizeLabel = GESTOR_GALLERY_SIZE_LABEL;
   readonly gestorGalleryMax = GESTOR_GALLERY_MAX;
@@ -1084,10 +1092,13 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   bannerCropFile = signal<File | null>(null);
   canManageClientPromoBanner = signal(false);
   clientPromoBannerEnabled = true;
-  clientPromoBannerImage = '';
+  clientPromoBannerImageDesktop = '';
+  clientPromoBannerImageMobile = '';
   clientPromoBannerLink = '';
   clientPromoBannerTitle = '';
   clientPromoBannerAlt = '';
+  clientPromoCropTarget = signal<'desktop' | 'mobile' | null>(null);
+  clientPromoCropFile = signal<File | null>(null);
   isUploadingClientPromoBanner = false;
   isSavingClientPromoBanner = false;
   gestorGalleryImages: string[] = [];
@@ -1177,7 +1188,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.canManageClientPromoBanner.set(!!b.canManage);
         if (!b.canManage) return;
         this.clientPromoBannerEnabled = !!b.promoBannerEnabled;
-        this.clientPromoBannerImage = b.promoBannerImage || '';
+        this.clientPromoBannerImageDesktop = b.promoBannerImageDesktop || b.promoBannerImage || '';
+        this.clientPromoBannerImageMobile = b.promoBannerImageMobile || '';
         this.clientPromoBannerLink = b.promoBannerLink || '';
         this.clientPromoBannerTitle = b.promoBannerTitle || '';
         this.clientPromoBannerAlt = b.promoBannerAlt || '';
@@ -1186,28 +1198,50 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     });
   }
 
-  onClientPromoBannerSelected(event: Event) {
+  onClientPromoBannerSelected(event: Event, target: 'desktop' | 'mobile') {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     if (!file) return;
+    this.clientPromoCropTarget.set(target);
+    this.clientPromoCropFile.set(file);
+    input.value = '';
+  }
+
+  onClientPromoCropConfirmed(result: { blob: Blob; previewUrl: string }) {
+    const target = this.clientPromoCropTarget();
+    const fileName = target === 'mobile' ? 'promo-banner-mobile.jpg' : 'promo-banner-desktop.jpg';
+    const file = new File([result.blob], fileName, { type: 'image/jpeg' });
+    this.clientPromoCropFile.set(null);
+    this.clientPromoCropTarget.set(null);
     this.isUploadingClientPromoBanner = true;
     this.uploadService.uploadFile(file).subscribe({
       next: (res) => {
-        this.clientPromoBannerImage = res.url;
+        if (target === 'mobile') {
+          this.clientPromoBannerImageMobile = res.url;
+        } else {
+          this.clientPromoBannerImageDesktop = res.url;
+          if (!this.clientPromoBannerImageMobile) {
+            this.clientPromoBannerImageMobile = res.url;
+          }
+        }
         this.isUploadingClientPromoBanner = false;
-        input.value = '';
         this.saveClientPromoBanner();
       },
       error: () => {
         this.isUploadingClientPromoBanner = false;
-        input.value = '';
         this.toast.error('No se pudo subir la imagen del banner');
       },
     });
   }
 
-  clearClientPromoBannerImage() {
-    this.clientPromoBannerImage = '';
+  onClientPromoCropCancelled() {
+    this.clientPromoCropFile.set(null);
+    this.clientPromoCropTarget.set(null);
+  }
+
+  clearClientPromoBannerImage(target: 'desktop' | 'mobile' | 'all' = 'all') {
+    if (target === 'desktop' || target === 'all') this.clientPromoBannerImageDesktop = '';
+    if (target === 'mobile' || target === 'all') this.clientPromoBannerImageMobile = '';
     this.saveClientPromoBanner();
   }
 
@@ -1216,7 +1250,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.isSavingClientPromoBanner = true;
     this.gestoresService.updateClientPromoBanner({
       promoBannerEnabled: this.clientPromoBannerEnabled,
-      promoBannerImage: this.clientPromoBannerImage,
+      promoBannerImage: this.clientPromoBannerImageDesktop,
+      promoBannerImageDesktop: this.clientPromoBannerImageDesktop,
+      promoBannerImageMobile: this.clientPromoBannerImageMobile,
       promoBannerLink: this.clientPromoBannerLink.trim(),
       promoBannerTitle: this.clientPromoBannerTitle.trim(),
       promoBannerAlt: this.clientPromoBannerAlt.trim(),

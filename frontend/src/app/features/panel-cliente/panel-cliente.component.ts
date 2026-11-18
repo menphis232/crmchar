@@ -145,14 +145,24 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   clientPromoBanner = signal<{
     promoBannerEnabled?: boolean;
     promoBannerImage?: string;
+    promoBannerImageDesktop?: string;
+    promoBannerImageMobile?: string;
     promoBannerLink?: string;
     promoBannerTitle?: string;
     promoBannerAlt?: string;
   } | null>(null);
+  clientPromoDesktopImage = computed(() => {
+    const b = this.clientPromoBanner();
+    return b?.promoBannerImageDesktop || b?.promoBannerImage || '';
+  });
+  clientPromoMobileImage = computed(() => {
+    const b = this.clientPromoBanner();
+    return b?.promoBannerImageMobile || b?.promoBannerImageDesktop || b?.promoBannerImage || '';
+  });
   showClientPromoBanner = computed(() => {
     const b = this.clientPromoBanner();
     if (!b?.promoBannerEnabled) return false;
-    return !!(b.promoBannerImage || b.promoBannerTitle);
+    return !!(this.clientPromoDesktopImage() || this.clientPromoMobileImage() || b.promoBannerTitle);
   });
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
@@ -414,6 +424,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.get<{
       promoBannerEnabled?: boolean;
       promoBannerImage?: string;
+      promoBannerImageDesktop?: string;
+      promoBannerImageMobile?: string;
       promoBannerLink?: string;
       promoBannerTitle?: string;
       promoBannerAlt?: string;

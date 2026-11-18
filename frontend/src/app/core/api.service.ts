@@ -31,6 +31,8 @@ export class GestoresService {
       canManage: boolean;
       promoBannerEnabled: boolean;
       promoBannerImage: string;
+      promoBannerImageDesktop: string;
+      promoBannerImageMobile: string;
       promoBannerLink: string;
       promoBannerTitle: string;
       promoBannerAlt: string;
@@ -39,6 +41,8 @@ export class GestoresService {
   updateClientPromoBanner(data: {
     promoBannerEnabled?: boolean;
     promoBannerImage?: string;
+    promoBannerImageDesktop?: string;
+    promoBannerImageMobile?: string;
     promoBannerLink?: string;
     promoBannerTitle?: string;
     promoBannerAlt?: string;
@@ -47,6 +51,8 @@ export class GestoresService {
       canManage: boolean;
       promoBannerEnabled: boolean;
       promoBannerImage: string;
+      promoBannerImageDesktop: string;
+      promoBannerImageMobile: string;
       promoBannerLink: string;
       promoBannerTitle: string;
       promoBannerAlt: string;

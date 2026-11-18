@@ -171,6 +171,8 @@ export interface SiteSettings {
   /** Banner promocional (panel cliente) */
   promoBannerEnabled?: boolean;
   promoBannerImage?: string;
+  promoBannerImageDesktop?: string;
+  promoBannerImageMobile?: string;
   promoBannerLink?: string;
   promoBannerTitle?: string;
   promoBannerAlt?: string;

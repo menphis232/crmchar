@@ -47,9 +47,16 @@ function parseSiteSettingsRow(row) {
 }
 
 function clientPromoBannerFromSettings(settings) {
+  const desktop =
+    settings?.promoBannerImageDesktop
+    || settings?.promoBannerImage
+    || '';
+  const mobile = settings?.promoBannerImageMobile || '';
   return {
     promoBannerEnabled: !!settings?.promoBannerEnabled,
-    promoBannerImage: settings?.promoBannerImage || '',
+    promoBannerImage: desktop,
+    promoBannerImageDesktop: desktop,
+    promoBannerImageMobile: mobile,
     promoBannerLink: settings?.promoBannerLink || '',
     promoBannerTitle: settings?.promoBannerTitle || '',
     promoBannerAlt: settings?.promoBannerAlt || '',
@@ -413,6 +420,18 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
 
     const existing = await get('SELECT * FROM site_settings WHERE page_key = ?', ['panel-cliente']);
     const current = parseSiteSettingsRow(existing);
+    let desktopNext = current.promoBannerImageDesktop || current.promoBannerImage || '';
+    if (req.body.promoBannerImageDesktop !== undefined) {
+      desktopNext = String(req.body.promoBannerImageDesktop || '').trim();
+    } else if (req.body.promoBannerImage !== undefined) {
+      desktopNext = String(req.body.promoBannerImage || '').trim();
+    }
+    let mobileNext = current.promoBannerImageMobile || '';
+    if (req.body.promoBannerImageMobile !== undefined) {
+      mobileNext = String(req.body.promoBannerImageMobile || '').trim();
+    } else if (!mobileNext && desktopNext) {
+      mobileNext = desktopNext;
+    }
     const next = {
       ...current,
       pageKey: undefined,
@@ -420,9 +439,9 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
       promoBannerEnabled: req.body.promoBannerEnabled !== undefined
         ? !!req.body.promoBannerEnabled
         : !!current.promoBannerEnabled,
-      promoBannerImage: req.body.promoBannerImage !== undefined
-        ? String(req.body.promoBannerImage || '').trim()
-        : (current.promoBannerImage || ''),
+      promoBannerImage: desktopNext,
+      promoBannerImageDesktop: desktopNext,
+      promoBannerImageMobile: mobileNext,
       promoBannerLink: req.body.promoBannerLink !== undefined
         ? String(req.body.promoBannerLink || '').trim()
         : (current.promoBannerLink || ''),

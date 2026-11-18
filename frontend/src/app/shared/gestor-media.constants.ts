@@ -6,6 +6,12 @@ export const GESTOR_LOGO_SIZE_LABEL = '512×512 px';
 export const GESTOR_BANNER_ASPECT = 3 / 1;
 export const GESTOR_BANNER_SIZE_LABEL = '1200×400 px';
 
+/** Banner promocional del panel cliente (desktop / móvil). */
+export const CLIENT_PROMO_BANNER_DESKTOP_ASPECT = 3 / 1;
+export const CLIENT_PROMO_BANNER_DESKTOP_SIZE_LABEL = '1200×400 px';
+export const CLIENT_PROMO_BANNER_MOBILE_ASPECT = 2 / 1;
+export const CLIENT_PROMO_BANNER_MOBILE_SIZE_LABEL = '800×400 px';
+
 /** Fotos de galería pública: cuadradas 1080×1080, grid 3×3 (máx. 9). */
 export const GESTOR_GALLERY_ASPECT = 1;
 export const GESTOR_GALLERY_SIZE_LABEL = '1080×1080 px';

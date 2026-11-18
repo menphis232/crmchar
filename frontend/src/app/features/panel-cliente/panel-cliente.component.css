@@ -12,11 +12,26 @@
   color: inherit;
 }
 
+.client-promo-banner picture,
 .client-promo-banner img {
   display: block;
   width: 100%;
-  max-height: 180px;
+}
+
+.client-promo-banner img {
+  height: auto;
+  aspect-ratio: 3 / 1;
   object-fit: cover;
+  object-position: center;
+}
+
+.client-promo-banner-caption {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mon-text, #323338);
+  background: #fff;
+  border-top: 1px solid var(--mon-border, #e6e9ef);
 }
 
 .client-promo-banner-fallback {
@@ -33,7 +48,7 @@
 
 @media (max-width: 640px) {
   .client-promo-banner img {
-    max-height: 140px;
+    aspect-ratio: 2 / 1;
   }
 }
 
