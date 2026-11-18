@@ -103,7 +103,7 @@ export class PanelThemeEditorComponent implements OnInit, OnDestroy {
     this.previewTheme.clearPreview(this.pageKey);
   }
 
-  update(field: keyof SiteSettings, value: string) {
+  update(field: keyof SiteSettings, value: string | boolean | number) {
     this.theme.update(t => ({ ...t, [field]: value }));
   }
 

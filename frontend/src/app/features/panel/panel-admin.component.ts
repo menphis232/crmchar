@@ -47,7 +47,7 @@ import {
   LucideChevronRight,
 } from '@lucide/angular';
 
-type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'push' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'stripe';
+type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 'knowledge' | 'push' | 'autos-theme' | 'gestores-theme' | 'panel-gestor' | 'panel-concesionaria' | 'panel-cliente' | 'stripe';
 
 @Component({
   selector: 'app-panel-admin',

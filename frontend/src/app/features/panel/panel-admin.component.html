@@ -94,6 +94,10 @@
       <svg lucideBuilding2 [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Panel Concesionaria
     </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'panel-cliente'" (click)="tab.set('panel-cliente'); isMobileMenuOpen.set(false)">
+      <svg lucideUser [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Panel Cliente
+    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'stripe'" (click)="tab.set('stripe'); isMobileMenuOpen.set(false)">
       <svg lucideSettings [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Configuración Global
@@ -705,6 +709,9 @@
     }
     @if (tab() === 'panel-concesionaria') {
       <app-panel-theme-editor pageKey="panel-concesionaria" title="Panel de Concesionaria" [isPanel]="true" />
+    }
+    @if (tab() === 'panel-cliente') {
+      <app-panel-theme-editor pageKey="panel-cliente" title="Panel del Cliente (banner y textos)" [isPanel]="true" />
     }
 
     @if (tab() === 'stripe') {

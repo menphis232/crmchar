@@ -142,6 +142,18 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   );
 
   activeTab = signal<ClientTab>('dashboard');
+  clientPromoBanner = signal<{
+    promoBannerEnabled?: boolean;
+    promoBannerImage?: string;
+    promoBannerLink?: string;
+    promoBannerTitle?: string;
+    promoBannerAlt?: string;
+  } | null>(null);
+  showClientPromoBanner = computed(() => {
+    const b = this.clientPromoBanner();
+    if (!b?.promoBannerEnabled) return false;
+    return !!(b.promoBannerImage || b.promoBannerTitle);
+  });
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
   sidebarCollapsed = signal(
@@ -357,6 +369,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.loadInvoices();
     this.loadWallet();
     this.loadVehicles();
+    this.loadClientPromoBanner();
     void this.oneSignal.refreshPermissionState();
     this.socket = io(environment.apiUrl.replace('/api', ''));
 
@@ -395,6 +408,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     if (this.socket) this.socket.disconnect();
+  }
+
+  private loadClientPromoBanner() {
+    this.http.get<{
+      promoBannerEnabled?: boolean;
+      promoBannerImage?: string;
+      promoBannerLink?: string;
+      promoBannerTitle?: string;
+      promoBannerAlt?: string;
+    }>(`${environment.apiUrl}/site/panel-cliente`).subscribe({
+      next: (cfg) => this.clientPromoBanner.set(cfg || null),
+      error: () => this.clientPromoBanner.set(null),
+    });
   }
 
   /** Aplica la pestaña y deja rastro en el historial del navegador. */

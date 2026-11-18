@@ -69,18 +69,18 @@
       <svg lucideLayoutDashboard [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Dashboard
     </button>
-    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'billetera'" (click)="setTab('billetera'); closeDeal()">
-      <svg lucideWallet [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
-      Billetera
-      @if (walletDocs().length > 0) {
-        <span class="kanban-count">{{ walletDocs().length }}</span>
-      }
-    </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'vehiculos'" (click)="setTab('vehiculos'); closeDeal()">
       <svg lucideCar [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Mis Vehículos
       @if (vehicles().length > 0) {
         <span class="kanban-count">{{ vehicles().length }}</span>
+      }
+    </button>
+    <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'billetera'" (click)="setTab('billetera'); closeDeal()">
+      <svg lucideWallet [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+      Billetera
+      @if (walletDocs().length > 0) {
+        <span class="kanban-count">{{ walletDocs().length }}</span>
       }
     </button>
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'tramites'" (click)="setTab('tramites'); closeDeal()">
@@ -122,6 +122,36 @@
 
   <main class="dash-main">
 
+    @if (showClientPromoBanner() && (activeTab() === 'dashboard' || activeTab() === 'ajustes' || activeTab() === 'vehiculos')) {
+      @if (clientPromoBanner()?.promoBannerLink; as promoLink) {
+        <a
+          class="client-promo-banner"
+          [href]="promoLink"
+          [attr.target]="promoLink.startsWith('http') ? '_blank' : null"
+          [attr.rel]="promoLink.startsWith('http') ? 'noopener noreferrer' : null"
+          [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+        >
+          @if (clientPromoBanner()?.promoBannerImage) {
+            <img [src]="clientPromoBanner()!.promoBannerImage!" [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'" />
+          } @else {
+            <div class="client-promo-banner-fallback">
+              <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
+            </div>
+          }
+        </a>
+      } @else {
+        <div class="client-promo-banner client-promo-banner--nolink" role="img" [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'">
+          @if (clientPromoBanner()?.promoBannerImage) {
+            <img [src]="clientPromoBanner()!.promoBannerImage!" [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'" />
+          } @else {
+            <div class="client-promo-banner-fallback">
+              <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
+            </div>
+          }
+        </div>
+      }
+    }
+
     @if (activeTab() === 'dashboard') {
       <div class="client-dashboard">
 
@@ -135,13 +165,6 @@
         <div class="dash-card">
           <h2 class="card-title">Accesos</h2>
           <nav class="mon-recent-grid client-access-grid" aria-label="Accesos rápidos">
-            <button type="button" class="mon-recent-card" (click)="setTab('tramites'); closeDeal()">
-              <strong>Mis trámites</strong>
-              <span>Seguimiento en vivo</span>
-              @if (activeDeals() > 0) {
-                <div class="mon-recent-foot">{{ activeDeals() }} en proceso</div>
-              }
-            </button>
             <button type="button" class="mon-recent-card" (click)="setTab('vehiculos'); closeDeal()">
               <strong>Mis vehículos</strong>
               <span>Placas y engomado</span>
@@ -152,6 +175,13 @@
             <button type="button" class="mon-recent-card" (click)="setTab('billetera'); closeDeal()">
               <strong>Billetera</strong>
               <span>Documentos personales</span>
+            </button>
+            <button type="button" class="mon-recent-card" (click)="setTab('tramites'); closeDeal()">
+              <strong>Mis trámites</strong>
+              <span>Seguimiento en vivo</span>
+              @if (activeDeals() > 0) {
+                <div class="mon-recent-foot">{{ activeDeals() }} en proceso</div>
+              }
             </button>
             <button type="button" class="mon-recent-card" (click)="setTab('facturas'); closeDeal()">
               <strong>Comprobantes</strong>

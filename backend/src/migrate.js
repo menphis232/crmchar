@@ -1395,6 +1395,25 @@ async function migrate() {
       console.log('Migración v67 (holograma / próxima verificación) aplicada.');
     }
 
+    const v68Path = path.join(__dirname, '..', 'sql', 'migration-v68-panel-cliente-promo.sql');
+    if (fs.existsSync(v68Path)) {
+      const v68 = fs.readFileSync(v68Path, 'utf8');
+      const conn68 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v68.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn68.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn68.end();
+      console.log('Migración v68 (banner panel cliente) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

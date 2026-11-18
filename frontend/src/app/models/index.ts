@@ -168,6 +168,12 @@ export interface SiteSettings {
   subtitleSize?: string;
   cardRadius?: string;
   customBlocks?: CustomBlock[];
+  /** Banner promocional (panel cliente) */
+  promoBannerEnabled?: boolean;
+  promoBannerImage?: string;
+  promoBannerLink?: string;
+  promoBannerTitle?: string;
+  promoBannerAlt?: string;
 }
 
 export interface ManagedUser {
