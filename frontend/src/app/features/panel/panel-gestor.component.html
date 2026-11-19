@@ -1304,7 +1304,35 @@
             Recomendado gratis:
             <a href="https://www.sociablekit.com/free-widgets/free-google-reviews-widget-website/" target="_blank" rel="noopener noreferrer">SociableKIT</a>
             (hasta 100 reseñas, sin tarjeta). WidgetPop free solo deja 3.
-            Promedio actual: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
+            El bloque <strong>ESTRELLAS</strong> de la ficha pública usa el promedio y la cantidad de abajo (idealmente los de Google).
+          </p>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;">
+            <div class="form-group" style="margin:0;">
+              <label>Promedio (estrellas)</label>
+              <input
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                [(ngModel)]="gestorPublicRating"
+                placeholder="Ej. 4.9"
+              >
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Cantidad de reseñas Google</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                [(ngModel)]="gestorPublicReviewCount"
+                placeholder="Ej. 320"
+              >
+            </div>
+          </div>
+          <p class="card-desc" style="margin:-4px 0 12px;font-size:11px;">
+            Actual en ficha: {{ gestorReviewsRating() | number:'1.1-1' }}/5 ({{ gestorReviewsCount() }} reseñas).
+            Cópialos desde tu ficha de Google Maps y Guarda.
           </p>
 
           <div class="form-group" style="margin-bottom:12px;">
@@ -1325,7 +1353,7 @@
           </div>
 
           <div class="form-group" style="margin-bottom:12px;">
-            <label>Google Place ID (opcional, solo para el botón “Ver en Google”)</label>
+            <label>Google Place ID (para “Ver en Google” y sincronizar)</label>
             <input [(ngModel)]="googlePlaceId" placeholder="Ej: ChIJsbBkGrH_0YUR0L_ilErdMKU" style="font-family:monospace;">
             <p class="card-desc" style="margin-top:6px; font-size:11px;">
               TVM: <code>ChIJsbBkGrH_0YUR0L_ilErdMKU</code>
@@ -1333,10 +1361,20 @@
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
             <button type="button" class="btn-copy" (click)="saveProfile()">Guardar reseñas / Place ID</button>
+            <button type="button" class="deal-outline-btn" (click)="syncGoogleReviews()" [disabled]="syncingGoogleReviews()">
+              {{ syncingGoogleReviews() ? 'Sincronizando…' : 'Sincronizar desde Google' }}
+            </button>
             @if (googleMapsUrl) {
               <a class="deal-outline-btn" [href]="googleMapsUrl" target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a>
             }
           </div>
+
+          @if (gestorReviews().length) {
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+              <p class="card-desc" style="margin:0;font-size:12px;">{{ gestorReviews().length }} reseña(s) manuales en la ficha (además del widget).</p>
+              <button type="button" class="btn-ghost small warn" (click)="deleteAllGestorReviews()">Quitar todas las manuales</button>
+            </div>
+          }
 
           @for (r of gestorReviews(); track r.id) {
             <div class="review-card">

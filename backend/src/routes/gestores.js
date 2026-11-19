@@ -198,6 +198,17 @@ async function recalcGestorReviewStats(gestorId) {
   );
   const avg = stats?.avgRating ? Number(Number(stats.avgRating).toFixed(1)) : 0;
   const cnt = stats?.cnt || 0;
+  // Si ya hay total de Google (sync o cargado a mano), no pisar el bloque ESTRELLAS.
+  const current = await get(
+    'SELECT google_rating, google_review_count FROM gestores WHERE id = ?',
+    [gestorId],
+  );
+  if (current?.google_review_count != null) {
+    return {
+      rating: current.google_rating != null ? Number(current.google_rating) : avg,
+      reviewCount: Number(current.google_review_count),
+    };
+  }
   await run('UPDATE gestores SET rating = ?, review_count = ? WHERE id = ?', [avg, cnt, gestorId]);
   return { rating: avg, reviewCount: cnt };
 }
@@ -293,8 +304,8 @@ function gestorRow(row) {
     bannerUrl: row.banner_url,
     photoUrl: row.photo_url,
     logoUrl: row.logo_url || null,
-    rating: Number(row.rating),
-    reviewCount: row.review_count,
+    rating: row.google_rating != null ? Number(row.google_rating) : Number(row.rating),
+    reviewCount: row.google_review_count != null ? Number(row.google_review_count) : row.review_count,
     tramitesCount: row.tramites_count,
     experienceYears: row.experience_years,
     bio: row.bio,
@@ -529,7 +540,11 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
 
-    const { name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule, experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages, googlePlaceId, googleReviewsEmbed } = req.body;
+    const {
+      name, location, state, bannerUrl, photoUrl, bio, whatsapp, schedule,
+      experienceYears, tramitesCount, phone, address, mapEmbedUrl, galleryImages,
+      googlePlaceId, googleReviewsEmbed, rating, reviewCount,
+    } = req.body;
 
     // Teléfono y WhatsApp son el mismo dato en el panel; mantener ambas columnas sincronizadas.
     const contactPhone = phone !== undefined ? phone : whatsapp;
@@ -599,6 +614,29 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
     if (galleryImages !== undefined) {
       const imgs = Array.isArray(galleryImages) ? galleryImages.filter(Boolean).slice(0, 9) : [];
       await run('UPDATE gestores SET gallery_images = ? WHERE user_id = ?', [JSON.stringify(imgs), req.user.id]);
+    }
+
+    // Promedio y cantidad del bloque ESTRELLAS (de Google Maps / Places).
+    // Se guarda también en google_* para que la ficha pública lo use aunque falle el sync.
+    if (rating !== undefined || reviewCount !== undefined) {
+      let nextRating = row.google_rating != null ? Number(row.google_rating) : Number(row.rating) || 0;
+      let nextCount = row.google_review_count != null ? Number(row.google_review_count) : Number(row.review_count) || 0;
+      if (rating !== undefined && rating !== null && rating !== '') {
+        const n = Number(rating);
+        if (!Number.isNaN(n) && n >= 0 && n <= 5) nextRating = Math.round(n * 10) / 10;
+      }
+      if (reviewCount !== undefined && reviewCount !== null && reviewCount !== '') {
+        const n = Number(reviewCount);
+        if (!Number.isNaN(n) && n >= 0) nextCount = Math.floor(n);
+      }
+      await run(
+        `UPDATE gestores SET
+          rating = ?, review_count = ?,
+          google_rating = ?, google_review_count = ?,
+          google_reviews_synced_at = NOW()
+         WHERE user_id = ?`,
+        [nextRating, nextCount, nextRating, nextCount, req.user.id],
+      );
     }
 
     if (bio !== undefined && bio !== null) {
@@ -807,6 +845,19 @@ router.delete('/me/reviews/:id', authRequired, requireRole('gestor'), requireAct
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar reseña' });
+  }
+});
+
+router.delete('/me/reviews', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+    await run('DELETE FROM gestor_reviews WHERE gestor_id = ?', [row.id]);
+    const stats = await recalcGestorReviewStats(row.id);
+    res.json({ ok: true, deleted: true, ...stats });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar reseñas' });
   }
 });
 

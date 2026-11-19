@@ -96,6 +96,9 @@ export class GestoresService {
   deleteReview(id: string) {
     return this.http.delete<{ ok: boolean; rating: number; reviewCount: number }>(`${this.base}/me/reviews/${id}`);
   }
+  deleteAllReviews() {
+    return this.http.delete<{ ok: boolean; rating: number; reviewCount: number }>(`${this.base}/me/reviews`);
+  }
   updateSolicitud(id: string, status: string) { return this.http.patch(`${this.base}/me/solicitudes/${id}`, { status }); }
   createSolicitud(gestorId: string, data: { clientName: string; serviceName: string; location?: string; clientEmail?: string; clientPhone?: string; customData?: any; }) {
     return this.http.post(`${this.base}/${gestorId}/solicitudes`, data);

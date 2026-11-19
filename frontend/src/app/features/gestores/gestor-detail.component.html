@@ -40,7 +40,7 @@
                 <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
                   @if (b.type === 'stats') {
                     <div class="profile-stats">
-                      @if (b.data.showRating) { <div class="ps-item"><div class="ps-val">{{ g.rating }}/5</div><div class="ps-lbl">ESTRELLAS ({{ g.reviewCount }})</div></div> }
+                      @if (b.data.showRating) { <div class="ps-item"><div class="ps-val">{{ displayRating(g) }}/5</div><div class="ps-lbl">ESTRELLAS ({{ displayReviewCount(g) }})</div></div> }
                       @if (b.data.showCount) { <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div> }
                       @if (b.data.showExperience) { <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div> }
                     </div>
@@ -134,8 +134,8 @@
                   @if (b.type === 'reviews' && (g.reviews?.length || g.reviewCount || g.googlePlaceId || g.googleReviewsEmbed)) {
                     <app-gestor-reviews-section
                       [title]="b.data.title || 'Reseñas de clientes'"
-                      [rating]="g.googleRating ?? g.rating"
-                      [reviewCount]="g.googleReviewCount ?? g.reviewCount"
+                      [rating]="displayRating(g)"
+                      [reviewCount]="displayReviewCount(g)"
                       [reviews]="g.reviews || []"
                       [googleMapsUrl]="g.googleMapsUrl || null"
                       [fromGoogle]="!!g.googlePlaceId"
@@ -291,7 +291,7 @@
           <div class="profile-location profile-location-with-icon"><svg lucideMapPin [size]="16" aria-hidden="true"></svg>{{ g.location }}</div>
 
           <div class="profile-stats">
-            <div class="ps-item"><div class="ps-val">{{ g.rating }}/5</div><div class="ps-lbl">ESTRELLAS ({{ g.reviewCount }})</div></div>
+            <div class="ps-item"><div class="ps-val">{{ displayRating(g) }}/5</div><div class="ps-lbl">ESTRELLAS ({{ displayReviewCount(g) }})</div></div>
             <div class="ps-item"><div class="ps-val">{{ g.tramitesCount | number }}</div><div class="ps-lbl">TRÁMITES ÉXITOSOS</div></div>
             <div class="ps-item"><div class="ps-val">{{ g.experienceYears }} Años</div><div class="ps-lbl">EXPERIENCIA</div></div>
           </div>
@@ -379,20 +379,20 @@
             }
           </div>
 
-          @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
-          }
-
           @if (g.reviews?.length || g.reviewCount || g.googlePlaceId || g.googleReviewsEmbed) {
             <app-gestor-reviews-section
               title="Reseñas de clientes"
-              [rating]="g.googleRating ?? g.rating"
-              [reviewCount]="g.googleReviewCount ?? g.reviewCount"
+              [rating]="displayRating(g)"
+              [reviewCount]="displayReviewCount(g)"
               [reviews]="g.reviews || []"
               [googleMapsUrl]="g.googleMapsUrl || null"
               [fromGoogle]="!!g.googlePlaceId"
               [googleReviewsEmbed]="g.googleReviewsEmbed || null"
             />
+          }
+
+          @if (g.galleryImages?.length) {
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
           }
         </div>
 

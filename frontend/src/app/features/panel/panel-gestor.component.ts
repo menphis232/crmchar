@@ -582,6 +582,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.gestorReviews.set(data.reviews);
         this.gestorReviewsRating.set(data.rating);
         this.gestorReviewsCount.set(data.reviewCount);
+        this.gestorPublicRating = data.rating ?? '';
+        this.gestorPublicReviewCount = data.reviewCount ?? '';
         const profile = this.profile();
         if (profile) {
           this.profile.set({ ...profile, rating: data.rating, reviewCount: data.reviewCount, reviews: data.reviews });
@@ -608,8 +610,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.gestoresService.syncGoogleReviews().subscribe({
           next: (res) => {
             this.syncingGoogleReviews.set(false);
-            if (res.googleRating != null) this.gestorReviewsRating.set(res.googleRating);
-            if (res.googleReviewCount != null) this.gestorReviewsCount.set(res.googleReviewCount);
+            if (res.googleRating != null) {
+              this.gestorReviewsRating.set(res.googleRating);
+              this.gestorPublicRating = res.googleRating;
+            }
+            if (res.googleReviewCount != null) {
+              this.gestorReviewsCount.set(res.googleReviewCount);
+              this.gestorPublicReviewCount = res.googleReviewCount;
+            }
             this.googleMapsUrl = res.googleMapsUrl || this.googleMapsUrl;
             this.toast.success(`Google: ${res.googleReviewCount ?? 0} reseñas sincronizadas.`);
             this.loadGestorReviews();
@@ -704,6 +712,20 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     });
   }
 
+  deleteAllGestorReviews() {
+    if (!confirm('¿Quitar TODAS las reseñas manuales de la ficha? El promedio/cantidad de Google (bloque ESTRELLAS) se mantiene.')) return;
+    this.gestoresService.deleteAllReviews().subscribe({
+      next: (res) => {
+        this.gestorReviews.set([]);
+        this.gestorReviewsRating.set(res.rating);
+        this.gestorReviewsCount.set(res.reviewCount);
+        this.resetGestorReviewForm();
+        this.toast.success('Reseñas manuales eliminadas.');
+      },
+      error: (err) => this.toast.error(err.error?.error || 'No se pudieron eliminar.'),
+    });
+  }
+
   loadProfile() {
     this.gestoresService.getMyProfile().subscribe(p => {
       this.profile.set(p);
@@ -722,6 +744,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.googlePlaceId = p.googlePlaceId || '';
       this.googleMapsUrl = p.googleMapsUrl || null;
       this.googleReviewsEmbed = p.googleReviewsEmbed || '';
+      this.gestorPublicRating = p.googleRating ?? p.rating ?? '';
+      this.gestorPublicReviewCount = p.googleReviewCount ?? p.reviewCount ?? '';
+      this.gestorReviewsRating.set(Number(p.googleRating ?? p.rating) || 0);
+      this.gestorReviewsCount.set(Number(p.googleReviewCount ?? p.reviewCount) || 0);
       this.canManageClientPromoBanner.set(!!p.canManageClientPromoBanner);
       if (p.canManageClientPromoBanner) this.loadClientPromoBanner();
       const embed = toGoogleMapsEmbedUrl(this.gestorMapEmbedUrl, this.gestorAddress);
@@ -1214,6 +1240,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   gestorReviews = signal<GestorReview[]>([]);
   gestorReviewsRating = signal(0);
   gestorReviewsCount = signal(0);
+  gestorPublicRating: number | '' = '';
+  gestorPublicReviewCount: number | '' = '';
   gestorReviewForm = { author: '', rating: 5, comment: '', reviewDate: '' };
   editingReviewId: string | null = null;
   reviewStarSlots = [1, 2, 3, 4, 5];
@@ -1554,6 +1582,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     const location = this.gestorState.trim();
     const prevSlug = this.publicSlug;
 
+    const publicRating = this.gestorPublicRating === '' ? undefined : Number(this.gestorPublicRating);
+    const publicReviewCount = this.gestorPublicReviewCount === '' ? undefined : Number(this.gestorPublicReviewCount);
+
     this.gestoresService.updateProfile({
       bio: this.bio,
       name: name || undefined,
@@ -1570,12 +1601,18 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       galleryImages: this.gestorGalleryImages.slice(0, this.gestorGalleryMax),
       googlePlaceId: this.googlePlaceId.trim() || null,
       googleReviewsEmbed: this.googleReviewsEmbed.trim() || null,
+      rating: publicRating != null && !Number.isNaN(publicRating) ? publicRating : undefined,
+      reviewCount: publicReviewCount != null && !Number.isNaN(publicReviewCount) ? publicReviewCount : undefined,
     }).subscribe({
       next: p => {
         this.publicSlug = p.slug || '';
         this.googlePlaceId = p.googlePlaceId || this.googlePlaceId;
         this.googleMapsUrl = p.googleMapsUrl || this.googleMapsUrl;
         this.googleReviewsEmbed = p.googleReviewsEmbed ?? this.googleReviewsEmbed;
+        this.gestorPublicRating = p.googleRating ?? p.rating ?? this.gestorPublicRating;
+        this.gestorPublicReviewCount = p.googleReviewCount ?? p.reviewCount ?? this.gestorPublicReviewCount;
+        this.gestorReviewsRating.set(Number(p.googleRating ?? p.rating) || 0);
+        this.gestorReviewsCount.set(Number(p.googleReviewCount ?? p.reviewCount) || 0);
         this.profile.set({ ...this.profile()!, ...p, slug: p.slug || '', name: name || p.name });
         this.auth.getMe().subscribe({
           next: (res) => {

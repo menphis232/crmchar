@@ -103,7 +103,7 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     return !!config.blocks?.some(b => b.type === 'text' && b.region !== 'sidebar');
   }
 
-  /** Orden fijo en ficha pública: stats → descripción → servicios → galería → reseñas. */
+  /** Orden fijo en ficha pública: stats → descripción → servicios → reseñas → galería. */
   orderedMainBlocks(config: PageBuilderConfig, g: Gestor): PageBlock[] {
     const blocks = (config.blocks ?? []).filter(b => b.region !== 'sidebar' && b.type !== 'hero');
     const pick = (type: PageBlock['type']) => blocks.filter(b => b.type === type);
@@ -133,8 +133,8 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
       ...pick('stats'),
       ...textBlocks,
       ...pick('services'),
-      ...galleryBlocks,
       ...pick('reviews'),
+      ...galleryBlocks,
     ];
   }
 
@@ -148,6 +148,18 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
   readonly serviceRequirements = serviceRequirements;
   readonly serviceIncludes = serviceIncludes;
   readonly serviceBonus = serviceBonus;
+
+  displayRating(g: Gestor): number {
+    const fromGoogle = g.googleRating != null ? Number(g.googleRating) : null;
+    if (fromGoogle != null && !Number.isNaN(fromGoogle)) return fromGoogle;
+    return Number(g.rating) || 0;
+  }
+
+  displayReviewCount(g: Gestor): number {
+    const fromGoogle = g.googleReviewCount != null ? Number(g.googleReviewCount) : null;
+    if (fromGoogle != null && !Number.isNaN(fromGoogle)) return fromGoogle;
+    return Number(g.reviewCount) || 0;
+  }
 
   hasSidebarFormBlock(config: PageBuilderConfig): boolean {
     return !!config.blocks?.some(b => b.region === 'sidebar' && b.type === 'form');
