@@ -762,9 +762,16 @@
 :host.panel-datta .btn-copy,
 :host.panel-datta ::ng-deep .btn-copy,
 :host.panel-datta .btn-nuevo-lead,
-:host.panel-datta ::ng-deep .btn-nuevo-lead {
+:host.panel-datta ::ng-deep .btn-nuevo-lead,
+:host.panel-datta .btn-primary,
+:host.panel-datta ::ng-deep .btn-primary,
+:host.panel-datta .mon-btn-primary,
+:host.panel-datta ::ng-deep .mon-btn-primary,
+:host.panel-datta .clients-btn--primary,
+:host.panel-datta ::ng-deep .clients-btn--primary {
   background: var(--mon-primary) !important;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
   border: 1px solid var(--mon-primary) !important;
   border-radius: 8px !important;
   font-family: var(--f-ui) !important;
@@ -773,11 +780,29 @@
   text-transform: none !important;
 }
 
+:host.panel-datta .btn-copy *,
+:host.panel-datta ::ng-deep .btn-copy *,
+:host.panel-datta .btn-nuevo-lead *,
+:host.panel-datta ::ng-deep .btn-nuevo-lead *,
+:host.panel-datta .btn-primary *,
+:host.panel-datta ::ng-deep .btn-primary *,
+:host.panel-datta .mon-btn-primary *,
+:host.panel-datta ::ng-deep .mon-btn-primary *,
+:host.panel-datta .clients-btn--primary *,
+:host.panel-datta ::ng-deep .clients-btn--primary * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 :host.panel-datta .btn-copy:hover,
 :host.panel-datta ::ng-deep .btn-copy:hover,
-:host.panel-datta .btn-nuevo-lead:hover {
+:host.panel-datta .btn-nuevo-lead:hover,
+:host.panel-datta .btn-primary:hover,
+:host.panel-datta .mon-btn-primary:hover,
+:host.panel-datta .clients-btn--primary:hover {
   background: #0060c2 !important;
   color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
 }
 
 :host.panel-datta .btn-ghost,
