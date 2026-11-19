@@ -62,7 +62,7 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
           </div>
           <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openCredentials()">
             <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
-            Cambiar contraseña / correo
+            Cambiar correo / contraseña
           </button>
           @if (showBilling) {
             <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openBilling()">
