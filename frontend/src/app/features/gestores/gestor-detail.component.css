@@ -846,9 +846,10 @@ aside {
 
   .gestor-map-card { order: 6; }
 
-  .main-block--reviews { order: 7; }
+  /* Solo móvil: Compartir justo debajo del mapa */
+  .btn-share { order: 7; }
 
-  .btn-share { order: 8; }
+  .main-block--reviews { order: 8; }
   .btn-back-top { order: 9; }
 
   /* Rastreador / formulario / mapa a ancho completo solo en móvil */
