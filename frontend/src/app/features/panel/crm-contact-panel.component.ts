@@ -2,6 +2,7 @@ import { Component, input, output, signal, effect, computed, inject } from '@ang
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { DateOnlyMxPipe } from '../../shared/date-only-mx.pipe';
+import { MxDateInputComponent } from '../../shared/mx-date-input.component';
 import { DomSanitizer } from '@angular/platform-browser';
 import { LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail, LucidePhone, LucidePlus, LucideSave, LucideTag, LucideTrash2, LucideUpload, LucideX } from '@lucide/angular';
 import { CrmService, UploadService } from '../../core/api.service';
@@ -16,7 +17,7 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 @Component({
   selector: 'app-crm-contact-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DateOnlyMxPipe, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
+  imports: [FormsModule, DatePipe, DateOnlyMxPipe, MxDateInputComponent, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
   templateUrl: './crm-contact-panel.component.html',
   styleUrls: ['./panel-dashboard.css'],
   styles: [`
@@ -459,7 +460,8 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       color: #fff;
     }
     .field-expired label { color: #e2445c !important; font-weight: 700; }
-    .field-expired input[type="date"] {
+    .field-expired input[type="date"],
+    .field-expired .mx-date-text {
       border-color: #e2445c !important;
       color: #e2445c !important;
       -webkit-text-fill-color: #e2445c !important;

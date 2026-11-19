@@ -2,6 +2,7 @@ import { Component, input, output, signal, computed, effect, inject, NgZone, OnD
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
 import { formatDateOnlyMx } from '../../shared/date-only.util';
+import { MxDateInputComponent } from '../../shared/mx-date-input.component';
 import {
   LucideCircle,
   LucideCircleCheck,
@@ -42,7 +43,7 @@ import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 @Component({
   selector: 'app-crm-deal-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, LucideX, LucideTrash2, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideBanknote],
+  imports: [FormsModule, DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe, MxDateInputComponent, LucideX, LucideTrash2, LucideUser, LucideMail, LucidePhone, LucideMessageCircle, LucideTimer, LucideCircleCheck, LucideHourglass, LucideCreditCard, LucideSparkles, LucidePlus, LucideSend, LucidePaperclip, LucideBanknote],
   templateUrl: './crm-deal-panel.component.html',
   styleUrl: './panel-dashboard.css',
   styles: [`

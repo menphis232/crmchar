@@ -1819,7 +1819,8 @@
   gap: 10px;
 }
 
-.client-wallet-input {
+.client-wallet-input,
+.client-vehicle-form .mx-date-text {
   background: #fff;
   border: 1px solid var(--mon-border);
   border-radius: 8px;
@@ -2412,7 +2413,8 @@ select.client-wallet-input option {
   font-weight: 700;
 }
 .field-expired label { color: #ef4444 !important; font-weight: 700; }
-.field-expired input[type="date"] {
+.field-expired input[type="date"],
+.field-expired .mx-date-text {
   border-color: #ef4444 !important;
   color: #ef4444 !important;
   -webkit-text-fill-color: #ef4444 !important;

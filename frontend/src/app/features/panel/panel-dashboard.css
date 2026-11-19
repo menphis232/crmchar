@@ -485,6 +485,7 @@ input[type="tel"],
 input[type="url"],
 input[type="number"],
 input[type="datetime-local"],
+.mx-date-text,
 select {
   width: 100%;
   padding: 12px 14px;
@@ -1286,6 +1287,7 @@ button.kanban-contact-btn:hover { text-decoration: underline; }
 }
 
 .deal-panel input,
+.deal-panel .mx-date-text,
 .deal-panel textarea,
 .deal-panel select,
 .deal-section select {

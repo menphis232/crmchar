@@ -841,11 +841,12 @@
         </select>
 
         <label>Fecha del pago</label>
-        <input type="date" lang="es-MX" [(ngModel)]="manualPaymentDate" [max]="todayIso()">
-        <p class="register-payment-hint">
-          Si el pago no fue hoy, elige el día en que se recibió.
-          @if (manualPaymentDate) { · {{ formatDateOnlyMx(manualPaymentDate) }} (día/mes/año) }
-        </p>
+        <app-mx-date-input
+          [value]="manualPaymentDate"
+          [max]="todayIso()"
+          (valueChange)="manualPaymentDate = $event"
+        />
+        <p class="register-payment-hint">Si el pago no fue hoy, elige el día en que se recibió.</p>
 
         <label>Notas (opcional)</label>
         <textarea [(ngModel)]="manualPaymentNotes" rows="2" placeholder="Referencia, folio, banco..."></textarea>

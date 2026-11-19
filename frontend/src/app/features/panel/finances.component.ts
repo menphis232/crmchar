@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { DateOnlyMxPipe } from '../../shared/date-only-mx.pipe';
+import { MxDateInputComponent } from '../../shared/mx-date-input.component';
 import { FormsModule } from '@angular/forms';
 import {
   LucideArrowDown,
@@ -43,7 +44,7 @@ import { formatMoney } from '../../shared/format-amount.util';
 @Component({
   selector: 'app-finances',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe, DateOnlyMxPipe, LucideWallet, LucideBarChart3, LucideFileText, LucidePlus, LucideTrendingUp, LucideTrendingDown, LucideScale, LucideCalendar, LucideCreditCard, LucideClipboardList, LucideSettings, LucideX, LucideInbox, LucideTrash2, LucideSave, LucideTriangleAlert, LucideArrowUp, LucideArrowDown, LucideChevronLeft, LucideChevronRight],
+  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe, DateOnlyMxPipe, MxDateInputComponent, LucideWallet, LucideBarChart3, LucideFileText, LucidePlus, LucideTrendingUp, LucideTrendingDown, LucideScale, LucideCalendar, LucideCreditCard, LucideClipboardList, LucideSettings, LucideX, LucideInbox, LucideTrash2, LucideSave, LucideTriangleAlert, LucideArrowUp, LucideArrowDown, LucideChevronLeft, LucideChevronRight],
   template: `
     <div class="fin-wrap">
 
@@ -496,11 +497,12 @@ import { formatMoney } from '../../shared/format-amount.util';
 
               <div class="field-row">
                 <label>Fecha del pago *</label>
-                <input type="date" lang="es-MX" [(ngModel)]="newTx.date" [max]="todayIso()">
-                <p class="field-hint">
-                  Si el pago no fue hoy, elige el día en que se recibió.
-                  @if (newTx.date) { · Se registrará como {{ newTx.date | dateOnlyMx }} (día/mes/año) }
-                </p>
+                <app-mx-date-input
+                  [value]="newTx.date"
+                  [max]="todayIso()"
+                  (valueChange)="newTx.date = $event"
+                />
+                <p class="field-hint">Si el pago no fue hoy, elige el día en que se recibió.</p>
               </div>
 
               <!-- Método de pago/cobro (ambos tipos) -->
@@ -812,8 +814,8 @@ import { formatMoney } from '../../shared/format-amount.util';
     .detail-grid { display: grid; grid-template-columns: 120px 1fr; gap: 12px 16px; padding: 18px 24px 8px; }
     .detail-k { font-size: 10px; color: #676879; font-weight: 700; font-family: var(--f-display); text-transform: uppercase; letter-spacing: 0.12em; padding-top: 3px; }
     .detail-v { font-size: 14px; color: #323338; font-family: var(--f-display); word-break: break-word; }
-    .field-row input, .field-row select { background: #fff; border: 1px solid #e6e9ef; padding: 10px 12px; border-radius: 8px; color: #323338; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: light; }
-    .field-row input:focus, .field-row select:focus { border-color: #676879; }
+    .field-row input, .field-row .mx-date-text, .field-row select { background: #fff; border: 1px solid #e6e9ef; padding: 10px 12px; border-radius: 8px; color: #323338; font-size: 14px; font-family: var(--f-display); outline: none; width: 100%; box-sizing: border-box; color-scheme: light; }
+    .field-row input:focus, .field-row .mx-date-text:focus, .field-row select:focus { border-color: #676879; }
     .input-money { display: flex; align-items: center; background: #fff; border: 1px solid #e6e9ef; border-radius: 8px; overflow: hidden; }
     .input-money span { padding: 0 12px; color: rgba(255,255,255,0.60); font-weight: 700; font-size: 16px; border-right: 1px solid rgba(255,255,255,0.10); background: #fff; font-family: var(--f-display); }
     .input-money input { border: none; background: transparent; flex: 1; color: #323338; }
