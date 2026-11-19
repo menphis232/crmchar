@@ -2345,7 +2345,8 @@ select.client-wallet-input option {
 }
 
 .client-vehicle-form select,
-.client-vehicle-form input {
+.client-vehicle-form input,
+.client-vehicle-form .mx-date-text {
   width: 100%;
   background: #fff;
   border: 1px solid var(--mon-border);
