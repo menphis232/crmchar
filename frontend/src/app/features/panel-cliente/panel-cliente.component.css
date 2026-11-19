@@ -917,10 +917,11 @@
 .client-detail-photo {
   display: block;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  max-height: 320px;
+  height: auto;
+  max-height: none;
   border-radius: 0;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: top center;
   border: none;
   border-bottom: 1px solid var(--mon-border, #e6e9ef);
   background: #eef1f6;
@@ -930,6 +931,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 160px;
   color: var(--mon-primary, #0073ea);
   background: var(--mon-primary-soft, #eef5ff);
 }
@@ -1547,10 +1549,6 @@
 
   .client-detail-hero .client-steps {
     padding: 0 16px;
-  }
-
-  .client-detail-photo {
-    max-height: 220px;
   }
 }
 
