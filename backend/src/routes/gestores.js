@@ -412,35 +412,42 @@ router.get('/me/client-promo-banner/clients', authRequired, requireRole('gestor'
 
     let rows;
     if (q) {
+      // Busca en usuarios cliente + contactos del gestor (LIMIT inline: mysql2 falla con LIMIT ?)
       rows = await query(
-        `SELECT DISTINCT u.id, u.name, u.email, u.phone
+        `SELECT u.id, u.name, u.email, u.phone
          FROM users u
-         LEFT JOIN contacts c ON (
-           (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
-           OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
-         )
          WHERE u.role = 'cliente'
+           AND (u.name LIKE ? OR u.email LIKE ? OR IFNULL(u.phone,'') LIKE ?)
+         UNION
+         SELECT u.id, u.name, u.email, u.phone
+         FROM contacts c
+         JOIN users u ON u.role = 'cliente'
            AND (
-             u.name LIKE ? OR u.email LIKE ? OR IFNULL(u.phone,'') LIKE ?
-             OR IFNULL(c.name,'') LIKE ? OR IFNULL(c.email,'') LIKE ? OR IFNULL(c.phone,'') LIKE ?
+             (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
+             OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
            )
-           AND (c.user_id IS NULL OR c.user_id = ?)
-         ORDER BY u.name ASC
-         LIMIT ?`,
-        [like, like, like, like, like, like, ownerId, limit],
+         WHERE c.user_id = ?
+           AND (
+             IFNULL(c.name,'') LIKE ? OR IFNULL(c.email,'') LIKE ? OR IFNULL(c.phone,'') LIKE ?
+             OR u.name LIKE ? OR u.email LIKE ? OR IFNULL(u.phone,'') LIKE ?
+           )
+         ORDER BY name ASC
+         LIMIT ${limit}`,
+        [like, like, like, ownerId, like, like, like, like, like, like],
       );
     } else {
       rows = await query(
         `SELECT DISTINCT u.id, u.name, u.email, u.phone
          FROM contacts c
-         JOIN users u ON u.role = 'cliente' AND (
-           (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
-           OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
-         )
+         JOIN users u ON u.role = 'cliente'
+           AND (
+             (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
+             OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
+           )
          WHERE c.user_id = ?
          ORDER BY u.name ASC
-         LIMIT ?`,
-        [ownerId, limit],
+         LIMIT ${limit}`,
+        [ownerId],
       );
     }
     res.json({ items: rows || [] });
