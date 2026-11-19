@@ -1581,6 +1581,14 @@ app-crm-team {
   color: #323338 !important;
   -webkit-text-fill-color: #323338 !important;
 }
+.mon-activity-board .mon-board-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
 .mon-activity-board .mon-board-title {
   margin: 0;
   color: #323338 !important;
@@ -1593,6 +1601,45 @@ app-crm-team {
   color: #676879 !important;
   -webkit-text-fill-color: #676879 !important;
   font-size: 13px;
+}
+.mon-activity-board .activity-refresh-btn,
+.mon-activity-board .mon-btn-primary.activity-refresh-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+  line-height: 1.2 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: #0073ea !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font-family: Figtree, system-ui, sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  white-space: nowrap;
+  box-sizing: border-box !important;
+  cursor: pointer;
+}
+.mon-activity-board .activity-refresh-btn span,
+.mon-activity-board .activity-refresh-btn svg {
+  display: inline-flex !important;
+  align-items: center !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  flex-shrink: 0;
+}
+.mon-activity-board .activity-refresh-btn:hover:not(:disabled) {
+  background: #0060c2 !important;
+}
+.mon-activity-board .activity-refresh-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .activity-kpis {

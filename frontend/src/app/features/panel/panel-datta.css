@@ -1793,6 +1793,33 @@
   -webkit-text-fill-color: #323338 !important;
 }
 
+:host.panel-datta .mon-activity-board .activity-refresh-btn,
+:host.panel-datta .mon-activity-board .mon-btn-primary.activity-refresh-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-height: 40px !important;
+  height: auto !important;
+  padding: 10px 16px !important;
+  line-height: 1.2 !important;
+  border-radius: 8px !important;
+  background: #0073ea !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  font: 600 14px Figtree, system-ui, sans-serif !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  box-sizing: border-box !important;
+}
+
+:host.panel-datta .mon-activity-board .activity-refresh-btn svg,
+:host.panel-datta .mon-activity-board .activity-refresh-btn span {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  flex-shrink: 0;
+}
+
 :host.panel-datta .mon-board.mon-services-board {
   background: #fff !important;
   border: 1px solid #e6e9ef !important;

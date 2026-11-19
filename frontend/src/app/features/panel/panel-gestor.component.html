@@ -463,9 +463,9 @@
             <h2 class="mon-board-title">Actividad de clientes</h2>
             <p class="mon-board-desc">Quién está en línea, quién ya entró alguna vez y la última vez que usó el panel.</p>
           </div>
-          <button type="button" class="mon-btn-primary" (click)="loadClientActivity()" [disabled]="clientActivityLoading()">
-            <svg lucideRefreshCw [size]="16" aria-hidden="true"></svg>
-            {{ clientActivityLoading() ? 'Actualizando...' : 'Actualizar' }}
+          <button type="button" class="mon-btn-primary activity-refresh-btn" (click)="loadClientActivity()" [disabled]="clientActivityLoading()">
+            <svg lucideRefreshCw [size]="16" [strokeWidth]="2" aria-hidden="true"></svg>
+            <span>{{ clientActivityLoading() ? 'Actualizando...' : 'Actualizar' }}</span>
           </button>
         </header>
 
