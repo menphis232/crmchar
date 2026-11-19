@@ -127,53 +127,26 @@
   letter-spacing: 0;
 }
 
-/* Desktop: sin foto en el menú lateral; avatar grande a la izquierda del header */
+/* Desktop: avatar grande a la izquierda del menú lateral (donde ya estaba) */
 @media (min-width: 992px) {
   :host .dash-sidebar .client-sidebar-avatar {
-    display: none !important;
-  }
-
-  :host.panel-datta {
-    --mon-header: 88px;
-    --datta-header: 88px;
-    --nav-h: 88px;
-  }
-
-  :host .dash-nav {
-    display: flex;
-    align-items: center;
-    height: 88px !important;
-    min-height: 88px !important;
-    max-height: 88px !important;
-  }
-
-  :host .dash-user {
-    order: 1;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    max-width: none !important;
-  }
-
-  :host .client-home-logo,
-  :host .dash-logo {
-    order: 2;
-  }
-
-  :host .mon-sidebar-toggle {
-    order: 4;
-    margin-left: auto !important;
-  }
-
-  :host .dash-user ::ng-deep .panel-avatar,
-  :host .dash-user ::ng-deep button.panel-avatar {
+    display: inline-flex !important;
     width: 72px !important;
     height: 72px !important;
-    min-width: 72px !important;
-    min-height: 72px !important;
-    max-width: none !important;
-    max-height: none !important;
-    font-size: 24px !important;
-    border-width: 2px !important;
+  }
+
+  :host .dash-sidebar .client-sidebar-avatar-initials {
+    font-size: 24px;
+  }
+
+  :host .dash-sidebar .datta-brand {
+    gap: 14px;
+    padding: 16px !important;
+    min-height: 96px;
+  }
+
+  :host .dash-sidebar .datta-brand-title {
+    font-size: 16px !important;
   }
 }
 
