@@ -274,15 +274,26 @@
               <div class="deal-simple-list">
                 @for (deal of recentDeals(); track deal.id) {
                   <button type="button" class="deal-simple-row" (click)="openDeal(deal)">
-                    <div class="deal-simple-head">
-                      <strong class="deal-simple-title">{{ deal.title }}</strong>
-                      <span class="deal-simple-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                    <div class="deal-simple-main">
+                      @if (dealServiceImage(deal); as svcImg) {
+                        <img class="deal-simple-photo" [src]="svcImg" [alt]="deal.title" loading="lazy">
+                      } @else {
+                        <span class="deal-simple-photo deal-simple-photo--placeholder" aria-hidden="true">
+                          <svg lucideCar [size]="18" aria-hidden="true"></svg>
+                        </span>
+                      }
+                      <div class="deal-simple-body">
+                        <div class="deal-simple-head">
+                          <strong class="deal-simple-title">{{ deal.title }}</strong>
+                          <span class="deal-simple-price">{{ deal.price | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
+                        </div>
+                        <p class="deal-simple-meta">{{ deal.gestor_name || 'Agencia' }} · {{ deal.created_at | date:'dd MMM yyyy' }}</p>
+                        <div class="deal-simple-progress">
+                          <div class="deal-simple-progress-fill" [style.width.%]="stageProgress(deal)"></div>
+                        </div>
+                        <p class="deal-simple-stage">{{ stageLabel(deal) }} · {{ stageProgress(deal) }}% avance</p>
+                      </div>
                     </div>
-                    <p class="deal-simple-meta">{{ deal.gestor_name || 'Agencia' }} · {{ deal.created_at | date:'dd MMM yyyy' }}</p>
-                    <div class="deal-simple-progress">
-                      <div class="deal-simple-progress-fill" [style.width.%]="stageProgress(deal)"></div>
-                    </div>
-                    <p class="deal-simple-stage">{{ stageLabel(deal) }} · {{ stageProgress(deal) }}% avance</p>
                   </button>
                 }
               </div>
@@ -401,7 +412,11 @@
               @for (deal of tramitesList(); track deal.id) {
                 <button type="button" class="client-deal-card" (click)="openDeal(deal)">
                   <div class="client-deal-top">
-                    <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
+                    @if (dealServiceImage(deal); as svcImg) {
+                      <img class="client-deal-photo" [src]="svcImg" [alt]="deal.title" loading="lazy">
+                    } @else {
+                      <span class="client-deal-icon"><svg lucideCar [size]="20" aria-hidden="true"></svg></span>
+                    }
                     <div class="client-deal-badges">
                       @if (isPaid(deal)) {
                         <span class="client-badge badge-paid">Pagado</span>
@@ -474,6 +489,9 @@
           <div class="client-history-list">
             @for (deal of historialList(); track deal.id) {
               <button type="button" class="client-history-row" (click)="openDeal(deal)">
+                @if (dealServiceImage(deal); as svcImg) {
+                  <img class="client-history-photo" [src]="svcImg" [alt]="deal.title" loading="lazy">
+                }
                 <div class="client-history-main">
                   <strong>{{ deal.title }}</strong>
                   <span>{{ deal.gestor_name || 'Agencia' }}</span>

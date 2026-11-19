@@ -1394,6 +1394,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     });
   }
 
+  dealServiceImage(deal: any): string {
+    return String(deal?.service_image_url || deal?.serviceImageUrl || '').trim();
+  }
+
   isPaid(deal: any): boolean {
     return deal?.payment_status === 'paid';
   }

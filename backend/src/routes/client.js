@@ -44,7 +44,8 @@ const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Ori
 const DEALS_SELECT = `
   SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, d.updated_at,
          g.name as gestor_name, d.deal_type, d.tracking_code,
-         d.payment_status, gs.required_documents, u.role as owner_role, u.crm_stages,
+         d.payment_status, gs.required_documents, gs.image_url as service_image_url,
+         u.role as owner_role, u.crm_stages,
          di.id as invoice_id, di.invoice_number, di.pdf_url as invoice_pdf_url,
          di.amount as invoice_amount, di.created_at as invoice_date
   FROM crm_deals d
