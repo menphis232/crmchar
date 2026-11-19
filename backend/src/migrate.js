@@ -863,19 +863,27 @@ async function migrate() {
         multipleStatements: true,
       });
       await conn40.query('USE tramites_vehiculares');
+      // Solo rellenar sort_order alfabético la PRIMERA vez que se agrega la columna.
+      // Si corre en cada deploy, pisa el orden manual del gestor.
+      let sortOrderColumnAdded = false;
       for (const stmt of v40.split(';').map(s => s.trim()).filter(Boolean)) {
-        try { await conn40.query(stmt); } catch (e) {
+        try {
+          await conn40.query(stmt);
+          if (/ADD\s+COLUMN\s+sort_order/i.test(stmt)) sortOrderColumnAdded = true;
+        } catch (e) {
           if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
         }
       }
-      const [gestorRows] = await conn40.query('SELECT DISTINCT gestor_id FROM gestor_services');
-      for (const row of gestorRows) {
-        const [services] = await conn40.query(
-          'SELECT id FROM gestor_services WHERE gestor_id = ? ORDER BY name',
-          [row.gestor_id],
-        );
-        for (let i = 0; i < services.length; i++) {
-          await conn40.query('UPDATE gestor_services SET sort_order = ? WHERE id = ?', [i, services[i].id]);
+      if (sortOrderColumnAdded) {
+        const [gestorRows] = await conn40.query('SELECT DISTINCT gestor_id FROM gestor_services');
+        for (const row of gestorRows) {
+          const [services] = await conn40.query(
+            'SELECT id FROM gestor_services WHERE gestor_id = ? ORDER BY name',
+            [row.gestor_id],
+          );
+          for (let i = 0; i < services.length; i++) {
+            await conn40.query('UPDATE gestor_services SET sort_order = ? WHERE id = ?', [i, services[i].id]);
+          }
         }
       }
       await conn40.end();

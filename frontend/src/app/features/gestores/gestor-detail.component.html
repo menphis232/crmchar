@@ -379,6 +379,10 @@
             }
           </div>
 
+          @if (g.galleryImages?.length) {
+            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
+          }
+
           @if (g.reviews?.length || g.reviewCount || g.googlePlaceId || g.googleReviewsEmbed) {
             <app-gestor-reviews-section
               title="Reseñas de clientes"
@@ -389,10 +393,6 @@
               [fromGoogle]="!!g.googlePlaceId"
               [googleReviewsEmbed]="g.googleReviewsEmbed || null"
             />
-          }
-
-          @if (g.galleryImages?.length) {
-            <app-gestor-showcase-gallery [images]="g.galleryImages!" title="Galería fotos" />
           }
         </div>
 
