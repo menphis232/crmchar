@@ -152,7 +152,21 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       font-family: Figtree, system-ui, sans-serif;
       box-sizing: border-box;
     }
-    /* Panel cliente móvil: avatar bien grande */
+    /* Panel cliente: avatar grande en header */
+    @media (min-width: 992px) {
+      :host-context(app-panel-cliente) .panel-avatar {
+        width: 72px !important;
+        height: 72px !important;
+        min-width: 72px !important;
+        min-height: 72px !important;
+        font-size: 24px !important;
+        border-width: 2px !important;
+      }
+      :host-context(app-panel-cliente) .avatar-dropdown {
+        left: 0;
+        right: auto;
+      }
+    }
     @media (max-width: 991px) {
       :host-context(app-panel-cliente) .panel-avatar {
         width: 104px !important;
