@@ -53,8 +53,16 @@ function parseSiteSettingsRow(row) {
 }
 
 const GESTOR_SERVICES_SELECT = `
-  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus, image_url as imageUrl
+  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus,
+         image_url as imageUrl, COALESCE(is_public, 1) as isPublic
   FROM gestor_services WHERE gestor_id = ?
+  ORDER BY sort_order ASC, name ASC
+`;
+
+const GESTOR_PUBLIC_SERVICES_SELECT = `
+  SELECT id, name, time_estimate as timeEstimate, price, required_documents, includes, bonus,
+         image_url as imageUrl, COALESCE(is_public, 1) as isPublic
+  FROM gestor_services WHERE gestor_id = ? AND COALESCE(is_public, 1) = 1
   ORDER BY sort_order ASC, name ASC
 `;
 
@@ -74,6 +82,7 @@ function parseGestorServices(rows) {
     s.required_documents = parseServiceJsonField(s.required_documents);
     s.includes = parseServiceJsonField(s.includes);
     s.bonus = parseServiceJsonField(s.bonus);
+    s.isPublic = s.isPublic === undefined || s.isPublic === null ? true : !!Number(s.isPublic);
     return s;
   });
 }
@@ -98,7 +107,7 @@ function normalizeStringList(value, { allowObjects = false } = {}) {
 }
 
 function parseServicePayload(body) {
-  const { name, timeEstimate, price, required_documents, includes, bonus, imageUrl } = body;
+  const { name, timeEstimate, price, required_documents, includes, bonus, imageUrl, isPublic } = body;
   if (!name || !timeEstimate) {
     return { error: 'Datos incompletos' };
   }
@@ -116,7 +125,17 @@ function parseServicePayload(body) {
   if (docs.length === 0) docs = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
   const includesList = normalizeStringList(includes, { allowObjects: true });
   const bonusList = normalizeStringList(bonus, { allowObjects: true });
-  return { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue: image || null };
+  const publicFlag = isPublic === undefined ? true : !!isPublic;
+  return {
+    name,
+    timeEstimate,
+    priceValue,
+    docs,
+    includesList,
+    bonusList,
+    imageValue: image || null,
+    isPublic: publicFlag,
+  };
 }
 
 function parseReviewDate(value) {
@@ -323,9 +342,10 @@ function gestorRow(row) {
   };
 }
 
-/** Solo gestores con al menos 1 servicio publicado en el catálogo. */
+/** Solo gestores con al menos 1 servicio visible en la ficha pública. */
 const HAS_SERVICES_SQL = `EXISTS (
-  SELECT 1 FROM gestor_services gs WHERE gs.gestor_id = g.id
+  SELECT 1 FROM gestor_services gs
+  WHERE gs.gestor_id = g.id AND COALESCE(gs.is_public, 1) = 1
 )`;
 
 router.get('/', async (req, res) => {
@@ -660,7 +680,7 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     const parsed = parseServicePayload(req.body);
     if (parsed.error) return res.status(400).json({ error: parsed.error });
-    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue } = parsed;
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue, isPublic } = parsed;
 
     const id = uuid();
     const maxOrder = await get(
@@ -670,10 +690,20 @@ router.post('/me/services', authRequired, requireRole('gestor'), requireActiveSu
     const sortOrder = (maxOrder?.maxOrder ?? -1) + 1;
 
     await run(
-      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, includes, bonus, image_url, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, sortOrder],
+      'INSERT INTO gestor_services (id, gestor_id, name, time_estimate, price, required_documents, includes, bonus, image_url, is_public, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [id, row.id, name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, isPublic ? 1 : 0, sortOrder],
     );
-    res.status(201).json({ id, name, timeEstimate, price: priceValue, required_documents: docs, includes: includesList, bonus: bonusList, imageUrl: imageValue });
+    res.status(201).json({
+      id,
+      name,
+      timeEstimate,
+      price: priceValue,
+      required_documents: docs,
+      includes: includesList,
+      bonus: bonusList,
+      imageUrl: imageValue,
+      isPublic,
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error al crear servicio' });
   }
@@ -720,13 +750,13 @@ router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiv
 
     const parsed = parseServicePayload(req.body);
     if (parsed.error) return res.status(400).json({ error: parsed.error });
-    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue } = parsed;
+    const { name, timeEstimate, priceValue, docs, includesList, bonusList, imageValue, isPublic } = parsed;
 
     await run(
       `UPDATE gestor_services
-       SET name = ?, time_estimate = ?, price = ?, required_documents = ?, includes = ?, bonus = ?, image_url = ?
+       SET name = ?, time_estimate = ?, price = ?, required_documents = ?, includes = ?, bonus = ?, image_url = ?, is_public = ?
        WHERE id = ? AND gestor_id = ?`,
-      [name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, req.params.id, row.id],
+      [name, timeEstimate, priceValue, JSON.stringify(docs), JSON.stringify(includesList), JSON.stringify(bonusList), imageValue, isPublic ? 1 : 0, req.params.id, row.id],
     );
     res.json({
       id: req.params.id,
@@ -737,9 +767,37 @@ router.put('/me/services/:id', authRequired, requireRole('gestor'), requireActiv
       includes: includesList,
       bonus: bonusList,
       imageUrl: imageValue,
+      isPublic,
     });
   } catch (err) {
     res.status(500).json({ error: 'Error al actualizar servicio' });
+  }
+});
+
+router.patch('/me/services/:id/visibility', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const row = await get('SELECT id FROM gestores WHERE user_id = ?', [req.user.id]);
+    if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
+
+    const existing = await get(
+      'SELECT id, COALESCE(is_public, 1) as is_public FROM gestor_services WHERE id = ? AND gestor_id = ?',
+      [req.params.id, row.id],
+    );
+    if (!existing) return res.status(404).json({ error: 'Servicio no encontrado' });
+
+    const nextPublic = req.body?.isPublic === undefined
+      ? !Number(existing.is_public)
+      : !!req.body.isPublic;
+
+    await run(
+      'UPDATE gestor_services SET is_public = ? WHERE id = ? AND gestor_id = ?',
+      [nextPublic ? 1 : 0, req.params.id, row.id],
+    );
+
+    res.json({ id: req.params.id, isPublic: nextPublic });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cambiar visibilidad del servicio' });
   }
 });
 
@@ -898,8 +956,8 @@ router.get('/:slugOrId', async (req, res) => {
       WHERE g.slug = ? OR g.id = ?`, [slugOrId, slugOrId]);
     if (!row) return res.status(404).json({ error: 'Gestor no encontrado' });
 
-    const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
-    // Sin servicios no debe aparecer en catálogo ni por URL directa
+    const services = parseGestorServices(await query(GESTOR_PUBLIC_SERVICES_SELECT, [row.id]));
+    // Sin servicios públicos no debe aparecer en catálogo ni por URL directa
     if (!services.length) {
       return res.status(404).json({ error: 'Gestor no encontrado' });
     }
@@ -1272,7 +1330,7 @@ router.post('/:slugOrId/chat', authOptional, async (req, res) => {
     }
 
     const services = await query(
-      'SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?) ORDER BY sort_order ASC, name ASC',
+      'SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?) AND COALESCE(is_public, 1) = 1 ORDER BY sort_order ASC, name ASC',
       [gestor.user_id],
     );
     let servicesText = services.map(s => {

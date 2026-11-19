@@ -597,6 +597,7 @@
               <thead>
                 <tr>
                   <th class="col-sort"></th>
+                  <th class="col-vis" title="Visible en ficha pública">Vista</th>
                   <th>Servicio</th>
                   <th>Tiempo</th>
                   <th class="col-num">Precio</th>
@@ -609,6 +610,7 @@
                   <tr class="service-sort-item"
                       [class.service-sort-item--dragging]="serviceDragIdx === $index"
                       [class.service-sort-item--over]="serviceDragOverIdx === $index"
+                      [class.service-sort-item--hidden]="!isServicePublic(s)"
                       (dragover)="onServiceDragOver($event, $index)"
                       (dragenter)="onServiceDragEnter($event, $index)"
                       (dragleave)="onServiceDragLeave()"
@@ -629,6 +631,23 @@
                           <svg lucideChevronDown [size]="14" aria-hidden="true"></svg>
                         </button>
                       </div>
+                    </td>
+                    <td class="col-vis">
+                      <button
+                        type="button"
+                        class="service-vis-btn"
+                        [class.is-public]="isServicePublic(s)"
+                        [class.is-hidden]="!isServicePublic(s)"
+                        [attr.title]="isServicePublic(s) ? 'Visible en la ficha — clic para ocultar' : 'Oculto en la ficha — clic para mostrar'"
+                        [attr.aria-label]="isServicePublic(s) ? 'Ocultar servicio en la ficha pública' : 'Mostrar servicio en la ficha pública'"
+                        (click)="toggleServiceVisibility(s, $event)"
+                      >
+                        @if (isServicePublic(s)) {
+                          <svg lucideEye [size]="16" aria-hidden="true"></svg>
+                        } @else {
+                          <svg lucideEyeOff [size]="16" aria-hidden="true"></svg>
+                        }
+                      </button>
                     </td>
                     <td>
                       <div class="svc-name-cell">
@@ -688,6 +707,14 @@
             <label>Precio (MXN)</label>
             <input type="number" [(ngModel)]="serviceForm.price" placeholder="Opcional" min="0">
             <p class="card-desc" style="font-size:11px; margin-top:4px;">Si lo dejas vacío, en tu ficha pública se mostrará «Precio por definir».</p>
+          </div>
+          <div class="form-group">
+            <label>Visibilidad</label>
+            <label class="service-public-check">
+              <input type="checkbox" [(ngModel)]="serviceForm.isPublic">
+              Mostrar en la ficha pública
+            </label>
+            <p class="card-desc" style="font-size:11px; margin-top:4px;">Desmárcalo para trámites exclusivos o temporalmente no disponibles.</p>
           </div>
         </div>
 

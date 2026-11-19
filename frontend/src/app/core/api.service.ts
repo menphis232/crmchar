@@ -63,6 +63,7 @@ export class GestoresService {
     timeEstimate: string;
     price: number | null;
     imageUrl?: string | null;
+    isPublic?: boolean;
     required_documents?: string[];
     includes?: string[];
     bonus?: string[];
@@ -74,11 +75,15 @@ export class GestoresService {
     timeEstimate: string;
     price: number | null;
     imageUrl?: string | null;
+    isPublic?: boolean;
     required_documents?: string[];
     includes?: string[];
     bonus?: string[];
   }) {
     return this.http.put(`${this.base}/me/services/${id}`, data);
+  }
+  setServiceVisibility(id: string, isPublic: boolean) {
+    return this.http.patch<{ id: string; isPublic: boolean }>(`${this.base}/me/services/${id}/visibility`, { isPublic });
   }
   reorderServices(order: string[]) {
     return this.http.put<{ ok: boolean; services: import('../models').GestorService[] }>(`${this.base}/me/services/order`, { order });

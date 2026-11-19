@@ -1452,6 +1452,25 @@ async function migrate() {
       console.log('Migración v70 (términos y last_seen) aplicada.');
     }
 
+    const v71Path = path.join(__dirname, '..', 'sql', 'migration-v71-service-is-public.sql');
+    if (fs.existsSync(v71Path)) {
+      const v71 = fs.readFileSync(v71Path, 'utf8');
+      const conn71 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v71.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn71.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn71.end();
+      console.log('Migración v71 (servicio is_public) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

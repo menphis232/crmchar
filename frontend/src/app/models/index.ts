@@ -389,6 +389,8 @@ export interface GestorService {
   timeEstimate: string;
   price: number | null;
   imageUrl?: string | null;
+  /** Visible en la ficha pública. false = solo panel / clientes exclusivos. */
+  isPublic?: boolean;
   required_documents?: string[];
   includes?: string[];
   bonus?: string[];

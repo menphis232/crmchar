@@ -1132,6 +1132,53 @@ app-crm-team {
   cursor: not-allowed;
 }
 
+.col-vis {
+  width: 44px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.service-vis-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.service-vis-btn.is-public {
+  color: #66d9a3;
+  border-color: rgba(102, 217, 163, 0.35);
+}
+
+.service-vis-btn.is-hidden {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.service-vis-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.service-sort-item--hidden {
+  opacity: 0.55;
+}
+
+.service-public-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text, #fff);
+  cursor: pointer;
+}
+
 .service-sort-item .inbox-info {
   flex: 1;
   min-width: 0;

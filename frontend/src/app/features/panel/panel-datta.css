@@ -2006,13 +2006,18 @@
   width: 88px !important;
   white-space: nowrap !important;
 }
-:host.panel-datta .mon-services-board .mon-table th:nth-child(2),
-:host.panel-datta .mon-services-board .mon-table td:nth-child(2) {
-  width: auto !important;
-  min-width: 0 !important;
+:host.panel-datta .mon-services-board .col-vis {
+  width: 52px !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }
 :host.panel-datta .mon-services-board .mon-table th:nth-child(3),
 :host.panel-datta .mon-services-board .mon-table td:nth-child(3) {
+  width: auto !important;
+  min-width: 0 !important;
+}
+:host.panel-datta .mon-services-board .mon-table th:nth-child(4),
+:host.panel-datta .mon-services-board .mon-table td:nth-child(4) {
   width: 110px !important;
   white-space: nowrap !important;
 }
@@ -2023,9 +2028,30 @@
   white-space: nowrap !important;
   font-weight: 600 !important;
 }
-:host.panel-datta .mon-services-board .mon-table th:nth-child(5),
-:host.panel-datta .mon-services-board .mon-table td:nth-child(5) {
+:host.panel-datta .mon-services-board .mon-table th:nth-child(6),
+:host.panel-datta .mon-services-board .mon-table td:nth-child(6) {
   width: 110px !important;
+}
+:host.panel-datta .mon-services-board .service-vis-btn {
+  border-color: #c5c7d0 !important;
+  background: #fff !important;
+  color: #676879 !important;
+}
+:host.panel-datta .mon-services-board .service-vis-btn.is-public {
+  color: #00a35f !important;
+  border-color: rgba(0, 163, 95, 0.35) !important;
+  background: #f0faf5 !important;
+}
+:host.panel-datta .mon-services-board .service-vis-btn.is-hidden {
+  color: #9a9ca8 !important;
+  background: #f5f6f8 !important;
+}
+:host.panel-datta .mon-services-board .service-vis-btn:hover {
+  border-color: #0073ea !important;
+  color: #0073ea !important;
+}
+:host.panel-datta .mon-services-board .service-sort-item--hidden td {
+  opacity: 0.72;
 }
 :host.panel-datta .mon-services-board .col-actions {
   width: 168px !important;

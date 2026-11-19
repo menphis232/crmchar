@@ -76,6 +76,8 @@ import {
   LucideGraduationCap,
   LucideActivity,
   LucideRefreshCw,
+  LucideEye,
+  LucideEyeOff,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -155,7 +157,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, CrmDealsBoardComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideChevronLeft, LucideChevronRight, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap, LucideActivity, LucideRefreshCw,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideChevronLeft, LucideChevronRight, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap, LucideActivity, LucideRefreshCw, LucideEye, LucideEyeOff,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css', './panel-datta.css'],
@@ -318,7 +320,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   message = signal('');
   editingServiceId: string | null = null;
   serviceDetailModal = signal<GestorService | null>(null);
-  serviceForm = { name: '', timeEstimate: '', price: null as number | null, imageUrl: '' };
+  serviceForm = { name: '', timeEstimate: '', price: null as number | null, imageUrl: '', isPublic: true };
   serviceDocs: QuoteCheckItem[] = [];
   serviceIncludesList: QuoteCheckItem[] = [];
   serviceBonusList: QuoteCheckItem[] = [];
@@ -2003,10 +2005,34 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   private resetServiceForm() {
     resetChecklistSeq();
     this.editingServiceId = null;
-    this.serviceForm = { name: '', timeEstimate: '', price: null, imageUrl: '' };
+    this.serviceForm = { name: '', timeEstimate: '', price: null, imageUrl: '', isPublic: true };
     this.serviceDocs = [];
     this.serviceIncludesList = [];
     this.serviceBonusList = [];
+  }
+
+  isServicePublic(s: GestorService): boolean {
+    return s.isPublic !== false;
+  }
+
+  toggleServiceVisibility(s: GestorService, event?: Event) {
+    event?.stopPropagation();
+    const next = !this.isServicePublic(s);
+    this.gestoresService.setServiceVisibility(s.id, next).subscribe({
+      next: (res) => {
+        const profile = this.profile();
+        if (profile?.services) {
+          this.profile.set({
+            ...profile,
+            services: profile.services.map((svc) =>
+              svc.id === s.id ? { ...svc, isPublic: res.isPublic } : svc,
+            ),
+          });
+        }
+        this.toast.success(res.isPublic ? 'Visible en tu ficha pública' : 'Oculto en la ficha pública');
+      },
+      error: (err) => this.toast.error(err.error?.error || 'No se pudo cambiar la visibilidad'),
+    });
   }
 
   startEditService(s: GestorService) {
@@ -2017,6 +2043,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       timeEstimate: s.timeEstimate,
       price: s.price,
       imageUrl: s.imageUrl || '',
+      isPublic: this.isServicePublic(s),
     };
     this.serviceDocs = checklistFromTexts(serviceRequirements(s));
     this.serviceIncludesList = checklistFromTexts(serviceIncludes(s));
@@ -2056,6 +2083,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       timeEstimate: string;
       price: number | null;
       imageUrl: string | null;
+      isPublic: boolean;
       required_documents?: string[];
       includes?: string[];
       bonus?: string[];
@@ -2064,6 +2092,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       timeEstimate: this.serviceForm.timeEstimate,
       price: this.serviceForm.price,
       imageUrl: this.serviceForm.imageUrl || null,
+      isPublic: this.serviceForm.isPublic !== false,
     };
     if (docs.length > 0) payload.required_documents = docs;
     if (includes.length > 0) payload.includes = includes;
