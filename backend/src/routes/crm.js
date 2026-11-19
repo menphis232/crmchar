@@ -39,7 +39,6 @@ import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
 import { isUserOnline } from '../utils/presence.js';
-import { normalizeMxPhone } from '../utils/phone.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
 import {
