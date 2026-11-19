@@ -205,7 +205,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   private isNarrowViewport = signal(
     typeof window !== 'undefined' && window.matchMedia('(max-width: 991px)').matches
   );
-  headerAvatarSize = computed(() => (this.isNarrowViewport() ? 60 : 34));
+  headerAvatarSize = computed(() => (this.isNarrowViewport() ? 76 : 34));
   sidebarCollapsed = signal(
     typeof localStorage !== 'undefined' && localStorage.getItem('crm_cliente_sidebar_collapsed') === '1'
   );
