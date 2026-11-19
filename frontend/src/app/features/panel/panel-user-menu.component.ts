@@ -1,14 +1,21 @@
 import {
   Component, EventEmitter, HostListener, Input, Output, signal,
 } from '@angular/core';
-import { LucideCreditCard, LucideKeyRound } from '@lucide/angular';
+import { LucideCreditCard, LucideEye, LucideKeyRound, LucideX } from '@lucide/angular';
 import { SubscriptionBillingComponent } from './subscription-billing.component';
 import { ChangeCredentialsComponent } from './change-credentials.component';
 
 @Component({
   selector: 'app-panel-user-menu',
   standalone: true,
-  imports: [SubscriptionBillingComponent, ChangeCredentialsComponent, LucideKeyRound, LucideCreditCard],
+  imports: [
+    SubscriptionBillingComponent,
+    ChangeCredentialsComponent,
+    LucideKeyRound,
+    LucideCreditCard,
+    LucideEye,
+    LucideX,
+  ],
   template: `
     <div class="panel-user-menu">
       @if (showName && name) {
@@ -33,10 +40,19 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       </button>
 
       @if (menuOpen()) {
-        <div class="avatar-dropdown">
+        <div class="avatar-dropdown" (click)="$event.stopPropagation()">
           <div class="avatar-dropdown-header">
             @if (avatarUrl) {
-              <img [src]="avatarUrl" [alt]="name || 'Avatar'" class="avatar-dropdown-photo" />
+              <button
+                type="button"
+                class="avatar-dropdown-photo-btn"
+                (click)="openPreview($event)"
+                title="Ver foto"
+                aria-label="Ver mi foto ampliada"
+              >
+                <img [src]="avatarUrl" [alt]="name || 'Avatar'" class="avatar-dropdown-photo" />
+                <span class="avatar-dropdown-photo-hint">Toca para ampliar</span>
+              </button>
             }
             <div class="avatar-dropdown-meta">
               <strong>{{ name }}</strong>
@@ -45,6 +61,12 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
               }
             </div>
           </div>
+          @if (avatarUrl) {
+            <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openPreview($event)">
+              <svg lucideEye [size]="14" aria-hidden="true"></svg>
+              Ver mi foto
+            </button>
+          }
           <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openCredentials()">
             <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
             Cambiar contraseña / correo
@@ -61,6 +83,34 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
         </div>
       }
     </div>
+
+    @if (previewOpen() && avatarUrl) {
+      <div
+        class="avatar-preview-overlay"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Vista de foto de perfil"
+        (click)="closePreview()"
+      >
+        <button
+          type="button"
+          class="avatar-preview-close"
+          (click)="closePreview(); $event.stopPropagation()"
+          aria-label="Cerrar"
+        >
+          <svg lucideX [size]="22" aria-hidden="true"></svg>
+        </button>
+        <img
+          [src]="avatarUrl"
+          [alt]="name || 'Mi foto'"
+          class="avatar-preview-img"
+          (click)="$event.stopPropagation()"
+        />
+        @if (name) {
+          <p class="avatar-preview-caption">{{ name }}</p>
+        }
+      </div>
+    }
 
     @if (billingOpen()) {
       <app-subscription-billing (closed)="billingOpen.set(false)" />
@@ -119,6 +169,27 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
         font-size: 36px !important;
         border-width: 2.5px !important;
       }
+      :host-context(app-panel-cliente) .avatar-dropdown {
+        left: 0;
+        right: auto;
+        min-width: min(300px, calc(100vw - 24px));
+      }
+      :host-context(app-panel-cliente) .avatar-dropdown-header {
+        flex-direction: column;
+        text-align: center;
+        padding: 16px;
+        gap: 10px;
+      }
+      :host-context(app-panel-cliente) .avatar-dropdown-photo-btn {
+        width: 120px;
+      }
+      :host-context(app-panel-cliente) .avatar-dropdown-photo {
+        width: 112px;
+        height: 112px;
+      }
+      :host-context(app-panel-cliente) .avatar-dropdown-meta {
+        align-items: center;
+      }
     }
     .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12); }
     .panel-avatar-img {
@@ -150,13 +221,38 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       border-bottom: 1px solid #e6e9ef;
       background: #f7f8fa;
     }
+    .avatar-dropdown-photo-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
     .avatar-dropdown-photo {
-      width: 40px;
-      height: 40px;
+      width: 56px;
+      height: 56px;
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
-      border: 1px solid #e6e9ef;
+      border: 2px solid #e6e9ef;
+      display: block;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .avatar-dropdown-photo-btn:hover .avatar-dropdown-photo,
+    .avatar-dropdown-photo-btn:focus-visible .avatar-dropdown-photo {
+      transform: scale(1.04);
+      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.25);
+    }
+    .avatar-dropdown-photo-hint {
+      font-size: 11px;
+      font-weight: 600;
+      color: #0073ea;
+      font-family: Figtree, system-ui, sans-serif;
+      line-height: 1.2;
     }
     .avatar-dropdown-meta {
       display: flex;
@@ -197,6 +293,57 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
     .avatar-dropdown-item.danger { color: #e2445c; }
     .avatar-dropdown-item.danger:hover { background: #fff0f1; color: #e2445c; }
 
+    .avatar-preview-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10050;
+      background: rgba(10, 12, 18, 0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px 16px;
+      box-sizing: border-box;
+    }
+    .avatar-preview-close {
+      position: absolute;
+      top: max(12px, env(safe-area-inset-top));
+      right: 12px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .avatar-preview-close:hover {
+      background: rgba(255, 255, 255, 0.24);
+    }
+    .avatar-preview-img {
+      width: min(86vw, 420px);
+      height: min(86vw, 420px);
+      max-height: min(70vh, 420px);
+      object-fit: cover;
+      border-radius: 50%;
+      border: 4px solid #fff;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+      background: #fff;
+    }
+    .avatar-preview-caption {
+      margin: 0;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      font-family: Figtree, system-ui, sans-serif;
+      text-align: center;
+    }
+
     :host-context(.sidebar-user-section) .panel-user-name {
       color: #676879;
       font-size: 12px;
@@ -217,7 +364,7 @@ export class PanelUserMenuComponent {
   @Input() email = '';
   @Input() initials = '?';
   @Input() avatarUrl = '';
-  /** Diámetro del avatar en px (p. ej. 60 en móvil del panel cliente). */
+  /** Diámetro del avatar en px (p. ej. 104 en móvil del panel cliente). */
   @Input() sizePx = 34;
 
   get avatarFontPx(): number {
@@ -228,6 +375,7 @@ export class PanelUserMenuComponent {
   @Output() logout = new EventEmitter<void>();
 
   menuOpen         = signal(false);
+  previewOpen      = signal(false);
   billingOpen      = signal(false);
   credentialsOpen  = signal(false);
 
@@ -236,9 +384,29 @@ export class PanelUserMenuComponent {
     this.menuOpen.set(false);
   }
 
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.previewOpen()) {
+      this.closePreview();
+      return;
+    }
+    this.menuOpen.set(false);
+  }
+
   toggleMenu(event: MouseEvent) {
     event.stopPropagation();
     this.menuOpen.update((v) => !v);
+  }
+
+  openPreview(event?: Event) {
+    event?.stopPropagation();
+    if (!this.avatarUrl) return;
+    this.menuOpen.set(false);
+    this.previewOpen.set(true);
+  }
+
+  closePreview() {
+    this.previewOpen.set(false);
   }
 
   openBilling() {
