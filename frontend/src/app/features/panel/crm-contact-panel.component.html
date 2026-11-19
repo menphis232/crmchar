@@ -242,80 +242,90 @@
             </div>
           }
 
-          <div class="vehicle-card" style="border-style:dashed;">
-            <h5 style="margin:0 0 10px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Agregar vehículo</h5>
-            <div class="vehicle-form-grid">
-              <div class="full">
-                <app-vehicle-mmy-select
-                  [(make)]="newMake"
-                  [(submodel)]="newModel"
-                  [(year)]="newYear"
-                />
-              </div>
-              <div>
-                <label>Placa</label>
-                <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
-              </div>
-              <div>
-                <label>Estado</label>
-                <select [(ngModel)]="newVehicleState">
-                  <option value="">—</option>
-                  @for (st of mexicoStates; track st) {
-                    <option [value]="st">{{ st }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label>Engomado</label>
-                <select [(ngModel)]="newEngomado">
-                  <option value="">—</option>
-                  @for (c of engomadoColors; track c.id) {
-                    <option [value]="c.id">{{ c.label }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label>Vencimiento póliza de seguro</label>
-                <app-mx-date-input
-                  [value]="newInsuranceExpiry"
-                  (valueChange)="newInsuranceExpiry = $event"
-                />
-              </div>
-              <div>
-                <label>Refrendo / tenencia {{ currentYear }}</label>
-                <select [(ngModel)]="newTenencia">
-                  <option value="">—</option>
-                  @for (t of tenenciaOptions; track t.value) {
-                    <option [value]="t.value">{{ t.label }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label>Holograma de verificación</label>
-                <select [(ngModel)]="newVerificationHologram">
-                  <option value="">—</option>
-                  @for (h of hologramOptions; track h.value) {
-                    <option [value]="h.value">{{ h.label }}</option>
-                  }
-                </select>
-              </div>
-              <div>
-                <label>Fecha de próxima verificación</label>
-                <app-mx-date-input
-                  [value]="newNextVerificationDate"
-                  (valueChange)="newNextVerificationDate = $event"
-                />
-              </div>
-              <div>
-                <label>Notas adicionales</label>
-                <input type="text" [(ngModel)]="newVehicleNotes" placeholder="Color, versión...">
-              </div>
-            </div>
-            <button type="button" class="deal-outline-btn btn-with-icon" style="margin-top:10px;" (click)="addVehicle()" [disabled]="isAddingVehicle()">
+          @if (!showAddVehicleForm()) {
+            <button type="button" class="deal-outline-btn btn-with-icon" style="margin-top:4px;" (click)="openAddVehicleForm()">
               <svg lucidePlus [size]="14" aria-hidden="true"></svg>
-              {{ isAddingVehicle() ? 'Agregando...' : 'Agregar vehículo' }}
+              Agregar vehículo
             </button>
-          </div>
+          } @else {
+            <div class="vehicle-card" style="border-style:dashed;">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;">
+                <h5 style="margin:0;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(255,255,255,0.45);">Agregar vehículo</h5>
+                <button type="button" class="btn-ghost small" (click)="cancelAddVehicleForm()">Cancelar</button>
+              </div>
+              <div class="vehicle-form-grid">
+                <div class="full">
+                  <app-vehicle-mmy-select
+                    [(make)]="newMake"
+                    [(submodel)]="newModel"
+                    [(year)]="newYear"
+                  />
+                </div>
+                <div>
+                  <label>Placa</label>
+                  <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
+                </div>
+                <div>
+                  <label>Estado</label>
+                  <select [(ngModel)]="newVehicleState">
+                    <option value="">—</option>
+                    @for (st of mexicoStates; track st) {
+                      <option [value]="st">{{ st }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Engomado</label>
+                  <select [(ngModel)]="newEngomado">
+                    <option value="">—</option>
+                    @for (c of engomadoColors; track c.id) {
+                      <option [value]="c.id">{{ c.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Vencimiento póliza de seguro</label>
+                  <app-mx-date-input
+                    [value]="newInsuranceExpiry"
+                    (valueChange)="newInsuranceExpiry = $event"
+                  />
+                </div>
+                <div>
+                  <label>Refrendo / tenencia {{ currentYear }}</label>
+                  <select [(ngModel)]="newTenencia">
+                    <option value="">—</option>
+                    @for (t of tenenciaOptions; track t.value) {
+                      <option [value]="t.value">{{ t.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Holograma de verificación</label>
+                  <select [(ngModel)]="newVerificationHologram">
+                    <option value="">—</option>
+                    @for (h of hologramOptions; track h.value) {
+                      <option [value]="h.value">{{ h.label }}</option>
+                    }
+                  </select>
+                </div>
+                <div>
+                  <label>Fecha de próxima verificación</label>
+                  <app-mx-date-input
+                    [value]="newNextVerificationDate"
+                    (valueChange)="newNextVerificationDate = $event"
+                  />
+                </div>
+                <div>
+                  <label>Notas adicionales</label>
+                  <input type="text" [(ngModel)]="newVehicleNotes" placeholder="Color, versión...">
+                </div>
+              </div>
+              <button type="button" class="deal-outline-btn btn-with-icon" style="margin-top:10px;" (click)="addVehicle()" [disabled]="isAddingVehicle()">
+                <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+                {{ isAddingVehicle() ? 'Agregando...' : 'Guardar vehículo' }}
+              </button>
+            </div>
+          }
         </div>
 
         <div class="deal-section">

@@ -761,8 +761,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return 'Link';
   }
 
-  loadVehicles() {
-    this.vehiclesLoading.set(true);
+  loadVehicles(opts: { quiet?: boolean } = {}) {
+    const quiet = !!opts.quiet && this.vehicles().length > 0;
+    if (!quiet) this.vehiclesLoading.set(true);
     this.http.get<CrmContactVehicle[]>(`${environment.apiUrl}/client/vehicles`).subscribe({
       next: list => {
         this.vehicles.set(list);
@@ -773,6 +774,15 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.toast.error('No se pudieron cargar tus vehículos', 'Error');
       },
     });
+  }
+
+  private patchClientVehicleDocuments(
+    vehicleId: string,
+    updater: (docs: CrmContactVehicleDocument[]) => CrmContactVehicleDocument[],
+  ) {
+    this.vehicles.update((list) =>
+      list.map((v) => (v.id === vehicleId ? { ...v, documents: updater(v.documents || []) } : v)),
+    );
   }
 
   addVehicle() {
@@ -801,7 +811,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.isAddingVehicle.set(false);
         this.resetNewVehicleForm();
         this.showAddVehicleForm.set(false);
-        this.loadVehicles();
+        this.loadVehicles({ quiet: true });
         this.toast.success('Vehículo registrado', 'Listo');
       },
       error: (e) => {
@@ -855,7 +865,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         );
       },
       error: () => {
-        this.loadVehicles();
+        this.loadVehicles({ quiet: true });
         this.toast.error('No se pudo actualizar el vehículo', 'Error');
       },
     });
@@ -866,7 +876,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.delete(`${environment.apiUrl}/client/vehicles/${v.id}`).subscribe({
       next: () => {
         if (this.editingVehicleId() === v.id) this.editingVehicleId.set(null);
-        this.loadVehicles();
+        this.vehicles.update((list) => list.filter((item) => item.id !== v.id));
         this.toast.success('Vehículo eliminado', 'Listo');
       },
       error: () => this.toast.error('No se pudo eliminar el vehículo', 'Error'),
@@ -904,11 +914,15 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
           fileUrl: res.url,
           label,
         }).subscribe({
-          next: () => {
+          next: (doc) => {
             this.uploadingVehicleDocId.set(null);
             this.vehicleDocLabels[v.id] = '';
             input.value = '';
-            this.loadVehicles();
+            if (doc?.id) {
+              this.patchClientVehicleDocuments(v.id, (docs) => [...docs, doc]);
+            } else {
+              this.loadVehicles({ quiet: true });
+            }
             this.toast.success('Documento guardado en el vehículo.', 'Listo');
           },
           error: (e) => {
@@ -930,7 +944,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     if (!confirm('¿Eliminar este documento del vehículo?')) return;
     this.http.delete(`${environment.apiUrl}/client/vehicle-documents/${doc.id}`).subscribe({
       next: () => {
-        this.loadVehicles();
+        const vehicleId =
+          doc.vehicleId ||
+          this.vehicles().find((v) => (v.documents || []).some((d) => d.id === doc.id))?.id;
+        if (vehicleId) {
+          this.patchClientVehicleDocuments(vehicleId, (docs) => docs.filter((d) => d.id !== doc.id));
+        } else {
+          this.loadVehicles({ quiet: true });
+        }
         this.toast.success('Documento eliminado.', 'Listo');
       },
       error: () => this.toast.error('No se pudo eliminar.', 'Error'),

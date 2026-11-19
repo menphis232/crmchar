@@ -502,6 +502,7 @@ export class CrmContactPanelComponent {
     whatsappUrl?: string | null;
   } | null>(null);
   isAddingVehicle = signal(false);
+  showAddVehicleForm = signal(false);
   uploadingVehicleId = signal<string | null>(null);
   previewDoc = signal<CrmContactVehicleDocument | null>(null);
   labelingDocId = signal<string | null>(null);
@@ -559,6 +560,8 @@ export class CrmContactPanelComponent {
   constructor(private crmService: CrmService, private toast: ToastService) {
     effect(() => {
       const id = this.contactId();
+      this.showAddVehicleForm.set(false);
+      this.resetNewVehicleForm();
       if (id) this.load(id);
       else {
         this.data.set(null);
@@ -567,21 +570,28 @@ export class CrmContactPanelComponent {
     });
   }
 
-  private load(id: string) {
-    this.loading.set(true);
-    this.data.set(null);
+  private load(id: string, opts: { quiet?: boolean } = {}) {
+    const quiet = !!opts.quiet && !!this.data();
+    if (!quiet) {
+      this.loading.set(true);
+      this.data.set(null);
+    }
     this.crmService.getContact(id).subscribe({
       next: (d) => {
         if (this.contactId() !== id) return;
         const payload = { ...d, vehicles: d.vehicles || [] };
         this.data.set(payload);
-        this.syncFormFromContact(payload);
+        if (!quiet) this.syncFormFromContact(payload);
         this.loading.set(false);
-        this.loadWallet(id);
+        if (!quiet) this.loadWallet(id);
       },
       error: () => {
         if (this.contactId() !== id) return;
         this.loading.set(false);
+        if (quiet) {
+          this.toast.error('No se pudo actualizar la ficha');
+          return;
+        }
         this.toast.error('No se pudo abrir la ficha del cliente');
         this.closed.emit();
       },
@@ -650,6 +660,29 @@ export class CrmContactPanelComponent {
     );
   }
 
+  openAddVehicleForm() {
+    this.showAddVehicleForm.set(true);
+  }
+
+  cancelAddVehicleForm() {
+    this.showAddVehicleForm.set(false);
+    this.resetNewVehicleForm();
+  }
+
+  private resetNewVehicleForm() {
+    this.newPlate = '';
+    this.newMake = '';
+    this.newModel = '';
+    this.newYear = null;
+    this.newVehicleState = '';
+    this.newEngomado = '';
+    this.newVehicleNotes = '';
+    this.newInsuranceExpiry = '';
+    this.newTenencia = '';
+    this.newVerificationHologram = '';
+    this.newNextVerificationDate = '';
+  }
+
   addVehicle() {
     const id = this.contactId();
     if (!id || !this.newPlate.trim()) {
@@ -676,19 +709,10 @@ export class CrmContactPanelComponent {
     }).subscribe({
       next: () => {
         this.isAddingVehicle.set(false);
-        this.newPlate = '';
-        this.newMake = '';
-        this.newModel = '';
-        this.newYear = null;
-        this.newVehicleState = '';
-        this.newEngomado = '';
-        this.newVehicleNotes = '';
-        this.newInsuranceExpiry = '';
-        this.newTenencia = '';
-        this.newVerificationHologram = '';
-        this.newNextVerificationDate = '';
+        this.resetNewVehicleForm();
+        this.showAddVehicleForm.set(false);
         this.toast.success('Vehículo agregado');
-        this.load(id);
+        this.load(id, { quiet: true });
         this.updated.emit();
       },
       error: () => {
@@ -716,6 +740,20 @@ export class CrmContactPanelComponent {
     });
   }
 
+  private patchVehicleDocuments(
+    vehicleId: string,
+    updater: (docs: CrmContactVehicleDocument[]) => CrmContactVehicleDocument[],
+  ) {
+    const current = this.data();
+    if (!current) return;
+    this.data.set({
+      ...current,
+      vehicles: (current.vehicles || []).map((v) =>
+        v.id === vehicleId ? { ...v, documents: updater(v.documents || []) } : v,
+      ),
+    });
+  }
+
   updateVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
     const payload: Record<string, string | number | null> = { [field]: value };
     this.patchVehicleLocal(v.id, { [field]: value } as Partial<CrmContactVehicle>);
@@ -726,7 +764,7 @@ export class CrmContactPanelComponent {
       },
       error: () => {
         const id = this.contactId();
-        if (id) this.load(id);
+        if (id) this.load(id, { quiet: true });
         this.toast.error('Error al actualizar vehículo');
       },
     });
@@ -737,7 +775,7 @@ export class CrmContactPanelComponent {
     this.crmService.deleteContactVehicle(vehicleId).subscribe({
       next: () => {
         const id = this.contactId();
-        if (id) this.load(id);
+        if (id) this.load(id, { quiet: true });
         this.updated.emit();
       },
       error: () => this.toast.error('Error al eliminar vehículo'),
@@ -873,12 +911,16 @@ export class CrmContactPanelComponent {
           fileUrl: res.url,
           label,
         }).subscribe({
-          next: () => {
+          next: (doc) => {
             this.uploadingVehicleId.set(null);
             this.uploadLabelByVehicle[vehicle.id] = '';
             input.value = '';
-            const id = this.contactId();
-            if (id) this.load(id);
+            if (doc?.id) {
+              this.patchVehicleDocuments(vehicle.id, (docs) => [...docs, doc]);
+            } else {
+              const id = this.contactId();
+              if (id) this.load(id, { quiet: true });
+            }
             this.updated.emit();
             this.toast.success('Documento subido');
           },
@@ -955,11 +997,21 @@ export class CrmContactPanelComponent {
       return;
     }
     this.crmService.updateContactVehicleDocument(doc.id, label).subscribe({
-      next: () => {
+      next: (updated) => {
         this.labelingDocId.set(null);
         this.labelDraft = '';
-        const id = this.contactId();
-        if (id) this.load(id);
+        const vehicleId =
+          updated?.vehicleId ||
+          doc.vehicleId ||
+          this.data()?.vehicles?.find((v) => (v.documents || []).some((d) => d.id === doc.id))?.id;
+        if (vehicleId) {
+          this.patchVehicleDocuments(vehicleId, (docs) =>
+            docs.map((d) => (d.id === doc.id ? { ...d, ...(updated || {}), label } : d)),
+          );
+        } else {
+          const id = this.contactId();
+          if (id) this.load(id, { quiet: true });
+        }
         this.toast.success('Etiqueta actualizada');
       },
       error: (e) => this.toast.error(e.error?.error || 'Error al guardar etiqueta'),
@@ -970,8 +1022,15 @@ export class CrmContactPanelComponent {
     if (!confirm('¿Eliminar este documento del vehículo?')) return;
     this.crmService.deleteContactVehicleDocument(doc.id).subscribe({
       next: () => {
-        const id = this.contactId();
-        if (id) this.load(id);
+        const vehicleId =
+          doc.vehicleId ||
+          this.data()?.vehicles?.find((v) => (v.documents || []).some((d) => d.id === doc.id))?.id;
+        if (vehicleId) {
+          this.patchVehicleDocuments(vehicleId, (docs) => docs.filter((d) => d.id !== doc.id));
+        } else {
+          const id = this.contactId();
+          if (id) this.load(id, { quiet: true });
+        }
         this.updated.emit();
         this.toast.success('Documento eliminado');
       },
