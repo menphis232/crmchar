@@ -3,6 +3,10 @@ export const TVM_LOGO_URL =
 
 export const TVM_MAIN_SITE_URL = 'https://www.tramitesvehicularesdemexico.com/';
 
+export const TVM_TERMS_URL = 'https://www.tramitesvehicularesdemexico.com/terminos-y-condiciones';
+
+export const TVM_PRIVACY_URL = 'https://www.tramitesvehicularesdemexico.com/aviso-de-privacidad';
+
 export const TVM_BRAND_NAME = 'Trámites Vehiculares de México';
 
 export const AUTO_SHARE_TAGLINE = 'EL INVENTARIO DE SEMINUEVOS MÁS GRANDE DE MÉXICO';

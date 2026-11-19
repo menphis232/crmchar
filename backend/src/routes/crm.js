@@ -38,6 +38,8 @@ import {
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
+import { isUserOnline } from '../utils/presence.js';
+import { normalizeMxPhone } from '../utils/phone.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
 import Stripe from 'stripe';
 import {
@@ -1358,6 +1360,77 @@ router.get('/insurance-alerts', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar pólizas vencidas' });
+  }
+});
+
+/** Actividad de clientes con acceso al panel (online / last seen). */
+router.get('/client-activity', async (req, res) => {
+  try {
+    if (!['gestor', 'concesionaria'].includes(req.user.role) && req.user.role !== 'admin') {
+      // staff de gestoría también
+    }
+    const uid = req.orgId;
+    const pipeline = pipelineForRole(req.user.role === 'concesionaria' ? 'concesionaria' : 'gestor');
+    const contacts = await query(
+      `SELECT id, name, email, phone, whatsapp
+       FROM contacts
+       WHERE user_id = ? AND pipeline = ?
+       ORDER BY updated_at DESC
+       LIMIT 500`,
+      [uid, pipeline],
+    );
+
+    const byUser = new Map();
+    for (const c of contacts) {
+      const email = String(c.email || '').trim().toLowerCase();
+      const phone = normalizeMxPhone(c.phone || c.whatsapp || '');
+      let user = null;
+      if (email) {
+        user = await get("SELECT id, name, email, phone, last_seen_at, terms_accepted_at, created_at FROM users WHERE role = 'cliente' AND email = ?", [email]);
+      }
+      if (!user && phone) {
+        user = await get("SELECT id, name, email, phone, last_seen_at, terms_accepted_at, created_at FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+      }
+      if (!user) continue;
+      if (byUser.has(user.id)) {
+        const prev = byUser.get(user.id);
+        if (!prev.contactIds.includes(c.id)) prev.contactIds.push(c.id);
+        continue;
+      }
+      byUser.set(user.id, {
+        userId: user.id,
+        name: user.name || c.name,
+        email: user.email,
+        phone: user.phone,
+        contactId: c.id,
+        contactIds: [c.id],
+        contactName: c.name,
+        lastSeenAt: user.last_seen_at || null,
+        hasLoggedIn: !!user.last_seen_at,
+        termsAccepted: !!user.terms_accepted_at,
+        online: isUserOnline(user.id),
+        accountCreatedAt: user.created_at || null,
+      });
+    }
+
+    const items = [...byUser.values()].sort((a, b) => {
+      if (a.online !== b.online) return a.online ? -1 : 1;
+      const ta = a.lastSeenAt ? new Date(a.lastSeenAt).getTime() : 0;
+      const tb = b.lastSeenAt ? new Date(b.lastSeenAt).getTime() : 0;
+      return tb - ta;
+    });
+
+    res.json({
+      items,
+      totals: {
+        withAccess: items.length,
+        online: items.filter((i) => i.online).length,
+        everLoggedIn: items.filter((i) => i.hasLoggedIn).length,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar actividad de clientes' });
   }
 });
 

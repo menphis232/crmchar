@@ -39,6 +39,8 @@ export class AuthService {
     lastName?: string;
     companyName?: string;
     phone?: string;
+    acceptTerms?: boolean;
+    acceptPrivacy?: boolean;
   }) {
     return this.http.post<{
       token?: string;
@@ -136,5 +138,33 @@ export class AuthService {
         if (token) this.setSession(token, res.user);
       })
     );
+  }
+
+  acceptLegal(acceptTerms: boolean, acceptPrivacy: boolean) {
+    return this.http.post<{ ok: boolean; user: User }>(`${environment.apiUrl}/auth/accept-legal`, {
+      acceptTerms,
+      acceptPrivacy,
+    }).pipe(
+      tap((res) => {
+        const token = this.getToken();
+        const current = this.user();
+        if (token && current) {
+          this.setSession(token, {
+            ...current,
+            ...res.user,
+            needsLegalAcceptance: false,
+            terms_accepted_at: res.user.terms_accepted_at || new Date().toISOString(),
+            privacy_accepted_at: res.user.privacy_accepted_at || new Date().toISOString(),
+          });
+        }
+      }),
+    );
+  }
+
+  needsLegalAcceptance(): boolean {
+    const u = this.user();
+    if (!u) return false;
+    if (typeof u.needsLegalAcceptance === 'boolean') return u.needsLegalAcceptance;
+    return !u.terms_accepted_at || !u.privacy_accepted_at;
   }
 }

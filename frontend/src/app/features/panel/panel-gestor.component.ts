@@ -72,6 +72,8 @@ import {
   LucideZap,
   LucideWallet,
   LucideGraduationCap,
+  LucideActivity,
+  LucideRefreshCw,
 } from '@lucide/angular';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { PanelSubscriptionLockComponent } from './panel-subscription-lock.component';
@@ -97,7 +99,21 @@ import {
   GESTOR_SERVICE_IMAGE_SIZE_LABEL,
 } from '../../shared/gestor-media.constants';
 
-type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'servicios' | 'perfil' | 'asistente' | 'entrenar_ia' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
+type GestorTab = 'dashboard' | 'pipeline' | 'clientes' | 'actividad' | 'servicios' | 'perfil' | 'asistente' | 'entrenar_ia' | 'plantillas' | 'pdf_designer' | 'team' | 'peritos' | 'finanzas' | 'page_builder' | 'automatizaciones';
+
+type ClientActivityItem = {
+  userId: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  contactId: string;
+  contactName?: string;
+  lastSeenAt: string | null;
+  hasLoggedIn: boolean;
+  termsAccepted: boolean;
+  online: boolean;
+  accountCreatedAt?: string | null;
+};
 
 /** Constructor Web oculto hasta v2 */
 const SHOW_PAGE_BUILDER = false;
@@ -137,7 +153,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, CrmDealsBoardComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap, LucideActivity, LucideRefreshCw,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css', './panel-datta.css'],
@@ -269,6 +285,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   verificationAlerts = signal<CrmVerificationAlert[]>([]);
   insuranceAlerts = signal<CrmVerificationAlert[]>([]);
+  clientActivity = signal<ClientActivityItem[]>([]);
+  clientActivityTotals = signal<{ withAccess: number; online: number; everLoggedIn: number }>({
+    withAccess: 0,
+    online: 0,
+    everLoggedIn: 0,
+  });
+  clientActivityLoading = signal(false);
+  clientActivityError = signal('');
   isAiLoading = signal(false);
   message = signal('');
   editingServiceId: string | null = null;
@@ -432,11 +456,41 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     }
     if (t === 'pipeline') this.loadCrm();
     if (t === 'clientes') this.loadVerificationAlerts();
+    if (t === 'actividad') this.loadClientActivity();
     if (t === 'plantillas') this.loadTemplates();
     if (t === 'automatizaciones') {
       this.syncCrmStagesFromDashboard();
       this.loadAutomations();
     }
+  }
+
+  loadClientActivity() {
+    this.clientActivityLoading.set(true);
+    this.clientActivityError.set('');
+    this.crmService.getClientActivity().subscribe({
+      next: (res) => {
+        this.clientActivity.set(res.items || []);
+        this.clientActivityTotals.set(res.totals || { withAccess: 0, online: 0, everLoggedIn: 0 });
+        this.clientActivityLoading.set(false);
+      },
+      error: (e) => {
+        this.clientActivityLoading.set(false);
+        this.clientActivityError.set(e.error?.error || 'No se pudo cargar la actividad');
+      },
+    });
+  }
+
+  formatLastSeen(value: string | null | undefined): string {
+    if (!value) return 'Nunca';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'Nunca';
+    return d.toLocaleString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   loadCrmSummary() {

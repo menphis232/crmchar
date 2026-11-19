@@ -279,6 +279,24 @@ export class CrmService {
   getInsuranceAlerts() {
     return this.http.get<CrmVerificationAlert[]>(`${this.base}/insurance-alerts`);
   }
+  getClientActivity() {
+    return this.http.get<{
+      items: Array<{
+        userId: string;
+        name: string;
+        email?: string | null;
+        phone?: string | null;
+        contactId: string;
+        contactName?: string;
+        lastSeenAt: string | null;
+        hasLoggedIn: boolean;
+        termsAccepted: boolean;
+        online: boolean;
+        accountCreatedAt?: string | null;
+      }>;
+      totals: { withAccess: number; online: number; everLoggedIn: number };
+    }>(`${this.base}/client-activity`);
+  }
   createTask(dealId: string, title: string, dueAt: string) {
     return this.http.post(`${this.base}/deals/${dealId}/tasks`, { title, dueAt });
   }

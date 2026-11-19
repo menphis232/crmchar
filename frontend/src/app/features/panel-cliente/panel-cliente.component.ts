@@ -331,6 +331,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   messages = signal<any[]>([]);
   newMessage = '';
   socket!: Socket;
+  private presenceTimer: ReturnType<typeof setInterval> | null = null;
   chatLoading = signal(false);
   uploadingFile = signal(false);
 
@@ -416,6 +417,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
     const user = this.auth.user();
     if (user) this.socket.emit('identify', user.id);
+    this.socket.on('connect', () => {
+      const u = this.auth.user();
+      if (u) this.socket.emit('identify', u.id);
+    });
+    this.presenceTimer = setInterval(() => {
+      if (this.socket?.connected) this.socket.emit('presence_ping');
+    }, 45000);
 
     this.socket.on('receive_message', (msg: any) => {
       this.zone.run(() => {
@@ -449,6 +457,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     this.narrowViewportMq?.removeEventListener('change', this.onNarrowViewportChange);
+    if (this.presenceTimer) {
+      clearInterval(this.presenceTimer);
+      this.presenceTimer = null;
+    }
     if (this.socket) this.socket.disconnect();
   }
 

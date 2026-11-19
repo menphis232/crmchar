@@ -24,10 +24,11 @@ import peritoRoutes from './routes/perito.js';
 import mpRoutes from './routes/mp.js';
 import supportRoutes from './routes/support.js';
 import knowledgeRoutes from './routes/knowledge.js';
-import { testConnection } from './db.js';
+import { testConnection, run } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkStalledDeals } from './crm/automations.js';
+import { markOnline, markOffline } from './utils/presence.js';
 import { startAutomationsCron } from './cron/automations.js';
 import { redirectToFrontend } from './utils/frontend-url.js';
 import { setSocketIo } from './utils/socket-events.js';
@@ -102,12 +103,27 @@ const isProd = process.env.NODE_ENV === 'production';
 // Socket.io connection handling
 io.on('connection', (socket) => {
   if (!isProd) console.log('Socket connected:', socket.id);
-  
+  let identifiedUserId = null;
+
   socket.on('identify', (payload) => {
     const userId = typeof payload === 'object' && payload !== null ? payload.userId : payload;
     const orgId = typeof payload === 'object' && payload !== null ? payload.orgId : null;
-    if (userId) socket.join('user_' + userId);
+    if (identifiedUserId && identifiedUserId !== userId) {
+      markOffline(identifiedUserId, socket.id);
+    }
+    identifiedUserId = userId ? String(userId) : null;
+    if (userId) {
+      socket.join('user_' + userId);
+      markOnline(userId, socket.id);
+      run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [userId]).catch(() => {});
+    }
     if (orgId && orgId !== userId) socket.join('user_' + orgId);
+  });
+
+  socket.on('presence_ping', () => {
+    if (!identifiedUserId) return;
+    markOnline(identifiedUserId, socket.id);
+    run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [identifiedUserId]).catch(() => {});
   });
 
   socket.on('join_deal', (dealId) => {
@@ -134,6 +150,10 @@ io.on('connection', (socket) => {
     if (data?.clientId) {
       io.to(`support_${String(data.clientId)}`).emit('receive_support_message', data);
     }
+  });
+
+  socket.on('disconnect', () => {
+    if (identifiedUserId) markOffline(identifiedUserId, socket.id);
   });
 });
 

@@ -100,6 +100,12 @@
         Contactos
       </button>
     }
+    @if (hasPerm('pipeline')) {
+      <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'actividad'" (click)="setTab('actividad'); isMobileMenuOpen.set(false)">
+        <svg lucideActivity [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Actividad
+      </button>
+    }
     @if (hasPerm('servicios')) {
       <button class="dash-link dash-link-with-icon" [class.active]="tab() === 'servicios'" (click)="setTab('servicios'); isMobileMenuOpen.set(false)">
         <svg lucideWrench [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
@@ -448,6 +454,85 @@
 
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
       <app-crm-clients-directory (openContact)="openClientContact($event)" />
+    }
+
+    @if (tab() === 'actividad' && hasPerm('pipeline')) {
+      <div class="mon-board">
+        <header class="mon-board-head">
+          <div>
+            <h2 class="mon-board-title">Actividad de clientes</h2>
+            <p class="mon-board-desc">Quién está en línea, quién ya entró alguna vez y la última vez que usó el panel.</p>
+          </div>
+          <button type="button" class="mon-btn-primary" (click)="loadClientActivity()" [disabled]="clientActivityLoading()">
+            <svg lucideRefreshCw [size]="16" aria-hidden="true"></svg>
+            {{ clientActivityLoading() ? 'Actualizando...' : 'Actualizar' }}
+          </button>
+        </header>
+
+        <div class="activity-kpis">
+          <div class="activity-kpi">
+            <span class="activity-kpi-label">Con acceso</span>
+            <strong>{{ clientActivityTotals().withAccess }}</strong>
+          </div>
+          <div class="activity-kpi activity-kpi--online">
+            <span class="activity-kpi-label">En línea ahora</span>
+            <strong>{{ clientActivityTotals().online }}</strong>
+          </div>
+          <div class="activity-kpi">
+            <span class="activity-kpi-label">Alguna vez entraron</span>
+            <strong>{{ clientActivityTotals().everLoggedIn }}</strong>
+          </div>
+        </div>
+
+        @if (clientActivityError()) {
+          <p class="error-msg">{{ clientActivityError() }}</p>
+        }
+
+        <div class="mon-table-wrap">
+          <table class="mon-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>¿Entró alguna vez?</th>
+                <th>Última vez</th>
+                <th>Términos</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of clientActivity(); track row.userId) {
+                <tr>
+                  <td>
+                    <strong>{{ row.name || row.contactName || 'Sin nombre' }}</strong>
+                    <div class="activity-meta">{{ row.email || row.phone || '—' }}</div>
+                  </td>
+                  <td>
+                    <span class="activity-dot" [class.online]="row.online"></span>
+                    {{ row.online ? 'En línea' : 'Fuera de línea' }}
+                  </td>
+                  <td>{{ row.hasLoggedIn ? 'Sí' : 'No' }}</td>
+                  <td>{{ formatLastSeen(row.lastSeenAt) }}</td>
+                  <td>{{ row.termsAccepted ? 'Aceptados' : 'Pendiente' }}</td>
+                  <td>
+                    <button type="button" class="link-btn" (click)="openClientContact(row.contactId)">Ver contacto</button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="activity-empty">
+                    @if (clientActivityLoading()) {
+                      Cargando actividad…
+                    } @else {
+                      Aún no hay clientes con acceso al panel vinculados a tus contactos.
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
     }
 
     <!-- ── SERVICIOS ── -->

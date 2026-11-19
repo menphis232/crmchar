@@ -7,6 +7,7 @@ import { environment } from '../../environments/environment';
 export class SocketService implements OnDestroy {
   private socket: Socket | null = null;
   private identifiedKey: string | null = null;
+  private presenceTimer: ReturnType<typeof setInterval> | null = null;
 
   connect(userId: string, orgId?: string): Socket {
     const identifyKey = `${userId}:${orgId || userId}`;
@@ -17,6 +18,7 @@ export class SocketService implements OnDestroy {
         this.socket.emit('identify', payload);
         this.identifiedKey = identifyKey;
       }
+      this.startPresencePing();
       return this.socket;
     }
 
@@ -31,14 +33,30 @@ export class SocketService implements OnDestroy {
 
     this.socket.on('connect', () => {
       this.socket?.emit('identify', payload);
+      this.startPresencePing();
     });
 
     this.identifiedKey = identifyKey;
     if (this.socket.connected) {
       this.socket.emit('identify', payload);
+      this.startPresencePing();
     }
 
     return this.socket;
+  }
+
+  private startPresencePing() {
+    if (this.presenceTimer) return;
+    this.presenceTimer = setInterval(() => {
+      if (this.socket?.connected) this.socket.emit('presence_ping');
+    }, 45000);
+  }
+
+  private stopPresencePing() {
+    if (this.presenceTimer) {
+      clearInterval(this.presenceTimer);
+      this.presenceTimer = null;
+    }
   }
 
   get connected(): boolean {
@@ -59,6 +77,7 @@ export class SocketService implements OnDestroy {
   }
 
   disconnect(): void {
+    this.stopPresencePing();
     this.socket?.disconnect();
     this.socket?.removeAllListeners();
     this.socket = null;

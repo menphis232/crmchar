@@ -5,12 +5,14 @@ import { AnalyticsTrackerService } from './core/analytics-tracker.service';
 import { OneSignalService } from './core/onesignal.service';
 import { AuthService } from './core/auth.service';
 import { ColorModeService } from './core/color-mode.service';
+import { LegalAcceptanceModalComponent } from './shared/legal-acceptance-modal.component';
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, LegalAcceptanceModalComponent],
   template: `
     <router-outlet />
+    <app-legal-acceptance-modal />
   `,
 })
 export class AppComponent implements OnInit {
@@ -30,6 +32,8 @@ export class AppComponent implements OnInit {
     const user = this.auth.user();
     if (user?.id) {
       this.oneSignal.syncUser(user.id, user.role);
+      // Refresca términos / last_seen para el modal legal y presencia.
+      this.auth.getMe().subscribe({ error: () => {} });
     }
   }
 }

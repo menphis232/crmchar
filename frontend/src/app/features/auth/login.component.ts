@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
-import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
+import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, TVM_PRIVACY_URL, TVM_TERMS_URL } from '../../shared/brand.constants';
 
 export type LoginRole = 'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'perito';
 
@@ -17,6 +17,8 @@ export type LoginRole = 'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'peri
 export class LoginComponent implements OnInit, OnDestroy {
   readonly tvmMainSite = TVM_MAIN_SITE_URL;
   readonly tvmLogo = TVM_LOGO_URL;
+  readonly termsUrl = TVM_TERMS_URL;
+  readonly privacyUrl = TVM_PRIVACY_URL;
 
   mode = signal<'login' | 'register' | 'forgot'>('login');
   role = signal<LoginRole>('cliente');
@@ -27,6 +29,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   lastName = '';
   companyName = '';
   phone = '';
+  acceptTerms = false;
+  acceptPrivacy = false;
   error = signal('');
   successMsg = signal('');
   loading = signal(false);
@@ -106,6 +110,12 @@ export class LoginComponent implements OnInit, OnDestroy {
     this.successMsg.set('');
 
     const role = this.role();
+    if (!this.acceptTerms || !this.acceptPrivacy) {
+      this.loading.set(false);
+      this.error.set('Debes aceptar los Términos y condiciones y el Aviso de privacidad.');
+      return;
+    }
+
     const payload: {
       email: string;
       password: string;
@@ -115,10 +125,14 @@ export class LoginComponent implements OnInit, OnDestroy {
       lastName?: string;
       companyName?: string;
       phone?: string;
+      acceptTerms: boolean;
+      acceptPrivacy: boolean;
     } = {
       email: this.email.trim(),
       password: this.password,
       role,
+      acceptTerms: true,
+      acceptPrivacy: true,
     };
 
     if (role === 'gestor') {

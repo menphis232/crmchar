@@ -189,6 +189,30 @@
   background: rgba(186,201,207,0.06);
 }
 
+.legal-accept {
+  text-align: left;
+  margin: 4px 0 18px;
+  display: grid;
+  gap: 10px;
+}
+.legal-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.45;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+}
+.legal-check input {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.legal-check a {
+  color: #7dd3fc;
+  text-decoration: underline;
+}
+
 .portal-picker {
   position: relative;
   margin-bottom: 28px;

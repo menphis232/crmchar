@@ -24,6 +24,10 @@ export interface User {
   parent_id?: string;
   permissions?: string[];
   avatar_url?: string;
+  terms_accepted_at?: string | null;
+  privacy_accepted_at?: string | null;
+  last_seen_at?: string | null;
+  needsLegalAcceptance?: boolean;
   logo_url?: string;
   pdf_settings?: {
     layout: string[];

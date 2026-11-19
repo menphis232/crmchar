@@ -107,6 +107,25 @@
           }
         </div>
 
+        @if (mode() === 'register' && role() !== 'admin' && role() !== 'perito') {
+          <div class="legal-accept">
+            <label class="legal-check">
+              <input type="checkbox" [(ngModel)]="acceptTerms" name="acceptTerms" />
+              <span>
+                Acepto los
+                <a [href]="termsUrl" target="_blank" rel="noopener noreferrer">Términos y condiciones</a>
+              </span>
+            </label>
+            <label class="legal-check">
+              <input type="checkbox" [(ngModel)]="acceptPrivacy" name="acceptPrivacy" />
+              <span>
+                Acepto el
+                <a [href]="privacyUrl" target="_blank" rel="noopener noreferrer">Aviso de privacidad</a>
+              </span>
+            </label>
+          </div>
+        }
+
         @if (error()) {
           <p class="error-msg">{{ error() }}</p>
         }

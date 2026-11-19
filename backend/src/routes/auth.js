@@ -60,10 +60,17 @@ router.post('/register', async (req, res) => {
       lastName,
       companyName,
       phone,
+      acceptTerms,
+      acceptPrivacy,
     } = req.body;
 
     if (!email || !password || !role) {
       return res.status(400).json({ error: 'Faltan campos obligatorios' });
+    }
+    if (!acceptTerms || !acceptPrivacy) {
+      return res.status(400).json({
+        error: 'Debes aceptar los Términos y condiciones y el Aviso de privacidad para registrarte',
+      });
     }
     if (String(password).length < 6) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
@@ -117,7 +124,10 @@ router.post('/register', async (req, res) => {
 
     const hash = bcrypt.hashSync(password, 10);
     await run(
-      'INSERT INTO users (id, email, password_hash, role, name, status, phone) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO users (
+         id, email, password_hash, role, name, status, phone,
+         terms_accepted_at, privacy_accepted_at, last_seen_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
       [userId, email.toLowerCase(), hash, role, displayName, initialStatus, phoneValue || null],
     );
 
@@ -271,12 +281,15 @@ router.post('/login', async (req, res) => {
     if (!user || !bcrypt.compareSync(password, user.password_hash)) {
       return res.status(401).json({ error: 'Credenciales incorrectas' });
     }
+    await run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
+    user.last_seen_at = new Date().toISOString();
     if (user.permissions && typeof user.permissions === 'string') {
       try { user.permissions = JSON.parse(user.permissions); } catch(e){}
     }
     const subscriptionStatus = await getOrgSubscriptionStatus(user.id, user.parent_id);
     const { password_hash, status: _s, ...safe } = user;
     safe.status = subscriptionStatus;
+    safe.needsLegalAcceptance = !user.terms_accepted_at || !user.privacy_accepted_at;
     if (user.parent_id) {
       const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [user.parent_id]);
       safe.payment_failed_count = org?.payment_failed_count || 0;
@@ -336,10 +349,12 @@ router.post('/forgot-password', async (req, res) => {
 
 router.get('/me', authRequired, async (req, res) => {
   try {
-    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, profile_type, address, map_embed_url, crm_stages, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await get('SELECT id, email, role, name, avatar_url, parent_id, permissions, status, payment_failed_count, logo_url, pdf_settings, google_analytics_id, stripe_secret_key, stripe_public_key, stripe_price_id, stripe_price_id_gestor, mp_access_token, mp_public_key, page_builder_config, ai_provider, ai_api_key, chatbot_bg_color, chatbot_btn_color, chatbot_text_color, panel_assistant_enabled, panel_assistant_name, panel_assistant_position, panel_assistant_bg_color, panel_assistant_btn_color, panel_assistant_text_color, panel_assistant_font, panel_assistant_prompt, ai_training, chat_ai_auto_reply_enabled, chat_ai_inactivity_minutes, slug, description, phone, profile_type, address, map_embed_url, crm_stages, terms_accepted_at, privacy_accepted_at, last_seen_at, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
 
     user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
+    user.needsLegalAcceptance = !user.terms_accepted_at || !user.privacy_accepted_at;
+    await run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
     if (user.parent_id) {
       const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [user.parent_id]);
       user.payment_failed_count = org?.payment_failed_count || 0;
@@ -416,6 +431,40 @@ router.get('/me', authRequired, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al obtener perfil' });
+  }
+});
+
+/** Aceptación de términos + aviso (registro propio o primer acceso de cuenta creada por gestoría). */
+router.post('/accept-legal', authRequired, async (req, res) => {
+  try {
+    const { acceptTerms, acceptPrivacy } = req.body || {};
+    if (!acceptTerms || !acceptPrivacy) {
+      return res.status(400).json({
+        error: 'Debes aceptar los Términos y condiciones y el Aviso de privacidad',
+      });
+    }
+    await run(
+      `UPDATE users
+       SET terms_accepted_at = COALESCE(terms_accepted_at, NOW()),
+           privacy_accepted_at = COALESCE(privacy_accepted_at, NOW()),
+           last_seen_at = NOW()
+       WHERE id = ?`,
+      [req.user.id],
+    );
+    const user = await get(
+      'SELECT id, email, role, name, terms_accepted_at, privacy_accepted_at, last_seen_at FROM users WHERE id = ?',
+      [req.user.id],
+    );
+    res.json({
+      ok: true,
+      user: {
+        ...user,
+        needsLegalAcceptance: !user?.terms_accepted_at || !user?.privacy_accepted_at,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo guardar la aceptación' });
   }
 });
 
