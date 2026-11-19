@@ -127,26 +127,34 @@
   letter-spacing: 0;
 }
 
-/* Desktop: avatar grande a la izquierda del menú lateral (donde ya estaba) */
+/* Desktop: quitar bloque avatar+nombre del sidebar; agrandar avatar del header (derecha) */
 @media (min-width: 992px) {
-  :host .dash-sidebar .client-sidebar-avatar {
-    display: inline-flex !important;
+  :host .dash-sidebar .datta-brand {
+    display: none !important;
+  }
+
+  :host.panel-datta {
+    --mon-header: 88px;
+    --datta-header: 88px;
+    --nav-h: 88px;
+  }
+
+  :host .dash-nav {
+    height: 88px !important;
+    min-height: 88px !important;
+    max-height: 88px !important;
+  }
+
+  :host .dash-user ::ng-deep .panel-avatar,
+  :host .dash-user ::ng-deep button.panel-avatar {
     width: 72px !important;
     height: 72px !important;
-  }
-
-  :host .dash-sidebar .client-sidebar-avatar-initials {
-    font-size: 24px;
-  }
-
-  :host .dash-sidebar .datta-brand {
-    gap: 14px;
-    padding: 16px !important;
-    min-height: 96px;
-  }
-
-  :host .dash-sidebar .datta-brand-title {
-    font-size: 16px !important;
+    min-width: 72px !important;
+    min-height: 72px !important;
+    max-width: none !important;
+    max-height: none !important;
+    font-size: 24px !important;
+    border-width: 2px !important;
   }
 }
 
