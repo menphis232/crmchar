@@ -1117,6 +1117,7 @@ router.get('/contacts', async (req, res) => {
     const tramite = String(req.query.tramite || '').trim();
     const engomado = String(req.query.engomado || '').trim();
     const estado = String(req.query.estado || '').trim();
+    const poliza = String(req.query.poliza || '').trim().toLowerCase();
 
     const where = ['c.user_id = ?', 'c.pipeline = ?'];
     const params = [uid, pipeline];
@@ -1166,6 +1167,15 @@ router.get('/contacts', async (req, res) => {
       params.push(uid, dealType, tramite);
     }
 
+    if (poliza === 'vencida') {
+      where.push(`EXISTS (
+        SELECT 1 FROM contact_vehicles cvp
+        WHERE cvp.contact_id = c.id
+          AND cvp.insurance_expiry IS NOT NULL
+          AND cvp.insurance_expiry < CURDATE()
+      )`);
+    }
+
     const whereSql = where.join(' AND ');
 
     const countRow = await get(`
@@ -1185,7 +1195,12 @@ router.get('/contacts', async (req, res) => {
         COUNT(DISTINCT cv.id) as vehicleCount,
         GROUP_CONCAT(DISTINCT cv.plate ORDER BY cv.plate SEPARATOR ', ') as plates,
         GROUP_CONCAT(DISTINCT cv.engomado_color ORDER BY cv.engomado_color SEPARATOR ',') as engomados,
-        GROUP_CONCAT(DISTINCT CONCAT(cv.plate, '|', COALESCE(cv.engomado_color, ''), '|', COALESCE(cv.state, '')) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
+        GROUP_CONCAT(DISTINCT CONCAT(
+          cv.plate, '|',
+          COALESCE(cv.engomado_color, ''), '|',
+          COALESCE(cv.state, ''), '|',
+          COALESCE(DATE_FORMAT(cv.insurance_expiry, '%Y-%m-%d'), '')
+        ) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
         GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
       FROM contacts c
       LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?${dealJoinAccess.sql}
@@ -1210,8 +1225,17 @@ router.get('/contacts', async (req, res) => {
         engomados: r.engomados ? r.engomados.split(',').filter(Boolean) : [],
         vehicles: r.vehicleSummary
           ? r.vehicleSummary.split(';;').filter(Boolean).map((v) => {
-            const [plate, engomado, state] = v.split('|');
-            return { plate, engomado: engomado || null, state: state || null };
+            const [plate, engomado, state, insuranceExpiry] = v.split('|');
+            const expiry = insuranceExpiry || null;
+            const today = new Date();
+            const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            return {
+              plate,
+              engomado: engomado || null,
+              state: state || null,
+              insuranceExpiry: expiry,
+              insuranceExpired: !!(expiry && expiry < ymd),
+            };
           })
           : [],
         tramites: r.tramites || undefined,
@@ -1303,6 +1327,37 @@ router.get('/verification-alerts', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar alertas de verificación' });
+  }
+});
+
+router.get('/insurance-alerts', async (req, res) => {
+  try {
+    const uid = req.orgId;
+    const rows = await query(`
+      SELECT cv.*, c.name as contact_name, c.phone as contact_phone, c.email as contact_email
+      FROM contact_vehicles cv
+      JOIN contacts c ON c.id = cv.contact_id
+      WHERE cv.user_id = ?
+        AND cv.insurance_expiry IS NOT NULL
+        AND cv.insurance_expiry < CURDATE()
+      ORDER BY cv.insurance_expiry ASC, cv.plate ASC
+    `, [uid]);
+
+    res.json(rows.map((row) => {
+      const vehicle = vehicleRowWithVerification(row);
+      return {
+        ...vehicle,
+        contactName: row.contact_name,
+        contactPhone: row.contact_phone,
+        contactEmail: row.contact_email,
+        verificationLabel: vehicle.insuranceExpiry
+          ? `Póliza vencida el ${vehicle.insuranceExpiry}`
+          : 'Póliza vencida',
+      };
+    }));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar pólizas vencidas' });
   }
 });
 

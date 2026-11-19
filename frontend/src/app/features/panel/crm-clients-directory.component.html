@@ -86,6 +86,10 @@
         <option [value]="st">{{ st }}</option>
       }
     </select>
+    <select aria-label="Filtrar por póliza de seguro" [ngModel]="filterPoliza()" (ngModelChange)="filterPoliza.set($event); onFilterChange()">
+      <option value="">Cualquier póliza</option>
+      <option value="vencida">Pólizas vencidas</option>
+    </select>
     @if (hasActiveFilters()) {
       <button type="button" class="clients-link" (click)="clearFilters()">Limpiar filtros</button>
     }
@@ -168,7 +172,7 @@
                     @if (c.vehicles?.length) {
                       <div class="client-vehicles">
                         @for (v of c.vehicles!.slice(0, 3); track v.plate) {
-                          <span class="plate-chip" [title]="plateChipTitle(v)">
+                          <span class="plate-chip" [class.plate-chip--expired]="v.insuranceExpired" [title]="plateChipTitle(v)">
                             <span class="engomado-dot" [attr.data-color]="v.engomado || 'none'" aria-hidden="true"></span>
                             {{ v.plate }}@if (v.state) { · {{ v.state }} }
                           </span>
@@ -177,6 +181,9 @@
                           <span class="mon-muted">+{{ c.vehicles!.length - 3 }}</span>
                         }
                       </div>
+                      @if (hasExpiredInsurance(c)) {
+                        <span class="poliza-badge">Póliza vencida</span>
+                      }
                     } @else {
                       <span class="mon-muted">Sin vehículos</span>
                     }

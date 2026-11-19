@@ -807,11 +807,31 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.newNextVerificationDate = '';
   }
 
+  isInsuranceExpired(date: string | null | undefined): boolean {
+    if (!date) return false;
+    const d = String(date).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+    const now = new Date();
+    const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return d < ymd;
+  }
+
   updateClientVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
     const payload: Record<string, string | number | null> = { [field]: value };
+    this.vehicles.update((list) =>
+      list.map((item) => (item.id === v.id ? { ...item, [field]: value } as CrmContactVehicle : item)),
+    );
     this.http.patch<CrmContactVehicle>(`${environment.apiUrl}/client/vehicles/${v.id}`, payload).subscribe({
-      next: () => this.loadVehicles(),
-      error: () => this.toast.error('No se pudo actualizar el vehículo', 'Error'),
+      next: (updated) => {
+        if (!updated?.id) return;
+        this.vehicles.update((list) =>
+          list.map((item) => (item.id === updated.id ? { ...item, ...updated } : item)),
+        );
+      },
+      error: () => {
+        this.loadVehicles();
+        this.toast.error('No se pudo actualizar el vehículo', 'Error');
+      },
     });
   }
 

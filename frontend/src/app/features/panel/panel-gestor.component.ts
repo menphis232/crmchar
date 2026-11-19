@@ -268,6 +268,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   logoCropFile = signal<File | null>(null);
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   verificationAlerts = signal<CrmVerificationAlert[]>([]);
+  insuranceAlerts = signal<CrmVerificationAlert[]>([]);
   isAiLoading = signal(false);
   message = signal('');
   editingServiceId: string | null = null;
@@ -452,6 +453,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.crmService.getVerificationAlerts().subscribe({
       next: (alerts) => this.verificationAlerts.set(alerts),
       error: () => this.verificationAlerts.set([]),
+    });
+    this.crmService.getInsuranceAlerts().subscribe({
+      next: (alerts) => this.insuranceAlerts.set(alerts),
+      error: () => this.insuranceAlerts.set([]),
     });
   }
 

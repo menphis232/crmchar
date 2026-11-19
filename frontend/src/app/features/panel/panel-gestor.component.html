@@ -307,6 +307,27 @@
         }
       </div>
 
+      @if (insuranceAlerts().length > 0) {
+        <div class="dash-card">
+          <h2 class="card-title card-title-with-icon">
+            <svg lucideTriangleAlert [size]="18" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+            Pólizas de seguro vencidas
+          </h2>
+          <p class="card-desc">Clientes con póliza vencida — útiles para campañas de renovación. También puedes filtrarlos en Contactos.</p>
+          @for (a of insuranceAlerts(); track a.id) {
+            <button type="button" class="inbox-row" (click)="openClientContact(a.contactId)">
+              <div>
+                <strong>{{ a.contactName }}</strong>
+                <p class="card-desc" style="margin:4px 0 0;">
+                  Placa {{ a.plate }}@if (a.engomadoColor) { · Engomado {{ a.engomadoColor }} }
+                </p>
+              </div>
+              <span class="status-badge" style="color:#e2445c;">{{ a.verificationLabel }}</span>
+            </button>
+          }
+        </div>
+      }
+
       @if (verificationAlerts().length > 0) {
         <div class="dash-card">
           <h2 class="card-title card-title-with-icon">

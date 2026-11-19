@@ -457,6 +457,19 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       border-color: #0060c2;
       color: #fff;
     }
+    .field-expired label { color: #e2445c !important; font-weight: 700; }
+    .field-expired input[type="date"] {
+      border-color: #e2445c !important;
+      color: #e2445c !important;
+      -webkit-text-fill-color: #e2445c !important;
+      background: rgba(226, 68, 92, 0.08) !important;
+    }
+    .expiry-alert {
+      margin: 6px 0 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2445c;
+    }
   `],
 })
 export class CrmContactPanelComponent {
@@ -682,15 +695,37 @@ export class CrmContactPanelComponent {
     });
   }
 
+  isInsuranceExpired(date: string | null | undefined): boolean {
+    if (!date) return false;
+    const d = String(date).slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+    const now = new Date();
+    const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return d < ymd;
+  }
+
+  private patchVehicleLocal(vehicleId: string, patch: Partial<CrmContactVehicle>) {
+    const current = this.data();
+    if (!current) return;
+    this.data.set({
+      ...current,
+      vehicles: (current.vehicles || []).map((v) => (v.id === vehicleId ? { ...v, ...patch } : v)),
+    });
+  }
+
   updateVehicle(v: CrmContactVehicle, field: string, value: string | number | null) {
     const payload: Record<string, string | number | null> = { [field]: value };
+    this.patchVehicleLocal(v.id, { [field]: value } as Partial<CrmContactVehicle>);
     this.crmService.updateContactVehicle(v.id, payload).subscribe({
-      next: () => {
-        const id = this.contactId();
-        if (id) this.load(id);
+      next: (updated) => {
+        if (updated?.id) this.patchVehicleLocal(v.id, updated);
         this.updated.emit();
       },
-      error: () => this.toast.error('Error al actualizar vehículo'),
+      error: () => {
+        const id = this.contactId();
+        if (id) this.load(id);
+        this.toast.error('Error al actualizar vehículo');
+      },
     });
   }
 

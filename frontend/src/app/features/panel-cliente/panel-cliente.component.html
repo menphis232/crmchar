@@ -728,7 +728,10 @@
                         <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
                       }
                       @if (v.insuranceExpiry) {
-                        <span class="client-vehicle-tag">Seguro {{ v.insuranceExpiry | date:'dd/MM/yy' }}</span>
+                        <span class="client-vehicle-tag" [class.insurance-expired]="isInsuranceExpired(v.insuranceExpiry)">
+                          Seguro {{ v.insuranceExpiry | date:'dd/MM/yy' }}
+                          @if (isInsuranceExpired(v.insuranceExpiry)) { · Vencida }
+                        </span>
                       }
                     </div>
                   }
@@ -781,9 +784,12 @@
                       }
                     </select>
                   </div>
-                  <div>
+                  <div [class.field-expired]="isInsuranceExpired(v.insuranceExpiry)">
                     <label>Vencimiento póliza de seguro</label>
-                    <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateClientVehicle(v, 'insuranceExpiry', $event)">
+                    <input type="date" [ngModel]="v.insuranceExpiry || ''" (change)="updateClientVehicle(v, 'insuranceExpiry', $any($event.target).value)">
+                    @if (isInsuranceExpired(v.insuranceExpiry)) {
+                      <p class="expiry-alert">Tu póliza está vencida. Renueva para circular sin riesgos.</p>
+                    }
                   </div>
                   <div>
                     <label>Refrendo / tenencia {{ currentYear }}</label>
@@ -805,7 +811,7 @@
                   </div>
                   <div>
                     <label>Fecha de próxima verificación</label>
-                    <input type="date" [ngModel]="v.nextVerificationDate || ''" (ngModelChange)="updateClientVehicle(v, 'nextVerificationDate', $event)">
+                    <input type="date" [ngModel]="v.nextVerificationDate || ''" (change)="updateClientVehicle(v, 'nextVerificationDate', $any($event.target).value)">
                   </div>
                 </div>
               } @else {
@@ -830,11 +836,14 @@
                     <dt>Engomado</dt>
                     <dd>{{ vehicleFact(engomadoLabel(v.engomadoColor) || v.engomadoColor) }}</dd>
                   </div>
-                  <div class="client-vehicle-fact">
+                  <div class="client-vehicle-fact" [class.fact-expired]="isInsuranceExpired(v.insuranceExpiry)">
                     <dt>Vencimiento póliza</dt>
                     <dd>
                       @if (v.insuranceExpiry) {
                         {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}
+                        @if (isInsuranceExpired(v.insuranceExpiry)) {
+                          <span class="expiry-alert-inline"> · Vencida</span>
+                        }
                       } @else {
                         —
                       }

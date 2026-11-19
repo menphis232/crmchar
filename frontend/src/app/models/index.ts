@@ -438,7 +438,13 @@ export interface CrmContact {
   vehicleCount?: number;
   plates?: string;
   engomados?: string[];
-  vehicles?: { plate: string; engomado: string | null; state?: string | null }[];
+  vehicles?: {
+    plate: string;
+    engomado: string | null;
+    state?: string | null;
+    insuranceExpiry?: string | null;
+    insuranceExpired?: boolean;
+  }[];
   tramites?: string;
   dealCount?: number;
   createdAt?: string;
@@ -455,6 +461,7 @@ export interface CrmContactVehicle {
   engomadoColor?: string;
   vehicleNotes?: string;
   insuranceExpiry?: string | null;
+  insuranceExpired?: boolean;
   tenenciaStatus?: 'si' | 'no' | 'pendiente' | string | null;
   tenenciaYear?: number | null;
   verificationHologram?: string | null;

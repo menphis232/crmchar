@@ -130,10 +130,26 @@ function emptyForm(): ClientForm {
     /* Toolbar: búsqueda + filtros en una sola línea */
     .clients-toolbar {
       display: grid;
-      grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(140px, 1fr)) auto;
+      grid-template-columns: minmax(220px, 2fr) repeat(4, minmax(140px, 1fr)) auto;
       gap: 10px;
       align-items: center;
       margin-bottom: 18px;
+    }
+    .plate-chip--expired {
+      border-color: #e2445c !important;
+      color: #e2445c !important;
+      background: rgba(226, 68, 92, 0.08) !important;
+    }
+    .poliza-badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 1px 7px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #e2445c;
+      background: rgba(226, 68, 92, 0.1);
+      border: 1px solid rgba(226, 68, 92, 0.35);
     }
     .clients-search {
       display: flex;
@@ -451,6 +467,7 @@ export class CrmClientsDirectoryComponent implements OnInit {
   filterTramite = signal('');
   filterEngomado = signal('');
   filterEstado = signal('');
+  filterPoliza = signal('');
   tramiteOptions = signal<string[]>([]);
   currentPage = signal(1);
   totalPages = signal(1);
@@ -498,6 +515,7 @@ export class CrmClientsDirectoryComponent implements OnInit {
       tramite: this.filterTramite() || undefined,
       engomado: this.filterEngomado() || undefined,
       estado: this.filterEstado() || undefined,
+      poliza: this.filterPoliza() || undefined,
     }).subscribe({
       next: (res) => {
         this.clients.set(res.contacts);
@@ -533,6 +551,7 @@ export class CrmClientsDirectoryComponent implements OnInit {
     this.filterTramite.set('');
     this.filterEngomado.set('');
     this.filterEstado.set('');
+    this.filterPoliza.set('');
     this.applyFilters();
   }
 
@@ -542,17 +561,22 @@ export class CrmClientsDirectoryComponent implements OnInit {
   }
 
   hasActiveFilters(): boolean {
-    return !!(this.search().trim() || this.filterTramite() || this.filterEngomado() || this.filterEstado());
+    return !!(this.search().trim() || this.filterTramite() || this.filterEngomado() || this.filterEstado() || this.filterPoliza());
+  }
+
+  hasExpiredInsurance(c: CrmContact): boolean {
+    return !!(c.vehicles || []).some((v) => v.insuranceExpired);
   }
 
   firstTramite(c: CrmContact): string {
     return (c.tramites || '').split(', ')[0] || '';
   }
 
-  plateChipTitle(v: { plate: string; engomado: string | null; state?: string | null }): string {
+  plateChipTitle(v: { plate: string; engomado: string | null; state?: string | null; insuranceExpired?: boolean }): string {
     const parts = [v.plate];
     if (v.state) parts.push(v.state);
     parts.push(v.engomado ? `Engomado ${engomadoLabel(v.engomado)}` : 'Sin engomado');
+    if (v.insuranceExpired) parts.push('Póliza vencida');
     return parts.join(' · ');
   }
 

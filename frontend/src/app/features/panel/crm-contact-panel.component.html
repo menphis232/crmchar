@@ -137,9 +137,12 @@
                     </p>
                   }
                 </div>
-                <div>
+                <div [class.field-expired]="isInsuranceExpired(v.insuranceExpiry)">
                   <label>Vencimiento póliza de seguro</label>
-                  <input type="date" [ngModel]="v.insuranceExpiry || ''" (ngModelChange)="updateVehicle(v, 'insuranceExpiry', $event)">
+                  <input type="date" [ngModel]="v.insuranceExpiry || ''" (change)="updateVehicle(v, 'insuranceExpiry', $any($event.target).value)">
+                  @if (isInsuranceExpired(v.insuranceExpiry)) {
+                    <p class="expiry-alert">Póliza vencida — alerta para renovación</p>
+                  }
                 </div>
                 <div>
                   <label>Refrendo / tenencia {{ currentYear }}</label>
@@ -164,7 +167,7 @@
                 </div>
                 <div>
                   <label>Fecha de próxima verificación</label>
-                  <input type="date" [ngModel]="v.nextVerificationDate || ''" (ngModelChange)="updateVehicle(v, 'nextVerificationDate', $event)">
+                  <input type="date" [ngModel]="v.nextVerificationDate || ''" (change)="updateVehicle(v, 'nextVerificationDate', $any($event.target).value)">
                 </div>
                 <div class="full">
                   <label>Notas adicionales</label>

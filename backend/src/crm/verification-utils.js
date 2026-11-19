@@ -77,8 +77,18 @@ export function getVerificationInfo(plate, now = new Date()) {
   return { status: 'ok', month: verMonth, label: `Verificación en ${monthLabel}` };
 }
 
+export function isInsuranceExpired(expiry, now = new Date()) {
+  const d = formatDateOnly(expiry);
+  if (!d || !/^\d{4}-\d{2}-\d{2}$/.test(d)) return false;
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return d < `${y}-${m}-${day}`;
+}
+
 export function vehicleRowWithVerification(row) {
   const verification = getVerificationInfo(row.plate);
+  const insuranceExpiry = formatDateOnly(row.insurance_expiry);
   return {
     id: row.id,
     contactId: row.contact_id,
@@ -89,7 +99,8 @@ export function vehicleRowWithVerification(row) {
     state: row.state,
     engomadoColor: row.engomado_color,
     vehicleNotes: row.vehicle_notes,
-    insuranceExpiry: formatDateOnly(row.insurance_expiry),
+    insuranceExpiry,
+    insuranceExpired: isInsuranceExpired(insuranceExpiry),
     tenenciaStatus: row.tenencia_2026 || null,
     tenenciaYear: row.tenencia_year != null ? Number(row.tenencia_year) : null,
     verificationHologram: row.verification_hologram || null,

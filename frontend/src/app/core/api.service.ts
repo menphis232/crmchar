@@ -192,6 +192,7 @@ export class CrmService {
     tramite?: string;
     engomado?: string;
     estado?: string;
+    poliza?: string;
   }) {
     let httpParams = new HttpParams();
     if (params?.page) httpParams = httpParams.set('page', String(params.page));
@@ -200,6 +201,7 @@ export class CrmService {
     if (params?.tramite) httpParams = httpParams.set('tramite', params.tramite);
     if (params?.engomado) httpParams = httpParams.set('engomado', params.engomado);
     if (params?.estado) httpParams = httpParams.set('estado', params.estado);
+    if (params?.poliza) httpParams = httpParams.set('poliza', params.poliza);
     return this.http.get<CrmContactsPage>(`${this.base}/contacts`, { params: httpParams });
   }
   createContact(data: {
@@ -273,6 +275,9 @@ export class CrmService {
   }
   getVerificationAlerts() {
     return this.http.get<CrmVerificationAlert[]>(`${this.base}/verification-alerts`);
+  }
+  getInsuranceAlerts() {
+    return this.http.get<CrmVerificationAlert[]>(`${this.base}/insurance-alerts`);
   }
   createTask(dealId: string, title: string, dueAt: string) {
     return this.http.post(`${this.base}/deals/${dealId}/tasks`, { title, dueAt });
