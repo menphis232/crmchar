@@ -1297,7 +1297,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.http.get<any[]>(`${environment.apiUrl}/client/deals/${deal.id}/documents`).subscribe({
       next: docs => {
         this.documents.set(docs);
-        if (this.isShippedDeal(deal) || this.isTerminalStage(deal) || deal.stage === 'completado' || deal.stage === 'vendido') {
+        if (this.isShippedDeal(deal) || this.isTerminalStage(deal)) {
           this.dealTab.set('docs');
         }
       },
@@ -1602,18 +1602,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   stageClass(deal: any): string {
-    const id = deal?.stage || '';
-    if (id === 'perdido') return 'badge-lost';
-    const stages = this.pipelineStages(deal);
+    if (deal?.is_closed && (deal?.stage === 'perdido' || /perdid|cancel|rechaz/i.test(String(deal?.stage || '')))) {
+      return 'badge-lost';
+    }
+    if (this.isTerminalStage(deal)) return 'badge-done';
     const idx = this.stageIndex(deal);
-    if (idx === stages.length - 1) return 'badge-done';
     if (idx === 0) return 'badge-new';
     return 'badge-progress';
   }
 
   stageProgress(deal: any): number {
     const stages = this.pipelineStages(deal);
-    if (!stages.length || deal?.stage === 'perdido') return 0;
+    if (!stages.length) return 0;
+    if (this.isTerminalStage(deal) && deal?.stage === 'perdido') return 0;
     const idx = this.stageIndex(deal);
     return Math.round(((idx + 1) / stages.length) * 100);
   }
