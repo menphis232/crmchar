@@ -66,6 +66,8 @@ import {
   LucideGripVertical,
   LucideChevronUp,
   LucideChevronDown,
+  LucideChevronLeft,
+  LucideChevronRight,
   LucideImage,
   LucideStar,
   LucideCar,
@@ -153,7 +155,7 @@ const DEFAULT_GESTOR_STAGES: CrmStageConfig[] = [
   imports: [
     RouterLink, FormsModule, DecimalPipe, DatePipe, CrmKanbanComponent, CrmDealPanelComponent,
     CrmTodayInboxComponent, CrmContactPanelComponent, CrmClientsDirectoryComponent, CrmDealsBoardComponent, PdfDesignerComponent, NotificationBellComponent, ThemeSwitchComponent, CrmTeamComponent, CrmPeritosComponent, FinancesComponent, PageBuilderComponent, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, PanelSubscriptionLockComponent, ImageCropperModalComponent,
-    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap, LucideActivity, LucideRefreshCw,
+    LucideSettings, LucideLayoutDashboard, LucideFunnel, LucideWrench, LucideLandmark, LucideBot, LucideFileText, LucidePalette, LucideUsers, LucideUserCheck, LucideGlobe, LucideSparkles, LucideLightbulb, LucideLink, LucideCopy, LucideClock, LucideSquarePen, LucideCreditCard, LucideMapPin, LucidePlus, LucideCamera, LucideSearch, LucideTriangleAlert, LucideX, LucideGripVertical, LucideChevronUp, LucideChevronDown, LucideChevronLeft, LucideChevronRight, LucideImage, LucideStar, LucideCar, LucideZap, LucideWallet, LucideGraduationCap, LucideActivity, LucideRefreshCw,
   ],
   templateUrl: './panel-gestor.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-dark-theme.css', './panel-gestor.component.css', './panel-datta.css'],
