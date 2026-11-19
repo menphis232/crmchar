@@ -816,31 +816,39 @@ aside {
 
 @media (max-width: 900px) {
   .profile-content {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
     padding: 0 16px 40px;
     gap: 24px;
   }
   aside { position: static; width: 100%; }
-  .main-column { width: 100%; min-width: 0; }
+  .main-column,
+  .detail-sidebar-rail {
+    display: contents;
+  }
 
-  /* En móvil: Rastrea + mapa justo debajo de reseñas; formulario después */
-  .detail-sidebar-rail > .track-card,
-  .detail-sidebar-rail > .sidebar-slot--tracker {
-    order: 1;
-  }
-  .detail-sidebar-rail > .gestor-map-card {
-    order: 2;
-  }
-  .detail-sidebar-rail > .inquiry-box,
-  .detail-sidebar-rail > .sidebar-slot--form {
-    order: 3;
-  }
-  .detail-sidebar-rail > .btn-share {
-    order: 4;
-  }
-  .detail-sidebar-rail > .btn-back-top {
-    order: 5;
-  }
+  /*
+    Móvil (Charveel):
+    servicios → imágenes → rastreador → formulario → mapa → reseñas
+    Desktop sigue en grid 2 cols sin estos orders.
+  */
+  .main-block--stats,
+  .main-block--text { order: 1; }
+  .main-block--services { order: 2; }
+  .main-block--gallery { order: 3; }
+
+  .track-card,
+  .sidebar-slot--tracker { order: 4; }
+
+  .inquiry-box,
+  .sidebar-slot--form { order: 5; }
+
+  .gestor-map-card { order: 6; }
+
+  .main-block--reviews { order: 7; }
+
+  .btn-share { order: 8; }
+  .btn-back-top { order: 9; }
 }
 
 @media (max-width: 768px) {
