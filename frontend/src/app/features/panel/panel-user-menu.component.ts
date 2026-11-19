@@ -176,21 +176,12 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
         right: auto;
         min-width: min(300px, calc(100vw - 24px));
       }
-      :host-context(app-panel-cliente) .avatar-dropdown-header {
-        flex-direction: column;
-        text-align: center;
-        padding: 16px;
-        gap: 10px;
-      }
       :host-context(app-panel-cliente) .avatar-dropdown-photo-btn {
         width: 120px;
       }
       :host-context(app-panel-cliente) .avatar-dropdown-photo {
         width: 112px;
         height: 112px;
-      }
-      :host-context(app-panel-cliente) .avatar-dropdown-meta {
-        align-items: center;
       }
     }
     .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12); }
@@ -217,9 +208,11 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
     }
     .avatar-dropdown-header {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
+      text-align: center;
+      gap: 10px;
+      padding: 16px;
       border-bottom: 1px solid #e6e9ef;
       background: #f7f8fa;
     }
@@ -233,10 +226,11 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       background: transparent;
       cursor: pointer;
       flex-shrink: 0;
+      width: 96px;
     }
     .avatar-dropdown-photo {
-      width: 56px;
-      height: 56px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
@@ -259,8 +253,10 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
     .avatar-dropdown-meta {
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 2px;
       min-width: 0;
+      width: 100%;
     }
     .avatar-dropdown-header strong {
       color: #323338;
@@ -269,6 +265,7 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      max-width: 100%;
     }
     .avatar-dropdown-header span {
       color: #676879;
