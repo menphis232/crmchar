@@ -1,7 +1,7 @@
 import {
   Component, EventEmitter, HostListener, Input, Output, signal,
 } from '@angular/core';
-import { LucideCreditCard, LucideEye, LucideKeyRound, LucideX } from '@lucide/angular';
+import { LucideCreditCard, LucideKeyRound, LucideX } from '@lucide/angular';
 import { SubscriptionBillingComponent } from './subscription-billing.component';
 import { ChangeCredentialsComponent } from './change-credentials.component';
 
@@ -13,7 +13,6 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
     ChangeCredentialsComponent,
     LucideKeyRound,
     LucideCreditCard,
-    LucideEye,
     LucideX,
   ],
   template: `
@@ -61,12 +60,6 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
               }
             </div>
           </div>
-          @if (avatarUrl) {
-            <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openPreview($event)">
-              <svg lucideEye [size]="14" aria-hidden="true"></svg>
-              Ver mi foto
-            </button>
-          }
           <button type="button" class="avatar-dropdown-item btn-with-icon" (click)="openCredentials()">
             <svg lucideKeyRound [size]="14" aria-hidden="true"></svg>
             Cambiar contraseña / correo
