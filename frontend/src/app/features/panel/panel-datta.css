@@ -1765,6 +1765,34 @@
 
 /* ── Servicios board Monday ── */
 :host.panel-datta .mon-services-board,
+:host.panel-datta .mon-board.mon-activity-board {
+  background: #fff !important;
+  border: 1px solid #e6e9ef !important;
+  border-radius: 12px !important;
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
+:host.panel-datta .mon-activity-board .activity-kpi {
+  background: #f7f8fa !important;
+  border-color: #e6e9ef !important;
+}
+
+:host.panel-datta .mon-activity-board .activity-kpi-label,
+:host.panel-datta .mon-activity-board .activity-meta,
+:host.panel-datta .mon-activity-board .mon-board-desc {
+  color: #676879 !important;
+  -webkit-text-fill-color: #676879 !important;
+}
+
+:host.panel-datta .mon-activity-board .activity-kpi strong,
+:host.panel-datta .mon-activity-board .mon-board-title,
+:host.panel-datta .mon-activity-board .activity-cell,
+:host.panel-datta .mon-activity-board .activity-cell-client strong {
+  color: #323338 !important;
+  -webkit-text-fill-color: #323338 !important;
+}
+
 :host.panel-datta .mon-board.mon-services-board {
   background: #fff !important;
   border: 1px solid #e6e9ef !important;

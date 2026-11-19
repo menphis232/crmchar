@@ -493,6 +493,18 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     });
   }
 
+  activityContactHint(row: ClientActivityItem): string {
+    const phone = String(row.phone || '').trim();
+    if (phone) return phone;
+    const email = String(row.email || '').trim();
+    if (!email) return '—';
+    // Oculta correos internos de acceso al panel.
+    if (email.endsWith('@clientes.tramitesmx.local') || email.startsWith('cliente.')) {
+      return '—';
+    }
+    return email;
+  }
+
   loadCrmSummary() {
     this.crmService.getDashboard().subscribe(d => {
       this.crmDashboard.set(d);

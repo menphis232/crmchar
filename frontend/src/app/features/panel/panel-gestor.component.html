@@ -457,7 +457,7 @@
     }
 
     @if (tab() === 'actividad' && hasPerm('pipeline')) {
-      <div class="mon-board">
+      <div class="mon-board mon-activity-board">
         <header class="mon-board-head">
           <div>
             <h2 class="mon-board-title">Actividad de clientes</h2>
@@ -485,52 +485,57 @@
         </div>
 
         @if (clientActivityError()) {
-          <p class="error-msg">{{ clientActivityError() }}</p>
+          <p class="activity-error">{{ clientActivityError() }}</p>
         }
 
-        <div class="mon-table-wrap">
-          <table class="mon-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th>¿Entró alguna vez?</th>
-                <th>Última vez</th>
-                <th>Términos</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of clientActivity(); track row.userId) {
-                <tr>
-                  <td>
-                    <strong>{{ row.name || row.contactName || 'Sin nombre' }}</strong>
-                    <div class="activity-meta">{{ row.email || row.phone || '—' }}</div>
-                  </td>
-                  <td>
-                    <span class="activity-dot" [class.online]="row.online"></span>
-                    {{ row.online ? 'En línea' : 'Fuera de línea' }}
-                  </td>
-                  <td>{{ row.hasLoggedIn ? 'Sí' : 'No' }}</td>
-                  <td>{{ formatLastSeen(row.lastSeenAt) }}</td>
-                  <td>{{ row.termsAccepted ? 'Aceptados' : 'Pendiente' }}</td>
-                  <td>
-                    <button type="button" class="link-btn" (click)="openClientContact(row.contactId)">Ver contacto</button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="6" class="activity-empty">
-                    @if (clientActivityLoading()) {
-                      Cargando actividad…
-                    } @else {
-                      Aún no hay clientes con acceso al panel vinculados a tus contactos.
-                    }
-                  </td>
-                </tr>
+        <div class="activity-list" role="table" aria-label="Actividad de clientes">
+          <div class="activity-list-head" role="row">
+            <span role="columnheader">Cliente</span>
+            <span role="columnheader">Estado</span>
+            <span role="columnheader">Entró</span>
+            <span role="columnheader">Última vez</span>
+            <span role="columnheader">Términos</span>
+            <span role="columnheader"></span>
+          </div>
+
+          @for (row of clientActivity(); track row.userId) {
+            <div class="activity-row" role="row" [class.is-online]="row.online">
+              <div class="activity-cell activity-cell-client" role="cell">
+                <strong>{{ row.name || row.contactName || 'Sin nombre' }}</strong>
+                <span class="activity-meta">{{ activityContactHint(row) }}</span>
+              </div>
+              <div class="activity-cell activity-cell-status" role="cell">
+                <span class="activity-status" [class.online]="row.online">
+                  <span class="activity-dot" [class.online]="row.online"></span>
+                  {{ row.online ? 'En línea' : 'Fuera de línea' }}
+                </span>
+              </div>
+              <div class="activity-cell" role="cell">
+                <span class="activity-pill" [class.yes]="row.hasLoggedIn" [class.no]="!row.hasLoggedIn">
+                  {{ row.hasLoggedIn ? 'Sí' : 'No' }}
+                </span>
+              </div>
+              <div class="activity-cell activity-cell-seen" role="cell">
+                {{ formatLastSeen(row.lastSeenAt) }}
+              </div>
+              <div class="activity-cell" role="cell">
+                <span class="activity-pill" [class.yes]="row.termsAccepted" [class.warn]="!row.termsAccepted">
+                  {{ row.termsAccepted ? 'Aceptados' : 'Pendiente' }}
+                </span>
+              </div>
+              <div class="activity-cell activity-cell-action" role="cell">
+                <button type="button" class="activity-link" (click)="openClientContact(row.contactId)">Ver contacto</button>
+              </div>
+            </div>
+          } @empty {
+            <div class="activity-empty">
+              @if (clientActivityLoading()) {
+                Cargando actividad…
+              } @else {
+                Aún no hay clientes con acceso al panel vinculados a tus contactos.
               }
-            </tbody>
-          </table>
+            </div>
+          }
         </div>
       </div>
     }
