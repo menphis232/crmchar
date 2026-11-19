@@ -155,7 +155,13 @@
             <a routerLink="/gestores" class="btn-back btn-back-top"><svg lucideArrowLeft [size]="14" aria-hidden="true"></svg> Volver al directorio</a>
             @for (b of config.blocks; track b.id) {
               @if (b.region === 'sidebar') {
-                <div [style.margin-top.px]="b.data.marginTop || 0" [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20">
+                <div
+                  class="sidebar-slot"
+                  [class.sidebar-slot--tracker]="b.type === 'tracker'"
+                  [class.sidebar-slot--form]="b.type === 'form'"
+                  [style.margin-top.px]="b.data.marginTop || 0"
+                  [style.margin-bottom.px]="b.data.marginBottom !== undefined ? b.data.marginBottom : 20"
+                >
                   @if (b.type === 'tracker') {
                     <div class="contact-card track-card">
                       <h3>{{ b.data.title }}</h3>

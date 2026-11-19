@@ -822,6 +822,25 @@ aside {
   }
   aside { position: static; width: 100%; }
   .main-column { width: 100%; min-width: 0; }
+
+  /* En móvil: Rastrea + mapa justo debajo de reseñas; formulario después */
+  .detail-sidebar-rail > .track-card,
+  .detail-sidebar-rail > .sidebar-slot--tracker {
+    order: 1;
+  }
+  .detail-sidebar-rail > .gestor-map-card {
+    order: 2;
+  }
+  .detail-sidebar-rail > .inquiry-box,
+  .detail-sidebar-rail > .sidebar-slot--form {
+    order: 3;
+  }
+  .detail-sidebar-rail > .btn-share {
+    order: 4;
+  }
+  .detail-sidebar-rail > .btn-back-top {
+    order: 5;
+  }
 }
 
 @media (max-width: 768px) {
