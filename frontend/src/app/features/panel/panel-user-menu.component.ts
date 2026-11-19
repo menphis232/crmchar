@@ -109,15 +109,15 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       font-family: Figtree, system-ui, sans-serif;
       box-sizing: border-box;
     }
-    /* Panel cliente móvil: tamaño grande (mismo componente, gana encapsulación) */
+    /* Panel cliente móvil: avatar bien grande */
     @media (max-width: 991px) {
       :host-context(app-panel-cliente) .panel-avatar {
-        width: 76px !important;
-        height: 76px !important;
-        min-width: 76px !important;
-        min-height: 76px !important;
-        font-size: 26px !important;
-        border-width: 2px !important;
+        width: 104px !important;
+        height: 104px !important;
+        min-width: 104px !important;
+        min-height: 104px !important;
+        font-size: 36px !important;
+        border-width: 2.5px !important;
       }
     }
     .panel-avatar:hover { box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.12); }
