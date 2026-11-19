@@ -18,6 +18,7 @@ import {
   parseCachedReviews,
   placesApiKey,
 } from '../services/googlePlaces.js';
+import { fetchSociableKitReviewStats } from '../services/sociablekit.js';
 import {
   emptyPromoBanner,
   normalizePromoBanner,
@@ -233,26 +234,34 @@ async function recalcGestorReviewStats(gestorId) {
 }
 
 async function syncGoogleReviewsForGestor(row, { force = false } = {}) {
-  const placeId = (row.google_place_id || '').trim();
-  if (!placeId) {
+  const placeId = (row.google_place_id || '').trim() || null;
+  const embedHtml = row.google_reviews_embed || null;
+
+  let rating = row.google_rating != null ? Number(row.google_rating) : null;
+  let reviewCount = row.google_review_count != null ? Number(row.google_review_count) : null;
+  let reviews = parseCachedReviews(row.google_reviews_json);
+  let mapsUrl = mapsUrlForPlace(placeId);
+  let syncError = null;
+  let synced = false;
+
+  if (!placeId && !embedHtml) {
     return {
       googlePlaceId: null,
-      googleRating: null,
-      googleReviewCount: null,
-      googleReviews: [],
+      googleRating: rating,
+      googleReviewCount: reviewCount,
+      googleReviews: reviews,
       googleMapsUrl: null,
       googleSyncOk: false,
       googleSyncError: null,
     };
   }
 
-  let rating = row.google_rating != null ? Number(row.google_rating) : null;
-  let reviewCount = row.google_review_count != null ? Number(row.google_review_count) : null;
-  let reviews = parseCachedReviews(row.google_reviews_json);
-  let syncError = null;
-  let synced = false;
+  const needsRefresh =
+    force ||
+    isStale(row.google_reviews_synced_at) ||
+    (embedHtml && row.google_review_count == null);
 
-  if (force || isStale(row.google_reviews_synced_at)) {
+  if (needsRefresh && placeId) {
     if (!placesApiKey()) {
       syncError = 'missing_api_key';
     } else {
@@ -262,16 +271,20 @@ async function syncGoogleReviewsForGestor(row, { force = false } = {}) {
           rating = details.rating;
           reviewCount = details.reviewCount;
           reviews = details.reviews;
+          if (details.mapsUrl) mapsUrl = details.mapsUrl;
           await run(
             `UPDATE gestores SET
               google_rating = ?,
               google_review_count = ?,
               google_reviews_json = ?,
-              google_reviews_synced_at = NOW()
+              google_reviews_synced_at = NOW(),
+              rating = COALESCE(?, rating),
+              review_count = COALESCE(?, review_count)
              WHERE id = ?`,
-            [rating, reviewCount, JSON.stringify(reviews), row.id],
+            [rating, reviewCount, JSON.stringify(reviews), rating, reviewCount, row.id],
           );
           synced = true;
+          syncError = null;
         }
       } catch (err) {
         console.error('[googlePlaces]', placeId, err.message);
@@ -280,13 +293,41 @@ async function syncGoogleReviewsForGestor(row, { force = false } = {}) {
     }
   }
 
+  // SociableKIT feed: promedio + cantidad reales del plugin (sin API key de Google).
+  if (needsRefresh && embedHtml) {
+    try {
+      const sk = await fetchSociableKitReviewStats(embedHtml);
+      if (sk) {
+        if (sk.rating != null) rating = sk.rating;
+        if (sk.reviewCount != null) reviewCount = sk.reviewCount;
+        if (sk.mapsUrl) mapsUrl = sk.mapsUrl;
+        await run(
+          `UPDATE gestores SET
+            google_rating = COALESCE(?, google_rating),
+            google_review_count = COALESCE(?, google_review_count),
+            google_reviews_synced_at = NOW(),
+            google_place_id = COALESCE(google_place_id, ?),
+            rating = COALESCE(?, rating),
+            review_count = COALESCE(?, review_count)
+           WHERE id = ?`,
+          [sk.rating, sk.reviewCount, sk.placeId || null, sk.rating, sk.reviewCount, row.id],
+        );
+        synced = true;
+        if (syncError === 'missing_api_key') syncError = null;
+      }
+    } catch (err) {
+      console.error('[sociablekit]', err.message);
+      if (!synced) syncError = err.code || err.message || 'sociablekit_failed';
+    }
+  }
+
   return {
     googlePlaceId: placeId,
     googleRating: rating,
     googleReviewCount: reviewCount,
     googleReviews: reviews,
-    googleMapsUrl: mapsUrlForPlace(placeId),
-    googleSyncOk: synced || (!syncError && reviews.length > 0),
+    googleMapsUrl: mapsUrl,
+    googleSyncOk: synced || (!syncError && (rating != null || reviewCount != null || reviews.length > 0)),
     googleSyncError: syncError,
   };
 }
@@ -625,6 +666,27 @@ router.put('/me/profile', authRequired, requireRole('gestor'), requireActiveSubs
       // Limitar tamaño para evitar payloads enormes
       const safeEmbed = embed && embed.length > 20000 ? embed.slice(0, 20000) : embed;
       await run('UPDATE gestores SET google_reviews_embed = ? WHERE user_id = ?', [safeEmbed, req.user.id]);
+      // Al guardar el plugin, sincronizar promedio/cantidad desde el feed público.
+      if (safeEmbed) {
+        try {
+          const sk = await fetchSociableKitReviewStats(safeEmbed);
+          if (sk) {
+            await run(
+              `UPDATE gestores SET
+                google_rating = COALESCE(?, google_rating),
+                google_review_count = COALESCE(?, google_review_count),
+                google_reviews_synced_at = NOW(),
+                google_place_id = COALESCE(google_place_id, ?),
+                rating = COALESCE(?, rating),
+                review_count = COALESCE(?, review_count)
+               WHERE user_id = ?`,
+              [sk.rating, sk.reviewCount, sk.placeId || null, sk.rating, sk.reviewCount, req.user.id],
+            );
+          }
+        } catch (err) {
+          console.error('[sociablekit] embed save', err.message);
+        }
+      }
     }
 
     if (name !== undefined && name !== null && String(name).trim()) {
@@ -1004,20 +1066,22 @@ router.post('/me/google-reviews/sync', authRequired, requireRole('gestor'), requ
   try {
     const row = await get('SELECT * FROM gestores WHERE user_id = ?', [req.user.id]);
     if (!row) return res.status(404).json({ error: 'Perfil no encontrado' });
-    if (!row.google_place_id) {
-      return res.status(400).json({ error: 'Primero guarda el Place ID de Google en tu perfil.' });
+    if (!row.google_place_id && !row.google_reviews_embed) {
+      return res.status(400).json({
+        error: 'Guarda el Place ID de Google o el código embed de reseñas (SociableKIT) en tu perfil.',
+      });
     }
-    if (!placesApiKey()) {
+    if (row.google_place_id && !row.google_reviews_embed && !placesApiKey()) {
       return res.status(503).json({
-        error: 'Falta GOOGLE_PLACES_API_KEY en el servidor. Activa Places API en Google Cloud y agrégala al .env del backend.',
+        error: 'Falta GOOGLE_PLACES_API_KEY en el servidor, o pega el embed de SociableKIT para sincronizar promedio y cantidad sin API key.',
         googlePlaceId: row.google_place_id,
         googleMapsUrl: mapsUrlForPlace(row.google_place_id),
       });
     }
     const googlePayload = await syncGoogleReviewsForGestor(row, { force: true });
-    if (googlePayload.googleSyncError && googlePayload.googleSyncError !== 'missing_api_key') {
+    if (googlePayload.googleSyncError && !googlePayload.googleSyncOk) {
       return res.status(502).json({
-        error: 'Google no devolvió reseñas. Revisa el Place ID y que Places API esté habilitada.',
+        error: 'No se pudieron sincronizar las reseñas. Revisa el Place ID o el embed de SociableKIT.',
         details: googlePayload.googleSyncError,
       });
     }

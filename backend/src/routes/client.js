@@ -41,6 +41,23 @@ async function predicateFor(user) {
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
+/** Match servicio↔deal aunque el título del deal sea más corto (ej. "BAJA DE PLACAS" vs "BAJA DE PLACAS CDMX | …"). */
+const SERVICE_MATCH_SQL = `
+  SELECT gs2.id FROM gestor_services gs2
+  WHERE gs2.gestor_id = g.id
+    AND (
+      TRIM(gs2.name) = TRIM(d.title)
+      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' %')
+      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), '|%')
+      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' |%')
+      OR TRIM(d.title) LIKE CONCAT(TRIM(gs2.name), '%')
+    )
+  ORDER BY
+    (TRIM(gs2.name) = TRIM(d.title)) DESC,
+    LENGTH(TRIM(gs2.name)) ASC
+  LIMIT 1
+`;
+
 const DEALS_SELECT = `
   SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, d.updated_at,
          g.name as gestor_name, d.deal_type, d.tracking_code,
@@ -50,7 +67,7 @@ const DEALS_SELECT = `
          di.amount as invoice_amount, di.created_at as invoice_date
   FROM crm_deals d
   LEFT JOIN gestores g ON g.user_id = d.user_id
-  LEFT JOIN gestor_services gs ON gs.gestor_id = g.id AND gs.name = d.title
+  LEFT JOIN gestor_services gs ON gs.id = (${SERVICE_MATCH_SQL})
   JOIN contacts c ON c.id = d.contact_id
   LEFT JOIN users u ON u.id = d.user_id
   LEFT JOIN deal_invoices di ON di.deal_id = d.id
