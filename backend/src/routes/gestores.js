@@ -784,14 +784,22 @@ router.put('/me/services/order', authRequired, requireRole('gestor'), requireAct
 
     const existing = await query('SELECT id FROM gestor_services WHERE gestor_id = ?', [row.id]);
     const existingIds = new Set(existing.map(s => String(s.id)));
-    const uniqueOrder = [...new Set(order.map(id => String(id)))];
+    const uniqueOrder = [...new Set(order.map(id => String(id)).filter(Boolean))];
     if (uniqueOrder.length !== existing.length || uniqueOrder.some(id => !existingIds.has(id))) {
       return res.status(400).json({ error: 'La lista de servicios no coincide con tu catálogo.' });
     }
 
-    for (let i = 0; i < uniqueOrder.length; i++) {
-      await run('UPDATE gestor_services SET sort_order = ? WHERE id = ? AND gestor_id = ?', [i, uniqueOrder[i], row.id]);
-    }
+    // Una sola pasada atómica: evita que requests concurrentes dejen sort_order a medias.
+    const cases = uniqueOrder.map(() => 'WHEN ? THEN ?').join(' ');
+    const params = [];
+    uniqueOrder.forEach((id, i) => { params.push(id, i); });
+    params.push(row.id, ...uniqueOrder);
+    await run(
+      `UPDATE gestor_services
+       SET sort_order = CASE id ${cases} ELSE sort_order END
+       WHERE gestor_id = ? AND id IN (${uniqueOrder.map(() => '?').join(',')})`,
+      params,
+    );
 
     const services = parseGestorServices(await query(GESTOR_SERVICES_SELECT, [row.id]));
     res.json({ ok: true, services });

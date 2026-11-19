@@ -2210,6 +2210,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.serviceDragOverIdx = -1;
   }
 
+  private serviceOrderSeq = 0;
+
   private moveServiceInList(fromIdx: number, toIdx: number) {
     const profile = this.profile();
     if (!profile?.services?.length) return;
@@ -2223,14 +2225,19 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   private persistServiceOrder(services: { id: string }[]) {
     const order = services.map(s => s.id);
+    const seq = ++this.serviceOrderSeq;
     this.serviceOrderSaving = true;
     this.gestoresService.reorderServices(order).subscribe({
       next: (res) => {
+        // Ignorar respuestas viejas si el usuario movió otra vez mientras guardaba.
+        if (seq !== this.serviceOrderSeq) return;
         const profile = this.profile();
         if (profile) this.profile.set({ ...profile, services: res.services });
         this.serviceOrderSaving = false;
+        this.toast.success('Orden de servicios guardado.');
       },
       error: (err) => {
+        if (seq !== this.serviceOrderSeq) return;
         this.serviceOrderSaving = false;
         this.toast.error(err.error?.error || 'No se pudo guardar el orden.');
         this.loadProfile();

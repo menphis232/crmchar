@@ -863,31 +863,41 @@ async function migrate() {
         multipleStatements: true,
       });
       await conn40.query('USE tramites_vehiculares');
-      // Solo rellenar sort_order alfabético la PRIMERA vez que se agrega la columna.
-      // Si corre en cada deploy, pisa el orden manual del gestor.
-      let sortOrderColumnAdded = false;
+      // Nunca reordenar alfabéticamente en cada arranque del contenedor:
+      // el CMD corre migrate.js siempre y eso pisaba el orden manual del gestor.
+      await conn40.query(`
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+          id VARCHAR(64) PRIMARY KEY,
+          applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+      const [v40Done] = await conn40.query(
+        "SELECT id FROM schema_migrations WHERE id = 'v40_gestor_service_sort'",
+      );
       for (const stmt of v40.split(';').map(s => s.trim()).filter(Boolean)) {
-        try {
-          await conn40.query(stmt);
-          if (/ADD\s+COLUMN\s+sort_order/i.test(stmt)) sortOrderColumnAdded = true;
-        } catch (e) {
+        try { await conn40.query(stmt); } catch (e) {
           if (!['ER_DUP_FIELDNAME'].includes(e.code)) throw e;
         }
       }
-      if (sortOrderColumnAdded) {
+      if (!v40Done.length) {
         const [gestorRows] = await conn40.query('SELECT DISTINCT gestor_id FROM gestor_services');
         for (const row of gestorRows) {
           const [services] = await conn40.query(
-            'SELECT id FROM gestor_services WHERE gestor_id = ? ORDER BY name',
+            'SELECT id FROM gestor_services WHERE gestor_id = ? ORDER BY sort_order ASC, name ASC',
             [row.gestor_id],
           );
           for (let i = 0; i < services.length; i++) {
             await conn40.query('UPDATE gestor_services SET sort_order = ? WHERE id = ?', [i, services[i].id]);
           }
         }
+        await conn40.query(
+          "INSERT IGNORE INTO schema_migrations (id) VALUES ('v40_gestor_service_sort')",
+        );
+        console.log('Migración v40 (gestor service sort) backfill único aplicado.');
+      } else {
+        console.log('Migración v40 (gestor service sort) ya aplicada — sin tocar sort_order.');
       }
       await conn40.end();
-      console.log('Migración v40 (gestor service sort) aplicada.');
     }
     
     const v41Path = path.join(__dirname, '..', 'sql', 'migration-v41-mercadopago.sql');
