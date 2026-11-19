@@ -854,7 +854,11 @@ export class CrmContactPanelComponent {
       error: (e) => {
         this.uploadingVehicleId.set(null);
         input.value = '';
-        this.toast.error(e.error?.error || 'Error al subir el archivo');
+        const msg =
+          e?.status === 413
+            ? 'El archivo es muy pesado (máx. ~15 MB).'
+            : e?.error?.error || 'Error al subir el archivo';
+        this.toast.error(msg);
       },
     });
   }
