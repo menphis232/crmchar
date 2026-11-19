@@ -1363,15 +1363,57 @@
   font-weight: 600;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 991px) {
+  /* Línea del tiempo vertical: legible con muchas etapas */
   .client-steps {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 8px;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    padding: 14px 16px;
+    overflow-x: visible;
+    overflow-y: visible;
+  }
+
+  .client-step {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    min-height: 40px;
+  }
+
+  .client-step-dot {
+    flex-shrink: 0;
+  }
+
+  .client-step.done .client-step-dot,
+  .client-step.current .client-step-dot {
+    color: #fff !important;
+    -webkit-text-fill-color: #fff !important;
+  }
+
+  .client-step span {
+    white-space: normal;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.35;
+    flex: 1;
+    min-width: 0;
   }
 
   .client-step-line {
-    display: none;
+    display: block;
+    width: 2px;
+    height: 14px;
+    min-width: 2px;
+    min-height: 14px;
+    flex: none;
+    align-self: flex-start;
+    margin: 2px 0 2px 15px; /* centrado bajo el dot de 32px */
   }
 
   .client-chat-row {
