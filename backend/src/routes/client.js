@@ -41,35 +41,45 @@ async function predicateFor(user) {
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
 
-/** Match servicio↔deal aunque el título del deal sea más corto (ej. "BAJA DE PLACAS" vs "BAJA DE PLACAS CDMX | …"). */
+/** Match servicio↔deal aunque el título sea más corto (ej. "BAJA DE PLACAS" vs "BAJA DE PLACAS CDMX | …").
+ *  Prefiere el catálogo del gestor dueño; si el deal es de concesionaria sin gestor, busca por título global. */
+const SERVICE_TITLE_MATCH = `
+  (
+    TRIM(gs2.name) = TRIM(d.title)
+    OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' %')
+    OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), '|%')
+    OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' |%')
+    OR TRIM(d.title) LIKE CONCAT(TRIM(gs2.name), '%')
+  )
+`;
+
 const SERVICE_MATCH_SQL = `
   SELECT gs2.id FROM gestor_services gs2
-  WHERE gs2.gestor_id = g.id
+  WHERE ${SERVICE_TITLE_MATCH}
     AND (
-      TRIM(gs2.name) = TRIM(d.title)
-      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' %')
-      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), '|%')
-      OR TRIM(gs2.name) LIKE CONCAT(TRIM(d.title), ' |%')
-      OR TRIM(d.title) LIKE CONCAT(TRIM(gs2.name), '%')
+      (g.id IS NOT NULL AND gs2.gestor_id = g.id)
+      OR (g.id IS NULL AND gs2.image_url IS NOT NULL AND gs2.image_url <> '')
     )
   ORDER BY
+    (g.id IS NOT NULL AND gs2.gestor_id = g.id) DESC,
     (TRIM(gs2.name) = TRIM(d.title)) DESC,
+    (gs2.image_url IS NOT NULL AND gs2.image_url <> '') DESC,
     LENGTH(TRIM(gs2.name)) ASC
   LIMIT 1
 `;
 
 const DEALS_SELECT = `
   SELECT d.id, d.title, d.stage, d.estimated_value as price, d.created_at, d.updated_at,
-         g.name as gestor_name, d.deal_type, d.tracking_code,
+         COALESCE(g.name, u.name) as gestor_name, d.deal_type, d.tracking_code,
          d.payment_status, gs.required_documents, gs.image_url as service_image_url,
          u.role as owner_role, u.crm_stages,
          di.id as invoice_id, di.invoice_number, di.pdf_url as invoice_pdf_url,
          di.amount as invoice_amount, di.created_at as invoice_date
   FROM crm_deals d
-  LEFT JOIN gestores g ON g.user_id = d.user_id
-  LEFT JOIN gestor_services gs ON gs.id = (${SERVICE_MATCH_SQL})
   JOIN contacts c ON c.id = d.contact_id
   LEFT JOIN users u ON u.id = d.user_id
+  LEFT JOIN gestores g ON g.user_id = COALESCE(u.parent_id, u.id)
+  LEFT JOIN gestor_services gs ON gs.id = (${SERVICE_MATCH_SQL})
   LEFT JOIN deal_invoices di ON di.deal_id = d.id
 `;
 
