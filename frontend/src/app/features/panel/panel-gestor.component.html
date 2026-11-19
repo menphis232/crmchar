@@ -1026,14 +1026,15 @@
 
                   <div class="form-group" style="margin-bottom:10px;">
                     <label>Estados (vehículo del cliente)</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow:auto;padding:4px 0;">
+                    <p class="card-desc" style="margin:0 0 8px;font-size:12px;">
+                      Toca para marcar/desmarcar. Seleccionados: {{ banner.audienceStates.length || 0 }}
+                    </p>
+                    <div class="audience-state-chips">
                       @for (st of mexicoStates; track st) {
                         <button
                           type="button"
-                          class="btn-ghost small"
-                          [style.background]="banner.audienceStates.includes(st) ? 'rgba(0,115,234,0.12)' : undefined"
-                          [style.borderColor]="banner.audienceStates.includes(st) ? '#0073ea' : undefined"
-                          [style.color]="banner.audienceStates.includes(st) ? '#0073ea' : undefined"
+                          class="audience-state-chip"
+                          [class.is-selected]="isClientPromoAudienceStateSelected(st)"
                           (click)="toggleClientPromoAudienceState(st)"
                         >{{ st }}</button>
                       }

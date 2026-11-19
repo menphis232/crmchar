@@ -1327,7 +1327,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       next: (b) => {
         this.canManageClientPromoBanner.set(!!b.canManage);
         if (!b.canManage) return;
-        const banners = (b.banners || []).map((row, i) => this.newClientPromoBanner({ ...row, sortOrder: row.sortOrder ?? i }));
+        const banners = (b.banners || []).map((row, i) => this.newClientPromoBanner({
+          ...row,
+          sortOrder: row.sortOrder ?? i,
+          audienceStates: Array.isArray(row.audienceStates) ? row.audienceStates : [],
+          audienceUserIds: Array.isArray(row.audienceUserIds) ? row.audienceUserIds : [],
+        }));
         this.clientPromoBanners.set(banners);
         if (!this.selectedClientPromoBannerId() && banners.length) {
           this.selectedClientPromoBannerId.set(banners[0].id);
@@ -1422,13 +1427,19 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.saveClientPromoBanner();
   }
 
+  isClientPromoAudienceStateSelected(state: string): boolean {
+    const banner = this.selectedClientPromoBanner();
+    return !!banner?.audienceStates?.includes(state);
+  }
+
   toggleClientPromoAudienceState(state: string) {
     const banner = this.selectedClientPromoBanner();
     if (!banner) return;
-    const has = banner.audienceStates.includes(state);
+    const current = Array.isArray(banner.audienceStates) ? banner.audienceStates : [];
+    const has = current.includes(state);
     const audienceStates = has
-      ? banner.audienceStates.filter((s) => s !== state)
-      : [...banner.audienceStates, state];
+      ? current.filter((s) => s !== state)
+      : [...current, state];
     this.patchSelectedClientPromoBanner({
       audienceMode: 'filtered',
       audienceStates,
