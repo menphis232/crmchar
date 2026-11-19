@@ -285,6 +285,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   aiInsights = signal<string[]>(DEFAULT_AI_TIPS);
   verificationAlerts = signal<CrmVerificationAlert[]>([]);
   insuranceAlerts = signal<CrmVerificationAlert[]>([]);
+  readonly activityPageSize = 10;
   clientActivity = signal<ClientActivityItem[]>([]);
   clientActivityTotals = signal<{ withAccess: number; online: number; everLoggedIn: number }>({
     withAccess: 0,
@@ -293,6 +294,24 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   });
   clientActivityLoading = signal(false);
   clientActivityError = signal('');
+  activityPage = signal(1);
+  activityTotalPages = computed(() => {
+    const total = this.clientActivity().length;
+    return Math.max(1, Math.ceil(total / this.activityPageSize));
+  });
+  pagedClientActivity = computed(() => {
+    const page = Math.min(this.activityPage(), this.activityTotalPages());
+    const start = (page - 1) * this.activityPageSize;
+    return this.clientActivity().slice(start, start + this.activityPageSize);
+  });
+  activityRangeLabel = computed(() => {
+    const total = this.clientActivity().length;
+    if (!total) return '0 de 0';
+    const page = Math.min(this.activityPage(), this.activityTotalPages());
+    const start = (page - 1) * this.activityPageSize + 1;
+    const end = Math.min(page * this.activityPageSize, total);
+    return `${start}–${end} de ${total}`;
+  });
   isAiLoading = signal(false);
   message = signal('');
   editingServiceId: string | null = null;
@@ -471,6 +490,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       next: (res) => {
         this.clientActivity.set(res.items || []);
         this.clientActivityTotals.set(res.totals || { withAccess: 0, online: 0, everLoggedIn: 0 });
+        this.activityPage.set(1);
         this.clientActivityLoading.set(false);
       },
       error: (e) => {
@@ -478,6 +498,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.clientActivityError.set(e.error?.error || 'No se pudo cargar la actividad');
       },
     });
+  }
+
+  setActivityPage(page: number) {
+    const max = this.activityTotalPages();
+    this.activityPage.set(Math.min(max, Math.max(1, page)));
   }
 
   formatLastSeen(value: string | null | undefined): string {

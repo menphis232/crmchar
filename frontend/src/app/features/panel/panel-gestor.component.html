@@ -488,55 +488,84 @@
           <p class="activity-error">{{ clientActivityError() }}</p>
         }
 
-        <div class="activity-list" role="table" aria-label="Actividad de clientes">
-          <div class="activity-list-head" role="row">
-            <span role="columnheader">Cliente</span>
-            <span role="columnheader">Estado</span>
-            <span role="columnheader">Entró</span>
-            <span role="columnheader">Última vez</span>
-            <span role="columnheader">Términos</span>
-            <span role="columnheader"></span>
-          </div>
+        <div class="activity-list-scroll">
+          <div class="activity-list" role="table" aria-label="Actividad de clientes">
+            <div class="activity-list-head" role="row">
+              <span role="columnheader">Cliente</span>
+              <span role="columnheader">Estado</span>
+              <span role="columnheader">Entró</span>
+              <span role="columnheader">Última vez</span>
+              <span role="columnheader">Términos</span>
+              <span role="columnheader"></span>
+            </div>
 
-          @for (row of clientActivity(); track row.userId) {
-            <div class="activity-row" role="row" [class.is-online]="row.online">
-              <div class="activity-cell activity-cell-client" role="cell">
-                <strong>{{ row.name || row.contactName || 'Sin nombre' }}</strong>
-                <span class="activity-meta">{{ activityContactHint(row) }}</span>
+            @for (row of pagedClientActivity(); track row.userId) {
+              <div class="activity-row" role="row" [class.is-online]="row.online">
+                <div class="activity-cell activity-cell-client" role="cell">
+                  <strong>{{ row.name || row.contactName || 'Sin nombre' }}</strong>
+                  <span class="activity-meta">{{ activityContactHint(row) }}</span>
+                </div>
+                <div class="activity-cell activity-cell-status" role="cell">
+                  <span class="activity-status" [class.online]="row.online">
+                    <span class="activity-dot" [class.online]="row.online"></span>
+                    {{ row.online ? 'En línea' : 'Fuera de línea' }}
+                  </span>
+                </div>
+                <div class="activity-cell" role="cell">
+                  <span class="activity-pill" [class.yes]="row.hasLoggedIn" [class.no]="!row.hasLoggedIn">
+                    {{ row.hasLoggedIn ? 'Sí' : 'No' }}
+                  </span>
+                </div>
+                <div class="activity-cell activity-cell-seen" role="cell">
+                  {{ formatLastSeen(row.lastSeenAt) }}
+                </div>
+                <div class="activity-cell" role="cell">
+                  <span class="activity-pill" [class.yes]="row.termsAccepted" [class.warn]="!row.termsAccepted">
+                    {{ row.termsAccepted ? 'Aceptados' : 'Pendiente' }}
+                  </span>
+                </div>
+                <div class="activity-cell activity-cell-action" role="cell">
+                  <button type="button" class="activity-link" (click)="openClientContact(row.contactId)">Ver contacto</button>
+                </div>
               </div>
-              <div class="activity-cell activity-cell-status" role="cell">
-                <span class="activity-status" [class.online]="row.online">
-                  <span class="activity-dot" [class.online]="row.online"></span>
-                  {{ row.online ? 'En línea' : 'Fuera de línea' }}
-                </span>
+            } @empty {
+              <div class="activity-empty">
+                @if (clientActivityLoading()) {
+                  Cargando actividad…
+                } @else {
+                  Aún no hay clientes con acceso al panel vinculados a tus contactos.
+                }
               </div>
-              <div class="activity-cell" role="cell">
-                <span class="activity-pill" [class.yes]="row.hasLoggedIn" [class.no]="!row.hasLoggedIn">
-                  {{ row.hasLoggedIn ? 'Sí' : 'No' }}
-                </span>
-              </div>
-              <div class="activity-cell activity-cell-seen" role="cell">
-                {{ formatLastSeen(row.lastSeenAt) }}
-              </div>
-              <div class="activity-cell" role="cell">
-                <span class="activity-pill" [class.yes]="row.termsAccepted" [class.warn]="!row.termsAccepted">
-                  {{ row.termsAccepted ? 'Aceptados' : 'Pendiente' }}
-                </span>
-              </div>
-              <div class="activity-cell activity-cell-action" role="cell">
-                <button type="button" class="activity-link" (click)="openClientContact(row.contactId)">Ver contacto</button>
-              </div>
-            </div>
-          } @empty {
-            <div class="activity-empty">
-              @if (clientActivityLoading()) {
-                Cargando actividad…
-              } @else {
-                Aún no hay clientes con acceso al panel vinculados a tus contactos.
-              }
-            </div>
-          }
+            }
+          </div>
         </div>
+
+        @if (clientActivity().length) {
+          <div class="activity-pager">
+            <span class="activity-pager-info">{{ activityRangeLabel() }}</span>
+            <div class="activity-pager-actions">
+              <button
+                type="button"
+                class="activity-pager-btn"
+                [disabled]="activityPage() <= 1"
+                (click)="setActivityPage(activityPage() - 1)"
+              >
+                <svg lucideChevronLeft [size]="16" aria-hidden="true"></svg>
+                Anterior
+              </button>
+              <span class="activity-pager-page">Pág. {{ activityPage() }} / {{ activityTotalPages() }}</span>
+              <button
+                type="button"
+                class="activity-pager-btn"
+                [disabled]="activityPage() >= activityTotalPages()"
+                (click)="setActivityPage(activityPage() + 1)"
+              >
+                Siguiente
+                <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
+              </button>
+            </div>
+          </div>
+        }
       </div>
     }
 
