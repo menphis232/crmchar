@@ -394,7 +394,7 @@
 
           <div class="client-search-bar">
             <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-            <input type="text" class="client-search-input" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, gestoría o código..."
+            <input type="text" class="client-search-input" [(ngModel)]="tramitesSearch" placeholder="Buscar por trámite, consultoría o código..."
                    (keyup.enter)="searchTramites()">
             <button type="button" class="btn-ghost small" (click)="searchTramites()">Buscar</button>
           </div>
@@ -472,7 +472,7 @@
 
         <div class="client-search-bar">
           <svg lucideSearch [size]="16" aria-hidden="true"></svg>
-          <input type="text" class="client-search-input" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, gestoría o código..."
+          <input type="text" class="client-search-input" [(ngModel)]="historialSearch" placeholder="Buscar por trámite, consultoría o código..."
                  (keyup.enter)="searchHistorial()">
           <button type="button" class="btn-ghost small" (click)="searchHistorial()">Buscar</button>
         </div>
@@ -722,7 +722,7 @@
           <svg lucideCar [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
           Mis Vehículos
         </h2>
-        <p class="card-desc">Registra los autos de tu familia con marca, submarca y año. Tu gestoría verá la misma información.</p>
+        <p class="card-desc">Registra los autos de tu familia con marca, submarca y año. Tu consultoría verá la misma información.</p>
 
         @if (vehiclesLoading()) {
           <div class="client-empty">Cargando vehículos...</div>
@@ -1298,7 +1298,7 @@
           <p class="client-detail-eyebrow">Seguimiento de trámite</p>
           <h2 class="client-detail-title">{{ selectedDeal().title }}</h2>
           <div class="client-detail-meta">
-            <span>Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
+            <span>Consultoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
             <span class="client-detail-dot">·</span>
             <span>Código <code class="client-code">{{ selectedDeal().tracking_code }}</code></span>
           </div>
@@ -1390,7 +1390,7 @@
               <div class="client-chat-placeholder">Cargando mensajes...</div>
             } @else if (messages().length === 0) {
               <div class="client-chat-placeholder">
-                <p>Escribe tu primer mensaje para contactar a tu gestoría.</p>
+                <p>Escribe tu primer mensaje para contactar a tu consultoría.</p>
               </div>
             } @else {
               @for (msg of messages(); track msg.id) {
@@ -1436,7 +1436,7 @@
             <div class="client-shipping-preview">
               <div class="client-docs-intro">
                 <h3>Tu guía de envío</h3>
-                <p>Descarga o previsualiza la etiqueta o guía que tu gestoría compartió contigo.</p>
+                <p>Descarga o previsualiza la etiqueta o guía que tu consultoría compartió contigo.</p>
               </div>
               @for (file of shippingFiles(); track file.id) {
                 <div class="client-shipping-card">
