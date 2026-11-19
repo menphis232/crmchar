@@ -1176,20 +1176,37 @@
               [alt]="banner.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (banner.promoBannerTitle && !clientPromoTitleBelow(banner)) {
+          @if (clientPromoHasText(banner) && !clientPromoTitleBelow(banner)) {
             <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle(banner)">{{ banner.promoBannerTitle }}</span>
+              <div class="client-promo-banner-copy">
+                @if (banner.promoBannerTitle) {
+                  <span class="client-promo-banner-title">{{ banner.promoBannerTitle }}</span>
+                }
+                @if (banner.promoBannerSubtitle) {
+                  <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+                }
+              </div>
             </div>
           }
         </div>
-        @if (banner.promoBannerTitle && clientPromoTitleBelow(banner)) {
+        @if (clientPromoHasText(banner) && clientPromoTitleBelow(banner)) {
           <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-            {{ banner.promoBannerTitle }}
+            @if (banner.promoBannerTitle) {
+              <span class="client-promo-banner-title">{{ banner.promoBannerTitle }}</span>
+            }
+            @if (banner.promoBannerSubtitle) {
+              <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+            }
           </div>
         }
-      } @else if (banner.promoBannerTitle) {
+      } @else if (clientPromoHasText(banner)) {
         <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-          <strong>{{ banner.promoBannerTitle }}</strong>
+          @if (banner.promoBannerTitle) {
+            <strong class="client-promo-banner-title">{{ banner.promoBannerTitle }}</strong>
+          }
+          @if (banner.promoBannerSubtitle) {
+            <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+          }
         </div>
       }
     </a>
@@ -1206,20 +1223,37 @@
               [alt]="banner.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (banner.promoBannerTitle && !clientPromoTitleBelow(banner)) {
+          @if (clientPromoHasText(banner) && !clientPromoTitleBelow(banner)) {
             <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle(banner)">{{ banner.promoBannerTitle }}</span>
+              <div class="client-promo-banner-copy">
+                @if (banner.promoBannerTitle) {
+                  <span class="client-promo-banner-title">{{ banner.promoBannerTitle }}</span>
+                }
+                @if (banner.promoBannerSubtitle) {
+                  <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+                }
+              </div>
             </div>
           }
         </div>
-        @if (banner.promoBannerTitle && clientPromoTitleBelow(banner)) {
+        @if (clientPromoHasText(banner) && clientPromoTitleBelow(banner)) {
           <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-            {{ banner.promoBannerTitle }}
+            @if (banner.promoBannerTitle) {
+              <span class="client-promo-banner-title">{{ banner.promoBannerTitle }}</span>
+            }
+            @if (banner.promoBannerSubtitle) {
+              <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+            }
           </div>
         }
-      } @else if (banner.promoBannerTitle) {
+      } @else if (clientPromoHasText(banner)) {
         <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
-          <strong>{{ banner.promoBannerTitle }}</strong>
+          @if (banner.promoBannerTitle) {
+            <strong class="client-promo-banner-title">{{ banner.promoBannerTitle }}</strong>
+          }
+          @if (banner.promoBannerSubtitle) {
+            <span class="client-promo-banner-subtitle">{{ banner.promoBannerSubtitle }}</span>
+          }
         </div>
       }
     </div>

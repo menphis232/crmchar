@@ -50,9 +50,16 @@
   -webkit-text-fill-color: var(--promo-title-color, #ffffff) !important;
 }
 
+.client-promo-banner-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 92%;
+  text-align: inherit;
+}
+
 .client-promo-banner-title {
   display: block;
-  max-width: 92%;
   font-weight: 700;
   line-height: 1.25;
   font-size: var(--promo-title-size, 18px) !important;
@@ -63,25 +70,56 @@
   word-break: break-word;
 }
 
-.client-promo-banner-caption {
+.client-promo-banner-subtitle {
   display: block;
+  font-weight: 500;
+  line-height: 1.35;
+  font-size: var(--promo-subtitle-size, 13px) !important;
+  color: var(--promo-title-color, #ffffff) !important;
+  -webkit-text-fill-color: var(--promo-title-color, #ffffff) !important;
+  opacity: 0.92;
+  text-align: inherit;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 0 10px rgba(0, 0, 0, 0.2);
+  word-break: break-word;
+}
+
+.client-promo-banner-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 10px 14px;
-  font-weight: 700;
   line-height: 1.25;
   background: #fff;
   border-top: 1px solid var(--mon-border, #e6e9ef);
-  color: var(--promo-title-color, #323338) !important;
-  -webkit-text-fill-color: var(--promo-title-color, #323338) !important;
-  font-size: var(--promo-title-size, 15px) !important;
   text-shadow: none;
 }
 
+.client-promo-banner-caption .client-promo-banner-title,
+.client-promo-banner-caption .client-promo-banner-subtitle {
+  color: var(--promo-title-color, #323338) !important;
+  -webkit-text-fill-color: var(--promo-title-color, #323338) !important;
+  text-shadow: none;
+}
+
+.client-promo-banner-caption .client-promo-banner-title {
+  font-weight: 700;
+  font-size: var(--promo-title-size, 15px) !important;
+}
+
+.client-promo-banner-caption .client-promo-banner-subtitle {
+  font-weight: 500;
+  font-size: var(--promo-subtitle-size, 13px) !important;
+  opacity: 0.85;
+}
+
 .client-promo-banner-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   padding: 18px 20px;
   background: linear-gradient(135deg, #0073ea 0%, #0060c2 100%);
   color: var(--promo-title-color, #ffffff) !important;
   -webkit-text-fill-color: var(--promo-title-color, #ffffff) !important;
-  font-size: var(--promo-title-size, 15px) !important;
 }
 
 .client-promo-banner--nolink {

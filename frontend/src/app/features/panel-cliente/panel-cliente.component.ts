@@ -156,6 +156,9 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   clientPromoTitleBelow(b: ClientPromoBannerDto): boolean {
     return (b.promoBannerTitlePlacement || 'overlay') === 'below';
   }
+  clientPromoHasText(b: ClientPromoBannerDto): boolean {
+    return !!(b.promoBannerTitle || b.promoBannerSubtitle);
+  }
   clientPromoTitleOverlayStyle(b: ClientPromoBannerDto): Record<string, string> {
     const sizeMap: Record<string, string> = {
       sm: '14px',
@@ -163,10 +166,18 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       lg: '24px',
       xl: '32px',
     };
+    const subtitleSizeMap: Record<string, string> = {
+      sm: '11px',
+      md: '13px',
+      lg: '15px',
+      xl: '18px',
+    };
+    const sizeKey = b.promoBannerTitleSize || 'md';
     const align = b.promoBannerTitleAlign || 'center';
     const valign = b.promoBannerTitleVAlign || 'center';
     const color = b.promoBannerTitleColor || '#ffffff';
-    const fontSize = sizeMap[b.promoBannerTitleSize || 'md'] || sizeMap['md'];
+    const fontSize = sizeMap[sizeKey] || sizeMap['md'];
+    const subtitleSize = subtitleSizeMap[sizeKey] || subtitleSizeMap['md'];
     const justify =
       align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
     const items =
@@ -174,6 +185,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return {
       '--promo-title-color': color,
       '--promo-title-size': fontSize,
+      '--promo-subtitle-size': subtitleSize,
       color,
       webkitTextFillColor: color,
       fontSize,

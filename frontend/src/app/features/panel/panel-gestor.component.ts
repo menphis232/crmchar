@@ -1292,13 +1292,14 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   private newClientPromoBanner(partial: Partial<ClientPromoBanner> = {}): ClientPromoBanner {
-    return {
+    const base: ClientPromoBanner = {
       id: crypto.randomUUID(),
       enabled: true,
       imageDesktop: '',
       imageMobile: '',
       link: '',
       title: '',
+      subtitle: '',
       titleColor: '#ffffff',
       titleSize: 'md',
       titleAlign: 'center',
@@ -1311,6 +1312,20 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       audienceStates: [],
       audiencePurchased: 'any',
       ...partial,
+    };
+    return {
+      ...base,
+      title: base.title || '',
+      subtitle: base.subtitle || '',
+      titleColor: base.titleColor || '#ffffff',
+      titleSize: base.titleSize || 'md',
+      titleAlign: base.titleAlign || 'center',
+      titleVAlign: base.titleVAlign || 'center',
+      titlePlacement: base.titlePlacement || 'overlay',
+      audienceMode: base.audienceMode || 'all',
+      audiencePurchased: base.audiencePurchased || 'any',
+      audienceUserIds: Array.isArray(base.audienceUserIds) ? base.audienceUserIds : [],
+      audienceStates: Array.isArray(base.audienceStates) ? base.audienceStates : [],
     };
   }
 

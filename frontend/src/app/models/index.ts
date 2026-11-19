@@ -199,6 +199,7 @@ export interface ClientPromoBanner {
   imageMobile: string;
   link: string;
   title: string;
+  subtitle: string;
   titleColor: string;
   titleSize: 'sm' | 'md' | 'lg' | 'xl';
   titleAlign: 'left' | 'center' | 'right';
@@ -220,6 +221,7 @@ export interface ClientPromoBannerDto {
   promoBannerImageMobile?: string;
   promoBannerLink?: string;
   promoBannerTitle?: string;
+  promoBannerSubtitle?: string;
   promoBannerTitleColor?: string;
   promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
   promoBannerTitleAlign?: 'left' | 'center' | 'right';

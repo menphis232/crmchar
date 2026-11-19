@@ -973,6 +973,14 @@
                 >
               </div>
               <div class="form-group" style="margin-bottom:10px;">
+                <label>Subtítulo <span style="font-weight:400;opacity:.7;">(más pequeño)</span></label>
+                <input
+                  [ngModel]="banner.subtitle"
+                  (ngModelChange)="patchSelectedClientPromoBanner({ subtitle: $event })"
+                  placeholder="Ej. Cotiza en minutos y sin salir de casa"
+                >
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
                 <label>Ubicación del título</label>
                 <select
                   [ngModel]="banner.titlePlacement"

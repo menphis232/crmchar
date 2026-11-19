@@ -58,6 +58,7 @@ export function emptyPromoBanner(partial = {}) {
     imageMobile: '',
     link: '',
     title: '',
+    subtitle: '',
     titleColor: '#ffffff',
     titleSize: 'md',
     titleAlign: 'center',
@@ -83,6 +84,7 @@ export function normalizePromoBanner(raw = {}, index = 0) {
     imageMobile: mobile,
     link: String(raw.link || raw.promoBannerLink || '').trim(),
     title: String(raw.title || raw.promoBannerTitle || '').trim(),
+    subtitle: String(raw.subtitle || raw.promoBannerSubtitle || '').trim(),
     titleColor: normalizePromoBannerTitleColor(raw.titleColor || raw.promoBannerTitleColor),
     titleSize: normalizePromoBannerTitleSize(raw.titleSize || raw.promoBannerTitleSize),
     titleAlign: normalizePromoBannerTitleAlign(raw.titleAlign || raw.promoBannerTitleAlign),
@@ -151,6 +153,7 @@ export function syncLegacyPromoFields(settings, banners) {
     promoBannerImageMobile: first?.imageMobile || '',
     promoBannerLink: first?.link || '',
     promoBannerTitle: first?.title || '',
+    promoBannerSubtitle: first?.subtitle || '',
     promoBannerTitleColor: first?.titleColor || '#ffffff',
     promoBannerTitleSize: first?.titleSize || 'md',
     promoBannerTitleAlign: first?.titleAlign || 'center',
@@ -169,6 +172,7 @@ export function bannerToClientDto(banner) {
     promoBannerImageMobile: banner.imageMobile || banner.imageDesktop || '',
     promoBannerLink: banner.link || '',
     promoBannerTitle: banner.title || '',
+    promoBannerSubtitle: banner.subtitle || '',
     promoBannerTitleColor: banner.titleColor || '#ffffff',
     promoBannerTitleSize: banner.titleSize || 'md',
     promoBannerTitleAlign: banner.titleAlign || 'center',
@@ -224,7 +228,7 @@ export async function resolveClientPromoAudience(user) {
 
 export function bannerMatchesAudience(banner, audience) {
   if (!banner?.enabled) return false;
-  const hasContent = !!(banner.imageDesktop || banner.imageMobile || banner.title);
+  const hasContent = !!(banner.imageDesktop || banner.imageMobile || banner.title || banner.subtitle);
   if (!hasContent) return false;
 
   if (banner.audienceMode !== 'filtered') return true;
