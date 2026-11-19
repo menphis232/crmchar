@@ -719,109 +719,230 @@
         </div>
 
         @if (canManageClientPromoBanner()) {
-          <div class="form-group" style="margin-bottom:24px;padding:16px;border:1px solid rgba(0,115,234,0.25);border-radius:12px;background:rgba(0,115,234,0.04);">
-            <h3 style="margin:0 0 6px;font-size:15px;">Banner del panel del cliente</h3>
-            <p class="card-desc" style="font-size:12px;margin:0 0 12px;">
-              Solo esta consultoría puede publicarlo. Recorta desktop y móvil; el título se muestra encima del banner (puedes centrarlo y ajustar color/tamaño).
-            </p>
-            <label class="inline-check" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-              <input type="checkbox" [(ngModel)]="clientPromoBannerEnabled" (ngModelChange)="saveClientPromoBanner()">
-              Mostrar banner a los clientes
-            </label>
-
-            <div style="display:grid;gap:14px;margin-bottom:14px;">
+          <div class="form-group client-promo-admin" style="margin-bottom:24px;padding:16px;border:1px solid rgba(0,115,234,0.25);border-radius:12px;background:rgba(0,115,234,0.04);">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
               <div>
-                <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Desktop · {{ clientPromoDesktopSizeLabel }} (3:1)</label>
-                @if (clientPromoBannerImageDesktop) {
-                  <img [src]="clientPromoBannerImageDesktop" alt="Banner desktop" class="gestor-banner-preview" style="margin-bottom:8px;">
-                }
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                  <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'desktop')" #clientPromoDesktopInput style="display:none">
-                  <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoDesktopInput.click()" [disabled]="isUploadingClientPromoBanner">
-                    <svg lucideCamera [size]="14" aria-hidden="true"></svg>
-                    {{ clientPromoBannerImageDesktop ? 'Recortar desktop' : 'Subir y recortar desktop' }}
-                  </button>
-                  @if (clientPromoBannerImageDesktop && !isUploadingClientPromoBanner) {
-                    <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('desktop')">Quitar desktop</button>
-                  }
-                </div>
+                <h3 style="margin:0 0 6px;font-size:15px;">Banners del panel del cliente</h3>
+                <p class="card-desc" style="font-size:12px;margin:0;">
+                  Puedes crear varios banners y elegir a quién se muestran: usuarios, estado del vehículo o si ya compraron un servicio.
+                </p>
               </div>
-              <div>
-                <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Móvil · {{ clientPromoMobileSizeLabel }} (2:1)</label>
-                @if (clientPromoBannerImageMobile) {
-                  <img [src]="clientPromoBannerImageMobile" alt="Banner móvil" class="gestor-banner-preview" style="margin-bottom:8px;max-width:280px;">
-                }
-                <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-                  <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'mobile')" #clientPromoMobileInput style="display:none">
-                  <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoMobileInput.click()" [disabled]="isUploadingClientPromoBanner">
-                    <svg lucideCamera [size]="14" aria-hidden="true"></svg>
-                    {{ clientPromoBannerImageMobile ? 'Recortar móvil' : 'Subir y recortar móvil' }}
-                  </button>
-                  @if (clientPromoBannerImageMobile && !isUploadingClientPromoBanner) {
-                    <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('mobile')">Quitar móvil</button>
-                  }
-                </div>
-              </div>
+              <button type="button" class="btn-copy small" (click)="addClientPromoBanner()">+ Nuevo banner</button>
             </div>
-            @if (isUploadingClientPromoBanner) { <p class="card-desc" style="margin:0 0 12px;">Subiendo imagen recortada...</p> }
 
-            <div class="form-group" style="margin-bottom:10px;">
-              <label>Título</label>
-              <input [(ngModel)]="clientPromoBannerTitle" placeholder="Ej. ¿Necesitas un trámite vehicular?" (change)="saveClientPromoBanner()">
-            </div>
-            <div class="form-group" style="margin-bottom:10px;">
-              <label>Ubicación del título</label>
-              <select [(ngModel)]="clientPromoBannerTitlePlacement" (ngModelChange)="saveClientPromoBanner()">
-                <option value="overlay">Encima del banner</option>
-                <option value="below">Debajo del banner</option>
-              </select>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;">
-              <div class="form-group" style="margin:0;">
-                <label>Color del texto</label>
-                <div style="display:flex;align-items:center;gap:8px;">
-                  <input type="color" [(ngModel)]="clientPromoBannerTitleColor" (ngModelChange)="saveClientPromoBanner()" style="width:42px;height:34px;padding:0;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;">
-                  <input type="text" [(ngModel)]="clientPromoBannerTitleColor" (change)="saveClientPromoBanner()" placeholder="#ffffff" style="flex:1;">
+            @if (clientPromoBanners().length) {
+              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                @for (b of clientPromoBanners(); track b.id) {
+                  <button
+                    type="button"
+                    class="btn-ghost"
+                    style="text-align:left;display:flex;flex-direction:column;gap:4px;padding:10px 12px;"
+                    [style.borderColor]="selectedClientPromoBannerId() === b.id ? 'var(--mon-primary,#0073ea)' : undefined"
+                    [style.background]="selectedClientPromoBannerId() === b.id ? 'rgba(0,115,234,0.08)' : undefined"
+                    (click)="selectClientPromoBanner(b.id)"
+                  >
+                    <strong style="font-size:13px;">{{ b.title || 'Sin título' }} {{ b.enabled ? '' : '(oculto)' }}</strong>
+                    <span style="font-size:11px;color:var(--mon-muted,#676879);">{{ audienceSummary(b) }}</span>
+                  </button>
+                }
+              </div>
+            } @else {
+              <p class="card-desc" style="margin:0 0 12px;">Aún no hay banners. Crea el primero.</p>
+            }
+
+            @if (selectedClientPromoBanner(); as banner) {
+              <label class="inline-check" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+                <input
+                  type="checkbox"
+                  [ngModel]="banner.enabled"
+                  (ngModelChange)="patchSelectedClientPromoBanner({ enabled: $event })"
+                >
+                Mostrar este banner
+              </label>
+
+              <div style="display:grid;gap:14px;margin-bottom:14px;">
+                <div>
+                  <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Desktop · {{ clientPromoDesktopSizeLabel }} (3:1)</label>
+                  @if (banner.imageDesktop) {
+                    <img [src]="banner.imageDesktop" alt="Banner desktop" class="gestor-banner-preview" style="margin-bottom:8px;">
+                  }
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'desktop')" #clientPromoDesktopInput style="display:none">
+                    <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoDesktopInput.click()" [disabled]="isUploadingClientPromoBanner">
+                      <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                      {{ banner.imageDesktop ? 'Recortar desktop' : 'Subir y recortar desktop' }}
+                    </button>
+                    @if (banner.imageDesktop && !isUploadingClientPromoBanner) {
+                      <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('desktop')">Quitar desktop</button>
+                    }
+                  </div>
+                </div>
+                <div>
+                  <label style="display:block;margin-bottom:6px;font-size:12px;font-weight:600;">Móvil · {{ clientPromoMobileSizeLabel }} (2:1)</label>
+                  @if (banner.imageMobile) {
+                    <img [src]="banner.imageMobile" alt="Banner móvil" class="gestor-banner-preview" style="margin-bottom:8px;max-width:280px;">
+                  }
+                  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                    <input type="file" accept="image/*" (change)="onClientPromoBannerSelected($event, 'mobile')" #clientPromoMobileInput style="display:none">
+                    <button type="button" class="btn-ghost small btn-with-icon" (click)="clientPromoMobileInput.click()" [disabled]="isUploadingClientPromoBanner">
+                      <svg lucideCamera [size]="14" aria-hidden="true"></svg>
+                      {{ banner.imageMobile ? 'Recortar móvil' : 'Subir y recortar móvil' }}
+                    </button>
+                    @if (banner.imageMobile && !isUploadingClientPromoBanner) {
+                      <button type="button" class="btn-delete small" (click)="clearClientPromoBannerImage('mobile')">Quitar móvil</button>
+                    }
+                  </div>
                 </div>
               </div>
-              <div class="form-group" style="margin:0;">
-                <label>Tamaño</label>
-                <select [(ngModel)]="clientPromoBannerTitleSize" (ngModelChange)="saveClientPromoBanner()">
-                  @for (opt of clientPromoTitleSizeOptions; track opt.value) {
-                    <option [value]="opt.value">{{ opt.label }}</option>
-                  }
+              @if (isUploadingClientPromoBanner) { <p class="card-desc" style="margin:0 0 12px;">Subiendo imagen recortada...</p> }
+
+              <div class="form-group" style="margin-bottom:10px;">
+                <label>Título</label>
+                <input
+                  [ngModel]="banner.title"
+                  (ngModelChange)="patchSelectedClientPromoBanner({ title: $event })"
+                  placeholder="Ej. ¿Necesitas un trámite vehicular?"
+                >
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <label>Ubicación del título</label>
+                <select
+                  [ngModel]="banner.titlePlacement"
+                  (ngModelChange)="patchSelectedClientPromoBanner({ titlePlacement: $event })"
+                >
+                  <option value="overlay">Encima del banner</option>
+                  <option value="below">Debajo del banner</option>
                 </select>
               </div>
-              <div class="form-group" style="margin:0;">
-                <label>Alineación horizontal</label>
-                <select [(ngModel)]="clientPromoBannerTitleAlign" (ngModelChange)="saveClientPromoBanner()">
-                  <option value="left">Izquierda</option>
-                  <option value="center">Centro</option>
-                  <option value="right">Derecha</option>
-                </select>
-              </div>
-              @if (clientPromoBannerTitlePlacement === 'overlay') {
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px;">
                 <div class="form-group" style="margin:0;">
-                  <label>Posición vertical</label>
-                  <select [(ngModel)]="clientPromoBannerTitleVAlign" (ngModelChange)="saveClientPromoBanner()">
-                    <option value="top">Arriba</option>
-                    <option value="center">Medio</option>
-                    <option value="bottom">Abajo</option>
+                  <label>Color del texto</label>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="color" [ngModel]="banner.titleColor" (ngModelChange)="patchSelectedClientPromoBanner({ titleColor: $event })" style="width:42px;height:34px;padding:0;border:1px solid var(--border);border-radius:6px;background:transparent;cursor:pointer;">
+                    <input type="text" [ngModel]="banner.titleColor" (ngModelChange)="patchSelectedClientPromoBanner({ titleColor: $event })" placeholder="#ffffff" style="flex:1;">
+                  </div>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>Tamaño</label>
+                  <select [ngModel]="banner.titleSize" (ngModelChange)="patchSelectedClientPromoBanner({ titleSize: $event })">
+                    @for (opt of clientPromoTitleSizeOptions; track opt.value) {
+                      <option [value]="opt.value">{{ opt.label }}</option>
+                    }
                   </select>
                 </div>
-              }
-            </div>
-            <div class="form-group" style="margin-bottom:10px;">
-              <label>Link al hacer clic (opcional)</label>
-              <input [(ngModel)]="clientPromoBannerLink" placeholder="/gestores o https://..." (change)="saveClientPromoBanner()">
-            </div>
-            <div class="form-group" style="margin-bottom:10px;">
-              <label>Texto alternativo</label>
-              <input [(ngModel)]="clientPromoBannerAlt" placeholder="Promoción" (change)="saveClientPromoBanner()">
-            </div>
-            <button type="button" class="btn-copy small" (click)="saveClientPromoBanner()" [disabled]="isSavingClientPromoBanner">
-              {{ isSavingClientPromoBanner ? 'Guardando...' : 'Guardar banner de clientes' }}
-            </button>
+                <div class="form-group" style="margin:0;">
+                  <label>Alineación horizontal</label>
+                  <select [ngModel]="banner.titleAlign" (ngModelChange)="patchSelectedClientPromoBanner({ titleAlign: $event })">
+                    <option value="left">Izquierda</option>
+                    <option value="center">Centro</option>
+                    <option value="right">Derecha</option>
+                  </select>
+                </div>
+                @if (banner.titlePlacement === 'overlay') {
+                  <div class="form-group" style="margin:0;">
+                    <label>Posición vertical</label>
+                    <select [ngModel]="banner.titleVAlign" (ngModelChange)="patchSelectedClientPromoBanner({ titleVAlign: $event })">
+                      <option value="top">Arriba</option>
+                      <option value="center">Medio</option>
+                      <option value="bottom">Abajo</option>
+                    </select>
+                  </div>
+                }
+              </div>
+              <div class="form-group" style="margin-bottom:10px;">
+                <label>Link al hacer clic (opcional)</label>
+                <input [ngModel]="banner.link" (ngModelChange)="patchSelectedClientPromoBanner({ link: $event })" placeholder="/gestores o https://...">
+              </div>
+              <div class="form-group" style="margin-bottom:14px;">
+                <label>Texto alternativo</label>
+                <input [ngModel]="banner.alt" (ngModelChange)="patchSelectedClientPromoBanner({ alt: $event })" placeholder="Promoción">
+              </div>
+
+              <div style="padding:12px;border:1px solid var(--mon-border,#e6e9ef);border-radius:10px;background:#fff;margin-bottom:14px;">
+                <h4 style="margin:0 0 8px;font-size:13px;">¿Quién ve este banner?</h4>
+                <div class="form-group" style="margin-bottom:10px;">
+                  <label>Audiencia</label>
+                  <select
+                    [ngModel]="banner.audienceMode"
+                    (ngModelChange)="patchSelectedClientPromoBanner({ audienceMode: $event })"
+                  >
+                    <option value="all">Todos los clientes</option>
+                    <option value="filtered">Solo quienes cumplan el filtro</option>
+                  </select>
+                </div>
+
+                @if (banner.audienceMode === 'filtered') {
+                  <div class="form-group" style="margin-bottom:10px;">
+                    <label>¿Compró algún servicio?</label>
+                    <select
+                      [ngModel]="banner.audiencePurchased"
+                      (ngModelChange)="patchSelectedClientPromoBanner({ audiencePurchased: $event })"
+                    >
+                      <option value="any">Da igual</option>
+                      <option value="yes">Sí (ya pagó al menos un trámite)</option>
+                      <option value="no">No (aún no ha pagado)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:10px;">
+                    <label>Estados (vehículo del cliente)</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;max-height:140px;overflow:auto;padding:4px 0;">
+                      @for (st of mexicoStates; track st) {
+                        <button
+                          type="button"
+                          class="btn-ghost small"
+                          [style.background]="banner.audienceStates.includes(st) ? 'rgba(0,115,234,0.12)' : undefined"
+                          [style.borderColor]="banner.audienceStates.includes(st) ? '#0073ea' : undefined"
+                          [style.color]="banner.audienceStates.includes(st) ? '#0073ea' : undefined"
+                          (click)="toggleClientPromoAudienceState(st)"
+                        >{{ st }}</button>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:8px;">
+                    <label>Usuarios específicos</label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+                      <input
+                        style="flex:1;min-width:180px;"
+                        [(ngModel)]="clientPromoAudienceSearch"
+                        placeholder="Buscar por nombre, correo o teléfono"
+                        (keyup.enter)="searchClientPromoAudienceClients()"
+                      >
+                      <button type="button" class="btn-ghost small" (click)="searchClientPromoAudienceClients()" [disabled]="clientPromoAudienceSearching">
+                        {{ clientPromoAudienceSearching ? 'Buscando...' : 'Buscar' }}
+                      </button>
+                    </div>
+                    @if (banner.audienceUserIds.length) {
+                      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+                        @for (uid of banner.audienceUserIds; track uid) {
+                          <button type="button" class="btn-ghost small" (click)="removeClientPromoAudienceUser(uid)">
+                            {{ clientPromoAudienceClientLabels()[uid] || uid }} ×
+                          </button>
+                        }
+                      </div>
+                    }
+                    @if (clientPromoAudienceSearchResults().length) {
+                      <div style="display:flex;flex-direction:column;gap:4px;max-height:160px;overflow:auto;">
+                        @for (u of clientPromoAudienceSearchResults(); track u.id) {
+                          <button type="button" class="btn-ghost" style="text-align:left;padding:8px 10px;" (click)="addClientPromoAudienceUser(u)">
+                            <strong style="display:block;font-size:12px;">{{ u.name || 'Sin nombre' }}</strong>
+                            <span style="font-size:11px;color:#676879;">{{ u.email }}{{ u.phone ? ' · ' + u.phone : '' }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                <button type="button" class="btn-copy small" (click)="saveClientPromoBanner()" [disabled]="isSavingClientPromoBanner">
+                  {{ isSavingClientPromoBanner ? 'Guardando...' : 'Guardar banners' }}
+                </button>
+                <button type="button" class="btn-delete small" (click)="removeSelectedClientPromoBanner()">Eliminar este banner</button>
+              </div>
+            }
           </div>
         }
 

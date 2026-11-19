@@ -4,7 +4,7 @@ import { SKIP_ERROR_TOAST } from './error.interceptor';
 import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
-  CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
+  ClientPromoBanner, ClientPromoBannerDto, CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
   PeritoAccount, PeritoAssignOption, PeritoDeal, PeritoDealDetail, PeritoOverviewItem, PeritoPerformance,
   MessageTemplate, SiteSettings, StateFilter, SupportMessage, SupportThread, FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
@@ -27,51 +27,23 @@ export class GestoresService {
   getMyProfile() { return this.http.get<Gestor>(`${this.base}/me/profile`); }
   updateProfile(data: Partial<Gestor>) { return this.http.put<Gestor>(`${this.base}/me/profile`, data); }
   getClientPromoBanner() {
-    return this.http.get<{
-      canManage: boolean;
-      promoBannerEnabled: boolean;
-      promoBannerImage: string;
-      promoBannerImageDesktop: string;
-      promoBannerImageMobile: string;
-      promoBannerLink: string;
-      promoBannerTitle: string;
-      promoBannerTitleColor: string;
-      promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
-      promoBannerTitleAlign: 'left' | 'center' | 'right';
-      promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
-      promoBannerTitlePlacement: 'overlay' | 'below';
-      promoBannerAlt: string;
-    }>(`${this.base}/me/client-promo-banner`);
+    return this.http.get<{ canManage: boolean; banners: ClientPromoBanner[] }>(
+      `${this.base}/me/client-promo-banner`,
+    );
   }
-  updateClientPromoBanner(data: {
-    promoBannerEnabled?: boolean;
-    promoBannerImage?: string;
-    promoBannerImageDesktop?: string;
-    promoBannerImageMobile?: string;
-    promoBannerLink?: string;
-    promoBannerTitle?: string;
-    promoBannerTitleColor?: string;
-    promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
-    promoBannerTitleAlign?: 'left' | 'center' | 'right';
-    promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
-    promoBannerTitlePlacement?: 'overlay' | 'below';
-    promoBannerAlt?: string;
-  }) {
-    return this.http.put<{
-      canManage: boolean;
-      promoBannerEnabled: boolean;
-      promoBannerImage: string;
-      promoBannerImageDesktop: string;
-      promoBannerImageMobile: string;
-      promoBannerLink: string;
-      promoBannerTitle: string;
-      promoBannerTitleColor: string;
-      promoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl';
-      promoBannerTitleAlign: 'left' | 'center' | 'right';
-      promoBannerTitleVAlign: 'top' | 'center' | 'bottom';
-      promoBannerTitlePlacement: 'overlay' | 'below';
-      promoBannerAlt: string;
-    }>(`${this.base}/me/client-promo-banner`, data);
+  updateClientPromoBanner(data: { banners: ClientPromoBanner[] }) {
+    return this.http.put<{ canManage: boolean; banners: ClientPromoBanner[] }>(
+      `${this.base}/me/client-promo-banner`,
+      data,
+    );
+  }
+  searchClientPromoAudienceClients(q = '', limit = 20) {
+    let params = new HttpParams().set('limit', String(limit));
+    if (q.trim()) params = params.set('q', q.trim());
+    return this.http.get<{ items: { id: string; name: string; email: string; phone?: string }[] }>(
+      `${this.base}/me/client-promo-banner/clients`,
+      { params },
+    );
   }
   syncGoogleReviews() {
     return this.http.post<{

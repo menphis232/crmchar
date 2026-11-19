@@ -19,7 +19,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { VehicleMmySelectComponent } from '../../shared/vehicle-mmy-select.component';
 import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 import { MEXICO_STATES } from '../../shared/mexico-states';
-import { CrmContactVehicle, CrmContactVehicleDocument, KnowledgePost } from '../../models';
+import { ClientPromoBannerDto, CrmContactVehicle, CrmContactVehicleDocument, KnowledgePost } from '../../models';
 import {
   checkCirculationToday,
   getMexicoCityCalendar,
@@ -142,54 +142,34 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   );
 
   activeTab = signal<ClientTab>('dashboard');
-  clientPromoBanner = signal<{
-    promoBannerEnabled?: boolean;
-    promoBannerImage?: string;
-    promoBannerImageDesktop?: string;
-    promoBannerImageMobile?: string;
-    promoBannerLink?: string;
-    promoBannerTitle?: string;
-    promoBannerTitleColor?: string;
-    promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
-    promoBannerTitleAlign?: 'left' | 'center' | 'right';
-    promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
-    promoBannerTitlePlacement?: 'overlay' | 'below';
-    promoBannerAlt?: string;
-  } | null>(null);
-  clientPromoTitleBelow = computed(() =>
-    (this.clientPromoBanner()?.promoBannerTitlePlacement || 'overlay') === 'below'
-  );
-  clientPromoDesktopImage = computed(() => {
-    const b = this.clientPromoBanner();
-    return b?.promoBannerImageDesktop || b?.promoBannerImage || '';
-  });
-  clientPromoMobileImage = computed(() => {
-    const b = this.clientPromoBanner();
-    return b?.promoBannerImageMobile || b?.promoBannerImageDesktop || b?.promoBannerImage || '';
-  });
-  showClientPromoBanner = computed(() => {
-    const b = this.clientPromoBanner();
-    if (!b?.promoBannerEnabled) return false;
-    return !!(this.clientPromoDesktopImage() || this.clientPromoMobileImage() || b.promoBannerTitle);
-  });
-  clientPromoTitleOverlayStyle = computed(() => {
-    const b = this.clientPromoBanner();
+  clientPromoBanners = signal<ClientPromoBannerDto[]>([]);
+  showClientPromoBanner = computed(() => this.clientPromoBanners().length > 0);
+
+  clientPromoDesktopImage(b: ClientPromoBannerDto): string {
+    return b.promoBannerImageDesktop || b.promoBannerImage || '';
+  }
+  clientPromoMobileImage(b: ClientPromoBannerDto): string {
+    return b.promoBannerImageMobile || b.promoBannerImageDesktop || b.promoBannerImage || '';
+  }
+  clientPromoTitleBelow(b: ClientPromoBannerDto): boolean {
+    return (b.promoBannerTitlePlacement || 'overlay') === 'below';
+  }
+  clientPromoTitleOverlayStyle(b: ClientPromoBannerDto): Record<string, string> {
     const sizeMap: Record<string, string> = {
       sm: '14px',
       md: '18px',
       lg: '24px',
       xl: '32px',
     };
-    const align = b?.promoBannerTitleAlign || 'center';
-    const valign = b?.promoBannerTitleVAlign || 'center';
-    const color = b?.promoBannerTitleColor || '#ffffff';
-    const fontSize = sizeMap[b?.promoBannerTitleSize || 'md'] || sizeMap['md'];
+    const align = b.promoBannerTitleAlign || 'center';
+    const valign = b.promoBannerTitleVAlign || 'center';
+    const color = b.promoBannerTitleColor || '#ffffff';
+    const fontSize = sizeMap[b.promoBannerTitleSize || 'md'] || sizeMap['md'];
     const justify =
       align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
     const items =
       valign === 'top' ? 'flex-start' : valign === 'bottom' ? 'flex-end' : 'center';
     return {
-      // CSS vars + !important en CSS (panel-datta pisa color/-webkit-text-fill)
       '--promo-title-color': color,
       '--promo-title-size': fontSize,
       color,
@@ -198,8 +178,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       justifyContent: justify,
       alignItems: items,
       textAlign: align as 'left' | 'center' | 'right',
-    } as Record<string, string>;
-  });
+    };
+  }
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
   private isNarrowViewport = signal(
@@ -472,22 +452,20 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   private loadClientPromoBanner() {
-    this.http.get<{
-      promoBannerEnabled?: boolean;
-      promoBannerImage?: string;
-      promoBannerImageDesktop?: string;
-      promoBannerImageMobile?: string;
-      promoBannerLink?: string;
-      promoBannerTitle?: string;
-      promoBannerTitleColor?: string;
-      promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
-      promoBannerTitleAlign?: 'left' | 'center' | 'right';
-      promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
-      promoBannerTitlePlacement?: 'overlay' | 'below';
-      promoBannerAlt?: string;
-    }>(`${environment.apiUrl}/site/panel-cliente`).subscribe({
-      next: (cfg) => this.clientPromoBanner.set(cfg || null),
-      error: () => this.clientPromoBanner.set(null),
+    this.http.get<{ banners?: ClientPromoBannerDto[] }>(`${environment.apiUrl}/client/promo-banners`).subscribe({
+      next: (res) => {
+        const list = (res?.banners || []).filter((b) => {
+          if (b.promoBannerEnabled === false) return false;
+          return !!(
+            b.promoBannerImageDesktop
+            || b.promoBannerImageMobile
+            || b.promoBannerImage
+            || b.promoBannerTitle
+          );
+        });
+        this.clientPromoBanners.set(list);
+      },
+      error: () => this.clientPromoBanners.set([]),
     });
   }
 

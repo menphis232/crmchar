@@ -23,6 +23,13 @@ import {
 import { ensureClientVehicleContacts } from '../crm/helpers.js';
 import { clientContactPredicate } from '../crm/client-match.js';
 import { normalizeMxPhone } from '../utils/phone.js';
+import {
+  bannerToClientDto,
+  filterBannersForAudience,
+  loadPanelClienteSettings,
+  promoBannersFromSettings,
+  resolveClientPromoAudience,
+} from '../utils/client-promo-banners.js';
 
 async function predicateFor(user) {
   if (user?.id && !normalizeMxPhone(user.phone)) {
@@ -807,6 +814,26 @@ router.delete('/vehicle-documents/:id', authRequired, requireRole('cliente'), as
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar documento' });
+  }
+});
+
+/** Banners promo del panel cliente filtrados por audiencia del usuario. */
+router.get('/promo-banners', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const settings = await loadPanelClienteSettings();
+    const all = promoBannersFromSettings(settings);
+    const audience = await resolveClientPromoAudience(req.user);
+    const matched = filterBannersForAudience(all, audience);
+    res.json({
+      banners: matched.map(bannerToClientDto),
+      audience: {
+        states: audience.states,
+        hasPurchased: audience.hasPurchased,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar banners' });
   }
 });
 

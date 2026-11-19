@@ -18,6 +18,12 @@ import {
   parseCachedReviews,
   placesApiKey,
 } from '../services/googlePlaces.js';
+import {
+  emptyPromoBanner,
+  normalizePromoBanner,
+  promoBannersFromSettings,
+  syncLegacyPromoFields,
+} from '../utils/client-promo-banners.js';
 const router = Router();
 
 /** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
@@ -44,58 +50,6 @@ function parseSiteSettingsRow(row) {
   if (!row) return { pageKey: 'panel-cliente' };
   const s = typeof row.settings === 'string' ? JSON.parse(row.settings) : (row.settings || {});
   return { pageKey: row.page_key, ...s };
-}
-
-function normalizePromoBannerTitleColor(value, fallback = '#ffffff') {
-  const raw = String(value || '').trim();
-  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(raw)) return raw;
-  return fallback;
-}
-
-function normalizePromoBannerTitleSize(value, fallback = 'md') {
-  const allowed = new Set(['sm', 'md', 'lg', 'xl']);
-  const raw = String(value || '').trim().toLowerCase();
-  return allowed.has(raw) ? raw : fallback;
-}
-
-function normalizePromoBannerTitleAlign(value, fallback = 'center') {
-  const allowed = new Set(['left', 'center', 'right']);
-  const raw = String(value || '').trim().toLowerCase();
-  return allowed.has(raw) ? raw : fallback;
-}
-
-function normalizePromoBannerTitleVAlign(value, fallback = 'center') {
-  const allowed = new Set(['top', 'center', 'bottom']);
-  const raw = String(value || '').trim().toLowerCase();
-  return allowed.has(raw) ? raw : fallback;
-}
-
-function normalizePromoBannerTitlePlacement(value, fallback = 'overlay') {
-  const allowed = new Set(['overlay', 'below']);
-  const raw = String(value || '').trim().toLowerCase();
-  return allowed.has(raw) ? raw : fallback;
-}
-
-function clientPromoBannerFromSettings(settings) {
-  const desktop =
-    settings?.promoBannerImageDesktop
-    || settings?.promoBannerImage
-    || '';
-  const mobile = settings?.promoBannerImageMobile || '';
-  return {
-    promoBannerEnabled: !!settings?.promoBannerEnabled,
-    promoBannerImage: desktop,
-    promoBannerImageDesktop: desktop,
-    promoBannerImageMobile: mobile,
-    promoBannerLink: settings?.promoBannerLink || '',
-    promoBannerTitle: settings?.promoBannerTitle || '',
-    promoBannerTitleColor: normalizePromoBannerTitleColor(settings?.promoBannerTitleColor),
-    promoBannerTitleSize: normalizePromoBannerTitleSize(settings?.promoBannerTitleSize),
-    promoBannerTitleAlign: normalizePromoBannerTitleAlign(settings?.promoBannerTitleAlign),
-    promoBannerTitleVAlign: normalizePromoBannerTitleVAlign(settings?.promoBannerTitleVAlign),
-    promoBannerTitlePlacement: normalizePromoBannerTitlePlacement(settings?.promoBannerTitlePlacement),
-    promoBannerAlt: settings?.promoBannerAlt || '',
-  };
 }
 
 const GESTOR_SERVICES_SELECT = `
@@ -432,14 +386,67 @@ router.get('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
     if (!gestor) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
     const allowed = canManageClientPromoBanner(gestor);
     if (!allowed) {
-      return res.json({ canManage: false, ...clientPromoBannerFromSettings({}) });
+      return res.json({ canManage: false, banners: [] });
     }
     const row = await get('SELECT * FROM site_settings WHERE page_key = ?', ['panel-cliente']);
     const settings = parseSiteSettingsRow(row);
-    res.json({ canManage: true, ...clientPromoBannerFromSettings(settings) });
+    const banners = promoBannersFromSettings(settings);
+    res.json({ canManage: true, banners });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar banner del cliente' });
+  }
+});
+
+/** Buscar clientes para asignar banners a usuarios específicos. */
+router.get('/me/client-promo-banner/clients', authRequired, requireRole('gestor'), requireActiveSubscription, async (req, res) => {
+  try {
+    const gestor = await getGestorOwnedByUser(req.user);
+    if (!gestor || !canManageClientPromoBanner(gestor)) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+    const q = String(req.query.q || '').trim();
+    const limit = Math.min(40, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const ownerId = orgOwnerId(req.user);
+    const like = `%${q.replace(/[%_]/g, '')}%`;
+
+    let rows;
+    if (q) {
+      rows = await query(
+        `SELECT DISTINCT u.id, u.name, u.email, u.phone
+         FROM users u
+         LEFT JOIN contacts c ON (
+           (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
+           OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
+         )
+         WHERE u.role = 'cliente'
+           AND (
+             u.name LIKE ? OR u.email LIKE ? OR IFNULL(u.phone,'') LIKE ?
+             OR IFNULL(c.name,'') LIKE ? OR IFNULL(c.email,'') LIKE ? OR IFNULL(c.phone,'') LIKE ?
+           )
+           AND (c.user_id IS NULL OR c.user_id = ?)
+         ORDER BY u.name ASC
+         LIMIT ?`,
+        [like, like, like, like, like, like, ownerId, limit],
+      );
+    } else {
+      rows = await query(
+        `SELECT DISTINCT u.id, u.name, u.email, u.phone
+         FROM contacts c
+         JOIN users u ON u.role = 'cliente' AND (
+           (c.email IS NOT NULL AND u.email IS NOT NULL AND LOWER(c.email) = LOWER(u.email))
+           OR (c.phone IS NOT NULL AND u.phone IS NOT NULL AND c.phone = u.phone)
+         )
+         WHERE c.user_id = ?
+         ORDER BY u.name ASC
+         LIMIT ?`,
+        [ownerId, limit],
+      );
+    }
+    res.json({ items: rows || [] });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al buscar clientes' });
   }
 });
 
@@ -455,53 +462,39 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
 
     const existing = await get('SELECT * FROM site_settings WHERE page_key = ?', ['panel-cliente']);
     const current = parseSiteSettingsRow(existing);
-    let desktopNext = current.promoBannerImageDesktop || current.promoBannerImage || '';
-    if (req.body.promoBannerImageDesktop !== undefined) {
-      desktopNext = String(req.body.promoBannerImageDesktop || '').trim();
-    } else if (req.body.promoBannerImage !== undefined) {
-      desktopNext = String(req.body.promoBannerImage || '').trim();
+
+    let banners;
+    if (Array.isArray(req.body.banners)) {
+      banners = req.body.banners.map((b, i) => normalizePromoBanner(b, i));
+    } else {
+      // Compat: guardar un solo banner legacy sobreescribiendo el primero / creando uno
+      const currentBanners = promoBannersFromSettings(current);
+      const base = currentBanners[0] ? { ...currentBanners[0] } : emptyPromoBanner();
+      if (req.body.promoBannerEnabled !== undefined) base.enabled = !!req.body.promoBannerEnabled;
+      if (req.body.promoBannerImageDesktop !== undefined || req.body.promoBannerImage !== undefined) {
+        base.imageDesktop = String(req.body.promoBannerImageDesktop || req.body.promoBannerImage || '').trim();
+      }
+      if (req.body.promoBannerImageMobile !== undefined) {
+        base.imageMobile = String(req.body.promoBannerImageMobile || '').trim();
+      } else if (!base.imageMobile && base.imageDesktop) {
+        base.imageMobile = base.imageDesktop;
+      }
+      if (req.body.promoBannerLink !== undefined) base.link = String(req.body.promoBannerLink || '').trim();
+      if (req.body.promoBannerTitle !== undefined) base.title = String(req.body.promoBannerTitle || '').trim();
+      if (req.body.promoBannerTitleColor !== undefined) base.titleColor = String(req.body.promoBannerTitleColor || '').trim();
+      if (req.body.promoBannerTitleSize !== undefined) base.titleSize = String(req.body.promoBannerTitleSize || '').trim();
+      if (req.body.promoBannerTitleAlign !== undefined) base.titleAlign = String(req.body.promoBannerTitleAlign || '').trim();
+      if (req.body.promoBannerTitleVAlign !== undefined) base.titleVAlign = String(req.body.promoBannerTitleVAlign || '').trim();
+      if (req.body.promoBannerTitlePlacement !== undefined) base.titlePlacement = String(req.body.promoBannerTitlePlacement || '').trim();
+      if (req.body.promoBannerAlt !== undefined) base.alt = String(req.body.promoBannerAlt || '').trim();
+      banners = [normalizePromoBanner(base, 0), ...currentBanners.slice(1).map((b, i) => normalizePromoBanner(b, i + 1))];
     }
-    let mobileNext = current.promoBannerImageMobile || '';
-    if (req.body.promoBannerImageMobile !== undefined) {
-      mobileNext = String(req.body.promoBannerImageMobile || '').trim();
-    } else if (!mobileNext && desktopNext) {
-      mobileNext = desktopNext;
-    }
-    const next = {
+
+    const next = syncLegacyPromoFields({
       ...current,
       pageKey: undefined,
       updatedAt: undefined,
-      promoBannerEnabled: req.body.promoBannerEnabled !== undefined
-        ? !!req.body.promoBannerEnabled
-        : !!current.promoBannerEnabled,
-      promoBannerImage: desktopNext,
-      promoBannerImageDesktop: desktopNext,
-      promoBannerImageMobile: mobileNext,
-      promoBannerLink: req.body.promoBannerLink !== undefined
-        ? String(req.body.promoBannerLink || '').trim()
-        : (current.promoBannerLink || ''),
-      promoBannerTitle: req.body.promoBannerTitle !== undefined
-        ? String(req.body.promoBannerTitle || '').trim()
-        : (current.promoBannerTitle || ''),
-      promoBannerTitleColor: req.body.promoBannerTitleColor !== undefined
-        ? normalizePromoBannerTitleColor(req.body.promoBannerTitleColor)
-        : normalizePromoBannerTitleColor(current.promoBannerTitleColor),
-      promoBannerTitleSize: req.body.promoBannerTitleSize !== undefined
-        ? normalizePromoBannerTitleSize(req.body.promoBannerTitleSize)
-        : normalizePromoBannerTitleSize(current.promoBannerTitleSize),
-      promoBannerTitleAlign: req.body.promoBannerTitleAlign !== undefined
-        ? normalizePromoBannerTitleAlign(req.body.promoBannerTitleAlign)
-        : normalizePromoBannerTitleAlign(current.promoBannerTitleAlign),
-      promoBannerTitleVAlign: req.body.promoBannerTitleVAlign !== undefined
-        ? normalizePromoBannerTitleVAlign(req.body.promoBannerTitleVAlign)
-        : normalizePromoBannerTitleVAlign(current.promoBannerTitleVAlign),
-      promoBannerTitlePlacement: req.body.promoBannerTitlePlacement !== undefined
-        ? normalizePromoBannerTitlePlacement(req.body.promoBannerTitlePlacement)
-        : normalizePromoBannerTitlePlacement(current.promoBannerTitlePlacement),
-      promoBannerAlt: req.body.promoBannerAlt !== undefined
-        ? String(req.body.promoBannerAlt || '').trim()
-        : (current.promoBannerAlt || ''),
-    };
+    }, banners);
     delete next.pageKey;
     delete next.updatedAt;
 
@@ -517,7 +510,7 @@ router.put('/me/client-promo-banner', authRequired, requireRole('gestor'), requi
       ]);
     }
 
-    res.json({ canManage: true, ...clientPromoBannerFromSettings(next) });
+    res.json({ canManage: true, banners: promoBannersFromSettings(next) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al guardar banner del cliente' });

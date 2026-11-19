@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, NgZone, signal, effect, inject, DestroyRef, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, NgZone, signal, computed, effect, inject, DestroyRef, ViewChild, ElementRef, HostListener } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -78,6 +78,7 @@ import { PanelSubscriptionLockComponent } from './panel-subscription-lock.compon
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, GESTOR_SHARE_TAGLINE } from '../../shared/brand.constants';
 import { getGestorOgImageUrl, getGestorPanelPreviewImageUrl, getGestorShareSubtitle } from '../../shared/gestor-share.util';
 import { MEXICO_STATES } from '../../shared/mexico-states';
+import type { ClientPromoBanner } from '../../models';
 import {
   CLIENT_PROMO_BANNER_DESKTOP_ASPECT,
   CLIENT_PROMO_BANNER_DESKTOP_SIZE_LABEL,
@@ -1091,17 +1092,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   isUploadingBanner = false;
   bannerCropFile = signal<File | null>(null);
   canManageClientPromoBanner = signal(false);
-  clientPromoBannerEnabled = true;
-  clientPromoBannerImageDesktop = '';
-  clientPromoBannerImageMobile = '';
-  clientPromoBannerLink = '';
-  clientPromoBannerTitle = '';
-  clientPromoBannerTitleColor = '#ffffff';
-  clientPromoBannerTitleSize: 'sm' | 'md' | 'lg' | 'xl' = 'md';
-  clientPromoBannerTitleAlign: 'left' | 'center' | 'right' = 'center';
-  clientPromoBannerTitleVAlign: 'top' | 'center' | 'bottom' = 'center';
-  clientPromoBannerTitlePlacement: 'overlay' | 'below' = 'overlay';
-  clientPromoBannerAlt = '';
+  clientPromoBanners = signal<ClientPromoBanner[]>([]);
+  selectedClientPromoBannerId = signal<string | null>(null);
+  clientPromoAudienceClientLabels = signal<Record<string, string>>({});
+  clientPromoAudienceSearch = '';
+  clientPromoAudienceSearchResults = signal<{ id: string; name: string; email: string; phone?: string }[]>([]);
+  clientPromoAudienceSearching = false;
   clientPromoTitleSizeOptions: Array<{ value: 'sm' | 'md' | 'lg' | 'xl'; label: string }> = [
     { value: 'sm', label: 'Pequeño' },
     { value: 'md', label: 'Mediano' },
@@ -1112,6 +1108,10 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   clientPromoCropFile = signal<File | null>(null);
   isUploadingClientPromoBanner = false;
   isSavingClientPromoBanner = false;
+  selectedClientPromoBanner = computed(() => {
+    const id = this.selectedClientPromoBannerId();
+    return this.clientPromoBanners().find((b) => b.id === id) || null;
+  });
   gestorGalleryImages: string[] = [];
   gestorReviews = signal<GestorReview[]>([]);
   gestorReviewsRating = signal(0);
@@ -1193,31 +1193,90 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.saveProfile();
   }
 
+  private newClientPromoBanner(partial: Partial<ClientPromoBanner> = {}): ClientPromoBanner {
+    return {
+      id: crypto.randomUUID(),
+      enabled: true,
+      imageDesktop: '',
+      imageMobile: '',
+      link: '',
+      title: '',
+      titleColor: '#ffffff',
+      titleSize: 'md',
+      titleAlign: 'center',
+      titleVAlign: 'center',
+      titlePlacement: 'overlay',
+      alt: '',
+      sortOrder: this.clientPromoBanners().length,
+      audienceMode: 'all',
+      audienceUserIds: [],
+      audienceStates: [],
+      audiencePurchased: 'any',
+      ...partial,
+    };
+  }
+
+  patchSelectedClientPromoBanner(patch: Partial<ClientPromoBanner>) {
+    const id = this.selectedClientPromoBannerId();
+    if (!id) return;
+    this.clientPromoBanners.update((list) =>
+      list.map((b) => (b.id === id ? { ...b, ...patch } : b)),
+    );
+  }
+
   loadClientPromoBanner() {
     this.gestoresService.getClientPromoBanner().subscribe({
       next: (b) => {
         this.canManageClientPromoBanner.set(!!b.canManage);
         if (!b.canManage) return;
-        this.clientPromoBannerEnabled = !!b.promoBannerEnabled;
-        this.clientPromoBannerImageDesktop = b.promoBannerImageDesktop || b.promoBannerImage || '';
-        this.clientPromoBannerImageMobile = b.promoBannerImageMobile || '';
-        this.clientPromoBannerLink = b.promoBannerLink || '';
-        this.clientPromoBannerTitle = b.promoBannerTitle || '';
-        this.clientPromoBannerTitleColor = b.promoBannerTitleColor || '#ffffff';
-        this.clientPromoBannerTitleSize = b.promoBannerTitleSize || 'md';
-        this.clientPromoBannerTitleAlign = b.promoBannerTitleAlign || 'center';
-        this.clientPromoBannerTitleVAlign = b.promoBannerTitleVAlign || 'center';
-        this.clientPromoBannerTitlePlacement = b.promoBannerTitlePlacement || 'overlay';
-        this.clientPromoBannerAlt = b.promoBannerAlt || '';
+        const banners = (b.banners || []).map((row, i) => this.newClientPromoBanner({ ...row, sortOrder: row.sortOrder ?? i }));
+        this.clientPromoBanners.set(banners);
+        if (!this.selectedClientPromoBannerId() && banners.length) {
+          this.selectedClientPromoBannerId.set(banners[0].id);
+        }
+        this.hydrateClientPromoAudienceLabels(banners);
       },
       error: () => this.canManageClientPromoBanner.set(false),
     });
   }
 
+  private hydrateClientPromoAudienceLabels(banners: ClientPromoBanner[]) {
+    const ids = [...new Set(banners.flatMap((b) => b.audienceUserIds || []))];
+    if (!ids.length) return;
+    this.gestoresService.searchClientPromoAudienceClients('', 40).subscribe({
+      next: (res) => {
+        const map: Record<string, string> = { ...this.clientPromoAudienceClientLabels() };
+        for (const u of res.items || []) {
+          map[u.id] = u.name || u.email || u.id;
+        }
+        this.clientPromoAudienceClientLabels.set(map);
+      },
+    });
+  }
+
+  selectClientPromoBanner(id: string) {
+    this.selectedClientPromoBannerId.set(id);
+  }
+
+  addClientPromoBanner() {
+    const banner = this.newClientPromoBanner({ title: `Banner ${this.clientPromoBanners().length + 1}` });
+    this.clientPromoBanners.update((list) => [...list, banner]);
+    this.selectedClientPromoBannerId.set(banner.id);
+  }
+
+  removeSelectedClientPromoBanner() {
+    const id = this.selectedClientPromoBannerId();
+    if (!id) return;
+    const next = this.clientPromoBanners().filter((b) => b.id !== id);
+    this.clientPromoBanners.set(next.map((b, i) => ({ ...b, sortOrder: i })));
+    this.selectedClientPromoBannerId.set(next[0]?.id || null);
+    this.saveClientPromoBanner();
+  }
+
   onClientPromoBannerSelected(event: Event, target: 'desktop' | 'mobile') {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (!file) return;
+    if (!file || !this.selectedClientPromoBanner()) return;
     this.clientPromoCropTarget.set(target);
     this.clientPromoCropFile.set(file);
     input.value = '';
@@ -1225,6 +1284,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   onClientPromoCropConfirmed(result: { blob: Blob; previewUrl: string }) {
     const target = this.clientPromoCropTarget();
+    const selected = this.selectedClientPromoBanner();
+    if (!target || !selected) return;
     const fileName = target === 'mobile' ? 'promo-banner-mobile.jpg' : 'promo-banner-desktop.jpg';
     const file = new File([result.blob], fileName, { type: 'image/jpeg' });
     this.clientPromoCropFile.set(null);
@@ -1233,12 +1294,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     this.uploadService.uploadFile(file).subscribe({
       next: (res) => {
         if (target === 'mobile') {
-          this.clientPromoBannerImageMobile = res.url;
+          this.patchSelectedClientPromoBanner({ imageMobile: res.url });
         } else {
-          this.clientPromoBannerImageDesktop = res.url;
-          if (!this.clientPromoBannerImageMobile) {
-            this.clientPromoBannerImageMobile = res.url;
-          }
+          const patch: Partial<ClientPromoBanner> = { imageDesktop: res.url };
+          if (!selected.imageMobile) patch.imageMobile = res.url;
+          this.patchSelectedClientPromoBanner(patch);
         }
         this.isUploadingClientPromoBanner = false;
         this.saveClientPromoBanner();
@@ -1256,31 +1316,85 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   clearClientPromoBannerImage(target: 'desktop' | 'mobile' | 'all' = 'all') {
-    if (target === 'desktop' || target === 'all') this.clientPromoBannerImageDesktop = '';
-    if (target === 'mobile' || target === 'all') this.clientPromoBannerImageMobile = '';
+    if (!this.selectedClientPromoBanner()) return;
+    const patch: Partial<ClientPromoBanner> = {};
+    if (target === 'desktop' || target === 'all') patch.imageDesktop = '';
+    if (target === 'mobile' || target === 'all') patch.imageMobile = '';
+    this.patchSelectedClientPromoBanner(patch);
     this.saveClientPromoBanner();
+  }
+
+  toggleClientPromoAudienceState(state: string) {
+    const banner = this.selectedClientPromoBanner();
+    if (!banner) return;
+    const has = banner.audienceStates.includes(state);
+    const audienceStates = has
+      ? banner.audienceStates.filter((s) => s !== state)
+      : [...banner.audienceStates, state];
+    this.patchSelectedClientPromoBanner({
+      audienceMode: 'filtered',
+      audienceStates,
+    });
+  }
+
+  searchClientPromoAudienceClients() {
+    if (!this.canManageClientPromoBanner()) return;
+    this.clientPromoAudienceSearching = true;
+    this.gestoresService.searchClientPromoAudienceClients(this.clientPromoAudienceSearch, 20).subscribe({
+      next: (res) => {
+        this.clientPromoAudienceSearchResults.set(res.items || []);
+        this.clientPromoAudienceSearching = false;
+        const map = { ...this.clientPromoAudienceClientLabels() };
+        for (const u of res.items || []) map[u.id] = u.name || u.email || u.id;
+        this.clientPromoAudienceClientLabels.set(map);
+      },
+      error: () => {
+        this.clientPromoAudienceSearching = false;
+        this.toast.error('No se pudo buscar clientes');
+      },
+    });
+  }
+
+  addClientPromoAudienceUser(user: { id: string; name: string; email: string }) {
+    const banner = this.selectedClientPromoBanner();
+    if (!banner || banner.audienceUserIds.includes(user.id)) return;
+    this.patchSelectedClientPromoBanner({
+      audienceMode: 'filtered',
+      audienceUserIds: [...banner.audienceUserIds, user.id],
+    });
+    this.clientPromoAudienceClientLabels.update((m) => ({
+      ...m,
+      [user.id]: user.name || user.email || user.id,
+    }));
+  }
+
+  removeClientPromoAudienceUser(userId: string) {
+    const banner = this.selectedClientPromoBanner();
+    if (!banner) return;
+    this.patchSelectedClientPromoBanner({
+      audienceUserIds: banner.audienceUserIds.filter((id) => id !== userId),
+    });
+  }
+
+  audienceSummary(banner: ClientPromoBanner): string {
+    if (banner.audienceMode !== 'filtered') return 'Todos los clientes';
+    const parts: string[] = [];
+    if (banner.audienceUserIds.length) parts.push(`${banner.audienceUserIds.length} usuario(s)`);
+    if (banner.audienceStates.length) parts.push(banner.audienceStates.join(', '));
+    if (banner.audiencePurchased === 'yes') parts.push('con servicio comprado');
+    if (banner.audiencePurchased === 'no') parts.push('sin servicio comprado');
+    return parts.length ? parts.join(' · ') : 'Filtro vacío (= todos)';
   }
 
   saveClientPromoBanner() {
     if (!this.canManageClientPromoBanner()) return;
     this.isSavingClientPromoBanner = true;
-    this.gestoresService.updateClientPromoBanner({
-      promoBannerEnabled: this.clientPromoBannerEnabled,
-      promoBannerImage: this.clientPromoBannerImageDesktop,
-      promoBannerImageDesktop: this.clientPromoBannerImageDesktop,
-      promoBannerImageMobile: this.clientPromoBannerImageMobile,
-      promoBannerLink: this.clientPromoBannerLink.trim(),
-      promoBannerTitle: this.clientPromoBannerTitle.trim(),
-      promoBannerTitleColor: this.clientPromoBannerTitleColor,
-      promoBannerTitleSize: this.clientPromoBannerTitleSize,
-      promoBannerTitleAlign: this.clientPromoBannerTitleAlign,
-      promoBannerTitleVAlign: this.clientPromoBannerTitleVAlign,
-      promoBannerTitlePlacement: this.clientPromoBannerTitlePlacement,
-      promoBannerAlt: this.clientPromoBannerAlt.trim(),
-    }).subscribe({
-      next: () => {
+    const banners = this.clientPromoBanners().map((b, i) => ({ ...b, sortOrder: i }));
+    this.gestoresService.updateClientPromoBanner({ banners }).subscribe({
+      next: (res) => {
         this.isSavingClientPromoBanner = false;
-        this.toast.success('Banner del panel cliente guardado');
+        this.clientPromoBanners.set(res.banners || banners);
+        this.toast.success('Banners del panel cliente guardados');
       },
       error: (e) => {
         this.isSavingClientPromoBanner = false;

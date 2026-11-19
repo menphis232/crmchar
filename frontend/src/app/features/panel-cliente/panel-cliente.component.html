@@ -138,7 +138,11 @@
         </div>
 
         @if (showClientPromoBanner()) {
-          <ng-container *ngTemplateOutlet="clientPromoBannerTpl" />
+          <div class="client-promo-banners">
+            @for (banner of clientPromoBanners(); track banner.id || $index) {
+              <ng-container *ngTemplateOutlet="clientPromoBannerTpl; context: { $implicit: banner }" />
+            }
+          </div>
         }
 
         <div class="dash-card">
@@ -1131,70 +1135,70 @@
 
 <app-ai-assistant panelRole="cliente" />
 
-<ng-template #clientPromoBannerTpl>
-  @if (clientPromoBanner()?.promoBannerLink; as promoLink) {
+<ng-template #clientPromoBannerTpl let-banner>
+  @if (banner.promoBannerLink; as promoLink) {
     <a
       class="client-promo-banner"
       [href]="promoLink"
       [attr.target]="promoLink.startsWith('http') ? '_blank' : null"
       [attr.rel]="promoLink.startsWith('http') ? 'noopener noreferrer' : null"
-      [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+      [attr.aria-label]="banner.promoBannerAlt || 'Promoción'"
     >
-      @if (clientPromoDesktopImage() || clientPromoMobileImage()) {
+      @if (clientPromoDesktopImage(banner) || clientPromoMobileImage(banner)) {
         <div class="client-promo-banner-media">
           <picture>
-            @if (clientPromoMobileImage()) {
-              <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+            @if (clientPromoMobileImage(banner)) {
+              <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage(banner)" />
             }
             <img
-              [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
-              [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+              [src]="clientPromoDesktopImage(banner) || clientPromoMobileImage(banner)"
+              [alt]="banner.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (clientPromoBanner()?.promoBannerTitle && !clientPromoTitleBelow()) {
-            <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
-              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+          @if (banner.promoBannerTitle && !clientPromoTitleBelow(banner)) {
+            <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle(banner)">{{ banner.promoBannerTitle }}</span>
             </div>
           }
         </div>
-        @if (clientPromoBanner()?.promoBannerTitle && clientPromoTitleBelow()) {
-          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle()">
-            {{ clientPromoBanner()?.promoBannerTitle }}
+        @if (banner.promoBannerTitle && clientPromoTitleBelow(banner)) {
+          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+            {{ banner.promoBannerTitle }}
           </div>
         }
-      } @else if (clientPromoBanner()?.promoBannerTitle) {
-        <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
-          <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
+      } @else if (banner.promoBannerTitle) {
+        <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+          <strong>{{ banner.promoBannerTitle }}</strong>
         </div>
       }
     </a>
   } @else {
-    <div class="client-promo-banner client-promo-banner--nolink" [attr.aria-label]="clientPromoBanner()?.promoBannerAlt || 'Promoción'">
-      @if (clientPromoDesktopImage() || clientPromoMobileImage()) {
+    <div class="client-promo-banner client-promo-banner--nolink" [attr.aria-label]="banner.promoBannerAlt || 'Promoción'">
+      @if (clientPromoDesktopImage(banner) || clientPromoMobileImage(banner)) {
         <div class="client-promo-banner-media">
           <picture>
-            @if (clientPromoMobileImage()) {
-              <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage()!" />
+            @if (clientPromoMobileImage(banner)) {
+              <source media="(max-width: 640px)" [srcset]="clientPromoMobileImage(banner)" />
             }
             <img
-              [src]="clientPromoDesktopImage() || clientPromoMobileImage()!"
-              [alt]="clientPromoBanner()?.promoBannerAlt || 'Promoción'"
+              [src]="clientPromoDesktopImage(banner) || clientPromoMobileImage(banner)"
+              [alt]="banner.promoBannerAlt || 'Promoción'"
             />
           </picture>
-          @if (clientPromoBanner()?.promoBannerTitle && !clientPromoTitleBelow()) {
-            <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle()">
-              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle()">{{ clientPromoBanner()?.promoBannerTitle }}</span>
+          @if (banner.promoBannerTitle && !clientPromoTitleBelow(banner)) {
+            <div class="client-promo-banner-overlay" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+              <span class="client-promo-banner-title" [ngStyle]="clientPromoTitleOverlayStyle(banner)">{{ banner.promoBannerTitle }}</span>
             </div>
           }
         </div>
-        @if (clientPromoBanner()?.promoBannerTitle && clientPromoTitleBelow()) {
-          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle()">
-            {{ clientPromoBanner()?.promoBannerTitle }}
+        @if (banner.promoBannerTitle && clientPromoTitleBelow(banner)) {
+          <div class="client-promo-banner-caption" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+            {{ banner.promoBannerTitle }}
           </div>
         }
-      } @else if (clientPromoBanner()?.promoBannerTitle) {
-        <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle()">
-          <strong>{{ clientPromoBanner()?.promoBannerTitle }}</strong>
+      } @else if (banner.promoBannerTitle) {
+        <div class="client-promo-banner-fallback" [ngStyle]="clientPromoTitleOverlayStyle(banner)">
+          <strong>{{ banner.promoBannerTitle }}</strong>
         </div>
       }
     </div>

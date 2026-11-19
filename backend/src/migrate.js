@@ -1414,6 +1414,25 @@ async function migrate() {
       console.log('Migración v68 (banner panel cliente) aplicada.');
     }
 
+    const v69Path = path.join(__dirname, '..', 'sql', 'migration-v69-client-promo-banners.sql');
+    if (fs.existsSync(v69Path)) {
+      const v69 = fs.readFileSync(v69Path, 'utf8');
+      const conn69 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v69.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn69.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn69.end();
+      console.log('Migración v69 (multi-banner audiencia) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

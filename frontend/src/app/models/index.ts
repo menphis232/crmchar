@@ -168,7 +168,48 @@ export interface SiteSettings {
   subtitleSize?: string;
   cardRadius?: string;
   customBlocks?: CustomBlock[];
-  /** Banner promocional (panel cliente) */
+  /** Banner promocional (panel cliente) — legacy / primer banner */
+  promoBannerEnabled?: boolean;
+  promoBannerImage?: string;
+  promoBannerImageDesktop?: string;
+  promoBannerImageMobile?: string;
+  promoBannerLink?: string;
+  promoBannerTitle?: string;
+  promoBannerTitleColor?: string;
+  promoBannerTitleSize?: 'sm' | 'md' | 'lg' | 'xl';
+  promoBannerTitleAlign?: 'left' | 'center' | 'right';
+  promoBannerTitleVAlign?: 'top' | 'center' | 'bottom';
+  promoBannerTitlePlacement?: 'overlay' | 'below';
+  promoBannerAlt?: string;
+  /** Varios banners con audiencia (TVM) */
+  promoBanners?: ClientPromoBanner[];
+}
+
+export type ClientPromoAudiencePurchased = 'any' | 'yes' | 'no';
+export type ClientPromoAudienceMode = 'all' | 'filtered';
+
+export interface ClientPromoBanner {
+  id: string;
+  enabled: boolean;
+  imageDesktop: string;
+  imageMobile: string;
+  link: string;
+  title: string;
+  titleColor: string;
+  titleSize: 'sm' | 'md' | 'lg' | 'xl';
+  titleAlign: 'left' | 'center' | 'right';
+  titleVAlign: 'top' | 'center' | 'bottom';
+  titlePlacement: 'overlay' | 'below';
+  alt: string;
+  sortOrder: number;
+  audienceMode: ClientPromoAudienceMode;
+  audienceUserIds: string[];
+  audienceStates: string[];
+  audiencePurchased: ClientPromoAudiencePurchased;
+}
+
+export interface ClientPromoBannerDto {
+  id?: string;
   promoBannerEnabled?: boolean;
   promoBannerImage?: string;
   promoBannerImageDesktop?: string;
