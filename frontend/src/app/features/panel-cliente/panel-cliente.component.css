@@ -134,27 +134,27 @@
   }
 
   :host.panel-datta {
-    --mon-header: 88px;
-    --datta-header: 88px;
-    --nav-h: 88px;
+    --mon-header: 120px;
+    --datta-header: 120px;
+    --nav-h: 120px;
   }
 
   :host .dash-nav {
-    height: 88px !important;
-    min-height: 88px !important;
-    max-height: 88px !important;
+    height: 120px !important;
+    min-height: 120px !important;
+    max-height: 120px !important;
   }
 
   :host .dash-user ::ng-deep .panel-avatar,
   :host .dash-user ::ng-deep button.panel-avatar {
-    width: 72px !important;
-    height: 72px !important;
-    min-width: 72px !important;
-    min-height: 72px !important;
+    width: 104px !important;
+    height: 104px !important;
+    min-width: 104px !important;
+    min-height: 104px !important;
     max-width: none !important;
     max-height: none !important;
-    font-size: 24px !important;
-    border-width: 2px !important;
+    font-size: 36px !important;
+    border-width: 2.5px !important;
   }
 }
 
