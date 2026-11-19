@@ -1287,13 +1287,22 @@
 
     <div class="client-detail-hero dash-card">
       <div class="client-detail-main">
-        <div class="client-detail-copy">
-          <p class="client-detail-eyebrow">Seguimiento de trámite</p>
-          <h2 class="client-detail-title">{{ selectedDeal().title }}</h2>
-          <div class="client-detail-meta">
-            <span>Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
-            <span class="client-detail-dot">·</span>
-            <span>Código <code class="client-code">{{ selectedDeal().tracking_code }}</code></span>
+        <div class="client-detail-heading">
+          @if (dealServiceImage(selectedDeal()); as svcImg) {
+            <img class="client-detail-photo" [src]="svcImg" [alt]="selectedDeal().title" loading="lazy">
+          } @else {
+            <span class="client-detail-photo client-detail-photo--placeholder" aria-hidden="true">
+              <svg lucideCar [size]="28" aria-hidden="true"></svg>
+            </span>
+          }
+          <div class="client-detail-copy">
+            <p class="client-detail-eyebrow">Seguimiento de trámite</p>
+            <h2 class="client-detail-title">{{ selectedDeal().title }}</h2>
+            <div class="client-detail-meta">
+              <span>Gestoría: <strong>{{ selectedDeal().gestor_name }}</strong></span>
+              <span class="client-detail-dot">·</span>
+              <span>Código <code class="client-code">{{ selectedDeal().tracking_code }}</code></span>
+            </div>
           </div>
         </div>
         <span class="client-badge large" [ngClass]="stageClass(selectedDeal())">{{ stageLabel(selectedDeal()) }}</span>
