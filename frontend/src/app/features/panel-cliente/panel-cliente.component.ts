@@ -202,6 +202,10 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   });
   isMobileMenuOpen = signal(false);
   credentialsOpen = signal(false);
+  private isNarrowViewport = signal(
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 991px)').matches
+  );
+  headerAvatarSize = computed(() => (this.isNarrowViewport() ? 60 : 34));
   sidebarCollapsed = signal(
     typeof localStorage !== 'undefined' && localStorage.getItem('crm_cliente_sidebar_collapsed') === '1'
   );
@@ -404,7 +408,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return 'Buenas noches';
   }
 
+  private narrowViewportMq: MediaQueryList | null = null;
+  private onNarrowViewportChange = (e: MediaQueryListEvent | MediaQueryList) => {
+    this.isNarrowViewport.set(!!e.matches);
+  };
+
   ngOnInit() {
+    if (typeof window !== 'undefined') {
+      this.narrowViewportMq = window.matchMedia('(max-width: 991px)');
+      this.isNarrowViewport.set(this.narrowViewportMq.matches);
+      this.narrowViewportMq.addEventListener('change', this.onNarrowViewportChange);
+    }
     this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
     this.auth.getMe().subscribe({
       next: () => this.syncProfileForm(),
@@ -453,6 +467,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    this.narrowViewportMq?.removeEventListener('change', this.onNarrowViewportChange);
     if (this.socket) this.socket.disconnect();
   }
 

@@ -130,9 +130,18 @@
   }
 
   /* Charveel: avatar izquierda, menú derecha, avatar más grande */
+  :host.panel-datta {
+    --mon-header: 72px;
+    --datta-header: 72px;
+    --nav-h: 72px;
+  }
+
   :host .dash-nav {
     display: flex;
     align-items: center;
+    height: 72px !important;
+    min-height: 72px !important;
+    max-height: 72px !important;
   }
 
   :host .dash-user {
@@ -155,14 +164,25 @@
     order: 4;
     margin-left: auto !important;
     margin-right: 0 !important;
+    width: 44px !important;
+    height: 44px !important;
   }
 
-  :host .dash-user ::ng-deep .panel-avatar {
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px !important;
-    min-height: 48px !important;
-    font-size: 16px !important;
+  :host .dash-user ::ng-deep .panel-avatar,
+  :host .dash-user ::ng-deep button.panel-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    min-width: 60px !important;
+    min-height: 60px !important;
+    max-width: 60px !important;
+    max-height: 60px !important;
+    font-size: 20px !important;
+    border-width: 2px !important;
+  }
+
+  :host .dash-user ::ng-deep .panel-avatar-img {
+    width: 100% !important;
+    height: 100% !important;
   }
 }
 

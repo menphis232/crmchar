@@ -40,6 +40,7 @@
       [email]="auth.user()?.email || ''"
       [initials]="initials(auth.user()?.name)"
       [avatarUrl]="auth.user()?.avatar_url || ''"
+      [sizePx]="headerAvatarSize()"
       [showName]="false"
       [showBilling]="false"
       (logout)="logout()"

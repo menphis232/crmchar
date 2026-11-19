@@ -14,7 +14,17 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       @if (showName && name) {
         <span class="panel-user-name">{{ name }}</span>
       }
-      <button type="button" class="panel-avatar" (click)="toggleMenu($event)" [title]="name || 'Cuenta'">
+      <button
+        type="button"
+        class="panel-avatar"
+        (click)="toggleMenu($event)"
+        [title]="name || 'Cuenta'"
+        [style.width.px]="sizePx"
+        [style.height.px]="sizePx"
+        [style.minWidth.px]="sizePx"
+        [style.minHeight.px]="sizePx"
+        [style.fontSize.px]="avatarFontPx"
+      >
         @if (avatarUrl) {
           <img [src]="avatarUrl" [alt]="name || 'Avatar'" class="panel-avatar-img" />
         } @else {
@@ -196,6 +206,12 @@ export class PanelUserMenuComponent {
   @Input() email = '';
   @Input() initials = '?';
   @Input() avatarUrl = '';
+  /** Diámetro del avatar en px (p. ej. 60 en móvil del panel cliente). */
+  @Input() sizePx = 34;
+
+  get avatarFontPx(): number {
+    return Math.max(12, Math.round(this.sizePx * 0.34));
+  }
   @Input() showBilling = true;
   @Input() showName = false;
   @Output() logout = new EventEmitter<void>();
