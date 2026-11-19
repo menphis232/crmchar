@@ -892,6 +892,13 @@
   margin-bottom: 0 !important;
 }
 
+.client-detail-hero.dash-card {
+  padding-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+  overflow: hidden;
+}
+
 .client-detail-main {
   display: flex;
   justify-content: space-between;
@@ -899,32 +906,36 @@
   gap: 16px;
   margin-bottom: 24px;
   flex-wrap: wrap;
+  padding: 20px 28px 0;
 }
 
-.client-detail-heading {
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+.client-detail-copy {
   min-width: 0;
   flex: 1 1 220px;
 }
 
 .client-detail-photo {
-  width: 72px;
-  height: 72px;
-  border-radius: 12px;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 320px;
+  border-radius: 0;
   object-fit: cover;
-  border: 1px solid var(--mon-border, #e6e9ef);
+  border: none;
+  border-bottom: 1px solid var(--mon-border, #e6e9ef);
   background: #eef1f6;
-  flex-shrink: 0;
 }
 
 .client-detail-photo--placeholder {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   color: var(--mon-primary, #0073ea);
   background: var(--mon-primary-soft, #eef5ff);
+}
+
+.client-detail-hero .client-steps {
+  padding: 0 28px;
 }
 
 .client-detail-eyebrow {
@@ -1531,6 +1542,15 @@
 
   .client-detail-main {
     flex-direction: column;
+    padding: 16px 16px 0;
+  }
+
+  .client-detail-hero .client-steps {
+    padding: 0 16px;
+  }
+
+  .client-detail-photo {
+    max-height: 220px;
   }
 }
 
