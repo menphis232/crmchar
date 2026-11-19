@@ -1573,6 +1573,86 @@ app-crm-team {
   .service-photo-field { flex-direction: column; }
 }
 
+.client-promo-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.client-promo-order-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #e6e9ef;
+  border-radius: 10px;
+  background: #fff;
+}
+.client-promo-order-row.is-selected {
+  border-color: #0073ea;
+  background: rgba(0, 115, 234, 0.06);
+}
+.client-promo-order-num {
+  flex: 0 0 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #0073ea;
+  background: rgba(0, 115, 234, 0.1);
+  border-radius: 8px;
+}
+.client-promo-order-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 4px 2px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #323338;
+}
+.client-promo-order-main strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+.client-promo-order-main span {
+  font-size: 11px;
+  color: #676879;
+}
+.client-promo-order-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.client-promo-order-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 28px;
+  border: 1px solid #c5c7d0;
+  border-radius: 6px;
+  background: #fff;
+  color: #323338;
+  cursor: pointer;
+  padding: 0;
+}
+.client-promo-order-btn:hover:not(:disabled) {
+  border-color: #0073ea;
+  color: #0073ea;
+  background: #f0f7ff;
+}
+.client-promo-order-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .audience-state-chips {
   display: flex;
   flex-wrap: wrap;

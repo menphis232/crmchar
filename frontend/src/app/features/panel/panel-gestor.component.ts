@@ -1327,13 +1327,15 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       next: (b) => {
         this.canManageClientPromoBanner.set(!!b.canManage);
         if (!b.canManage) return;
-        const banners = (b.banners || []).map((row, i) => this.newClientPromoBanner({
-          ...row,
-          sortOrder: row.sortOrder ?? i,
-          audienceStates: Array.isArray(row.audienceStates) ? row.audienceStates : [],
-          audienceUserIds: Array.isArray(row.audienceUserIds) ? row.audienceUserIds : [],
-        }));
-        this.clientPromoBanners.set(banners);
+        const banners = (b.banners || [])
+          .map((row, i) => this.newClientPromoBanner({
+            ...row,
+            sortOrder: row.sortOrder ?? i,
+            audienceStates: Array.isArray(row.audienceStates) ? row.audienceStates : [],
+            audienceUserIds: Array.isArray(row.audienceUserIds) ? row.audienceUserIds : [],
+          }))
+          .sort((a, c) => (a.sortOrder - c.sortOrder) || a.title.localeCompare(c.title));
+        this.clientPromoBanners.set(banners.map((row, i) => ({ ...row, sortOrder: i })));
         if (!this.selectedClientPromoBannerId() && banners.length) {
           this.selectedClientPromoBannerId.set(banners[0].id);
         }
@@ -1359,6 +1361,19 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   selectClientPromoBanner(id: string) {
     this.selectedClientPromoBannerId.set(id);
+  }
+
+  moveClientPromoBanner(id: string, direction: -1 | 1) {
+    const list = [...this.clientPromoBanners()];
+    const idx = list.findIndex((b) => b.id === id);
+    if (idx < 0) return;
+    const next = idx + direction;
+    if (next < 0 || next >= list.length) return;
+    const tmp = list[idx];
+    list[idx] = list[next];
+    list[next] = tmp;
+    this.clientPromoBanners.set(list.map((b, i) => ({ ...b, sortOrder: i })));
+    this.saveClientPromoBanner();
   }
 
   addClientPromoBanner() {

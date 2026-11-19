@@ -864,26 +864,54 @@
               <div>
                 <h3 style="margin:0 0 6px;font-size:15px;">Banners del panel del cliente</h3>
                 <p class="card-desc" style="font-size:12px;margin:0;">
-                  Puedes crear varios banners y elegir a quién se muestran: usuarios, estado del vehículo o si ya compraron un servicio.
+                  Varios banners, audiencia (usuarios / estado / compra) y el orden en que salen en el panel del cliente (1º, 2º…).
                 </p>
               </div>
               <button type="button" class="btn-copy small" (click)="addClientPromoBanner()">+ Nuevo banner</button>
             </div>
 
             @if (clientPromoBanners().length) {
-              <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-                @for (b of clientPromoBanners(); track b.id) {
-                  <button
-                    type="button"
-                    class="btn-ghost"
-                    style="text-align:left;display:flex;flex-direction:column;gap:4px;padding:10px 12px;"
-                    [style.borderColor]="selectedClientPromoBannerId() === b.id ? 'var(--mon-primary,#0073ea)' : undefined"
-                    [style.background]="selectedClientPromoBannerId() === b.id ? 'rgba(0,115,234,0.08)' : undefined"
-                    (click)="selectClientPromoBanner(b.id)"
+              <p class="card-desc" style="margin:0 0 8px;font-size:12px;">
+                Usa las flechas para definir qué banner sale primero. El orden se guarda solo.
+              </p>
+              <div class="client-promo-order-list">
+                @for (b of clientPromoBanners(); track b.id; let i = $index) {
+                  <div
+                    class="client-promo-order-row"
+                    [class.is-selected]="selectedClientPromoBannerId() === b.id"
                   >
-                    <strong style="font-size:13px;">{{ b.title || 'Sin título' }} {{ b.enabled ? '' : '(oculto)' }}</strong>
-                    <span style="font-size:11px;color:var(--mon-muted,#676879);">{{ audienceSummary(b) }}</span>
-                  </button>
+                    <span class="client-promo-order-num" title="Posición en el panel cliente">{{ i + 1 }}º</span>
+                    <button
+                      type="button"
+                      class="client-promo-order-main"
+                      (click)="selectClientPromoBanner(b.id)"
+                    >
+                      <strong>{{ b.title || 'Sin título' }} {{ b.enabled ? '' : '(oculto)' }}</strong>
+                      <span>{{ audienceSummary(b) }}</span>
+                    </button>
+                    <div class="client-promo-order-actions">
+                      <button
+                        type="button"
+                        class="client-promo-order-btn"
+                        [disabled]="i === 0 || isSavingClientPromoBanner"
+                        (click)="moveClientPromoBanner(b.id, -1)"
+                        title="Subir (mostrar antes)"
+                        aria-label="Subir banner"
+                      >
+                        <svg lucideChevronUp [size]="16" aria-hidden="true"></svg>
+                      </button>
+                      <button
+                        type="button"
+                        class="client-promo-order-btn"
+                        [disabled]="i === clientPromoBanners().length - 1 || isSavingClientPromoBanner"
+                        (click)="moveClientPromoBanner(b.id, 1)"
+                        title="Bajar (mostrar después)"
+                        aria-label="Bajar banner"
+                      >
+                        <svg lucideChevronDown [size]="16" aria-hidden="true"></svg>
+                      </button>
+                    </div>
+                  </div>
                 }
               </div>
             } @else {
