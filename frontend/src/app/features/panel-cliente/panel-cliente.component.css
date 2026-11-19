@@ -101,6 +101,52 @@
   cursor: pointer;
 }
 
+.client-sidebar-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: #fff !important;
+  border: 2px solid #000;
+  color: #000 !important;
+  overflow: hidden;
+}
+
+.client-sidebar-avatar-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  background: #fff !important;
+  display: block;
+}
+
+.client-sidebar-avatar-initials {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+@media (max-width: 991px) {
+  :host .dash-sidebar .client-sidebar-avatar {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  :host .dash-sidebar .client-sidebar-avatar-initials {
+    font-size: 22px;
+  }
+
+  :host .dash-sidebar .datta-brand {
+    gap: 14px;
+    padding: 16px !important;
+  }
+
+  :host .dash-sidebar .datta-brand-title {
+    font-size: 16px !important;
+  }
+}
+
 .client-nav-back {
   display: none;
   align-items: center;

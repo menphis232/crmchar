@@ -55,8 +55,12 @@
 <div class="dash-container">
   <aside class="dash-sidebar" [class.mobile-open]="isMobileMenuOpen()">
     <a class="datta-brand" href="javascript:void(0)" (click)="goHome()">
-      <span class="datta-brand-mark">
-        <img [src]="tvmLogo" alt="" />
+      <span class="datta-brand-mark client-sidebar-avatar" aria-hidden="true">
+        @if (auth.user()?.avatar_url) {
+          <img [src]="auth.user()!.avatar_url!" [alt]="" class="client-sidebar-avatar-img" />
+        } @else {
+          <span class="client-sidebar-avatar-initials">{{ initials(auth.user()?.name) }}</span>
+        }
       </span>
       <span class="datta-brand-title">{{ auth.user()?.name || 'Mi panel' }}</span>
     </a>
