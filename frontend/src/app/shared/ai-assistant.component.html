@@ -13,6 +13,7 @@
   <div class="vega-widget" [class]="positionClass()" [class.open]="isChatOpen() || isTourActive()">
     @if (isChatOpen() || isTourActive()) {
       <div class="vega-panel"
+        [class.vega-panel--light]="isLightPanel()"
         [style.backgroundColor]="bgColor()"
         [style.--vega-bg]="bgColor()"
         [style.--vega-btn]="btnColor()"

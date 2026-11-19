@@ -198,8 +198,8 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       right: 0;
       min-width: 260px;
       max-width: min(320px, calc(100vw - 24px));
-      background: #fff;
-      border: 1px solid #e6e9ef;
+      background: var(--mon-surface, #fff);
+      border: 1px solid var(--mon-border, #e6e9ef);
       border-radius: 12px;
       box-shadow: 0 12px 32px rgba(50, 51, 56, 0.16);
       z-index: 500;
@@ -213,8 +213,8 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       text-align: center;
       gap: 10px;
       padding: 16px;
-      border-bottom: 1px solid #e6e9ef;
-      background: #f7f8fa;
+      border-bottom: 1px solid var(--mon-border, #e6e9ef);
+      background: var(--mon-primary-soft, #e5f4ff);
     }
     .avatar-dropdown-photo-btn {
       display: flex;
@@ -234,19 +234,19 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       border-radius: 50%;
       object-fit: cover;
       flex-shrink: 0;
-      border: 2px solid #e6e9ef;
+      border: 2px solid var(--mon-primary, #0073ea);
       display: block;
       transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
     .avatar-dropdown-photo-btn:hover .avatar-dropdown-photo,
     .avatar-dropdown-photo-btn:focus-visible .avatar-dropdown-photo {
       transform: scale(1.04);
-      box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.25);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--mon-primary, #0073ea) 28%, transparent);
     }
     .avatar-dropdown-photo-hint {
       font-size: 11px;
       font-weight: 600;
-      color: #0073ea;
+      color: var(--mon-primary, #0073ea);
       font-family: Figtree, system-ui, sans-serif;
       line-height: 1.2;
     }
@@ -259,7 +259,7 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       width: 100%;
     }
     .avatar-dropdown-header strong {
-      color: #323338;
+      color: var(--mon-text, #323338);
       font-size: 14px;
       font-weight: 700;
       overflow: hidden;
@@ -268,7 +268,7 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       max-width: 100%;
     }
     .avatar-dropdown-header span {
-      color: #676879;
+      color: var(--mon-muted, #676879);
       font-size: 12px;
       overflow-wrap: anywhere;
       word-break: break-word;
@@ -281,16 +281,19 @@ import { ChangeCredentialsComponent } from './change-credentials.component';
       text-align: left;
       background: transparent;
       border: none;
-      color: #323338;
+      color: var(--mon-text, #323338);
       padding: 12px 16px;
       font-size: 13px;
       font-weight: 500;
       font-family: Figtree, system-ui, sans-serif;
       cursor: pointer;
     }
-    .avatar-dropdown-item:hover { background: #f5f6f8; color: #0073ea; }
-    .avatar-dropdown-item.danger { color: #e2445c; }
-    .avatar-dropdown-item.danger:hover { background: #fff0f1; color: #e2445c; }
+    .avatar-dropdown-item:hover {
+      background: var(--mon-primary-soft, #e5f4ff);
+      color: var(--mon-primary, #0073ea);
+    }
+    .avatar-dropdown-item.danger { color: var(--mon-red, #e2445c); }
+    .avatar-dropdown-item.danger:hover { background: #fff0f1; color: var(--mon-red, #e2445c); }
 
     .avatar-preview-overlay {
       position: fixed;

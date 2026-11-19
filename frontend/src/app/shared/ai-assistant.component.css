@@ -167,7 +167,7 @@
   width: 6px; height: 6px; border-radius: 50%;
   background: rgba(0, 0, 0, 0.15);
 }
-.vega-step-dots .dot.active { background: #4F46E5; transform: scale(1.2); }
+.vega-step-dots .dot.active { background: var(--vega-btn, #0073ea); transform: scale(1.2); }
 
 .vega-tour-btns { display: flex; gap: 6px; flex-wrap: wrap; }
 .vtb {
@@ -175,7 +175,7 @@
   border-radius: 6px; border: 1px solid rgba(0,0,0,0.12);
   background: #f8f7f5; color: #333; cursor: pointer;
 }
-.vtb-next { margin-left: auto; background: #4F46E5; color: #fff; border-color: #4F46E5; }
+.vtb-next { margin-left: auto; background: var(--vega-btn, #0073ea); color: #fff; border-color: var(--vega-btn, #0073ea); }
 .vtb-skip { color: #e63d2f; border-color: transparent; background: transparent; }
 
 /* ── Messages ── */
@@ -309,6 +309,53 @@
 }
 
 .vega-input-row button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* ── Light / Monday panel theme (cliente) ── */
+.vega-panel--light {
+  border: 1px solid var(--mon-border, #e6e9ef);
+  box-shadow: 0 12px 32px rgba(50, 51, 56, 0.18);
+}
+
+.vega-panel--light .vega-msg.assistant .vega-bubble {
+  background: var(--mon-primary-soft, #e5f4ff);
+  color: var(--mon-text, #323338);
+  border: 1px solid var(--mon-border, #e6e9ef);
+}
+
+.vega-panel--light .vega-msg.user .vega-bubble {
+  color: #fff;
+}
+
+.vega-panel--light .vega-time {
+  color: var(--mon-muted, #676879) !important;
+  opacity: 1;
+}
+
+.vega-panel--light .vega-hint {
+  color: var(--mon-muted, #676879);
+  opacity: 1;
+}
+
+.vega-panel--light .vega-quick-asks button {
+  background: var(--mon-bg, #f6f7fb);
+  border: 1px solid var(--mon-border, #e6e9ef);
+  color: var(--mon-text, #323338);
+}
+
+.vega-panel--light .vega-quick-asks button:hover {
+  background: var(--mon-primary-soft, #e5f4ff);
+  border-color: var(--mon-primary, #0073ea);
+  color: var(--mon-primary, #0073ea);
+}
+
+.vega-panel--light .vega-input-row {
+  border-top: 1px solid var(--mon-border, #e6e9ef);
+  background: var(--mon-bg, #f6f7fb);
+}
+
+.vega-panel--light .vega-messages {
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
 
 @media (max-width: 480px) {
   .vega-panel {

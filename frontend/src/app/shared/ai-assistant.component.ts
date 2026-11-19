@@ -162,10 +162,57 @@ export class AiAssistantComponent implements OnInit, OnDestroy {
     if (custom && custom !== 'VEGA' && custom !== 'LEGALIA') return custom;
     return 'Asistente Virtual';
   });
-  bgColor = computed(() => this.auth.user()?.panel_assistant_bg_color || '#0f172a');
-  btnColor = computed(() => this.auth.user()?.panel_assistant_btn_color || '#4F46E5');
-  textColor = computed(() => this.auth.user()?.panel_assistant_text_color || '#FFFFFF');
+  /** Colores Monday del panel para el asistente del cliente. */
+  private readonly panelDefaults = {
+    bg: '#ffffff',
+    btn: '#0073ea',
+    text: '#FFFFFF',
+  } as const;
+
+  private isStockAssistantColor(value: string | null | undefined, stock: string): boolean {
+    const v = (value || '').trim().toLowerCase();
+    return !v || v === stock.toLowerCase();
+  }
+
+  bgColor = computed(() => {
+    const custom = this.auth.user()?.panel_assistant_bg_color;
+    if (this.panelRole === 'cliente') {
+      // Ignora el default oscuro de stock; usa superficie Monday del panel.
+      if (this.isStockAssistantColor(custom, '#0f172a')) return this.panelDefaults.bg;
+      return (custom || this.panelDefaults.bg).trim();
+    }
+    return (custom || '#0f172a').trim();
+  });
+  btnColor = computed(() => {
+    const custom = this.auth.user()?.panel_assistant_btn_color;
+    if (this.panelRole === 'cliente') {
+      // Ignora el morado stock; usa --mon-primary del panel.
+      if (this.isStockAssistantColor(custom, '#4F46E5')) return this.panelDefaults.btn;
+      return (custom || this.panelDefaults.btn).trim();
+    }
+    return (custom || '#4F46E5').trim();
+  });
+  textColor = computed(() => {
+    const custom = this.auth.user()?.panel_assistant_text_color;
+    return (custom || this.panelDefaults.text).trim();
+  });
   assistantFont = computed(() => this.auth.user()?.panel_assistant_font || 'Spartan');
+
+  /** Panel claro cuando el fondo del asistente es claro (cliente Monday). */
+  isLightPanel = computed(() => {
+    const bg = (this.bgColor() || '').trim().toLowerCase();
+    if (!bg) return this.panelRole === 'cliente';
+    if (bg.startsWith('#') && (bg.length === 7 || bg.length === 4)) {
+      const hex = bg.length === 4
+        ? `#${bg[1]}${bg[1]}${bg[2]}${bg[2]}${bg[3]}${bg[3]}`
+        : bg;
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return (0.299 * r + 0.587 * g + 0.114 * b) > 186;
+    }
+    return this.panelRole === 'cliente';
+  });
 
   positionClass = computed(() => {
     const pos = this.auth.user()?.panel_assistant_position || 'bottom-right';
