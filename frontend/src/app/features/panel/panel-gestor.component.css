@@ -1688,38 +1688,42 @@ app-crm-team {
   width: 100%;
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
   border: 1px solid #e6e9ef;
   border-radius: 10px;
-  background: #fff;
+  /* Mismo gris del header: evita hueco blanco en esquinas/móvil al hacer scroll */
+  background: #f7f8fa;
   margin-bottom: 12px;
 }
 .activity-list {
-  width: max(100%, 820px);
-  min-width: 100%;
+  display: block;
+  box-sizing: border-box;
+  min-width: 820px;
+  width: 100%;
   background: #fff;
 }
 .activity-list-head,
 .activity-row {
   display: grid;
-  grid-template-columns: minmax(180px, 1.6fr) 140px 72px 150px 110px 120px;
+  grid-template-columns: minmax(160px, 1.5fr) 132px 64px 140px 104px 118px;
   gap: 8px;
   align-items: center;
   padding: 12px 14px;
-  width: 100%;
   box-sizing: border-box;
+  width: 100%;
+  min-width: 820px;
 }
 .activity-list-head {
-  background: #f7f8fa;
+  background: #f7f8fa !important;
   border-bottom: 1px solid #e6e9ef;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #676879;
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  /* sticky + overflow-x en iOS deja el fondo corto; mejor sin sticky */
+  position: static;
 }
 .activity-row {
   border-bottom: 1px solid #eef0f4;
