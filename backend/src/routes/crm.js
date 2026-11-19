@@ -1351,7 +1351,7 @@ router.get('/insurance-alerts', async (req, res) => {
         contactPhone: row.contact_phone,
         contactEmail: row.contact_email,
         verificationLabel: vehicle.insuranceExpiry
-          ? `Póliza vencida el ${vehicle.insuranceExpiry}`
+          ? `Póliza vencida el ${String(vehicle.insuranceExpiry).slice(0, 10).split('-').reverse().join('/')}`
           : 'Póliza vencida',
       };
     }));

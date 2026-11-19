@@ -1,6 +1,7 @@
 import { Component, input, output, signal, computed, effect, inject, NgZone, OnDestroy, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe, UpperCasePipe, JsonPipe, KeyValuePipe } from '@angular/common';
+import { formatDateOnlyMx } from '../../shared/date-only.util';
 import {
   LucideCircle,
   LucideCircleCheck,
@@ -2045,6 +2046,8 @@ export class CrmDealPanelComponent implements OnDestroy {
     if (idx < 0) return all;
     return all.slice(idx);
   }
+
+  readonly formatDateOnlyMx = formatDateOnlyMx;
 
   todayIso(): string {
     return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());

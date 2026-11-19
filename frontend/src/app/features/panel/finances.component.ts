@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
+import { DateOnlyMxPipe } from '../../shared/date-only-mx.pipe';
 import { FormsModule } from '@angular/forms';
 import {
   LucideArrowDown,
@@ -42,7 +43,7 @@ import { formatMoney } from '../../shared/format-amount.util';
 @Component({
   selector: 'app-finances',
   standalone: true,
-  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe, LucideWallet, LucideBarChart3, LucideFileText, LucidePlus, LucideTrendingUp, LucideTrendingDown, LucideScale, LucideCalendar, LucideCreditCard, LucideClipboardList, LucideSettings, LucideX, LucideInbox, LucideTrash2, LucideSave, LucideTriangleAlert, LucideArrowUp, LucideArrowDown, LucideChevronLeft, LucideChevronRight],
+  imports: [CommonModule, FormsModule, DecimalPipe, DatePipe, DateOnlyMxPipe, LucideWallet, LucideBarChart3, LucideFileText, LucidePlus, LucideTrendingUp, LucideTrendingDown, LucideScale, LucideCalendar, LucideCreditCard, LucideClipboardList, LucideSettings, LucideX, LucideInbox, LucideTrash2, LucideSave, LucideTriangleAlert, LucideArrowUp, LucideArrowDown, LucideChevronLeft, LucideChevronRight],
   template: `
     <div class="fin-wrap">
 
@@ -227,7 +228,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             <tbody>
               @for (tx of transactions(); track tx.id) {
                 <tr class="tx-row" tabindex="0" (click)="openDetail(tx)" (keydown.enter)="openDetail(tx)">
-                  <td class="col-date">{{ tx.date | date:'dd/MM/yyyy' }}</td>
+                  <td class="col-date">{{ tx.date | dateOnlyMx }}</td>
                   <td>
                     <span class="badge" [class.badge-income]="tx.type === 'income'" [class.badge-expense]="tx.type === 'expense'">
                       {{ tx.type === 'income' ? '↑ Ingreso' : '↓ Gasto' }}
@@ -410,7 +411,7 @@ import { formatMoney } from '../../shared/format-amount.util';
             </div>
             <div class="detail-grid">
               <span class="detail-k">Fecha</span>
-              <span class="detail-v">{{ tx.date | date:'dd/MM/yyyy' }}</span>
+              <span class="detail-v">{{ tx.date | dateOnlyMx }}</span>
               <span class="detail-k">Tipo</span>
               <span class="detail-v">{{ tx.type === 'income' ? 'Ingreso' : 'Gasto' }}</span>
               <span class="detail-k">Monto</span>
@@ -495,8 +496,11 @@ import { formatMoney } from '../../shared/format-amount.util';
 
               <div class="field-row">
                 <label>Fecha del pago *</label>
-                <input type="date" [(ngModel)]="newTx.date" [max]="todayIso()">
-                <p class="field-hint">Si el pago no fue hoy, elige el día en que se recibió.</p>
+                <input type="date" lang="es-MX" [(ngModel)]="newTx.date" [max]="todayIso()">
+                <p class="field-hint">
+                  Si el pago no fue hoy, elige el día en que se recibió.
+                  @if (newTx.date) { · Se registrará como {{ newTx.date | dateOnlyMx }} (día/mes/año) }
+                </p>
               </div>
 
               <!-- Método de pago/cobro (ambos tipos) -->

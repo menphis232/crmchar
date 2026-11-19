@@ -10,6 +10,14 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME || 'tramites_vehiculares',
   waitForConnections: true,
   connectionLimit: 10,
+  // DATE sin hora: devolver 'YYYY-MM-DD' (evita que Finanzas/póliza resten un día por UTC)
+  typeCast(field, next) {
+    if (field.type === 'DATE') {
+      const v = field.string();
+      return v || null;
+    }
+    return next();
+  },
 });
 
 export async function query(sql, params = []) {

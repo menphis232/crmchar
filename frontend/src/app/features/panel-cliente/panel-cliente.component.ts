@@ -1,5 +1,6 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed, NgZone, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule, DatePipe, CurrencyPipe, NgTemplateOutlet } from '@angular/common';
+import { DateOnlyMxPipe } from '../../shared/date-only-mx.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -86,7 +87,7 @@ const CLIENT_TABS: ClientTab[] = [
   },
   standalone: true,
   imports: [
-    CommonModule, FormsModule, DatePipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
+    CommonModule, FormsModule, DatePipe, DateOnlyMxPipe, CurrencyPipe, NgTemplateOutlet, RouterLink,
     PanelUserMenuComponent, ChangeCredentialsComponent, ThemeSwitchComponent, AiAssistantComponent, VehicleMmySelectComponent,
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck,

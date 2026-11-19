@@ -729,7 +729,7 @@
                       }
                       @if (v.insuranceExpiry) {
                         <span class="client-vehicle-tag" [class.insurance-expired]="isInsuranceExpired(v.insuranceExpiry)">
-                          Seguro {{ v.insuranceExpiry | date:'dd/MM/yy' }}
+                          Seguro {{ v.insuranceExpiry | dateOnlyMx }}
                           @if (isInsuranceExpired(v.insuranceExpiry)) { · Vencida }
                         </span>
                       }
@@ -786,7 +786,10 @@
                   </div>
                   <div [class.field-expired]="isInsuranceExpired(v.insuranceExpiry)">
                     <label>Vencimiento póliza de seguro</label>
-                    <input type="date" [ngModel]="v.insuranceExpiry || ''" (change)="updateClientVehicle(v, 'insuranceExpiry', $any($event.target).value)">
+                    <input type="date" lang="es-MX" [ngModel]="v.insuranceExpiry || ''" (change)="updateClientVehicle(v, 'insuranceExpiry', $any($event.target).value)">
+                    @if (v.insuranceExpiry) {
+                      <p class="card-desc" style="margin-top:4px;">{{ v.insuranceExpiry | dateOnlyMx }} <span style="opacity:.7">(día/mes/año)</span></p>
+                    }
                     @if (isInsuranceExpired(v.insuranceExpiry)) {
                       <p class="expiry-alert">Tu póliza está vencida. Renueva para circular sin riesgos.</p>
                     }
@@ -811,7 +814,10 @@
                   </div>
                   <div>
                     <label>Fecha de próxima verificación</label>
-                    <input type="date" [ngModel]="v.nextVerificationDate || ''" (change)="updateClientVehicle(v, 'nextVerificationDate', $any($event.target).value)">
+                    <input type="date" lang="es-MX" [ngModel]="v.nextVerificationDate || ''" (change)="updateClientVehicle(v, 'nextVerificationDate', $any($event.target).value)">
+                    @if (v.nextVerificationDate) {
+                      <p class="card-desc" style="margin-top:4px;">{{ v.nextVerificationDate | dateOnlyMx }} <span style="opacity:.7">(día/mes/año)</span></p>
+                    }
                   </div>
                 </div>
               } @else {
@@ -840,7 +846,7 @@
                     <dt>Vencimiento póliza</dt>
                     <dd>
                       @if (v.insuranceExpiry) {
-                        {{ v.insuranceExpiry | date:'dd/MM/yyyy' }}
+                        {{ v.insuranceExpiry | dateOnlyMx }}
                         @if (isInsuranceExpired(v.insuranceExpiry)) {
                           <span class="expiry-alert-inline"> · Vencida</span>
                         }
@@ -861,7 +867,7 @@
                     <dt>Fecha de próxima verificación</dt>
                     <dd>
                       @if (v.nextVerificationDate) {
-                        {{ v.nextVerificationDate | date:'dd/MM/yyyy' }}
+                        {{ v.nextVerificationDate | dateOnlyMx }}
                       } @else {
                         —
                       }
@@ -1010,7 +1016,10 @@
               </div>
               <div>
                 <label>Vencimiento póliza de seguro</label>
-                <input type="date" class="client-wallet-input" [(ngModel)]="newInsuranceExpiry">
+                <input type="date" lang="es-MX" class="client-wallet-input" [(ngModel)]="newInsuranceExpiry">
+                @if (newInsuranceExpiry) {
+                  <p class="card-desc" style="margin-top:4px;">{{ newInsuranceExpiry | dateOnlyMx }} <span style="opacity:.7">(día/mes/año)</span></p>
+                }
               </div>
               <div>
                 <label>Refrendo / tenencia {{ currentYear }}</label>
@@ -1032,7 +1041,10 @@
               </div>
               <div>
                 <label>Fecha de próxima verificación</label>
-                <input type="date" class="client-wallet-input" [(ngModel)]="newNextVerificationDate">
+                <input type="date" lang="es-MX" class="client-wallet-input" [(ngModel)]="newNextVerificationDate">
+                @if (newNextVerificationDate) {
+                  <p class="card-desc" style="margin-top:4px;">{{ newNextVerificationDate | dateOnlyMx }} <span style="opacity:.7">(día/mes/año)</span></p>
+                }
               </div>
             </div>
             <button type="button" class="btn-copy client-vehicle-add-btn" (click)="addVehicle()" [disabled]="isAddingVehicle()">
