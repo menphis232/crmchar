@@ -1,0 +1,97 @@
+<div class="cotizacion-page">
+  <h1>Cotización</h1>
+  <p class="hint">Precios sugeridos Guía EBC / Libro Azul (venta entre particulares).</p>
+
+  @if (error()) {
+    <p class="err">{{ error() }}</p>
+  }
+
+  @if (step() === 1) {
+    <section class="box">
+      <h2>1. Datos del vehículo</h2>
+
+      <label>
+        Año
+        <select [(ngModel)]="claveAnio" (ngModelChange)="onAnioChange()" [disabled]="loading() || !configured()">
+          <option value="">Seleccione año</option>
+          @for (a of anios(); track a.clave) {
+            <option [value]="a.clave">{{ a.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Marca
+        <select [(ngModel)]="claveMarca" (ngModelChange)="onMarcaChange()" [disabled]="loading() || !claveAnio">
+          <option value="">Seleccione marca</option>
+          @for (m of marcas(); track m.clave) {
+            <option [value]="m.clave">{{ m.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Modelo
+        <select [(ngModel)]="claveModelo" (ngModelChange)="onModeloChange()" [disabled]="loading() || !claveMarca">
+          <option value="">Seleccione modelo</option>
+          @for (m of modelos(); track m.clave) {
+            <option [value]="m.clave">{{ m.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Kilometraje (opcional)
+        <input type="number" min="0" step="1000" [(ngModel)]="kilometraje" placeholder="Ej. 45000" [disabled]="loading()">
+      </label>
+
+      <button type="button" (click)="goToVersiones()" [disabled]="loading() || !claveModelo">
+        {{ loading() ? 'Cargando…' : 'Continuar a versiones' }}
+      </button>
+    </section>
+  }
+
+  @if (step() === 2) {
+    <section class="box">
+      <h2>2. Versión</h2>
+      <p class="resumen">
+        {{ anioNombre }} · {{ marcaNombre }} · {{ modeloNombre }}
+        @if (kilometraje != null) { · {{ kilometraje | number }} km }
+      </p>
+
+      <label>
+        Versión del vehículo
+        <select [(ngModel)]="claveVersion" (ngModelChange)="onVersionChange()" [disabled]="loading()">
+          <option value="">Seleccione versión</option>
+          @for (v of versiones(); track v.clave) {
+            <option [value]="v.clave">{{ v.nombre }}</option>
+          }
+        </select>
+      </label>
+
+      <div class="actions">
+        <button type="button" class="secondary" (click)="backToStep1()" [disabled]="loading()">Volver</button>
+        <button type="button" (click)="consultarPrecio()" [disabled]="loading() || !claveVersion">
+          {{ loading() ? 'Consultando…' : 'Consultar precio' }}
+        </button>
+      </div>
+
+      @if (precio(); as p) {
+        <div class="precio">
+          <h3>Resultado</h3>
+          <p><strong>Versión:</strong> {{ versionNombre }}</p>
+          @if (asNumber(p.venta) != null) {
+            <p><strong>Venta sugerida:</strong> {{ asNumber(p.venta) | currency:(p.moneda || 'MXN'):'symbol-narrow':'1.0-0' }}</p>
+          } @else if (p.venta) {
+            <p><strong>Venta sugerida:</strong> {{ p.venta }}</p>
+          }
+          @if (asNumber(p.compra) != null) {
+            <p><strong>Compra sugerida:</strong> {{ asNumber(p.compra) | currency:(p.moneda || 'MXN'):'symbol-narrow':'1.0-0' }}</p>
+          } @else if (p.compra) {
+            <p><strong>Compra sugerida:</strong> {{ p.compra }}</p>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

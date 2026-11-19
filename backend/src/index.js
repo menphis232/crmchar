@@ -24,6 +24,7 @@ import peritoRoutes from './routes/perito.js';
 import mpRoutes from './routes/mp.js';
 import supportRoutes from './routes/support.js';
 import knowledgeRoutes from './routes/knowledge.js';
+import libroazulRoutes from './routes/libroazul.js';
 import { testConnection, run } from './db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -77,6 +78,7 @@ app.use('/api/perito', peritoRoutes);
 app.use('/api/mp', mpRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/libroazul', libroazulRoutes);
 app.use('/og', ogRoutes);
 // Rutas cortas para compartir con OG tags
 app.use('/s', shareRoutes);   // /s/:id  → autos

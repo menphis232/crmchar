@@ -8,6 +8,7 @@ export const routes: Routes = [
   { path: 'concesionarias/:slug', loadComponent: () => import('./features/autos/dealer-profile.component').then(m => m.DealerProfileComponent) },
   { path: 'gestores', loadComponent: () => import('./features/gestores/gestores-list.component').then(m => m.GestoresListComponent) },
   { path: 'gestores/:slug', loadComponent: () => import('./features/gestores/gestor-detail.component').then(m => m.GestorDetailComponent) },
+  { path: 'cotizacion', loadComponent: () => import('./features/cotizacion/cotizacion.component').then(m => m.CotizacionComponent) },
   { path: 'review/:dealId', loadComponent: () => import('./features/site/pages/review.component').then(m => m.ReviewComponent) },
   { path: 'pay/success', loadComponent: () => import('./features/site/pay-success.component').then(m => m.PaySuccessComponent) },
   { path: 'pay/mp/:token', loadComponent: () => import('./features/payment/mp-checkout.component').then(m => m.MpCheckoutComponent) },

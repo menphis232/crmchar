@@ -1,0 +1,97 @@
+.cotizacion-page {
+  max-width: 480px;
+  margin: 24px auto;
+  padding: 16px;
+  font-family: system-ui, sans-serif;
+  color: #111;
+}
+
+h1 {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+
+.hint {
+  margin: 0 0 16px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #ccc;
+  padding: 16px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+}
+
+select,
+input {
+  padding: 8px;
+  font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+button {
+  padding: 10px 14px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #eee;
+  border: 1px solid #bbb;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.actions button {
+  flex: 1;
+}
+
+.err {
+  color: #b00020;
+  font-size: 0.9rem;
+}
+
+.resumen {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.precio {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ddd;
+}
+
+.precio h3 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.precio p {
+  margin: 4px 0;
+}
