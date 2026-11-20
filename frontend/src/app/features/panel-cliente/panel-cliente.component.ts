@@ -255,6 +255,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   allInvoices = signal<any[]>([]);
   invoicesLoading = signal(false);
   downloadingInvoiceId = signal<string | null>(null);
+  viewingInvoiceId = signal<string | null>(null);
   uploadingDocType = signal<string | null>(null);
   walletPickerFor = signal<string | null>(null);
 
@@ -1389,7 +1390,32 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       },
       error: () => {
         this.downloadingInvoiceId.set(null);
-        this.toast.error('No se pudo descargar la factura.', 'Error');
+        this.toast.error('No se pudo descargar el comprobante.', 'Error');
+      },
+    });
+  }
+
+  viewInvoice(invoiceId: string) {
+    if (this.viewingInvoiceId()) return;
+    this.viewingInvoiceId.set(invoiceId);
+    this.http.get(`${environment.apiUrl}/client/invoices/${invoiceId}/download`, {
+      responseType: 'blob',
+    }).subscribe({
+      next: blob => {
+        const pdfBlob = blob.type === 'application/pdf'
+          ? blob
+          : new Blob([blob], { type: 'application/pdf' });
+        const url = URL.createObjectURL(pdfBlob);
+        const win = window.open(url, '_blank', 'noopener');
+        if (!win) {
+          this.toast.warning('Permite ventanas emergentes para ver el comprobante.');
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        this.viewingInvoiceId.set(null);
+      },
+      error: () => {
+        this.viewingInvoiceId.set(null);
+        this.toast.error('No se pudo abrir el comprobante.', 'Error');
       },
     });
   }

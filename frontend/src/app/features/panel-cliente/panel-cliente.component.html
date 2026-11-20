@@ -703,11 +703,23 @@
                 </div>
                 <div class="client-invoice-row-side">
                   <span class="client-deal-price">{{ inv.amount | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
-                  <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === inv.id"
-                          (click)="downloadInvoice(inv.id, inv.invoice_number)">
-                    <svg lucideDownload [size]="14" aria-hidden="true"></svg>
-                    Descargar
-                  </button>
+                  <div class="client-invoice-actions">
+                    <button
+                      type="button"
+                      class="btn-ghost small"
+                      [class.loading]="viewingInvoiceId() === inv.id"
+                      [disabled]="viewingInvoiceId() === inv.id"
+                      (click)="viewInvoice(inv.id)"
+                    >
+                      <svg lucideEye [size]="14" aria-hidden="true"></svg>
+                      {{ viewingInvoiceId() === inv.id ? 'Abriendo...' : 'Visualizar' }}
+                    </button>
+                    <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === inv.id"
+                            (click)="downloadInvoice(inv.id, inv.invoice_number)">
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      Descargar
+                    </button>
+                  </div>
                 </div>
               </div>
             }
@@ -1359,11 +1371,23 @@
                   {{ dealInvoice().amount | currency:'MXN':'symbol-narrow':'1.2-2' }}
                 </span>
               </div>
-              <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === dealInvoice().id"
-                      (click)="downloadInvoice(dealInvoice().id, dealInvoice().invoice_number)">
-                <svg lucideDownload [size]="14" aria-hidden="true"></svg>
-                {{ downloadingInvoiceId() === dealInvoice().id ? 'Descargando...' : 'Descargar PDF' }}
-              </button>
+              <div class="client-invoice-actions">
+                <button
+                  type="button"
+                  class="btn-ghost small"
+                  [class.loading]="viewingInvoiceId() === dealInvoice().id"
+                  [disabled]="viewingInvoiceId() === dealInvoice().id"
+                  (click)="viewInvoice(dealInvoice().id)"
+                >
+                  <svg lucideEye [size]="14" aria-hidden="true"></svg>
+                  {{ viewingInvoiceId() === dealInvoice().id ? 'Abriendo...' : 'Visualizar' }}
+                </button>
+                <button type="button" class="btn-copy small" [class.loading]="downloadingInvoiceId() === dealInvoice().id"
+                        (click)="downloadInvoice(dealInvoice().id, dealInvoice().invoice_number)">
+                  <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                  {{ downloadingInvoiceId() === dealInvoice().id ? 'Descargando...' : 'Descargar PDF' }}
+                </button>
+              </div>
             </div>
           } @else if (isPaid(selectedDeal())) {
             <div class="client-empty">

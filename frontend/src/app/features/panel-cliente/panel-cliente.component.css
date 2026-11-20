@@ -1763,10 +1763,22 @@
   flex-shrink: 0;
 }
 
-.client-invoice-row-side .btn-copy {
+.client-invoice-row-side .btn-copy,
+.client-invoice-row-side .btn-ghost,
+.client-invoice-actions .btn-copy,
+.client-invoice-actions .btn-ghost {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.client-invoice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* Search, pagination, historial, wallet */
