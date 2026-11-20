@@ -921,10 +921,10 @@
   max-height: none;
   border-radius: 0;
   object-fit: contain;
-  object-position: center top;
+  object-position: top center;
   border: none;
   border-bottom: 1px solid var(--mon-border, #e6e9ef);
-  background: #fff;
+  background: #eef1f6;
 }
 
 .client-detail-photo--placeholder {
@@ -934,46 +934,6 @@
   min-height: 160px;
   color: var(--mon-primary, #0073ea);
   background: var(--mon-primary-soft, #eef5ff);
-}
-
-/* PC: misma composición que móvil (foto arriba + título), sin foto gigante ni recorte */
-@media (min-width: 992px) {
-  .client-detail {
-    max-width: 860px;
-  }
-
-  .client-detail-photo {
-    max-height: 220px;
-    object-fit: contain;
-    object-position: center;
-    background: #f7f8fa;
-  }
-
-  .client-detail-title {
-    font-size: clamp(1.55rem, 2.2vw, 2rem);
-    line-height: 1.15;
-  }
-
-  .deal-simple-main {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .deal-simple-photo {
-    width: 100%;
-    height: auto;
-    max-height: 140px;
-    aspect-ratio: 16 / 10;
-    border-radius: 12px;
-    object-fit: contain;
-    object-position: center;
-    background: #f7f8fa;
-  }
-
-  .deal-simple-photo--placeholder {
-    min-height: 100px;
-  }
 }
 
 .client-detail-hero .client-steps {
