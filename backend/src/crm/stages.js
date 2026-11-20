@@ -127,7 +127,26 @@ export function mapInquiryStatus(status) {
   return status === 'respondido' ? 'contactado' : 'lead_nuevo';
 }
 
-export function mapDealStageToSolicitudStatus(stage) {
+export function mapDealStageToSolicitudStatus(stage, role = 'gestor', stagesJson = null) {
+  if (!stage) return 'nuevo';
+
+  // Con embudo personalizado (TVM): no asumir que id completado/perdido = cierre.
+  const custom = parseCrmStagesForRole(role, stagesJson);
+  if (custom?.length) {
+    const stageCfg = custom.find((s) => s.id === stage);
+    const label = String(stageCfg?.label || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+    if (/perdid|cancel|rechaz/.test(label)) return 'completado';
+    if (label === 'completado' || /\bcompletad/.test(label) || label === 'entregado' || /\bentregad/.test(label)) {
+      return 'completado';
+    }
+    if (stage === 'nuevo' || label.includes('solicitud')) return 'nuevo';
+    return 'en_proceso';
+  }
+
   return ({
     nuevo: 'nuevo',
     contactado: 'en_proceso',

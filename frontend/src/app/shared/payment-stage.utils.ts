@@ -87,23 +87,60 @@ export function isPaidDealBackwardMoveBlocked(
   return isBackwardStageMove(stagesConfig, deal.stage || '', toStageId);
 }
 
+/** Etapa de pérdida real (no ids reutilizados mid-embudo, p.ej. TVM `perdido` = "PAGO DE LINEA"). */
+export function looksLikeLostLabel(label?: string): boolean {
+  const key = normalizeStageKey(label);
+  return /perdid|cancel|rechaz/.test(key);
+}
+
+export function isLostStage(
+  stageId: string,
+  stagesConfig: CrmStageConfig[] | Record<string, string> | string[] = {},
+): boolean {
+  if (!stageId) return false;
+
+  if (Array.isArray(stagesConfig) && stagesConfig.length && typeof stagesConfig[0] === 'object') {
+    const stages = stagesConfig as CrmStageConfig[];
+    const idx = stages.findIndex((s) => s.id === stageId);
+    const stage = idx >= 0 ? stages[idx] : null;
+    if (looksLikeLostLabel(stage?.label)) return true;
+    // Id "perdido" a mitad del embudo con otro label → no es pérdida
+    if (stageId === 'perdido' && idx >= 0 && idx < stages.length - 1) return false;
+    if (stageId === 'perdido' && stage && !looksLikeLostLabel(stage.label)) return false;
+    return false;
+  }
+
+  if (stagesConfig && typeof stagesConfig === 'object' && !Array.isArray(stagesConfig)) {
+    const label = (stagesConfig as Record<string, string>)[stageId];
+    if (looksLikeLostLabel(label)) return true;
+    if (stageId === 'perdido' && label && !looksLikeLostLabel(label)) return false;
+  }
+
+  return stageId === 'perdido';
+}
+
 export function isCompletedStage(
   stageId: string,
   stagesConfig: CrmStageConfig[] | Record<string, string> | string[] = {},
 ): boolean {
   if (!stageId) return false;
-  if (stageId === 'completado' || stageId === 'vendido') return true;
 
   if (Array.isArray(stagesConfig) && stagesConfig.length && typeof stagesConfig[0] === 'object') {
     const stage = (stagesConfig as CrmStageConfig[]).find((s) => s.id === stageId);
     const label = normalizeStageKey(stage?.label || '');
     if (label === 'completado' || label === 'vendido' || /\bcompletad/.test(label)) return true;
-  } else if (stagesConfig && typeof stagesConfig === 'object' && !Array.isArray(stagesConfig)) {
-    const label = normalizeStageKey((stagesConfig as Record<string, string>)[stageId] || '');
-    if (label === 'completado' || label === 'vendido' || /\bcompletad/.test(label)) return true;
+    // Id "completado" reutilizado (ej. TVM = "INGRESO") → no es cierre
+    if (stage && (stageId === 'completado' || stageId === 'vendido')) return false;
+    return false;
   }
 
-  return false;
+  if (stagesConfig && typeof stagesConfig === 'object' && !Array.isArray(stagesConfig)) {
+    const label = normalizeStageKey((stagesConfig as Record<string, string>)[stageId] || '');
+    if (label === 'completado' || label === 'vendido' || /\bcompletad/.test(label)) return true;
+    if ((stageId === 'completado' || stageId === 'vendido') && label) return false;
+  }
+
+  return stageId === 'completado' || stageId === 'vendido';
 }
 
 export function isShippedStage(

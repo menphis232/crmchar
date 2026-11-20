@@ -10,7 +10,7 @@ import {
   LucideTrash2,
 } from '@lucide/angular';
 import { CrmDeal } from '../../models';
-import { CrmStageConfig, isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isPaymentStage } from '../../shared/payment-stage.utils';
+import { CrmStageConfig, isDealPaymentLocked, isLostStage, isPaidDealBackwardMoveBlocked, isPaymentStage } from '../../shared/payment-stage.utils';
 import { ToastService } from '../../core/toast.service';
 import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
@@ -747,6 +747,23 @@ export class CrmKanbanComponent {
 
   isPaymentStageCol(stageId: string): boolean {
     return isPaymentStage(stageId, this.paymentStagesConfig());
+  }
+
+  isLostCol(stage: KanbanStage): boolean {
+    return isLostStage(stage.id, this.localStages().length ? this.localStages() : [stage]);
+  }
+
+  isTerminalCol(stage: KanbanStage): boolean {
+    const stages = this.localStages();
+    if (this.isLostCol(stage)) return true;
+    // Última columna del embudo (o penúltima si la última es pérdida)
+    if (!stages.length) return stage.id === 'completado' || stage.id === 'vendido';
+    const last = stages[stages.length - 1];
+    if (isLostStage(last.id, stages)) {
+      const win = stages[stages.length - 2];
+      return !!win && stage.id === win.id;
+    }
+    return stage.id === last.id;
   }
 
   peritoStageLabel(stage: string | null | undefined): string {

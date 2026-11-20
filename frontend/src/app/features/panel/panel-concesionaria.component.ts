@@ -15,7 +15,7 @@ import { CrmContactPanelComponent } from './crm-contact-panel.component';
 import { PdfDesignerComponent } from './pdf-designer.component';
 import { PageBuilderComponent } from './page-builder.component';
 import { ToastService } from '../../core/toast.service';
-import { isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage } from '../../shared/payment-stage.utils';
+import { isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, isLostStage } from '../../shared/payment-stage.utils';
 import { FinancesComponent } from './finances.component';
 import { NotificationBellComponent } from '../../shared/notification-bell.component';
 import { ThemeSwitchComponent } from '../../shared/theme-switch.component';
@@ -345,8 +345,8 @@ export class PanelConcesionariaComponent implements OnInit {
       this.loadCrm();
       return;
     }
-    if (stage === 'perdido') {
-      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
+    if (isLostStage(stage, this.crmStages)) {
+      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
       if (fromDrag) {
         this.message.set('Trámite movido a Perdido. Haz clic en la tarjeta para indicar el motivo de pérdida.');
       } else {

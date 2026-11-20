@@ -10,7 +10,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { CrmService, GestoresService, SiteService, ThemeService, UploadService } from '../../core/api.service';
 import { AiTraining, CrmDashboard, CrmDeal, CrmTodayInbox, CrmVerificationAlert, Gestor, GestorReview, GestorService, MessageTemplate, PageBuilderConfig, SiteSettings } from '../../models';
-import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, isLostStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { CrmKanbanComponent } from './crm-kanban.component';
 import { CrmDealsBoardComponent } from './crm-deals-board.component';
 import { CrmDealPanelComponent } from './crm-deal-panel.component';
@@ -952,8 +952,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       this.loadDeals();
       return;
     }
-    if (stage === 'perdido') {
-      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage: 'perdido' } : d)));
+    // Solo pedir motivo si la etapa es pérdida real (no id `perdido` reutilizado mid-embudo)
+    if (isLostStage(stage, this.crmStages)) {
+      this.deals.update(list => list.map(d => (d.id === deal.id ? { ...d, stage } : d)));
       if (fromDrag) {
         this.message.set('Trámite movido a Perdido. Haz clic en la tarjeta para indicar el motivo de pérdida.');
       } else {

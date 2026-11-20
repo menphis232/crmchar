@@ -36,7 +36,7 @@ import {
   nextChecklistId,
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
-import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, CrmStageConfig } from '../../shared/payment-stage.utils';
+import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, isLostStage, CrmStageConfig } from '../../shared/payment-stage.utils';
 import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
 import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
@@ -1871,12 +1871,14 @@ export class CrmDealPanelComponent implements OnDestroy {
       this.toast.warning('Los trámites ya pagados solo pueden avanzar, no retroceder en el embudo.', 'Solo hacia adelante');
       return;
     }
-    if (stage === 'perdido' && !this.lostReason) {
+    const stagesForLost = this.stagesConfig().length ? this.stagesConfig() : this.stageLabels();
+    const movingToLost = isLostStage(stage, stagesForLost);
+    if (movingToLost && !this.lostReason) {
       this.deal.update(cur => (cur ? { ...cur, stage } : cur));
       return;
     }
     const payload: { stage: string; lostReason?: string } = { stage };
-    if (stage === 'perdido') payload.lostReason = this.lostReason;
+    if (movingToLost) payload.lostReason = this.lostReason;
     this.crmService.updateDeal(d.id, payload).subscribe({
       next: () => {
         this.loadDeal(d.id);

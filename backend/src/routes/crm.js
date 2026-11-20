@@ -37,6 +37,7 @@ import {
 } from '../crm/verification-utils.js';
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
+import { isLostStageId } from '../crm/deal-status.js';
 import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
 import { isUserOnline } from '../utils/presence.js';
 import { finalizeDealPayment } from '../services/deal-payment.js';
@@ -826,7 +827,8 @@ router.patch('/deals/:id', async (req, res) => {
     if (stage && !allowedStages.includes(stage) && !isCustom && !['completado', 'perdido'].includes(stage)) {
       return res.status(400).json({ error: 'Etapa inválida' });
     }
-    if (stage === 'perdido' && !lostReason && !deal.lost_reason) {
+    // Solo exigir motivo si la etapa es pérdida real (en TVM el id `perdido` es "PAGO DE LINEA")
+    if (stage && isLostStageId(stage, role, userRow?.crm_stages) && !lostReason && !deal.lost_reason) {
       return res.status(400).json({ error: 'Indica el motivo de pérdida' });
     }
 
@@ -941,7 +943,7 @@ router.patch('/deals/:id', async (req, res) => {
       processStageChangeAutomations(req.params.id, stage);
 
       if (deal.ref_type === 'solicitud' && deal.ref_id) {
-        const solStatus = mapDealStageToSolicitudStatus(stage);
+        const solStatus = mapDealStageToSolicitudStatus(stage, role, userRow?.crm_stages);
         await run('UPDATE solicitudes SET status = ? WHERE id = ?', [solStatus, deal.ref_id]);
       }
       if (deal.ref_type === 'auto_inquiry' && deal.ref_id && ['contactado', 'interesado', 'visita', 'negociacion', 'vendido'].includes(stage)) {

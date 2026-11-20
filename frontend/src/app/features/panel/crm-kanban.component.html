@@ -20,7 +20,7 @@
     <div
       class="kanban-col"
       [class.drag-over]="dragOverStage() === stage.id"
-      [class.kanban-col-lost]="stage.id === 'perdido'"
+      [class.kanban-col-lost]="isLostCol(stage)"
       [class.kanban-col-payment]="isPaymentStageCol(stage.id)"
       [class.col-dragging]="colDraggingId() === stage.id"
       [class.col-drag-over-left]="colDragOverId() === stage.id && colDragSide() === 'left'"
@@ -91,7 +91,7 @@
         @for (deal of dealsInStage(stage.id, idx); track deal.id) {
           <div
             class="kanban-card"
-            [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && stage.id !== 'completado' && stage.id !== 'vendido' && stage.id !== 'perdido'"
+            [class.stalled]="deal.daysInStage && deal.daysInStage > 2 && !isTerminalCol(stage)"
             [class.payment-locked]="isPaymentLocked(deal)"
             [attr.draggable]="!isTouchDevice() && !isPaymentLocked(deal)"
             (dragstart)="onDragStart($event, deal)"

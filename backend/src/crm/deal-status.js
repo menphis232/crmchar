@@ -1,12 +1,25 @@
 import { pipelineStagesForUser } from './stages.js';
 
-function looksLikeLostLabel(label) {
+export function looksLikeLostLabel(label) {
   const key = String(label || '')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
   return /perdid|cancel|rechaz/.test(key);
+}
+
+/** True solo si la etapa es pérdida real (no id `perdido` reutilizado mid-embudo). */
+export function isLostStageId(stageId, role, stagesJson = null) {
+  if (!stageId) return false;
+  const stages = pipelineStagesForUser(role || 'gestor', stagesJson);
+  if (!Array.isArray(stages) || !stages.length) return stageId === 'perdido';
+  const idx = stages.findIndex((s) => s.id === stageId);
+  const stage = idx >= 0 ? stages[idx] : null;
+  if (looksLikeLostLabel(stage?.label)) return true;
+  if (stageId === 'perdido' && idx >= 0 && idx < stages.length - 1) return false;
+  if (stageId === 'perdido' && stage && !looksLikeLostLabel(stage.label)) return false;
+  return stageId === 'perdido' && idx < 0;
 }
 
 /**
