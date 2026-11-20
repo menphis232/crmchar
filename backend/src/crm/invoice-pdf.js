@@ -61,6 +61,14 @@ export async function generateInvoicePdfFile({ deal, orgUser, amount, invoiceNum
 
   const settings = orgUser?.pdf_settings || {};
   const primary = settings.primaryColor || '#009ee3';
+  const orgName = String(orgUser?.name || '');
+  const isTvm = /tr[aá]mites\s+vehiculares/i.test(orgName);
+  const tvmFooterLines = [
+    'Trámites Vehiculares de México',
+    'World Trade Center Ciudad de México',
+    'Montecito 38 Primer Piso Oficina 14 Int. 20A, Col. Nápoles C.P. 03810 Benito Juárez, CDMX.',
+    'www.tramitesvehicularesdemexico.com',
+  ];
   const footerText = settings.footerText || 'Comprobante de pago emitido electrónicamente.';
 
   const doc = new PDFDocument({ margin: 50, size: 'A4' });
@@ -109,7 +117,18 @@ export async function generateInvoicePdfFile({ deal, orgUser, amount, invoiceNum
 
   doc.fontSize(14).fillColor(primary).text(`Total pagado: ${formatMoney(amount)}`, 50, tableTop + 80, { align: 'right' });
 
-  doc.fontSize(8).fillColor('#888').text(footerText, 50, 720, { align: 'center', width: 495 });
+  const pageBottom = doc.page.height - 50;
+  if (isTvm) {
+    let footerY = pageBottom - (tvmFooterLines.length * 12) - 4;
+    doc.strokeColor('#dddddd').lineWidth(0.5).moveTo(50, footerY - 10).lineTo(545, footerY - 10).stroke();
+    doc.fontSize(8).fillColor('#555');
+    for (const line of tvmFooterLines) {
+      doc.text(line, 50, footerY, { align: 'center', width: 495 });
+      footerY += 12;
+    }
+  } else {
+    doc.fontSize(8).fillColor('#888').text(footerText, 50, pageBottom - 20, { align: 'center', width: 495 });
+  }
 
   doc.end();
 
