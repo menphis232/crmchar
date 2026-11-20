@@ -127,6 +127,7 @@ async function deleteDealCascade(dealId) {
     'automation_executions',
     'perito_uploads',
     'perito_notes',
+    'fin_transactions',
   ];
   for (const table of linkedTables) {
     await run(`DELETE FROM ${table} WHERE deal_id = ?`, [dealId]).catch(() => {});
