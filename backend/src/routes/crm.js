@@ -117,6 +117,7 @@ async function loadDealForRequest(req, dealId, { dealType = null, select = '*' }
 }
 
 async function deleteDealCascade(dealId) {
+  const deal = await get('SELECT id, ref_type, ref_id FROM crm_deals WHERE id = ?', [dealId]);
   const linkedTables = [
     'chat_messages',
     'deal_documents',
@@ -133,7 +134,17 @@ async function deleteDealCascade(dealId) {
     await run(`DELETE FROM ${table} WHERE deal_id = ?`, [dealId]).catch(() => {});
   }
   await run('UPDATE gestor_reviews SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
-  await run('UPDATE solicitudes SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
+  // Borrar la solicitud/inquiry de origen para que el backfill de migrate no la recree.
+  if (deal?.ref_type === 'solicitud' && deal.ref_id) {
+    await run('DELETE FROM solicitudes WHERE id = ?', [deal.ref_id]).catch(() => {});
+  } else {
+    await run('UPDATE solicitudes SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
+  }
+  if (deal?.ref_type === 'auto_inquiry' && deal.ref_id) {
+    await run('DELETE FROM auto_inquiries WHERE id = ?', [deal.ref_id]).catch(() => {});
+  } else {
+    await run('UPDATE auto_inquiries SET deal_id = NULL WHERE deal_id = ?', [dealId]).catch(() => {});
+  }
   await run('DELETE FROM notifications WHERE ref_id = ?', [dealId]).catch(() => {});
   await run('DELETE FROM crm_deals WHERE id = ?', [dealId]);
 }

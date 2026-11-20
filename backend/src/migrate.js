@@ -122,9 +122,34 @@ async function migrate() {
     await conn3.end();
     console.log('Migración v4 (CRM) aplicada.');
 
-    const { backfillCrmDeals } = await import('./crm/backfill.js');
-    await backfillCrmDeals();
-    console.log('CRM backfill completado.');
+    // Backfill one-shot: si corre en cada restart recrea trámites borrados
+    // desde solicitudes huérfanas (sin crm_deals.ref_id).
+    const connBackfill = await mysql.createConnection({
+      host: process.env.DB_HOST || 'localhost',
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'tramites_vehiculares',
+    });
+    await connBackfill.query(`
+      CREATE TABLE IF NOT EXISTS schema_migrations (
+        id VARCHAR(64) PRIMARY KEY,
+        applied_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    const [backfillDone] = await connBackfill.query(
+      "SELECT id FROM schema_migrations WHERE id = 'v4_crm_deals_backfill'",
+    );
+    if (!backfillDone.length) {
+      const { backfillCrmDeals } = await import('./crm/backfill.js');
+      await backfillCrmDeals();
+      await connBackfill.query(
+        "INSERT IGNORE INTO schema_migrations (id) VALUES ('v4_crm_deals_backfill')",
+      );
+      console.log('CRM backfill completado (one-shot).');
+    } else {
+      console.log('CRM backfill ya aplicado — sin recrear trámites.');
+    }
+    await connBackfill.end();
   }
 
   // v5: CRM fase 2 — tareas, lost_reason, first_response_at
