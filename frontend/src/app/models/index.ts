@@ -28,6 +28,8 @@ export interface User {
   privacy_accepted_at?: string | null;
   last_seen_at?: string | null;
   needsLegalAcceptance?: boolean;
+  impersonatedBy?: string;
+  impersonatorName?: string;
   logo_url?: string;
   pdf_settings?: {
     layout: string[];

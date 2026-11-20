@@ -6,6 +6,7 @@ import { MxDateInputComponent } from '../../shared/mx-date-input.component';
 import { DomSanitizer } from '@angular/platform-browser';
 import { LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail, LucidePhone, LucidePlus, LucideSave, LucideTag, LucideTrash2, LucideUpload, LucideX } from '@lucide/angular';
 import { CrmService, UploadService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { CrmContact360, CrmContactVehicle, CrmContactVehicleDocument } from '../../models';
 import { MEXICO_STATES } from '../../shared/mexico-states';
@@ -476,8 +477,11 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
   `],
 })
 export class CrmContactPanelComponent {
+  private auth = inject(AuthService);
+
   contactId = input<string | null>(null);
   stageLabels = input<Record<string, string>>({});
+  canImpersonate = input(false);
 
   closed = output<void>();
   openDeal = output<string>();
@@ -494,6 +498,7 @@ export class CrmContactPanelComponent {
   loading = signal(false);
   isSaving = signal(false);
   isCreatingAccess = signal(false);
+  isImpersonating = signal(false);
   clientAccessNotice = signal<{
     created: boolean;
     login: string;
@@ -644,6 +649,22 @@ export class CrmContactPanelComponent {
       error: (e) => {
         this.isCreatingAccess.set(false);
         this.toast.error(e.error?.error || 'No se pudo crear el usuario');
+      },
+    });
+  }
+
+  enterClientPanel() {
+    const id = this.contactId();
+    if (!id || !this.canImpersonate() || this.isImpersonating()) return;
+    this.isImpersonating.set(true);
+    this.crmService.impersonateContact(id).subscribe({
+      next: (res) => {
+        this.isImpersonating.set(false);
+        this.auth.startImpersonation(res.token, res.user);
+      },
+      error: (e) => {
+        this.isImpersonating.set(false);
+        this.toast.error(e.error?.error || 'No se pudo abrir el panel del cliente');
       },
     });
   }

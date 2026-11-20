@@ -1,7 +1,8 @@
-import { Component, output, signal, OnInit, inject } from '@angular/core';
+import { Component, input, output, signal, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { LucideChevronLeft, LucideChevronRight, LucidePencil, LucidePlus, LucideSearch, LucideTrash2 } from '@lucide/angular';
+import { LucideChevronLeft, LucideChevronRight, LucideLogIn, LucidePencil, LucidePlus, LucideSearch, LucideTrash2 } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { CrmContact } from '../../models';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
@@ -16,7 +17,7 @@ function emptyForm(): ClientForm {
 @Component({
   selector: 'app-crm-clients-directory',
   standalone: true,
-  imports: [FormsModule, LucideSearch, LucidePlus, LucidePencil, LucideTrash2, LucideChevronLeft, LucideChevronRight],
+  imports: [FormsModule, LucideSearch, LucidePlus, LucidePencil, LucideTrash2, LucideChevronLeft, LucideChevronRight, LucideLogIn],
   templateUrl: './crm-clients-directory.component.html',
   styles: [`
     :host { display: block; }
@@ -458,9 +459,12 @@ function emptyForm(): ClientForm {
 })
 export class CrmClientsDirectoryComponent implements OnInit {
   private toast = inject(ToastService);
+  private auth = inject(AuthService);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+  canImpersonate = input(false);
   openContact = output<string>();
+  impersonatingId = signal<string | null>(null);
 
   clients = signal<CrmContact[]>([]);
   search = signal('');
@@ -654,6 +658,21 @@ export class CrmClientsDirectoryComponent implements OnInit {
       error: (err) => {
         this.isSaving.set(false);
         this.toast.error(err?.error?.error || 'No se pudo guardar el cliente');
+      },
+    });
+  }
+
+  enterClientPanel(c: CrmContact) {
+    if (!this.canImpersonate() || this.impersonatingId()) return;
+    this.impersonatingId.set(c.id);
+    this.crmService.impersonateContact(c.id).subscribe({
+      next: (res) => {
+        this.impersonatingId.set(null);
+        this.auth.startImpersonation(res.token, res.user);
+      },
+      error: (err) => {
+        this.impersonatingId.set(null);
+        this.toast.error(err?.error?.error || 'No se pudo abrir el panel del cliente');
       },
     });
   }

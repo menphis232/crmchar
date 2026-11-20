@@ -190,6 +190,7 @@
       <app-crm-contact-panel
         [contactId]="selectedContactId()"
         [stageLabels]="crmDashboard()?.stageLabels ?? {}"
+        [canImpersonate]="canManageClientPromoBanner()"
         (closed)="selectedContactId.set(null)"
         (openDeal)="openDeal($event); setTab('pipeline')"
         (updated)="loadVerificationAlerts()"
@@ -453,7 +454,10 @@
     }
 
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
-      <app-crm-clients-directory (openContact)="openClientContact($event)" />
+      <app-crm-clients-directory
+        [canImpersonate]="canManageClientPromoBanner()"
+        (openContact)="openClientContact($event)"
+      />
     }
 
     @if (tab() === 'actividad' && hasPerm('pipeline')) {
@@ -526,6 +530,16 @@
                 </div>
                 <div class="activity-cell activity-cell-action" role="cell">
                   <button type="button" class="activity-link" (click)="openClientContact(row.contactId)">Ver contacto</button>
+                  @if (canManageClientPromoBanner()) {
+                    <button
+                      type="button"
+                      class="activity-link"
+                      (click)="enterClientPanel(row.contactId)"
+                      [disabled]="impersonatingContactId() === row.contactId"
+                    >
+                      {{ impersonatingContactId() === row.contactId ? 'Abriendo…' : 'Entrar al panel' }}
+                    </button>
+                  }
                 </div>
               </div>
             } @empty {

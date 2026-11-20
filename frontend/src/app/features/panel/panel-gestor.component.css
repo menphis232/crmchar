@@ -1928,9 +1928,14 @@ app-crm-team {
   overflow-wrap: anywhere;
 }
 .activity-cell-status,
-.activity-cell-seen,
-.activity-cell-action {
+.activity-cell-seen {
   white-space: nowrap;
+}
+.activity-cell-action {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
 }
 .activity-status {
   display: inline-flex;
@@ -1987,9 +1992,13 @@ app-crm-team {
   cursor: pointer;
   font-family: inherit;
 }
-.activity-link:hover {
+.activity-link:hover:not(:disabled) {
   border-color: #0073ea;
   background: #f0f7ff;
+}
+.activity-link:disabled {
+  opacity: 0.5;
+  cursor: wait;
 }
 .activity-empty {
   text-align: center;

@@ -79,6 +79,16 @@
             <button type="button" class="deal-outline-btn btn-with-icon" (click)="createClientAccess(false)" [disabled]="isCreatingAccess()">
               {{ isCreatingAccess() ? 'Preparando…' : 'Usuario / clave del cliente' }}
             </button>
+            @if (canImpersonate()) {
+              <button
+                type="button"
+                class="deal-outline-btn btn-with-icon"
+                (click)="enterClientPanel()"
+                [disabled]="isImpersonating()"
+              >
+                {{ isImpersonating() ? 'Abriendo…' : 'Entrar al panel' }}
+              </button>
+            }
           </div>
         </div>
 

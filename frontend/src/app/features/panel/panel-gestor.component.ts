@@ -561,6 +561,23 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  impersonatingContactId = signal<string | null>(null);
+
+  enterClientPanel(contactId: string) {
+    if (!contactId || !this.canManageClientPromoBanner() || this.impersonatingContactId()) return;
+    this.impersonatingContactId.set(contactId);
+    this.crmService.impersonateContact(contactId).subscribe({
+      next: (res) => {
+        this.impersonatingContactId.set(null);
+        this.auth.startImpersonation(res.token, res.user);
+      },
+      error: (err) => {
+        this.impersonatingContactId.set(null);
+        this.toast.error(err?.error?.error || 'No se pudo abrir el panel del cliente');
+      },
+    });
+  }
+
   private scheduleAiInsights() {
     const run = () => this.loadAiInsights();
     if (typeof requestIdleCallback !== 'undefined') {

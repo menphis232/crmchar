@@ -388,6 +388,10 @@ export class CrmService {
     }>(`${this.base}/contacts/${contactId}/client-access`, { reset });
   }
 
+  impersonateContact(contactId: string) {
+    return this.http.post<{ token: string; user: any }>(`${this.base}/contacts/${contactId}/impersonate`, {});
+  }
+
   // Phase 3.2: Documents
   getDocuments(dealId: string) {
     return this.http.get<CrmDocument[]>(`${this.base}/deals/${dealId}/documents`);

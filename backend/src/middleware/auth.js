@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'tramites-dev-secret-change-in-prod';
 
-export function signToken(user) {
+export function signToken(user, extras = {}) {
   return jwt.sign(
     { 
       id: user.id, 
@@ -12,9 +12,10 @@ export function signToken(user) {
       parent_id: user.parent_id,
       permissions: user.permissions,
       status: user.status,
+      ...(extras && typeof extras === 'object' ? extras : {}),
     },
     JWT_SECRET,
-    { expiresIn: '7d' }
+    { expiresIn: extras?.impersonatedBy ? '2h' : '7d' }
   );
 }
 

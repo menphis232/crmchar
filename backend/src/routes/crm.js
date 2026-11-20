@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 import { v4 as uuid } from 'uuid';
 import { get, query, run } from '../db.js';
 import { callAIProvider } from '../utils/ai_helper.js';
-import { authRequired, requireRole } from '../middleware/auth.js';
+import { authRequired, requireRole, signToken } from '../middleware/auth.js';
 import { requireActiveSubscription } from '../middleware/subscription.js';
 import { processStageChangeAutomations } from '../services/automation.js';
 import {
@@ -1495,6 +1495,71 @@ router.post('/contacts/:id/client-access', async (req, res) => {
   } catch (err) {
     console.error('contact client-access:', err);
     res.status(500).json({ error: err.message || 'No se pudo crear el acceso del cliente' });
+  }
+});
+
+/** Solo Trámites Vehiculares de México puede abrir el panel de un cliente. */
+const CLIENT_IMPERSONATE_SLUGS = String(
+  process.env.CLIENT_PROMO_BANNER_GESTOR_SLUG || 'tramites-vehiculares-de-mexico',
+)
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+async function findClientUserForContact(contact) {
+  const email = String(contact?.email || '').trim().toLowerCase();
+  if (email && !isInternalClientEmail(email)) {
+    const byEmail = await get("SELECT * FROM users WHERE role = 'cliente' AND email = ?", [email]);
+    if (byEmail) return byEmail;
+  }
+  const phone = normalizeMxPhone(contact?.phone || contact?.whatsapp || '');
+  if (!phone) return null;
+  return get("SELECT * FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+}
+
+router.post('/contacts/:id/impersonate', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+
+    const gestorProfile = await get('SELECT slug, name FROM gestores WHERE user_id = ?', [req.orgId]);
+    if (!gestorProfile?.slug || !CLIENT_IMPERSONATE_SLUGS.includes(gestorProfile.slug)) {
+      return res.status(403).json({ error: 'No autorizado' });
+    }
+
+    const pipeline = pipelineForRole(req.user.role);
+    const contact = await get(
+      'SELECT id, name, email, phone, whatsapp FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
+
+    const client = await findClientUserForContact(contact);
+    if (!client) {
+      return res.status(400).json({
+        error: 'Este contacto aún no tiene acceso al panel. Crea su usuario primero.',
+      });
+    }
+    if (client.status === 'deactivated') {
+      return res.status(400).json({ error: 'La cuenta del cliente está desactivada' });
+    }
+
+    const { password_hash, ...safe } = client;
+    if (safe.permissions && typeof safe.permissions === 'string') {
+      try { safe.permissions = JSON.parse(safe.permissions); } catch { /* ignore */ }
+    }
+    safe.needsLegalAcceptance = false;
+    safe.impersonatedBy = req.user.id;
+    safe.impersonatorName = req.user.name || gestorProfile.name || '';
+
+    const token = signToken(safe, {
+      impersonatedBy: req.user.id,
+      impersonatorName: safe.impersonatorName,
+    });
+
+    res.json({ token, user: safe });
+  } catch (err) {
+    console.error('contact impersonate:', err);
+    res.status(500).json({ error: 'No se pudo abrir el panel del cliente' });
   }
 });
 

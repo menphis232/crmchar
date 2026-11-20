@@ -199,6 +199,18 @@
                     }
                   </td>
                   <td class="col-actions" (click)="$event.stopPropagation()">
+                    @if (canImpersonate()) {
+                      <button
+                        type="button"
+                        class="icon-btn"
+                        (click)="enterClientPanel(c)"
+                        [attr.aria-label]="'Entrar al panel de ' + c.name"
+                        title="Entrar al panel"
+                        [disabled]="impersonatingId() === c.id"
+                      >
+                        <svg lucideLogIn [size]="15" aria-hidden="true"></svg>
+                      </button>
+                    }
                     <button type="button" class="icon-btn" (click)="openEditForm(c)" [attr.aria-label]="'Editar ' + c.name" title="Editar">
                       <svg lucidePencil [size]="15" aria-hidden="true"></svg>
                     </button>

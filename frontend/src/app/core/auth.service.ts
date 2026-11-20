@@ -8,11 +8,14 @@ import { OneSignalService } from './onesignal.service';
 
 const TOKEN_KEY = 'tramites_token';
 const USER_KEY = 'tramites_user';
+const IMPERSONATOR_TOKEN_KEY = 'tramites_impersonator_token';
+const IMPERSONATOR_USER_KEY = 'tramites_impersonator_user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly user = signal<User | null>(this.loadUser());
   readonly isLoggedIn = signal(!!this.getToken());
+  readonly isImpersonating = signal(!!this.loadImpersonatorBackup());
 
   constructor(
     private http: HttpClient,
@@ -62,12 +65,41 @@ export class AuthService {
 
   logout() {
     const target = this.loginPathAfterLogout();
+    this.clearImpersonatorBackup();
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     this.user.set(null);
     this.isLoggedIn.set(false);
+    this.isImpersonating.set(false);
     this.oneSignal.syncUser(null);
     this.router.navigate([target]);
+  }
+
+  /** Entra al panel cliente conservando la sesión del gestor para poder volver. */
+  startImpersonation(token: string, user: User) {
+    const currentToken = this.getToken();
+    const currentUser = this.user();
+    if (currentToken && currentUser && currentUser.role !== 'cliente') {
+      localStorage.setItem(IMPERSONATOR_TOKEN_KEY, currentToken);
+      localStorage.setItem(IMPERSONATOR_USER_KEY, JSON.stringify(currentUser));
+    }
+    this.setSession(token, { ...user, needsLegalAcceptance: false });
+    this.isImpersonating.set(true);
+    this.router.navigateByUrl('/panel/cliente');
+  }
+
+  /** Restaura la sesión del gestor y vuelve a su panel. */
+  stopImpersonation() {
+    const backup = this.loadImpersonatorBackup();
+    this.clearImpersonatorBackup();
+    this.isImpersonating.set(false);
+    if (!backup) {
+      this.logout();
+      return;
+    }
+    this.setSession(backup.token, backup.user);
+    const path = this.panelPathByRole(backup.user.role) || '/panel/gestor';
+    this.router.navigateByUrl(path);
   }
 
   /** Login contextual al cerrar sesión desde un panel específico. */
@@ -162,9 +194,26 @@ export class AuthService {
   }
 
   needsLegalAcceptance(): boolean {
+    if (this.isImpersonating()) return false;
     const u = this.user();
     if (!u) return false;
     if (typeof u.needsLegalAcceptance === 'boolean') return u.needsLegalAcceptance;
     return !u.terms_accepted_at || !u.privacy_accepted_at;
+  }
+
+  private loadImpersonatorBackup(): { token: string; user: User } | null {
+    try {
+      const token = localStorage.getItem(IMPERSONATOR_TOKEN_KEY);
+      const raw = localStorage.getItem(IMPERSONATOR_USER_KEY);
+      if (!token || !raw) return null;
+      return { token, user: JSON.parse(raw) as User };
+    } catch {
+      return null;
+    }
+  }
+
+  private clearImpersonatorBackup() {
+    localStorage.removeItem(IMPERSONATOR_TOKEN_KEY);
+    localStorage.removeItem(IMPERSONATOR_USER_KEY);
   }
 }
