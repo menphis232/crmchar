@@ -943,7 +943,7 @@
   }
 
   .client-detail-photo {
-    max-height: 360px;
+    max-height: 220px;
     object-fit: contain;
     object-position: center;
     background: #f7f8fa;
@@ -963,7 +963,7 @@
   .deal-simple-photo {
     width: 100%;
     height: auto;
-    max-height: 220px;
+    max-height: 140px;
     aspect-ratio: 16 / 10;
     border-radius: 12px;
     object-fit: contain;
@@ -972,7 +972,7 @@
   }
 
   .deal-simple-photo--placeholder {
-    min-height: 140px;
+    min-height: 100px;
   }
 }
 
