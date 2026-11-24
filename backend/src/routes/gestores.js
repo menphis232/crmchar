@@ -26,8 +26,42 @@ import {
   promoBannersFromSettings,
   syncLegacyPromoFields,
 } from '../utils/client-promo-banners.js';
-import { normalizeMxPhone } from '../utils/phone.js';
+import { normalizeMxPhone, isInternalClientEmail } from '../utils/phone.js';
 const router = Router();
+
+const PHONE_ALREADY_REGISTERED = 'PHONE_ALREADY_REGISTERED';
+
+/** Si el teléfono ya pertenece a otro cliente con correo distinto, no permitir nuevo registro. */
+async function assertPhoneAvailableForRegistration(clientPhone, clientEmail) {
+  const phone = normalizeMxPhone(clientPhone);
+  if (!phone) return null;
+
+  const last10 = phone.length >= 10 ? phone.slice(-10) : phone;
+  const owner = await get(
+    `SELECT id, email, name, phone FROM users
+     WHERE role = 'cliente'
+       AND phone IS NOT NULL
+       AND (
+         phone = ?
+         OR RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(phone,''),' ',''),'-',''),'+',''),'(',''),')',''), 10) = ?
+       )
+     LIMIT 1`,
+    [phone, last10],
+  );
+  if (!owner) return null;
+
+  const emailNorm = clientEmail ? String(clientEmail).trim().toLowerCase() : '';
+  const ownerEmail = String(owner.email || '').toLowerCase();
+  if (emailNorm && ownerEmail === emailNorm) return owner;
+  if (isInternalClientEmail(ownerEmail)) return owner; // cuenta solo-teléfono: reutilizar, no crear otra
+
+  const err = new Error(
+    'Ese teléfono ya está registrado. Inicia sesión en tu panel con ese número o el correo con el que te registraste.',
+  );
+  err.code = PHONE_ALREADY_REGISTERED;
+  err.existingUserId = owner.id;
+  throw err;
+}
 
 /** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
 const CLIENT_PROMO_BANNER_SLUGS = String(
@@ -1178,6 +1212,9 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     throw new Error('Gestor inválido: falta id o user_id');
   }
 
+  // Antes de crear nada: teléfono ya registrado con otro correo → no permitir nuevo registro
+  const phoneOwner = await assertPhoneAvailableForRegistration(clientPhone, clientEmail);
+
   const service = await get(
     'SELECT price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
     [gestor.id, serviceName],
@@ -1220,15 +1257,24 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
   let clientUserId = null;
   let pendingTempPassword = null;
   const normalizedPhone = normalizeMxPhone(clientPhone) || null;
-  if (clientEmail) {
-    const emailNorm = String(clientEmail).trim().toLowerCase();
+  const emailNorm = clientEmail ? String(clientEmail).trim().toLowerCase() : '';
+  if (phoneOwner) {
+    existingAccount = true;
+    clientUserId = phoneOwner.id;
+  } else if (emailNorm) {
     // Buscar solo por email: mismo teléfono con otro correo = otra cuenta de panel.
     const existingUser = await get('SELECT id, phone FROM users WHERE email = ?', [emailNorm]);
     if (existingUser) {
       existingAccount = true;
       clientUserId = existingUser.id;
       if (normalizedPhone && !existingUser.phone) {
-        await run('UPDATE users SET phone = ? WHERE id = ?', [normalizedPhone, existingUser.id]);
+        const taken = await get(
+          "SELECT id FROM users WHERE role = 'cliente' AND phone = ? AND id != ?",
+          [normalizedPhone, existingUser.id],
+        );
+        if (!taken) {
+          await run('UPDATE users SET phone = ? WHERE id = ?', [normalizedPhone, existingUser.id]);
+        }
       }
     } else {
       pendingTempPassword = Math.random().toString(36).slice(-8);
@@ -1241,28 +1287,30 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
       accountCreated = true;
       clientUserId = userId;
     }
+  }
 
-    // Asegura que el contacto del deal tenga el email/tel con el que el cliente entra al panel
-    if (dealId) {
-      const dealContact = await get(
-        'SELECT c.id, c.email, c.phone FROM crm_deals d JOIN contacts c ON c.id = d.contact_id WHERE d.id = ?',
-        [dealId],
-      );
-      if (dealContact) {
-        const sets = [];
-        const params = [];
-        if (emailNorm && String(dealContact.email || '').toLowerCase() !== emailNorm) {
-          sets.push('email = ?');
-          params.push(emailNorm);
-        }
-        if (normalizedPhone && !dealContact.phone) {
-          sets.push('phone = ?');
-          params.push(normalizedPhone);
-        }
-        if (sets.length) {
-          params.push(dealContact.id);
-          await run(`UPDATE contacts SET ${sets.join(', ')} WHERE id = ?`, params);
-        }
+  // Contacto del deal = email/tel con el que el cliente entra al panel
+  const contactEmail = emailNorm
+    || (phoneOwner && !isInternalClientEmail(phoneOwner.email) ? String(phoneOwner.email).toLowerCase() : null);
+  if (dealId && (contactEmail || normalizedPhone)) {
+    const dealContact = await get(
+      'SELECT c.id, c.email, c.phone FROM crm_deals d JOIN contacts c ON c.id = d.contact_id WHERE d.id = ?',
+      [dealId],
+    );
+    if (dealContact) {
+      const sets = [];
+      const params = [];
+      if (contactEmail && String(dealContact.email || '').toLowerCase() !== contactEmail) {
+        sets.push('email = ?');
+        params.push(contactEmail);
+      }
+      if (normalizedPhone && !dealContact.phone) {
+        sets.push('phone = ?');
+        params.push(normalizedPhone);
+      }
+      if (sets.length) {
+        params.push(dealContact.id);
+        await run(`UPDATE contacts SET ${sets.join(', ')} WHERE id = ?`, params);
       }
     }
   }
@@ -1450,6 +1498,13 @@ router.post('/:id/solicitudes', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    if (err.code === PHONE_ALREADY_REGISTERED) {
+      return res.status(409).json({
+        error: err.message,
+        code: PHONE_ALREADY_REGISTERED,
+        loginUrl: `${getFrontendBase()}/login/cliente`,
+      });
+    }
     res.status(500).json({ error: 'Error al crear solicitud' });
   }
 });
@@ -1620,6 +1675,7 @@ CLIENTE YA REGISTRADO EN LA PLATAFORMA (sesión iniciada):
 1. Si el cliente quiere iniciar un trámite o contratar un servicio, DEBES pedirle que te proporcione sus datos para registrar su solicitud.
 2. Los datos que necesitas obligatoriamente son: Su Nombre completo, su Correo electrónico, su Teléfono o WhatsApp, su Ubicación (Ciudad/Estado), y el Servicio que desea contratar.
 3. Pregunta estos datos de forma natural y conversacional, uno a uno o todos juntos si fluye bien en la plática.
+4. TELÉFONO YA REGISTRADO: un número de teléfono solo puede usarse en UNA cuenta. Si el cliente dice que ya tiene cuenta, o que ese teléfono ya lo usó antes, NO intentes registrar otra cuenta con ese número ni emitas create_lead con un correo distinto. Dile claramente: "Ese teléfono ya está registrado. Entra a tu panel con ese número o el correo con el que te registraste para continuar tu trámite." Invítale a iniciar sesión en /login/cliente. No inventes contraseñas.
 5. UNA VEZ QUE TENGAS TODOS ESTOS DATOS Y EL CLIENTE CONFIRME QUE DESEA CONTINUAR, debes añadir EXACTAMENTE al FINAL de tu respuesta el siguiente bloque JSON. NUNCA añadas este bloque si faltan datos.
 \`\`\`json
 {"action": "create_lead", "clientName": "...", "clientEmail": "...", "clientPhone": "...", "location": "...", "serviceName": "..."}
@@ -1636,6 +1692,7 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
     }
 
     const leadData = extractCreateLeadAction(generatedText);
+    let leadCreated = false;
     if (leadData) {
       try {
         if (knownClient) {
@@ -1651,6 +1708,7 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
           leadData.location,
           leadData.serviceName,
         );
+        leadCreated = true;
         generatedText = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
 
         const magicUrl = result.magicLoginUrl || result.panelLoginUrl || null;
@@ -1720,12 +1778,23 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
         }
       } catch (e) {
         console.error('Error creando lead desde chatbot:', e.message);
-        generatedText = (generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').trim())
-          || 'Recibí tus datos pero hubo un problema al registrar la solicitud. Por favor intenta de nuevo o contáctanos directamente.';
+        const cleaned = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
+        if (e.code === PHONE_ALREADY_REGISTERED) {
+          const loginUrl = `${getFrontendBase()}/login/cliente`;
+          generatedText = [
+            'Ese teléfono ya está registrado en una cuenta.',
+            'No puedo crear otro registro con el mismo número.',
+            `Entra a tu panel con ese teléfono o el correo con el que te registraste: ${loginUrl}`,
+            'Desde ahí puedes seguir o iniciar tu trámite.',
+          ].join('\n\n');
+        } else {
+          generatedText = cleaned
+            || 'Recibí tus datos pero hubo un problema al registrar la solicitud. Por favor intenta de nuevo o contáctanos directamente.';
+        }
       }
     }
 
-    res.json({ reply: generatedText, leadCreated: !!leadData });
+    res.json({ reply: generatedText, leadCreated });
   } catch (err) {
     console.error('Error Chatbot IA:', err.message);
     res.status(500).json({ error: 'Error del asistente virtual' });
