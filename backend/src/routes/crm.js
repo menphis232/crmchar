@@ -12,7 +12,7 @@ import { processStageChangeAutomations } from '../services/automation.js';
 import {
   contactRow, dealRow, ensureDefaultTemplates, markFirstResponse, taskRow,
   createManualVentaDeal, createManualTramiteDeal, findOrCreateContact, ensureClientUser,
-  DEAL_VEHICLE_SELECT, DEAL_VEHICLE_JOIN,
+  DEAL_VEHICLE_SELECT, DEAL_VEHICLE_JOIN, syncContactPeritoToDeals,
 } from '../crm/helpers.js';
 import {
   dealTypeForRole, initialStageForRole, LOST_REASONS, mapDealStageToSolicitudStatus,
@@ -1050,7 +1050,13 @@ router.get('/contacts/:id', async (req, res) => {
     const uid = req.orgId;
     const pipeline = pipelineForRole(req.user.role);
     const dealType = dealTypeForRole(req.user.role);
-    const contact = await get('SELECT * FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?', [req.params.id, uid, pipeline]);
+    const contact = await get(
+      `SELECT c.*, per.name AS perito_name
+       FROM contacts c
+       LEFT JOIN users per ON per.id = c.perito_id
+       WHERE c.id = ? AND c.user_id = ? AND c.pipeline = ?`,
+      [req.params.id, uid, pipeline],
+    );
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
     const access = dealAccessFilter(req.user);
@@ -1453,22 +1459,65 @@ router.get('/engomado-colors', (_req, res) => {
 
 router.patch('/contacts/:id', async (req, res) => {
   try {
-    const { name, email, phone, whatsapp, notes, residenceState } = req.body;
+    const { name, email, phone, whatsapp, notes, residenceState, peritoId } = req.body;
     const pipeline = pipelineForRole(req.user.role);
-    const result = await run(`
-      UPDATE contacts SET
-        name = COALESCE(?, name), email = COALESCE(?, email),
-        phone = COALESCE(?, phone), whatsapp = COALESCE(?, whatsapp),
-        notes = COALESCE(?, notes),
-        residence_state = COALESCE(?, residence_state),
-        updated_at = NOW()
-      WHERE id = ? AND user_id = ? AND pipeline = ?
-    `, [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState, req.params.id, req.orgId, pipeline]);
+    const contact = await get(
+      'SELECT id, perito_id FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      [req.params.id, req.orgId, pipeline],
+    );
+    if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
-    if (!result.affectedRows) return res.status(404).json({ error: 'Contacto no encontrado' });
-    const row = await get('SELECT * FROM contacts WHERE id = ?', [req.params.id]);
+    const sets = [
+      'name = COALESCE(?, name)',
+      'email = COALESCE(?, email)',
+      'phone = COALESCE(?, phone)',
+      'whatsapp = COALESCE(?, whatsapp)',
+      'notes = COALESCE(?, notes)',
+      'residence_state = COALESCE(?, residence_state)',
+      'updated_at = NOW()',
+    ];
+    const params = [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState];
+
+    let nextPeritoId = contact.perito_id || null;
+    if (peritoId !== undefined && req.user.role === 'gestor') {
+      if (req.user.parent_id) {
+        return res.status(403).json({ error: 'Solo el titular puede asignar perito al cliente' });
+      }
+      if (peritoId) {
+        const perito = await get(
+          "SELECT id FROM users WHERE id = ? AND role = 'perito' AND parent_id = ?",
+          [peritoId, req.orgId],
+        );
+        if (!perito) return res.status(400).json({ error: 'Perito no válido' });
+        sets.push('perito_id = ?', 'perito_assigned_at = NOW()');
+        params.push(peritoId);
+        nextPeritoId = peritoId;
+      } else {
+        sets.push('perito_id = NULL', 'perito_assigned_at = NULL');
+        nextPeritoId = null;
+      }
+    }
+
+    params.push(req.params.id, req.orgId, pipeline);
+    await run(
+      `UPDATE contacts SET ${sets.join(', ')} WHERE id = ? AND user_id = ? AND pipeline = ?`,
+      params,
+    );
+
+    if (peritoId !== undefined && req.user.role === 'gestor' && !req.user.parent_id) {
+      await syncContactPeritoToDeals(req.params.id, req.orgId, nextPeritoId);
+    }
+
+    const row = await get(
+      `SELECT c.*, per.name AS perito_name
+       FROM contacts c
+       LEFT JOIN users per ON per.id = c.perito_id
+       WHERE c.id = ?`,
+      [req.params.id],
+    );
     res.json(contactRow(row));
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Error al actualizar contacto' });
   }
 });
@@ -2903,6 +2952,11 @@ router.delete('/peritos/:id', gestorOwnerOnly, async (req, res) => {
   try {
     await run(
       `UPDATE crm_deals SET perito_id = NULL, perito_stage = NULL, perito_assigned_at = NULL, perito_completed_at = NULL
+       WHERE perito_id = ? AND user_id = ?`,
+      [req.params.id, req.user.id],
+    );
+    await run(
+      `UPDATE contacts SET perito_id = NULL, perito_assigned_at = NULL
        WHERE perito_id = ? AND user_id = ?`,
       [req.params.id, req.user.id],
     );

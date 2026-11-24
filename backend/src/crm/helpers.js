@@ -209,6 +209,8 @@ export async function createDealFromSolicitud(solicitud, gestorUserId, extra = {
     [uuid(), dealId, gestorUserId, `Solicitud recibida: ${title}`],
   );
 
+  await applyContactPeritoToDeal(dealId, contact.id, gestorUserId);
+
   return dealId;
 }
 
@@ -539,6 +541,8 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     [uuid(), dealId, gestorUserId, 'Trámite registrado manualmente'],
   );
 
+  await applyContactPeritoToDeal(dealId, contact.id, gestorUserId);
+
   if (message?.trim()) {
     await run(
       `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
@@ -561,10 +565,58 @@ export function contactRow(row) {
     source: row.source,
     notes: row.notes,
     residenceState: row.residence_state,
+    peritoId: row.perito_id || null,
+    peritoName: row.perito_name || null,
+    peritoAssignedAt: row.perito_assigned_at || null,
     vehicleCount: row.vehicleCount != null ? Number(row.vehicleCount) : undefined,
     plates: row.plates || undefined,
     createdAt: row.created_at,
   };
+}
+
+/** Aplica el perito del contacto a un trámite concreto. */
+export async function applyContactPeritoToDeal(dealId, contactId, gestorUserId) {
+  if (!dealId || !contactId || !gestorUserId) return;
+  const contact = await get(
+    'SELECT perito_id FROM contacts WHERE id = ? AND user_id = ?',
+    [contactId, gestorUserId],
+  );
+  if (!contact?.perito_id) return;
+  await run(
+    `UPDATE crm_deals
+     SET perito_id = ?, perito_assigned_at = NOW(),
+         perito_stage = COALESCE(perito_stage, 'tramite'),
+         perito_poliza_status = COALESCE(perito_poliza_status, 'pendiente'),
+         updated_at = NOW()
+     WHERE id = ? AND user_id = ? AND deal_type = 'tramite'`,
+    [contact.perito_id, dealId, gestorUserId],
+  );
+}
+
+/** Sincroniza el perito del cliente a todos sus trámites. */
+export async function syncContactPeritoToDeals(contactId, gestorUserId, peritoId) {
+  if (!contactId || !gestorUserId) return;
+  if (peritoId) {
+    await run(
+      `UPDATE crm_deals
+       SET perito_id = ?, perito_assigned_at = NOW(),
+           perito_stage = COALESCE(perito_stage, 'tramite'),
+           perito_poliza_status = COALESCE(perito_poliza_status, 'pendiente'),
+           perito_completed_at = NULL,
+           updated_at = NOW()
+       WHERE contact_id = ? AND user_id = ? AND deal_type = 'tramite'`,
+      [peritoId, contactId, gestorUserId],
+    );
+  } else {
+    await run(
+      `UPDATE crm_deals
+       SET perito_id = NULL, perito_assigned_at = NULL, perito_stage = NULL,
+           perito_poliza_status = 'pendiente', perito_completed_at = NULL,
+           updated_at = NOW()
+       WHERE contact_id = ? AND user_id = ? AND deal_type = 'tramite'`,
+      [contactId, gestorUserId],
+    );
+  }
 }
 
 /** Fragmento SELECT + JOIN para placa/MMY del vehículo del trámite (d.* ya trae vehicle_id). */

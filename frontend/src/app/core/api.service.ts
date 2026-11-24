@@ -223,7 +223,7 @@ export class CrmService {
     return this.http.post<CrmContact>(`${this.base}/contacts`, data);
   }
   getContact(id: string) { return this.http.get<CrmContact360>(`${this.base}/contacts/${id}`); }
-  updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string }) {
+  updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string; peritoId?: string | null }) {
     return this.http.patch<CrmContact>(`${this.base}/contacts/${id}`, data);
   }
   deleteContact(id: string, withDeals = false) {

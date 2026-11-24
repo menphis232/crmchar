@@ -70,6 +70,29 @@
           </div>
         </div>
 
+        @if (canAssignPerito()) {
+          <div class="deal-section">
+            <h4>Perito asignado</h4>
+            <p class="card-desc">El perito queda ligado a este cliente y a sus trámites.</p>
+            <div class="contact-form-grid">
+              <div class="full">
+                <label>Perito</label>
+                <select [ngModel]="peritoIdModel" (ngModelChange)="assignPerito($event)" [disabled]="isAssigningPerito()">
+                  <option value="">— Sin perito —</option>
+                  @for (p of peritoMembers(); track p.id) {
+                    <option [value]="p.id">{{ p.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </div>
+        } @else if (c360.contact.peritoName) {
+          <div class="deal-section">
+            <h4>Perito asignado</h4>
+            <p class="section-sub">{{ c360.contact.peritoName }}</p>
+          </div>
+        }
+
         <div class="deal-section">
           <h4>Usuario y clave del portal</h4>
           <p class="card-desc">

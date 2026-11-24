@@ -8,7 +8,7 @@ import { LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail,
 import { CrmService, UploadService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
-import { CrmContact360, CrmContactVehicle, CrmContactVehicleDocument } from '../../models';
+import { CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, PeritoAssignOption } from '../../models';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
 import { environment } from '../../../environments/environment';
@@ -499,6 +499,13 @@ export class CrmContactPanelComponent {
   isSaving = signal(false);
   isCreatingAccess = signal(false);
   isImpersonating = signal(false);
+  isAssigningPerito = signal(false);
+  peritoMembers = signal<PeritoAssignOption[]>([]);
+  canAssignPerito = computed(() => {
+    const u = this.auth.user();
+    return u?.role === 'gestor' && !u?.parent_id;
+  });
+  peritoIdModel = '';
   clientAccessNotice = signal<{
     created: boolean;
     login: string;
@@ -529,6 +536,14 @@ export class CrmContactPanelComponent {
   editWhatsapp = '';
   editResidenceState = '';
   editNotes = '';
+
+  private ensurePeritosLoaded() {
+    if (!this.canAssignPerito() || this.peritoMembers().length) return;
+    this.crmService.getPeritosForAssign().subscribe({
+      next: (rows) => this.peritoMembers.set(rows || []),
+      error: () => this.peritoMembers.set([]),
+    });
+  }
 
   newPlate = '';
   newMake = '';
@@ -610,6 +625,35 @@ export class CrmContactPanelComponent {
     this.editWhatsapp = d.contact.whatsapp || '';
     this.editResidenceState = d.contact.residenceState || '';
     this.editNotes = d.contact.notes || '';
+    this.peritoIdModel = d.contact.peritoId || '';
+    this.ensurePeritosLoaded();
+  }
+
+  assignPerito(peritoId: string) {
+    const id = this.contactId();
+    const d = this.data();
+    if (!id || !d || !this.canAssignPerito()) return;
+    const pid = peritoId || null;
+    if ((d.contact.peritoId || '') === (pid || '')) return;
+    this.isAssigningPerito.set(true);
+    this.crmService.updateContact(id, { peritoId: pid }).subscribe({
+      next: (contact) => {
+        this.isAssigningPerito.set(false);
+        this.peritoIdModel = contact.peritoId || '';
+        this.data.set({
+          ...d,
+          contact: { ...d.contact, ...contact },
+        });
+        this.toast.success(pid ? 'Perito asignado al cliente' : 'Perito quitado del cliente');
+        this.load(id, { quiet: true });
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.isAssigningPerito.set(false);
+        this.peritoIdModel = d.contact.peritoId || '';
+        this.toast.error(e.error?.error || 'Error al asignar perito');
+      },
+    });
   }
 
   saveContact() {

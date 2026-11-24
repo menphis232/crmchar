@@ -445,6 +445,9 @@ export interface CrmContact {
   source?: string;
   notes?: string;
   residenceState?: string;
+  peritoId?: string | null;
+  peritoName?: string | null;
+  peritoAssignedAt?: string | null;
   vehicleCount?: number;
   plates?: string;
   engomados?: string[];
