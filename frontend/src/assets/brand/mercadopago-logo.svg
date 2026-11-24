@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 48" role="img" aria-label="Mercado Pago">
+  <rect width="260" height="48" rx="8" fill="none"/>
+  <circle cx="22" cy="24" r="16" fill="#009EE3"/>
+  <path fill="#fff" d="M14.8 24.8c0-4.2 3.3-7.6 7.4-7.6 2.2 0 4.1.9 5.4 2.4l-2.3 2.2a4.2 4.2 0 0 0-3.1-1.3c-2.4 0-4.3 2-4.3 4.3s1.9 4.3 4.3 4.3c1.2 0 2.3-.5 3.1-1.3l2.3 2.2a7.4 7.4 0 0 1-5.4 2.4c-4.1 0-7.4-3.4-7.4-7.6z"/>
+  <text x="48" y="31" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#009EE3">Mercado Pago</text>
+</svg>

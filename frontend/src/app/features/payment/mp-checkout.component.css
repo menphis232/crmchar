@@ -34,9 +34,18 @@
   margin-bottom: 16px;
 }
 
+.mp-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
 .mp-logo {
+  display: block;
   height: 28px;
-  filter: brightness(0) invert(1);
+  width: auto;
 }
 
 .mp-badge {

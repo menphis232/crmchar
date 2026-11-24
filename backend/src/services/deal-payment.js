@@ -101,6 +101,7 @@ export async function finalizeDealPayment(dealId, {
     ? null
     : resolvePaymentDate(paidAt);
 
+  // Primero marcar pagado (no depender del PDF/correo)
   if (shouldKeepStage) {
     await run(
       `UPDATE crm_deals
@@ -118,6 +119,17 @@ export async function finalizeDealPayment(dealId, {
       [paidAmount, mpOrderId, dealId],
     );
   }
+
+  const refreshedStage = shouldKeepStage
+    ? deal.stage
+    : 'completado';
+
+  emitDealPaymentPaid({
+    dealId,
+    userId: deal.user_id,
+    paymentStatus: 'paid',
+    stage: refreshedStage,
+  });
 
   const methodLabel = resolvePaymentMethodLabel(paymentMethod, orgUserRow?.fin_payment_methods);
   const finExists = await get(
@@ -146,75 +158,73 @@ export async function finalizeDealPayment(dealId, {
     );
   }
 
-  const orgUser = await get(
-    'SELECT id, name, email, logo_url, pdf_settings, role FROM users WHERE id = ?',
-    [deal.user_id],
-  );
-  if (orgUser?.pdf_settings && typeof orgUser.pdf_settings === 'string') {
-    try { orgUser.pdf_settings = JSON.parse(orgUser.pdf_settings); } catch { orgUser.pdf_settings = {}; }
-  }
+  try {
+    const orgUser = await get(
+      'SELECT id, name, email, logo_url, pdf_settings, role FROM users WHERE id = ?',
+      [deal.user_id],
+    );
+    if (orgUser?.pdf_settings && typeof orgUser.pdf_settings === 'string') {
+      try { orgUser.pdf_settings = JSON.parse(orgUser.pdf_settings); } catch { orgUser.pdf_settings = {}; }
+    }
 
-  const invoiceNumber = await nextInvoiceNumber(deal.user_id);
-  const { filePath, pdfUrl } = await generateInvoicePdfFile({
-    deal,
-    orgUser,
-    amount: paidAmount,
-    invoiceNumber,
-    paymentMethod,
-    mpOrderId,
-    paidAt: paymentDate,
-  });
-
-  const invoiceId = uuid();
-  await run(
-    `INSERT INTO deal_invoices (id, deal_id, user_id, contact_email, invoice_number, amount, pdf_url, payment_method, mp_order_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      invoiceId,
-      dealId,
-      deal.user_id,
-      deal.contact_email || '',
+    const invoiceNumber = await nextInvoiceNumber(deal.user_id);
+    const { filePath, pdfUrl } = await generateInvoicePdfFile({
+      deal,
+      orgUser,
+      amount: paidAmount,
       invoiceNumber,
-      paidAmount,
-      pdfUrl,
       paymentMethod,
       mpOrderId,
-    ],
-  );
+      paidAt: paymentDate,
+    });
 
-  if (deal.contact_email) {
-    const panelUrl = (process.env.FRONTEND_URL || 'https://central.tramitesvehicularesdemexico.com').replace(/\/$/, '');
-    const subject = `Comprobante de pago — ${deal.title || 'Trámite vehicular'}`;
-    const text = `Tu pago de ${paidAmount} MXN fue recibido. Folio: ${invoiceNumber}. Consulta tu factura en ${panelUrl}/panel/cliente`;
-    const html = `
-      <p>Tu pago de <strong>${paidAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong> fue recibido correctamente.</p>
-      <p><strong>Trámite:</strong> ${deal.title || 'Trámite vehicular'}<br>
-      <strong>Folio:</strong> ${invoiceNumber}</p>
-      <p>Puedes ver y descargar tu comprobante en tu panel de cliente:</p>
-      <p><a href="${panelUrl}/panel/cliente" style="color:#009ee3;font-weight:600;">Ir a mi panel</a></p>
-    `;
-    try {
-      await sendEmail(
-        deal.contact_email,
-        subject,
-        text,
-        html,
+    const invoiceId = uuid();
+    await run(
+      `INSERT INTO deal_invoices (id, deal_id, user_id, contact_email, invoice_number, amount, pdf_url, payment_method, mp_order_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        invoiceId,
+        dealId,
         deal.user_id,
-        [{ filename: `${invoiceNumber}.pdf`, path: filePath, contentType: 'application/pdf' }],
-      );
-    } catch (mailErr) {
-      console.error('Invoice email error:', mailErr);
+        deal.contact_email || '',
+        invoiceNumber,
+        paidAmount,
+        pdfUrl,
+        paymentMethod,
+        mpOrderId,
+      ],
+    );
+
+    if (deal.contact_email) {
+      const panelUrl = (process.env.FRONTEND_URL || 'https://central.tramitesvehicularesdemexico.com').replace(/\/$/, '');
+      const subject = `Comprobante de pago — ${deal.title || 'Trámite vehicular'}`;
+      const text = `Tu pago de ${paidAmount} MXN fue recibido. Folio: ${invoiceNumber}. Consulta tu factura en ${panelUrl}/panel/cliente`;
+      const html = `
+        <p>Tu pago de <strong>${paidAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })} MXN</strong> fue recibido correctamente.</p>
+        <p><strong>Trámite:</strong> ${deal.title || 'Trámite vehicular'}<br>
+        <strong>Folio:</strong> ${invoiceNumber}</p>
+        <p>Puedes ver y descargar tu comprobante en tu panel de cliente:</p>
+        <p><a href="${panelUrl}/panel/cliente" style="color:#009ee3;font-weight:600;">Ir a mi panel</a></p>
+      `;
+      try {
+        await sendEmail(
+          deal.contact_email,
+          subject,
+          text,
+          html,
+          deal.user_id,
+          [{ filename: `${invoiceNumber}.pdf`, path: filePath, contentType: 'application/pdf' }],
+        );
+      } catch (mailErr) {
+        console.error('Invoice email error:', mailErr);
+      }
     }
+
+    return get('SELECT * FROM deal_invoices WHERE id = ?', [invoiceId]);
+  } catch (invoiceErr) {
+    console.error('Invoice generation after payment failed (deal already marked paid):', invoiceErr);
+    return get('SELECT * FROM deal_invoices WHERE deal_id = ? LIMIT 1', [dealId]);
   }
-
-  emitDealPaymentPaid({
-    dealId,
-    userId: deal.user_id,
-    paymentStatus: 'paid',
-    stage: shouldKeepStage ? deal.stage : 'completado',
-  });
-
-  return get('SELECT * FROM deal_invoices WHERE id = ?', [invoiceId]);
 }
 
 /** Resuelve dealId desde mp_order_id o external_reference deal_{uuid} */
@@ -232,12 +242,17 @@ export async function resolveDealIdFromMpOrder(orderData) {
 }
 
 export async function isOrderPaid(orderData) {
-  const status = orderData?.status;
-  const statusDetail = orderData?.status_detail;
+  const status = String(orderData?.status || '').toLowerCase();
+  const statusDetail = String(orderData?.status_detail || '').toLowerCase();
   const payment = orderData?.transactions?.payments?.[0];
+  const paymentStatus = String(payment?.status || '').toLowerCase();
+  const paymentDetail = String(payment?.status_detail || '').toLowerCase();
   return status === 'processed'
     || status === 'approved'
+    || status === 'paid'
     || statusDetail === 'accredited'
-    || payment?.status_detail === 'accredited'
-    || payment?.status === 'processed';
+    || paymentDetail === 'accredited'
+    || paymentStatus === 'processed'
+    || paymentStatus === 'approved'
+    || paymentStatus === 'paid';
 }

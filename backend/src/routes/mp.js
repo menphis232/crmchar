@@ -91,10 +91,12 @@ async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal'
       if (kind === 'pending') {
         await fulfillPendingCheckout(row, { mpOrderId: orderId || null });
       } else {
+        // Cobro de cliente: marcar pagado sin cerrar el trámite
         await finalizeDealPayment(row.id, {
           amount: row.estimated_value,
           mpOrderId: orderId || null,
           paymentMethod: 'mercadopago',
+          keepStage: true,
         });
       }
     } catch (finalizeErr) {
@@ -384,6 +386,7 @@ router.post('/webhook', async (req, res) => {
                 amount: deal.estimated_value,
                 mpOrderId: orderId,
                 paymentMethod: 'mercadopago',
+                keepStage: true,
               });
             }
           } catch (fetchErr) {

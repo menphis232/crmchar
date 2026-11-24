@@ -173,6 +173,7 @@ export async function fulfillPendingCheckout(pending, { mpOrderId = null } = {})
     amount: Number(pending.amount),
     mpOrderId: mpOrderId || pending.mp_order_id || null,
     paymentMethod: 'mercadopago',
+    keepStage: true,
   });
 
   await run(
