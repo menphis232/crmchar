@@ -1283,6 +1283,9 @@ export class CrmDealPanelComponent implements OnDestroy {
   isOwner = computed(() => !this.auth.user()?.parent_id);
   assignedToModel = '';
   peritoIdModel = '';
+  peritoServiceCostModel: number | null = null;
+  savingPeritoCost = false;
+  markingPeritoServicePaid = false;
   noteText = '';
   replyText = '';
   estimatedValue = 0;
@@ -1470,6 +1473,7 @@ export class CrmDealPanelComponent implements OnDestroy {
         this.lostReason = d.lostReason || '';
         this.assignedToModel = d.assignedTo || '';
         this.peritoIdModel = d.peritoId || '';
+        this.peritoServiceCostModel = d.peritoServiceCost ?? null;
         if (this.quoteOpenDealId !== id) {
           this.quoteOpenDealId = id;
           this.dealView.set('resumen');
@@ -2153,6 +2157,50 @@ export class CrmDealPanelComponent implements OnDestroy {
       error: (e) => {
         this.peritoIdModel = d.peritoId || '';
         this.toast.error(e.error?.error || 'Error al asignar perito');
+      },
+    });
+  }
+
+  savePeritoServiceCost() {
+    const d = this.deal();
+    if (!d || !this.isOwner()) return;
+    const raw = this.peritoServiceCostModel;
+    const cost = raw === null || raw === undefined || (raw as any) === ''
+      ? null
+      : Number(raw);
+    if (cost != null && (!Number.isFinite(cost) || cost < 0)) {
+      this.toast.error('Costo inválido');
+      return;
+    }
+    this.savingPeritoCost = true;
+    this.crmService.updateDeal(d.id, { peritoServiceCost: cost }).subscribe({
+      next: () => {
+        this.savingPeritoCost = false;
+        this.loadDeal(d.id);
+        this.toast.success('Costo de servicio guardado');
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.savingPeritoCost = false;
+        this.toast.error(e.error?.error || 'Error al guardar el costo');
+      },
+    });
+  }
+
+  markPeritoServicePaid() {
+    const d = this.deal();
+    if (!d || !this.isOwner() || d.peritoServicePaid === 'pagado') return;
+    this.markingPeritoServicePaid = true;
+    this.crmService.updateDeal(d.id, { peritoServicePaid: 'pagado' }).subscribe({
+      next: () => {
+        this.markingPeritoServicePaid = false;
+        this.loadDeal(d.id);
+        this.toast.success('Costo marcado como pagado');
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.markingPeritoServicePaid = false;
+        this.toast.error(e.error?.error || 'Error al marcar como pagado');
       },
     });
   }

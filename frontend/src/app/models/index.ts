@@ -565,6 +565,8 @@ export interface CrmDeal {
   peritoName?: string | null;
   peritoStage?: string | null;
   peritoPolizaStatus?: 'pendiente' | 'pagado';
+  peritoServiceCost?: number | null;
+  peritoServicePaid?: 'pendiente' | 'pagado';
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
 }
@@ -606,6 +608,8 @@ export interface PeritoDeal {
   estimatedValue: number;
   internalNotes?: string | null;
   peritoPolizaStatus: 'pendiente' | 'pagado';
+  peritoServiceCost?: number | null;
+  peritoServicePaid?: 'pendiente' | 'pagado';
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
   contactName?: string | null;

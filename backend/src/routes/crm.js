@@ -797,7 +797,10 @@ router.patch('/deals/:id', async (req, res) => {
   try {
     const uid = req.orgId;
     const role = req.user.role;
-    const { stage, internalNotes, estimatedValue, lostReason, assignedTo, peritoId, vehicleId } = req.body;
+    const {
+      stage, internalNotes, estimatedValue, lostReason, assignedTo, peritoId, vehicleId,
+      peritoServiceCost, peritoServicePaid,
+    } = req.body;
 
     const deal = await loadDealForRequest(req, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Deal no encontrado' });
@@ -887,6 +890,25 @@ router.patch('/deals/:id', async (req, res) => {
           'perito_poliza_status = ?', 'perito_completed_at = NULL');
         params.push('pendiente');
       }
+    }
+
+    if (peritoServiceCost !== undefined && role === 'gestor') {
+      const cost = peritoServiceCost === null || peritoServiceCost === ''
+        ? null
+        : Number(peritoServiceCost);
+      if (cost != null && (!Number.isFinite(cost) || cost < 0)) {
+        return res.status(400).json({ error: 'Costo de servicio inválido' });
+      }
+      sets.push('perito_service_cost = ?');
+      params.push(cost);
+    }
+
+    if (peritoServicePaid !== undefined && role === 'gestor') {
+      if (!['pendiente', 'pagado'].includes(peritoServicePaid)) {
+        return res.status(400).json({ error: 'Estatus de pago inválido' });
+      }
+      sets.push('perito_service_paid = ?');
+      params.push(peritoServicePaid);
     }
 
     if (vehicleId !== undefined && role === 'gestor') {

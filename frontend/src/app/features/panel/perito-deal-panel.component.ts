@@ -13,7 +13,6 @@ import { PERITO_STAGES, PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 const UPLOAD_LABELS: Record<string, string> = {
   poliza_pago: 'Póliza de pago',
   tramite_listo: 'Trámite listo',
-  guia_paqueteria: 'Guía de paquetería',
 };
 
 @Component({
@@ -42,7 +41,11 @@ export class PeritoDealPanelComponent implements OnInit {
   newStaffMessage = '';
   staffMessages: any[] = [];
   uploading = signal<string | null>(null);
+  serviceCostModel: number | null = null;
+  savingCost = signal(false);
+  markingPaid = signal(false);
   stages = PERITO_STAGES.map((id) => ({ id, label: PERITO_STAGE_LABELS[id] }));
+  readonly uploadTypes = ['poliza_pago', 'tramite_listo'] as const;
 
   get myUserId() {
     return this.auth.user()?.id;
@@ -57,6 +60,7 @@ export class PeritoDealPanelComponent implements OnInit {
     this.peritoService.getDeal(this.dealId()).subscribe({
       next: (d) => {
         this.detail.set(d);
+        this.serviceCostModel = d.deal.peritoServiceCost ?? null;
         this.loading.set(false);
         this.loadStaffMessages();
       },
@@ -125,6 +129,50 @@ export class PeritoDealPanelComponent implements OnInit {
         this.updated.emit();
       },
       error: (e) => this.toast.error(e.error?.error || 'Error al actualizar póliza'),
+    });
+  }
+
+  saveServiceCost() {
+    const d = this.detail()?.deal;
+    if (!d) return;
+    const raw = this.serviceCostModel;
+    const cost = raw === null || raw === undefined || (raw as any) === ''
+      ? null
+      : Number(raw);
+    if (cost != null && (!Number.isFinite(cost) || cost < 0)) {
+      this.toast.error('Costo inválido');
+      return;
+    }
+    this.savingCost.set(true);
+    this.peritoService.updateServiceCost(d.id, cost).subscribe({
+      next: () => {
+        this.savingCost.set(false);
+        this.toast.success('Costo guardado');
+        this.load();
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.savingCost.set(false);
+        this.toast.error(e.error?.error || 'Error al guardar el costo');
+      },
+    });
+  }
+
+  markServicePaid() {
+    const d = this.detail()?.deal;
+    if (!d || d.peritoServicePaid === 'pagado') return;
+    this.markingPaid.set(true);
+    this.peritoService.markServicePaid(d.id, 'pagado').subscribe({
+      next: () => {
+        this.markingPaid.set(false);
+        this.toast.success('Marcado como pagado');
+        this.load();
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.markingPaid.set(false);
+        this.toast.error(e.error?.error || 'Error al marcar como pagado');
+      },
     });
   }
 

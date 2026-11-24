@@ -40,6 +40,38 @@
           </select>
         </section>
 
+        <section class="deal-section">
+          <h4>Costo del servicio</h4>
+          <div class="perito-cost-row">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              inputmode="decimal"
+              [(ngModel)]="serviceCostModel"
+              placeholder="0.00"
+            >
+            <button type="button" class="btn-primary" (click)="saveServiceCost()" [disabled]="savingCost()">
+              {{ savingCost() ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+          <div class="perito-cost-paid-row">
+            <span class="perito-paid-status" [class.is-paid]="data.deal.peritoServicePaid === 'pagado'">
+              {{ data.deal.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente de pago' }}
+            </span>
+            @if (data.deal.peritoServicePaid !== 'pagado') {
+              <button
+                type="button"
+                class="btn-primary"
+                (click)="markServicePaid()"
+                [disabled]="markingPaid()"
+              >
+                {{ markingPaid() ? 'Marcando…' : 'Marcar como pagado' }}
+              </button>
+            }
+          </div>
+        </section>
+
         @if (data.deal.internalNotes) {
           <section class="deal-section">
             <h4>Notas del gestor</h4>
@@ -85,7 +117,7 @@
 
         <section class="deal-section">
           <h4>Mis archivos</h4>
-          @for (type of ['poliza_pago', 'tramite_listo', 'guia_paqueteria']; track type) {
+          @for (type of uploadTypes; track type) {
             <div class="perito-upload-block">
               <div class="perito-upload-head">
                 <span>{{ uploadLabel(type) }}</span>

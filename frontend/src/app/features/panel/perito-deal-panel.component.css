@@ -269,6 +269,52 @@
   text-decoration: none;
 }
 
+.perito-cost-row,
+.perito-cost-paid-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.perito-cost-row input {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 44px;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #c5c7d0;
+  color: #323338;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 13px;
+}
+
+.perito-cost-row input:focus {
+  outline: none;
+  border-color: #0073ea;
+  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.12);
+}
+
+.perito-cost-paid-row {
+  margin-top: 12px;
+}
+
+.perito-paid-status {
+  font-size: 13px;
+  font-weight: 600;
+  color: #c77700;
+  background: #fff4e5;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.perito-paid-status.is-paid {
+  color: #00854d;
+  background: #e7f8ef;
+}
+
 .perito-note-form {
   display: flex;
   flex-direction: column;

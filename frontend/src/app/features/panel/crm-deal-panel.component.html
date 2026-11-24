@@ -236,6 +236,34 @@
                   Etapa perito: <strong>{{ peritoStageLabel(d.peritoStage) }}</strong>
                   · Póliza: <strong>{{ d.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}</strong>
                 </p>
+                <div class="deal-value-row" style="margin-top:12px;">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    [(ngModel)]="peritoServiceCostModel"
+                    placeholder="Costo del servicio"
+                  >
+                  <button type="button" class="deal-outline-btn" (click)="savePeritoServiceCost()" [disabled]="savingPeritoCost">
+                    {{ savingPeritoCost ? 'Guardando…' : 'Guardar costo' }}
+                  </button>
+                </div>
+                <div class="deal-value-row" style="margin-top:8px; align-items:center;">
+                  <span class="card-desc" style="margin:0;">
+                    Pago servicio:
+                    <strong>{{ d.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}</strong>
+                  </span>
+                  @if (d.peritoServicePaid !== 'pagado') {
+                    <button
+                      type="button"
+                      class="btn-copy small"
+                      (click)="markPeritoServicePaid()"
+                      [disabled]="markingPeritoServicePaid"
+                    >
+                      {{ markingPeritoServicePaid ? 'Marcando…' : 'Marcar como pagado' }}
+                    </button>
+                  }
+                </div>
               }
             </div>
           } @else if (d.peritoName) {
@@ -246,6 +274,10 @@
                 <p class="card-desc" style="margin-top:4px;">
                   Etapa: <strong>{{ peritoStageLabel(d.peritoStage) }}</strong>
                   · Póliza: <strong>{{ d.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}</strong>
+                  · Costo:
+                  <strong>{{ d.peritoServiceCost != null ? ('$' + d.peritoServiceCost) : '—' }}</strong>
+                  · Pago:
+                  <strong>{{ d.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}</strong>
                 </p>
               }
             </div>

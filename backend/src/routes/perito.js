@@ -46,6 +46,8 @@ function peritoDealRow(row) {
     estimatedValue: null,
     internalNotes: row.internal_notes || null,
     peritoPolizaStatus: row.perito_poliza_status || 'pendiente',
+    peritoServiceCost: row.perito_service_cost != null ? Number(row.perito_service_cost) : null,
+    peritoServicePaid: row.perito_service_paid === 'pagado' ? 'pagado' : 'pendiente',
     peritoAssignedAt: row.perito_assigned_at,
     peritoCompletedAt: row.perito_completed_at,
     createdAt: row.created_at,
@@ -224,6 +226,58 @@ peritoRouter.patch('/deals/:id/poliza-status', async (req, res) => {
   }
 });
 
+peritoRouter.patch('/deals/:id/service-cost', async (req, res) => {
+  try {
+    const raw = req.body?.cost;
+    const cost = raw === null || raw === '' || raw === undefined ? null : Number(raw);
+    if (cost != null && (!Number.isFinite(cost) || cost < 0)) {
+      return res.status(400).json({ error: 'Costo inválido' });
+    }
+    const deal = await loadPeritoDeal(req.user.id, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+
+    await run(
+      'UPDATE crm_deals SET perito_service_cost = ?, updated_at = NOW() WHERE id = ? AND perito_id = ?',
+      [cost, req.params.id, req.user.id],
+    );
+
+    notifyGestorPeritoUpdate(req.user.parent_id, {
+      dealId: req.params.id,
+      title: 'Costo de servicio',
+      body: `${req.user.name || 'El perito'} actualizó el costo de servicio de "${deal.title}"`,
+    });
+
+    res.json({ ok: true, peritoServiceCost: cost });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al guardar el costo' });
+  }
+});
+
+peritoRouter.patch('/deals/:id/service-paid', async (req, res) => {
+  try {
+    const status = req.body?.status === 'pendiente' ? 'pendiente' : 'pagado';
+    const deal = await loadPeritoDeal(req.user.id, req.params.id);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+
+    await run(
+      'UPDATE crm_deals SET perito_service_paid = ?, updated_at = NOW() WHERE id = ? AND perito_id = ?',
+      [status, req.params.id, req.user.id],
+    );
+
+    notifyGestorPeritoUpdate(req.user.parent_id, {
+      dealId: req.params.id,
+      title: 'Pago de servicio',
+      body: `${req.user.name || 'El perito'} marcó el costo de servicio de "${deal.title}" como ${status === 'pagado' ? 'pagado' : 'pendiente'}`,
+    });
+
+    res.json({ ok: true, peritoServicePaid: status });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al actualizar el pago' });
+  }
+});
+
 peritoRouter.post('/deals/:id/notes', async (req, res) => {
   try {
     const note = (req.body.note || '').trim();
@@ -246,7 +300,7 @@ peritoRouter.post('/deals/:id/notes', async (req, res) => {
 peritoRouter.post('/deals/:id/uploads', async (req, res) => {
   try {
     const { docType, fileUrl, fileName } = req.body;
-    const allowed = ['poliza_pago', 'tramite_listo', 'guia_paqueteria'];
+    const allowed = ['poliza_pago', 'tramite_listo'];
     if (!allowed.includes(docType) || !fileUrl) {
       return res.status(400).json({ error: 'Tipo o archivo inválido' });
     }

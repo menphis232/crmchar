@@ -1533,6 +1533,25 @@ async function migrate() {
       console.log('Migración v72 (perito en contacto) aplicada.');
     }
 
+    const v73Path = path.join(__dirname, '..', 'sql', 'migration-v73-perito-service-cost.sql');
+    if (fs.existsSync(v73Path)) {
+      const v73 = fs.readFileSync(v73Path, 'utf8');
+      const conn73 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v73.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn73.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn73.end();
+      console.log('Migración v73 (costo servicio perito) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

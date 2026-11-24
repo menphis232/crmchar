@@ -167,6 +167,8 @@ export class CrmService {
     assignedTo?: string | null;
     peritoId?: string | null;
     vehicleId?: string | null;
+    peritoServiceCost?: number | null;
+    peritoServicePaid?: 'pendiente' | 'pagado';
   }) {
     return this.http.patch<CrmDeal>(`${this.base}/deals/${id}`, data);
   }
@@ -859,6 +861,14 @@ export class PeritoService {
 
   updatePolizaStatus(dealId: string, status: 'pendiente' | 'pagado') {
     return this.http.patch<{ ok: boolean; peritoPolizaStatus: string }>(`${this.base}/deals/${dealId}/poliza-status`, { status });
+  }
+
+  updateServiceCost(dealId: string, cost: number | null) {
+    return this.http.patch<{ ok: boolean; peritoServiceCost: number | null }>(`${this.base}/deals/${dealId}/service-cost`, { cost });
+  }
+
+  markServicePaid(dealId: string, status: 'pendiente' | 'pagado' = 'pagado') {
+    return this.http.patch<{ ok: boolean; peritoServicePaid: string }>(`${this.base}/deals/${dealId}/service-paid`, { status });
   }
 
   addNote(dealId: string, note: string) {
