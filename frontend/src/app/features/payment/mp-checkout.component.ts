@@ -19,6 +19,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   processing = signal(false);
   error = signal('');
   success = signal(false);
+  autoLoginPending = signal(false);
   requiresAction = signal(false);
   actionUrl = signal('');
 
@@ -95,10 +96,11 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
     };
 
     if (magicLoginToken) {
+      this.autoLoginPending.set(true);
       this.auth.magicLogin(magicLoginToken).subscribe({
         next: () => enter(),
         error: () => {
-          // Si el magic falla, al menos ir al login
+          this.autoLoginPending.set(false);
           void this.router.navigate(['/login/cliente'], {
             queryParams: { next: '/panel/cliente' },
           });
@@ -107,6 +109,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
+    this.autoLoginPending.set(false);
     this.redirectTimer = setTimeout(() => {
       if (this.auth.isLoggedIn() && this.auth.user()?.role === 'cliente') {
         enter();
@@ -115,7 +118,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
       void this.router.navigate(['/login/cliente'], {
         queryParams: { next: '/panel/cliente' },
       });
-    }, 1200);
+    }, 1600);
   }
 
   private tryInitBrick() {
@@ -206,7 +209,9 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
                   this.processing.set(false);
                   if (res.success || res.status === 'processed' || res.status === 'approved') {
                     this.success.set(true);
-                    this.goToPanelAfterPayment(res.magicLoginToken);
+                    this.autoLoginPending.set(!!res.magicLoginToken);
+                    // Solo auto-login si el backend emitió token (email del pagador = cliente)
+                    this.goToPanelAfterPayment(res.magicLoginToken || null);
                     resolve();
                     return;
                   }

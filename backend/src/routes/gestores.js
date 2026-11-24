@@ -27,6 +27,10 @@ import {
   syncLegacyPromoFields,
 } from '../utils/client-promo-banners.js';
 import { normalizeMxPhone, isInternalClientEmail } from '../utils/phone.js';
+import {
+  createPaymentLinkToken,
+  paymentExpirySql,
+} from '../services/mp-payment-security.js';
 const router = Router();
 
 const PHONE_ALREADY_REGISTERED = 'PHONE_ALREADY_REGISTERED';
@@ -1359,8 +1363,11 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     && owner?.mp_access_token
     && owner?.mp_public_key
   ) {
-    const token = uuid();
-    await run('UPDATE crm_deals SET mp_payment_token = ? WHERE id = ?', [token, dealId]);
+    const token = createPaymentLinkToken();
+    await run(
+      `UPDATE crm_deals SET mp_payment_token = ?, mp_payment_expires_at = ${paymentExpirySql()} WHERE id = ?`,
+      [token, dealId],
+    );
     paymentUrl = `${getFrontendBase()}/pay/mp/${token}`;
     requiresPayment = true;
     // No enviar correo "Completa el pago": el link ya va en el chat/formulario.

@@ -115,6 +115,16 @@
   min-height: 200px;
 }
 
+.mp-hint {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0f7fc;
+  color: #1a4a66;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
 .mp-brick {
   min-height: 420px;
   overflow: visible;

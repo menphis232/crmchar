@@ -39,8 +39,13 @@
         <div class="mp-status mp-status--success">
           <div class="mp-icon success">✓</div>
           <h2>¡Pago realizado!</h2>
-          <p>Pago confirmado. Iniciando sesión y entrando a tu panel…</p>
-          <a href="/panel/cliente" class="mp-btn">Ir ahora</a>
+          @if (autoLoginPending()) {
+            <p>Pago confirmado. Iniciando sesión y entrando a tu panel…</p>
+            <a href="/panel/cliente" class="mp-btn">Ir ahora</a>
+          } @else {
+            <p>Pago confirmado. Por seguridad, inicia sesión con el correo de tu cuenta para entrar al panel.</p>
+            <a href="/login/cliente?next=/panel/cliente" class="mp-btn">Entrar a mi panel</a>
+          }
         </div>
       }
 
@@ -67,6 +72,7 @@
       }
 
       @if (showBrick() && !success() && !requiresAction()) {
+        <p class="mp-hint">Usa el mismo correo con el que registraste el trámite. Así protegemos tu cuenta.</p>
         <div id="cardPaymentBrick_container" class="mp-brick" [class.mp-brick--hidden]="!brickReady()"></div>
       }
 

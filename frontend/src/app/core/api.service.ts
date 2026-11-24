@@ -941,6 +941,7 @@ export class MpService {
       actionUrl?: string;
       message?: string;
       magicLoginToken?: string | null;
+      requiresLogin?: boolean;
     }>(`${this.base}/process-payment/${token}`, body);
   }
 }

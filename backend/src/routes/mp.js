@@ -14,6 +14,13 @@ import {
   createMagicLoginToken,
   resolveClienteUserIdForDeal,
 } from '../services/magic-login.js';
+import {
+  createPaymentLinkToken,
+  isPaymentTokenExpired,
+  payerMatchesDealClient,
+  paymentExpirySql,
+  rateLimitPaymentAttempt,
+} from '../services/mp-payment-security.js';
 
 const router = express.Router();
 
@@ -83,7 +90,7 @@ function extractMpError(err) {
   return [...new Set(parts.filter(Boolean))].join('. ') || 'Error al procesar el pago';
 }
 
-async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal' } = {}) {
+async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal', payerEmail = null } = {}) {
   const status = orderResult?.status;
   const orderId = orderResult?.id;
   const statusDetail = orderResult?.status_detail;
@@ -109,12 +116,21 @@ async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal'
       console.error('finalize payment error:', finalizeErr);
     }
 
+    // Anti-clonación: magic login SOLO si el email del pagador = email del cliente del trámite.
+    // Si alguien paga con otro correo, el trámite queda pagado pero no obtiene sesión del cliente.
     let magicLoginToken = null;
     if (dealIdForLogin) {
       try {
-        const clientUserId = await resolveClienteUserIdForDeal(dealIdForLogin);
-        if (clientUserId) {
-          magicLoginToken = await createMagicLoginToken(clientUserId);
+        const emailOk = await payerMatchesDealClient(dealIdForLogin, payerEmail);
+        if (emailOk) {
+          const clientUserId = await resolveClienteUserIdForDeal(dealIdForLogin);
+          if (clientUserId) {
+            magicLoginToken = await createMagicLoginToken(clientUserId);
+          }
+        } else {
+          console.warn(
+            `[mp-security] Pago OK deal=${dealIdForLogin} pero payerEmail no coincide con contacto; sin magic login`,
+          );
         }
       } catch (magicErr) {
         console.error('magic login after payment error:', magicErr);
@@ -127,6 +143,7 @@ async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal'
       orderId,
       createdDeal: kind === 'pending',
       magicLoginToken,
+      requiresLogin: !magicLoginToken,
     });
   }
 
@@ -181,9 +198,9 @@ router.post('/generate-link/:dealId', authRequired, async (req, res) => {
       });
     }
 
-    const token = uuid();
+    const token = createPaymentLinkToken();
     await run(
-      'UPDATE crm_deals SET mp_payment_token = ? WHERE id = ?',
+      `UPDATE crm_deals SET mp_payment_token = ?, mp_payment_expires_at = ${paymentExpirySql()} WHERE id = ?`,
       [token, dealId],
     );
 
@@ -201,8 +218,12 @@ router.get('/payment-info/:token', async (req, res) => {
   try {
     const token = req.params.token;
 
+    if (!token || String(token).length < 32) {
+      return res.status(400).json({ error: 'Link de pago inválido' });
+    }
+
     const dealRow = await get(
-      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status,
+      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status, d.mp_payment_expires_at,
               u.mp_public_key, u.name AS gestor_name
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
@@ -216,6 +237,9 @@ router.get('/payment-info/:token', async (req, res) => {
       }
       if (dealRow.payment_status === 'paid' || dealRow.stage === 'completado') {
         return res.status(409).json({ error: 'Este trámite ya fue pagado. No es necesario volver a pagar.' });
+      }
+      if (isPaymentTokenExpired(dealRow.mp_payment_expires_at)) {
+        return res.status(410).json({ error: 'Este link de pago expiró. Pide uno nuevo a tu gestor.' });
       }
       return res.json({
         publicKey: dealRow.mp_public_key,
@@ -272,9 +296,24 @@ router.post('/process-payment/:token', async (req, res) => {
     }
 
     const token = req.params.token;
+    if (!token || String(token).length < 32) {
+      return res.status(400).json({ error: 'Link de pago inválido' });
+    }
+
+    const ip = String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown')
+      .split(',')[0]
+      .trim();
+    const rl = rateLimitPaymentAttempt(`${token}:${ip}`);
+    if (!rl.ok) {
+      return res.status(429).json({
+        error: 'Demasiados intentos de pago. Espera unos minutos e intenta de nuevo.',
+        retryAfterSec: rl.retryAfterSec,
+      });
+    }
+
     let kind = 'deal';
     let row = await get(
-      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status, d.user_id,
+      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status, d.user_id, d.mp_payment_expires_at,
               u.mp_access_token
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
@@ -285,6 +324,9 @@ router.post('/process-payment/:token', async (req, res) => {
     if (row) {
       if (row.payment_status === 'paid' || row.stage === 'completado') {
         return res.status(409).json({ error: 'Este trámite ya fue pagado. No es necesario volver a pagar.' });
+      }
+      if (isPaymentTokenExpired(row.mp_payment_expires_at)) {
+        return res.status(410).json({ error: 'Este link de pago expiró. Pide uno nuevo a tu gestor.' });
       }
     } else {
       const pending = await findPendingByToken(token);
@@ -358,6 +400,7 @@ router.post('/process-payment/:token', async (req, res) => {
 
     const requestOptions = { idempotencyKey: uuid() };
     const targetRow = kind === 'pending' ? row._pending : row;
+    const orderOpts = { kind, payerEmail };
 
     try {
       const orderResult = await orderApi.create({ body, requestOptions });
@@ -368,7 +411,7 @@ router.post('/process-payment/:token', async (req, res) => {
           await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderResult.id, row.id]);
         }
       }
-      return handleOrderResponse(orderResult, targetRow, res, null, { kind });
+      return handleOrderResponse(orderResult, targetRow, res, null, orderOpts);
     } catch (mpErr) {
       console.error('MP process-payment error:', JSON.stringify(mpErr, null, 2));
       if (mpErr?.data) {
@@ -379,7 +422,7 @@ router.post('/process-payment/:token', async (req, res) => {
             await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [mpErr.data.id, row.id]);
           }
         }
-        return handleOrderResponse(mpErr.data, targetRow, res, mpErr, { kind });
+        return handleOrderResponse(mpErr.data, targetRow, res, mpErr, orderOpts);
       }
       return res.status(500).json({ error: extractMpError(mpErr) });
     }
