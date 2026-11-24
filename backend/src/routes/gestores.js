@@ -25,6 +25,7 @@ import {
   promoBannersFromSettings,
   syncLegacyPromoFields,
 } from '../utils/client-promo-banners.js';
+import { createPendingCheckout } from '../services/mp-pending-checkout.js';
 const router = Router();
 
 /** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
@@ -1175,7 +1176,71 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
   if (!gestor?.id || !gestor?.user_id) {
     throw new Error('Gestor inválido: falta id o user_id');
   }
-  // Auto-registro de cliente
+
+  const service = await get(
+    'SELECT price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
+    [gestor.id, serviceName],
+  );
+  const estimatedValue = service ? Number(service.price) || 0 : 0;
+
+  const owner = await get(
+    'SELECT mp_access_token, mp_public_key, name FROM users WHERE id = ?',
+    [gestor.user_id],
+  );
+
+  // Flujo automatizado: cobro primero → al pagar se crea el trámite
+  if (
+    estimatedValue > 0
+    && owner?.mp_access_token
+    && owner?.mp_public_key
+  ) {
+    const pending = await createPendingCheckout({
+      gestor,
+      clientName,
+      clientEmail,
+      clientPhone,
+      location,
+      serviceName,
+      amount: estimatedValue,
+      customData,
+    });
+
+    if (clientEmail) {
+      const html = `
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
+          Para activar tu trámite de <strong>${serviceName}</strong> realiza el pago seguro aquí:
+        </p>
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${pending.paymentUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Pagar $${estimatedValue.toFixed(2)} MXN</a>
+        </div>
+        <p style="color: #a0aec0; font-size: 14px; line-height: 1.6; text-align: center;">
+          Al confirmarse el pago, tu trámite se crea automáticamente y te enviamos acceso al panel.
+        </p>
+      `;
+      try {
+        await sendEmail(
+          clientEmail,
+          `Completa el pago de ${serviceName}`,
+          `Paga para activar tu trámite: ${pending.paymentUrl}`,
+          html,
+          gestor.user_id,
+        );
+      } catch (e) {
+        console.error('No se pudo enviar correo de pago pendiente:', e);
+      }
+    }
+
+    return {
+      id: pending.id,
+      dealId: null,
+      requiresPayment: true,
+      paymentUrl: pending.paymentUrl,
+      amount: pending.amount,
+    };
+  }
+
+  // Fallback: sin MP o servicio sin precio → crear trámite directo (legado)
   if (clientEmail) {
     const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
     if (!existingUser) {
@@ -1186,13 +1251,13 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
         'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
         [userId, clientEmail, hash, 'cliente', clientName]
       );
-      
-      // Enviar correo con credenciales provisionales
+
+      const loginUrl = `${getFrontendBase()}/login/cliente`;
       const html = `
         <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido tu solicitud para el trámite de <strong>${serviceName}</strong> con el gestor ${gestor.name || 'asignado'}.</p>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido tu solicitud para el trámite de <strong>${serviceName}</strong> con el gestor ${gestor.name || owner?.name || 'asignado'}.</p>
         <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento a tu trámite, chatear con tu gestor y subir documentos.</p>
-        
+
         <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
           <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
           <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
@@ -1200,16 +1265,16 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
             <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
           </ul>
         </div>
-        
+
         <div style="text-align: center; margin: 40px 0;">
-          <a href="http://localhost:4200/login" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
+          <a href="${loginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
         </div>
         <p style="color: #a0aec0; font-size: 15px; line-height: 1.6; text-align: center;">Por favor cambia tu contraseña lo antes posible en la sección de Ajustes.</p>
       `;
       try {
         await sendEmail(clientEmail, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html, gestor.user_id);
-      } catch(e) {
-        console.error("No se pudo enviar el correo:", e);
+      } catch (e) {
+        console.error('No se pudo enviar el correo:', e);
       }
     }
   }
@@ -1221,12 +1286,8 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     [id, gestor.id, clientName, serviceName, location || null, clientEmail || null, clientPhone || null, customData ? JSON.stringify(customData) : null],
   );
 
-  const service = await get('SELECT price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1', [gestor.id, serviceName]);
-  const estimatedValue = service ? service.price : 0;
-
   const solicitud = await get('SELECT * FROM solicitudes WHERE id = ?', [id]);
-  
-  // Format customData into a readable message if it exists
+
   let clientMessage = '';
   if (customData && typeof customData === 'object') {
     clientMessage = Object.entries(customData)
@@ -1236,7 +1297,6 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
 
   const dealId = await createDealFromSolicitud(solicitud, gestor.user_id, { clientEmail, clientPhone, estimatedValue, clientMessage });
 
-  // FASE 3.3: Automatización en tiempo real (Notificación)
   const notifId = uuid();
   await run(
     'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
@@ -1252,7 +1312,7 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     dealId,
   });
 
-  return { id, dealId };
+  return { id, dealId, requiresPayment: false };
 }
 
 router.post('/:id/solicitudes', async (req, res) => {
@@ -1265,8 +1325,17 @@ router.post('/:id/solicitudes', async (req, res) => {
       return res.status(400).json({ error: 'Nombre y servicio requeridos' });
     }
 
-    // Calls the extracted function
     const result = await processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData);
+
+    if (result.requiresPayment) {
+      return res.status(201).json({
+        id: result.id,
+        status: 'pendiente_pago',
+        requiresPayment: true,
+        paymentUrl: result.paymentUrl,
+        amount: result.amount,
+      });
+    }
 
     const io = req.app.get('io');
     if (io) {
@@ -1281,7 +1350,7 @@ router.post('/:id/solicitudes', async (req, res) => {
       });
     }
 
-    res.status(201).json({ id: result.id, status: 'nuevo' });
+    res.status(201).json({ id: result.id, status: 'nuevo', dealId: result.dealId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear solicitud' });
@@ -1433,6 +1502,7 @@ ${servicesText || 'No hay servicios listados.'}
 ${trainingText ? `\n${trainingText}\n` : ''}
 Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas.
 4. NUNCA inventes precios o servicios.
+5. El flujo es automatizado: al registrar la solicitud el sistema puede enviar un link de pago. NO digas que "alguien los contactará" como paso obligatorio; di que al pagar el trámite se activa solo.
 `;
 
     if (knownClient) {
@@ -1485,22 +1555,34 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
           leadData.serviceName,
         );
         generatedText = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
-        if (!generatedText) {
+
+        if (result.requiresPayment && result.paymentUrl) {
+          const amountTxt = Number(result.amount || 0).toFixed(2);
+          generatedText = [
+            'Perfecto, ya tengo tus datos.',
+            `Para activar tu trámite de ${leadData.serviceName} realiza el pago de $${amountTxt} MXN aquí:`,
+            result.paymentUrl,
+            'Al confirmarse el pago, el trámite se crea solo y te enviamos acceso a tu panel. No necesitas esperar a nadie.',
+          ].join('\n\n');
+        } else if (!generatedText) {
           generatedText = knownClient
             ? '¡Listo! Registré tu solicitud con tu cuenta. Pronto el gestor se pondrá en contacto contigo; también puedes seguirla desde Mi Panel.'
             : '¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.';
         }
-        const io = req.app.get('io');
-        if (io) {
-          io.to('user_' + gestor.user_id).emit('notification', {
-            id: uuid(),
-            type: 'nuevo_lead',
-            title: 'Nueva Solicitud Recibida',
-            body: `Tienes un nuevo trámite de ${leadData.serviceName} de ${leadData.clientName}.`,
-            ref_id: result.dealId,
-            is_read: 0,
-            created_at: new Date().toISOString(),
-          });
+
+        if (!result.requiresPayment && result.dealId) {
+          const io = req.app.get('io');
+          if (io) {
+            io.to('user_' + gestor.user_id).emit('notification', {
+              id: uuid(),
+              type: 'nuevo_lead',
+              title: 'Nueva Solicitud Recibida',
+              body: `Tienes un nuevo trámite de ${leadData.serviceName} de ${leadData.clientName}.`,
+              ref_id: result.dealId,
+              is_read: 0,
+              created_at: new Date().toISOString(),
+            });
+          }
         }
       } catch (e) {
         console.error('Error creando lead desde chatbot:', e.message);

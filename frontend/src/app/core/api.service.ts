@@ -106,7 +106,14 @@ export class GestoresService {
   }
   updateSolicitud(id: string, status: string) { return this.http.patch(`${this.base}/me/solicitudes/${id}`, { status }); }
   createSolicitud(gestorId: string, data: { clientName: string; serviceName: string; location?: string; clientEmail?: string; clientPhone?: string; customData?: any; }) {
-    return this.http.post(`${this.base}/${gestorId}/solicitudes`, data);
+    return this.http.post<{
+      id: string;
+      status: string;
+      requiresPayment?: boolean;
+      paymentUrl?: string;
+      amount?: number;
+      dealId?: string;
+    }>(`${this.base}/${gestorId}/solicitudes`, data);
   }
   trackSolicitud(slugOrId: string, code: string) {
     return this.http.get<{ title: string; stage: string; updatedAt: string, stages?: { id: string, label: string }[] }>(`${this.base}/${slugOrId}/track/${code}`);
@@ -913,7 +920,7 @@ export class MpService {
   }
 
   getPaymentInfo(token: string) {
-    return this.http.get<{ publicKey: string; amount: number; description: string; gestorName: string }>(`${this.base}/payment-info/${token}`);
+    return this.http.get<{ publicKey: string; amount: number; description: string; gestorName: string; mode?: 'deal' | 'pending' }>(`${this.base}/payment-info/${token}`);
   }
 
   processPayment(token: string, body: {

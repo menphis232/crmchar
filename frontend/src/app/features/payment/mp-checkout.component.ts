@@ -25,6 +25,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   amount = 0;
   description = '';
   gestorName = '';
+  mode: 'deal' | 'pending' = 'deal';
 
   showBrick = signal(false);
   brickReady = signal(false);
@@ -58,6 +59,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
         this.amount = info.amount;
         this.description = info.description;
         this.gestorName = info.gestorName;
+        this.mode = info.mode === 'pending' ? 'pending' : 'deal';
         this.paymentInfoReady = true;
         this.showBrick.set(true);
         this.tryInitBrick();

@@ -5,6 +5,11 @@ import { get, run } from '../db.js';
 import { authRequired } from '../middleware/auth.js';
 import { orgId } from '../utils/org-access.js';
 import { finalizeDealPayment, isOrderPaid } from '../services/deal-payment.js';
+import {
+  findPendingByToken,
+  findPendingByOrderId,
+  fulfillPendingCheckout,
+} from '../services/mp-pending-checkout.js';
 
 const router = express.Router();
 
@@ -74,7 +79,7 @@ function extractMpError(err) {
   return [...new Set(parts.filter(Boolean))].join('. ') || 'Error al procesar el pago';
 }
 
-async function handleOrderResponse(orderResult, row, res, mpErr) {
+async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal' } = {}) {
   const status = orderResult?.status;
   const orderId = orderResult?.id;
   const statusDetail = orderResult?.status_detail;
@@ -83,20 +88,28 @@ async function handleOrderResponse(orderResult, row, res, mpErr) {
 
   if (isOrderPaid(orderResult)) {
     try {
-      await finalizeDealPayment(row.id, {
-        amount: row.estimated_value,
-        mpOrderId: orderId || null,
-        paymentMethod: 'mercadopago',
-      });
+      if (kind === 'pending') {
+        await fulfillPendingCheckout(row, { mpOrderId: orderId || null });
+      } else {
+        await finalizeDealPayment(row.id, {
+          amount: row.estimated_value,
+          mpOrderId: orderId || null,
+          paymentMethod: 'mercadopago',
+        });
+      }
     } catch (finalizeErr) {
-      console.error('finalizeDealPayment error:', finalizeErr);
+      console.error('finalize payment error:', finalizeErr);
     }
-    return res.json({ success: true, status, orderId });
+    return res.json({ success: true, status, orderId, createdDeal: kind === 'pending' });
   }
 
   if (status === 'requires_action') {
     const actionUrl = payment?.payment_method?.transaction_security?.url;
-    await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
+    if (kind === 'pending') {
+      await run('UPDATE mp_pending_checkouts SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
+    } else {
+      await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderId || null, row.id]);
+    }
     return res.json({ success: false, status, requiresAction: true, actionUrl });
   }
 
@@ -159,28 +172,51 @@ router.post('/generate-link/:dealId', authRequired, async (req, res) => {
 // GET /api/mp/payment-info/:token
 router.get('/payment-info/:token', async (req, res) => {
   try {
-    const row = await get(
+    const token = req.params.token;
+
+    const dealRow = await get(
       `SELECT d.id, d.title, d.estimated_value, d.stage,
               u.mp_public_key, u.name AS gestor_name
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
        WHERE d.mp_payment_token = ?`,
-      [req.params.token],
+      [token],
     );
 
-    if (!row) return res.status(404).json({ error: 'Link de pago no encontrado o expirado' });
-    if (!row.mp_public_key) {
-      return res.status(400).json({ error: 'El gestor no ha configurado MercadoPago' });
-    }
-    if (row.stage === 'completado') {
-      return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+    if (dealRow) {
+      if (!dealRow.mp_public_key) {
+        return res.status(400).json({ error: 'El gestor no ha configurado MercadoPago' });
+      }
+      if (dealRow.stage === 'completado') {
+        return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+      }
+      return res.json({
+        publicKey: dealRow.mp_public_key,
+        amount: Number(dealRow.estimated_value),
+        description: dealRow.title || 'Trámite Vehicular',
+        gestorName: dealRow.gestor_name,
+        mode: 'deal',
+      });
     }
 
-    res.json({
-      publicKey: row.mp_public_key,
-      amount: Number(row.estimated_value),
-      description: row.title || 'Trámite Vehicular',
-      gestorName: row.gestor_name,
+    const pending = await findPendingByToken(token);
+    if (!pending) return res.status(404).json({ error: 'Link de pago no encontrado o expirado' });
+    if (pending.status === 'paid') {
+      return res.status(409).json({ error: 'Este pago ya fue completado. Tu trámite ya está activo.' });
+    }
+    if (pending.status !== 'pending') {
+      return res.status(410).json({ error: 'Este link de pago ya no está disponible' });
+    }
+    if (!pending.mp_public_key) {
+      return res.status(400).json({ error: 'El gestor no ha configurado MercadoPago' });
+    }
+
+    return res.json({
+      publicKey: pending.mp_public_key,
+      amount: Number(pending.amount),
+      description: pending.service_name || 'Trámite Vehicular',
+      gestorName: pending.gestor_user_name,
+      mode: 'pending',
     });
   } catch (err) {
     console.error('MP payment-info error:', err);
@@ -208,19 +244,40 @@ router.post('/process-payment/:token', async (req, res) => {
       return res.status(400).json({ error: 'No se recibió el tipo de tarjeta. Intenta de nuevo.' });
     }
 
-    const row = await get(
+    const token = req.params.token;
+    let kind = 'deal';
+    let row = await get(
       `SELECT d.id, d.title, d.estimated_value, d.stage, d.user_id,
               u.mp_access_token
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
        WHERE d.mp_payment_token = ?`,
-      [req.params.token],
+      [token],
     );
 
-    if (!row) return res.status(404).json({ error: 'Link de pago no encontrado o expirado' });
-    if (row.stage === 'completado') {
-      return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+    if (row) {
+      if (row.stage === 'completado') {
+        return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+      }
+    } else {
+      const pending = await findPendingByToken(token);
+      if (!pending) return res.status(404).json({ error: 'Link de pago no encontrado o expirado' });
+      if (pending.status === 'paid') {
+        return res.status(409).json({ error: 'Este pago ya fue completado' });
+      }
+      if (pending.status !== 'pending') {
+        return res.status(410).json({ error: 'Este link de pago ya no está disponible' });
+      }
+      kind = 'pending';
+      row = {
+        id: pending.id,
+        title: pending.service_name,
+        estimated_value: pending.amount,
+        mp_access_token: pending.mp_access_token,
+        _pending: pending,
+      };
     }
+
     if (!row.mp_access_token) {
       return res.status(400).json({ error: 'El gestor no tiene configurado MercadoPago' });
     }
@@ -230,13 +287,16 @@ router.post('/process-payment/:token', async (req, res) => {
 
     const totalAmount = Number(row.estimated_value).toFixed(2);
     const title = (row.title || 'Trámite Vehicular').slice(0, 150);
+    const externalRef = kind === 'pending'
+      ? `pending_${row.id}`.slice(0, 150)
+      : `deal_${row.id}`.slice(0, 150);
 
     const body = {
       type: 'online',
       processing_mode: 'automatic',
       capture_mode: 'automatic',
       total_amount: totalAmount,
-      external_reference: `deal_${row.id}`.slice(0, 150),
+      external_reference: externalRef,
       description: title,
       payer: {
         email: payerEmail,
@@ -270,20 +330,29 @@ router.post('/process-payment/:token', async (req, res) => {
     };
 
     const requestOptions = { idempotencyKey: uuid() };
+    const targetRow = kind === 'pending' ? row._pending : row;
 
     try {
       const orderResult = await orderApi.create({ body, requestOptions });
       if (orderResult?.id) {
-        await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderResult.id, row.id]);
+        if (kind === 'pending') {
+          await run('UPDATE mp_pending_checkouts SET mp_order_id = ? WHERE id = ?', [orderResult.id, row.id]);
+        } else {
+          await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [orderResult.id, row.id]);
+        }
       }
-      return handleOrderResponse(orderResult, row, res);
+      return handleOrderResponse(orderResult, targetRow, res, null, { kind });
     } catch (mpErr) {
       console.error('MP process-payment error:', JSON.stringify(mpErr, null, 2));
       if (mpErr?.data) {
         if (mpErr.data?.id) {
-          await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [mpErr.data.id, row.id]);
+          if (kind === 'pending') {
+            await run('UPDATE mp_pending_checkouts SET mp_order_id = ? WHERE id = ?', [mpErr.data.id, row.id]);
+          } else {
+            await run('UPDATE crm_deals SET mp_order_id = ? WHERE id = ?', [mpErr.data.id, row.id]);
+          }
         }
-        return handleOrderResponse(mpErr.data, row, res, mpErr);
+        return handleOrderResponse(mpErr.data, targetRow, res, mpErr, { kind });
       }
       return res.status(500).json({ error: extractMpError(mpErr) });
     }
@@ -299,7 +368,7 @@ router.post('/webhook', async (req, res) => {
   try {
     const { type, data } = req.body || {};
     const orderId = data?.id;
-    if (type === 'order' && orderId) {
+    if ((type === 'order' || type === 'payment') && orderId) {
       const deal = await get(
         'SELECT id, estimated_value, user_id FROM crm_deals WHERE mp_order_id = ?',
         [orderId],
@@ -319,6 +388,19 @@ router.post('/webhook', async (req, res) => {
             }
           } catch (fetchErr) {
             console.error('MP webhook order fetch:', fetchErr);
+          }
+        }
+      } else {
+        const pending = await findPendingByOrderId(orderId);
+        if (pending?.mp_access_token && pending.status === 'pending') {
+          try {
+            const orderApi = new Order(getMpClient(pending.mp_access_token));
+            const orderResult = await orderApi.get({ id: orderId });
+            if (isOrderPaid(orderResult)) {
+              await fulfillPendingCheckout(pending, { mpOrderId: orderId });
+            }
+          } catch (fetchErr) {
+            console.error('MP webhook pending fetch:', fetchErr);
           }
         }
       }

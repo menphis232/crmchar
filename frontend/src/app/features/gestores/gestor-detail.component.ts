@@ -172,7 +172,12 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.gestoresService.createSolicitud(g.id, { ...this.solicitudForm, customData: this.customData }).subscribe({
-      next: () => {
+      next: (res) => {
+        if (res?.requiresPayment && res.paymentUrl) {
+          this.toast.success('Te llevamos al pago seguro. Al confirmarse, tu trámite se crea solo.', 'Continúa con el pago');
+          window.location.href = res.paymentUrl;
+          return;
+        }
         const hadEmail = !!this.solicitudForm.clientEmail?.trim();
         this.solicitudSent.set(true);
         this.solicitudForm = { clientName: '', clientEmail: '', clientPhone: '', serviceName: '', location: '' };
