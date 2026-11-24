@@ -48,6 +48,16 @@
   padding: 20px 18px 18px;
 }
 
+@media (max-width: 991px) {
+  .kanban-wrap {
+    padding: 14px 10px 12px;
+  }
+
+  .perito-page-header {
+    margin-bottom: 12px;
+  }
+}
+
 /* Kanban: mismo Monday light que crm-kanban / panel-datta */
 :host ::ng-deep app-perito-kanban .kanban-hint,
 :host ::ng-deep app-perito-kanban .kanban-scroll-hint {

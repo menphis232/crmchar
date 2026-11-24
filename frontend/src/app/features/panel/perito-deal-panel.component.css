@@ -17,6 +17,13 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 991px) {
+  .deal-page {
+    padding: 0 0 40px;
+    max-width: none;
+  }
+}
+
 .deal-page-toolbar {
   display: flex;
   align-items: center;
@@ -33,7 +40,8 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  padding: 6px 0;
+  padding: 10px 0;
+  min-height: 44px;
 }
 
 .deal-back-btn:hover {
@@ -44,8 +52,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 1px solid #e6e9ef;
   border-radius: 8px;
   background: #fff;
@@ -79,15 +87,6 @@
   margin-bottom: 12px;
 }
 
-.deal-panel-eyebrow {
-  margin: 0 0 4px;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #676879;
-  font-weight: 600;
-}
-
 .deal-panel-header h3 {
   margin: 0;
   color: #323338;
@@ -95,6 +94,22 @@
   font-size: 18px;
   font-weight: 650;
   letter-spacing: 0.01em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .deal-panel-header {
+    padding: 14px 14px;
+  }
+
+  .deal-panel-header h3 {
+    font-size: 16px;
+  }
+
+  .deal-section {
+    padding: 14px;
+  }
 }
 
 .deal-panel-body {
@@ -219,6 +234,7 @@
   font-size: 13px;
   font-weight: 600;
   color: #323338;
+  flex-wrap: wrap;
 }
 
 .perito-upload-item {
@@ -369,17 +385,20 @@
   padding: 10px;
   border-top: 1px solid #e6e9ef;
   background: #fff;
+  flex-wrap: wrap;
 }
 
 .perito-staff-input input {
-  flex: 1;
+  flex: 1 1 160px;
   min-width: 0;
+  min-height: 44px;
 }
 
 .btn-primary,
 .btn-upload {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   background: #0073ea;
   color: #fff;
@@ -389,8 +408,21 @@
   font-size: 13px;
   font-weight: 600;
   padding: 8px 14px;
+  min-height: 44px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+}
+
+@media (max-width: 640px) {
+  .perito-staff-input .btn-primary {
+    flex: 1 1 100%;
+  }
+
+  .deal-section select,
+  .perito-note-form textarea {
+    min-height: 44px;
+    font-size: 16px; /* evita zoom iOS */
+  }
 }
 
 .btn-primary:hover,

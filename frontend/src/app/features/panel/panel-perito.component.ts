@@ -11,7 +11,10 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 
 @Component({
   selector: 'app-panel-perito',
-  host: { class: 'panel-datta' },
+  host: {
+    class: 'panel-datta',
+    '[class.sidebar-collapsed]': 'sidebarCollapsed()',
+  },
   standalone: true,
   imports: [
     CommonModule, PeritoKanbanComponent, PeritoDealPanelComponent, PanelUserMenuComponent, LucideClipboardList,
@@ -30,9 +33,24 @@ export class PanelPeritoComponent implements OnInit {
   loading = signal(true);
   selectedDealId = signal<string | null>(null);
   isMobileMenuOpen = signal(false);
+  sidebarCollapsed = signal(
+    typeof localStorage !== 'undefined' && localStorage.getItem('crm_sidebar_collapsed') === '1',
+  );
 
   ngOnInit() {
     this.reload();
+  }
+
+  toggleSidebar() {
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 991px)').matches) {
+      this.isMobileMenuOpen.update((v) => !v);
+      return;
+    }
+    const next = !this.sidebarCollapsed();
+    this.sidebarCollapsed.set(next);
+    try {
+      localStorage.setItem('crm_sidebar_collapsed', next ? '1' : '0');
+    } catch { /* ignore */ }
   }
 
   reload() {
