@@ -1252,9 +1252,12 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     }
   }
 
-  // 3) Luego el pago (con o sin cuenta previa)
+  // 3) Pago: si el servicio trae precio + MP → link automático; si no hay precio → alerta al gestor
   let paymentUrl = null;
   let requiresPayment = false;
+  let needsManualPaymentLink = false;
+  const panelLoginUrl = `${getFrontendBase()}/login/cliente`;
+
   if (
     estimatedValue > 0
     && owner?.mp_access_token
@@ -1287,6 +1290,45 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
         console.error('No se pudo enviar correo de pago:', e);
       }
     }
+  } else if (estimatedValue <= 0) {
+    needsManualPaymentLink = true;
+
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content)
+       VALUES (?, ?, ?, 'note', ?)`,
+      [
+        uuid(),
+        dealId,
+        gestor.user_id,
+        'Servicio sin precio definido. Debes cotizar, enviar el link de pago de Mercado Pago al cliente y marcar como pagado cuando pague.',
+      ],
+    );
+
+    if (clientEmail && (accountCreated || existingAccount)) {
+      const html = `
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
+          Registramos tu trámite de <strong>${serviceName}</strong>. Nos pondremos en contacto contigo con el costo y el link de pago.
+        </p>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
+          Mientras tanto, inicia sesión en tu panel para dar seguimiento.
+        </p>
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${panelLoginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Ir a mi panel</a>
+        </div>
+      `;
+      try {
+        await sendEmail(
+          clientEmail,
+          `Tu trámite de ${serviceName} está registrado`,
+          `Nos pondremos en contacto. Entra a tu panel: ${panelLoginUrl}`,
+          html,
+          gestor.user_id,
+        );
+      } catch (e) {
+        console.error('No se pudo enviar correo sin precio:', e);
+      }
+    }
   }
 
   const notifId = uuid();
@@ -1294,6 +1336,21 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
     [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`, dealId],
   );
+
+  if (needsManualPaymentLink) {
+    const alertId = uuid();
+    await run(
+      'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        alertId,
+        gestor.user_id,
+        'pago_pendiente_link',
+        'Envía link de pago MP',
+        `${clientName} solicitó ${serviceName} sin precio. Define el monto, envíale el link de Mercado Pago y marca el trámite como pagado cuando pague.`,
+        dealId,
+      ],
+    );
+  }
 
   await notifyGestorNewLeadByEmail(gestor.user_id, {
     clientName,
@@ -1312,6 +1369,8 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     amount: estimatedValue,
     accountCreated,
     existingAccount,
+    needsManualPaymentLink,
+    panelLoginUrl,
   };
 }
 
@@ -1338,6 +1397,17 @@ router.post('/:id/solicitudes', async (req, res) => {
         is_read: 0,
         created_at: new Date().toISOString(),
       });
+      if (result.needsManualPaymentLink) {
+        io.to('user_' + gestor.user_id).emit('notification', {
+          id: uuid(),
+          type: 'pago_pendiente_link',
+          title: 'Envía link de pago MP',
+          body: `${clientName} solicitó ${serviceName} sin precio. Define el monto, envíale el link de Mercado Pago y marca como pagado cuando pague.`,
+          ref_id: result.dealId,
+          is_read: 0,
+          created_at: new Date().toISOString(),
+        });
+      }
     }
 
     res.status(201).json({
@@ -1348,6 +1418,7 @@ router.post('/:id/solicitudes', async (req, res) => {
       paymentUrl: result.paymentUrl || null,
       amount: result.amount || 0,
       accountCreated: !!result.accountCreated,
+      needsManualPaymentLink: !!result.needsManualPaymentLink,
     });
   } catch (err) {
     console.error(err);
@@ -1500,7 +1571,7 @@ ${servicesText || 'No hay servicios listados.'}
 ${trainingText ? `\n${trainingText}\n` : ''}
 Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas.
 4. NUNCA inventes precios o servicios.
-5. El flujo es automatizado: primero se registra el trámite; si el cliente no tiene cuenta se le crea; después se le pide el pago con un link. NO digas que deben pagar antes de registrar el trámite.
+5. El flujo es automatizado: primero se registra el trámite; si el cliente no tiene cuenta se le crea; si el servicio tiene precio se le manda link de pago. Si el servicio NO tiene precio, di que nos pondremos en contacto y invita a iniciar sesión en el panel. NO inventes montos.
 `;
 
     if (knownClient) {
@@ -1566,6 +1637,21 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
           }
           lines.push(`Para continuar, realiza el pago de $${amountTxt} MXN aquí:`, result.paymentUrl);
           generatedText = lines.join('\n\n');
+        } else if (result.needsManualPaymentLink) {
+          const loginUrl = result.panelLoginUrl || `${getFrontendBase()}/login/cliente`;
+          const lines = [
+            `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
+            'Como este servicio requiere cotización, nos pondremos en contacto contigo con el costo y el link de pago.',
+          ];
+          if (result.accountCreated) {
+            lines.push('Ya tienes cuenta creada: revisa tu correo con el acceso e inicia sesión en tu panel.');
+          } else if (result.existingAccount || knownClient) {
+            lines.push('Como ya tienes cuenta, inicia sesión en tu panel para dar seguimiento:');
+          } else {
+            lines.push('Cuando te contactemos también te ayudaremos con el acceso al panel.');
+          }
+          lines.push(loginUrl);
+          generatedText = lines.join('\n\n');
         } else if (!generatedText) {
           generatedText = knownClient || result.existingAccount
             ? '¡Listo! Registré tu solicitud con tu cuenta. Puedes seguirla desde Mi Panel.'
@@ -1586,6 +1672,17 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
               is_read: 0,
               created_at: new Date().toISOString(),
             });
+            if (result.needsManualPaymentLink) {
+              io.to('user_' + gestor.user_id).emit('notification', {
+                id: uuid(),
+                type: 'pago_pendiente_link',
+                title: 'Envía link de pago MP',
+                body: `${leadData.clientName} solicitó ${leadData.serviceName} sin precio. Define el monto, envíale el link de Mercado Pago y marca como pagado cuando pague.`,
+                ref_id: result.dealId,
+                is_read: 0,
+                created_at: new Date().toISOString(),
+              });
+            }
           }
         }
       } catch (e) {

@@ -187,6 +187,13 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
         this.solicitudSent.set(true);
         this.solicitudForm = { clientName: '', clientEmail: '', clientPhone: '', serviceName: '', location: '' };
         this.customData = {};
+        if (res?.needsManualPaymentLink) {
+          this.toast.success(
+            'Nos pondremos en contacto con el costo. Ya puedes entrar a tu panel.',
+            '¡Solicitud registrada!',
+          );
+          return;
+        }
         this.toast.success(
           hadEmail
             ? 'Revisa el embudo Trámites en tu panel de gestor.'

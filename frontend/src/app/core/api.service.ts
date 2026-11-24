@@ -114,6 +114,7 @@ export class GestoresService {
       amount?: number;
       dealId?: string;
       accountCreated?: boolean;
+      needsManualPaymentLink?: boolean;
     }>(`${this.base}/${gestorId}/solicitudes`, data);
   }
   trackSolicitud(slugOrId: string, code: string) {
