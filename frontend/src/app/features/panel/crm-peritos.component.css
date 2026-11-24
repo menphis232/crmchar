@@ -467,15 +467,17 @@
 }
 
 .member-btn--enter {
-  background: #0073ea;
-  border-color: #0073ea;
-  color: #fff;
+  background: #0073ea !important;
+  border-color: #0073ea !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 .member-btn--enter:hover:not(:disabled) {
-  background: #0060c2;
-  border-color: #0060c2;
-  color: #fff;
+  background: #0060c2 !important;
+  border-color: #0060c2 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 .member-btn--delete {

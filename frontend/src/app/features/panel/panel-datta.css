@@ -768,7 +768,9 @@
 :host.panel-datta .mon-btn-primary,
 :host.panel-datta ::ng-deep .mon-btn-primary,
 :host.panel-datta .clients-btn--primary,
-:host.panel-datta ::ng-deep .clients-btn--primary {
+:host.panel-datta ::ng-deep .clients-btn--primary,
+:host.panel-datta .member-btn--enter,
+:host.panel-datta ::ng-deep .member-btn--enter {
   background: var(--mon-primary) !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -789,7 +791,9 @@
 :host.panel-datta .mon-btn-primary *,
 :host.panel-datta ::ng-deep .mon-btn-primary *,
 :host.panel-datta .clients-btn--primary *,
-:host.panel-datta ::ng-deep .clients-btn--primary * {
+:host.panel-datta ::ng-deep .clients-btn--primary *,
+:host.panel-datta .member-btn--enter *,
+:host.panel-datta ::ng-deep .member-btn--enter * {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
@@ -799,7 +803,9 @@
 :host.panel-datta .btn-nuevo-lead:hover,
 :host.panel-datta .btn-primary:hover,
 :host.panel-datta .mon-btn-primary:hover,
-:host.panel-datta .clients-btn--primary:hover {
+:host.panel-datta .clients-btn--primary:hover,
+:host.panel-datta .member-btn--enter:hover,
+:host.panel-datta ::ng-deep .member-btn--enter:hover {
   background: #0060c2 !important;
   color: #fff !important;
   -webkit-text-fill-color: #fff !important;
