@@ -16,6 +16,7 @@ export const routes: Routes = [
   { path: 'login/gestor', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'gestor' } },
   { path: 'login/concesionaria', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'concesionaria' } },
   { path: 'login/cliente', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'cliente' } },
+  { path: 'login/magic/:token', loadComponent: () => import('./features/auth/magic-login.component').then(m => m.MagicLoginComponent) },
   { path: 'login/perito', redirectTo: 'login/gestor', pathMatch: 'full' },
   { path: 'login/admin', loadComponent: () => import('./features/auth/login.component').then(m => m.LoginComponent), data: { role: 'admin' } },
   { path: 'registro-pendiente', loadComponent: () => import('./features/auth/registro-pendiente.component').then(m => m.RegistroPendienteComponent) },

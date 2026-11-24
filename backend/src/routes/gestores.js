@@ -8,6 +8,7 @@ import { pipelineStagesForUser } from '../crm/stages.js';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '../utils/mailer.js';
 import { getFrontendBase } from '../utils/frontend-url.js';
+import { createMagicLoginUrl, createMagicLoginUrlByEmail } from '../services/magic-login.js';
 import { callAIProvider } from '../utils/ai_helper.js';
 import { aiTrainingPrompt } from '../utils/ai-training.js';
 import { slugify, uniqueGestorSlug } from '../utils/slug.js';
@@ -1214,41 +1215,56 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
   // 2) Si no tiene cuenta → crear usuario (después del trámite)
   let accountCreated = false;
   let existingAccount = false;
+  let clientUserId = null;
+  let pendingTempPassword = null;
   if (clientEmail) {
     const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
     if (existingUser) {
       existingAccount = true;
+      clientUserId = existingUser.id;
     } else {
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const hash = bcrypt.hashSync(tempPassword, 10);
+      pendingTempPassword = Math.random().toString(36).slice(-8);
+      const hash = bcrypt.hashSync(pendingTempPassword, 10);
       const userId = uuid();
       await run(
         'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
         [userId, clientEmail, hash, 'cliente', clientName],
       );
       accountCreated = true;
+      clientUserId = userId;
+    }
+  }
 
-      const loginUrl = `${getFrontendBase()}/login/cliente`;
-      const html = `
-        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Ya registramos tu trámite de <strong>${serviceName}</strong> con ${gestor.name || owner?.name || 'tu gestor'}.</p>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te creamos una cuenta para seguir el avance, chatear y subir documentos.</p>
-        <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
-          <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
-          <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
-            <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
-            <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
-          </ul>
-        </div>
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${loginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
-        </div>
-      `;
-      try {
-        await sendEmail(clientEmail, 'Tu trámite y cuenta ya están listos', 'Tu cuenta ha sido creada', html, gestor.user_id);
-      } catch (e) {
-        console.error('No se pudo enviar el correo de cuenta:', e);
-      }
+  // Un solo link mágico (chat + correo) — un clic inicia sesión
+  let magicLoginUrl = null;
+  if (clientUserId) {
+    magicLoginUrl = await createMagicLoginUrl(clientUserId);
+  } else if (clientEmail) {
+    magicLoginUrl = await createMagicLoginUrlByEmail(clientEmail);
+  }
+
+  if (accountCreated && clientEmail && pendingTempPassword) {
+    const loginUrl = magicLoginUrl || `${getFrontendBase()}/login/cliente`;
+    const html = `
+      <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Ya registramos tu trámite de <strong>${serviceName}</strong> con ${gestor.name || owner?.name || 'tu gestor'}.</p>
+      <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te creamos una cuenta para seguir el avance, chatear y subir documentos.</p>
+      <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
+        <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
+        <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
+          <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
+          <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${pendingTempPassword}</span></li>
+        </ul>
+      </div>
+      <div style="text-align: center; margin: 40px 0;">
+        <a href="${loginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Entrar a mi panel</a>
+      </div>
+      <p style="color: #a0aec0; font-size: 13px; line-height: 1.5; text-align: center;">El botón te inicia sesión automáticamente (válido 1 hora).</p>
+    `;
+    try {
+      await sendEmail(clientEmail, 'Tu trámite y cuenta ya están listos', 'Tu cuenta ha sido creada', html, gestor.user_id);
+    } catch (e) {
+      console.error('No se pudo enviar el correo de cuenta:', e);
     }
   }
 
@@ -1256,7 +1272,7 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
   let paymentUrl = null;
   let requiresPayment = false;
   let needsManualPaymentLink = false;
-  const panelLoginUrl = `${getFrontendBase()}/login/cliente`;
+  const panelLoginUrl = magicLoginUrl || `${getFrontendBase()}/login/cliente`;
 
   if (
     estimatedValue > 0
@@ -1350,6 +1366,7 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     existingAccount,
     needsManualPaymentLink,
     panelLoginUrl,
+    magicLoginUrl,
   };
 }
 
@@ -1604,39 +1621,44 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
         );
         generatedText = generatedText.replace(/```(?:json)?\s*[\s\S]*?```/i, '').replace(/\{[\s\S]*?"action"\s*:\s*"create_lead"[\s\S]*?\}/, '').trim();
 
+        const magicUrl = result.magicLoginUrl || result.panelLoginUrl || null;
         if (result.requiresPayment && result.paymentUrl) {
           const amountTxt = Number(result.amount || 0).toFixed(2);
           const lines = [
             `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
           ];
-          if (result.accountCreated) {
+          if (magicUrl) {
+            lines.push('Entra a tu panel con un clic (inicio de sesión automático):', magicUrl);
+          } else if (result.accountCreated) {
             lines.push('También te creamos una cuenta; revisa tu correo con el acceso al panel.');
-          } else if (result.existingAccount || knownClient) {
-            lines.push('Puedes seguirlo desde tu panel de cliente.');
           }
           lines.push(`Para continuar, realiza el pago de $${amountTxt} MXN aquí:`, result.paymentUrl);
           generatedText = lines.join('\n\n');
         } else if (result.needsManualPaymentLink) {
-          const loginUrl = result.panelLoginUrl || `${getFrontendBase()}/login/cliente`;
           const lines = [
             `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
             'Como este servicio requiere cotización, nos pondremos en contacto contigo con el costo y el link de pago.',
           ];
-          if (result.accountCreated) {
-            lines.push('Ya tienes cuenta creada: revisa tu correo con el acceso e inicia sesión en tu panel.');
-          } else if (result.existingAccount || knownClient) {
-            lines.push('Como ya tienes cuenta, inicia sesión en tu panel para dar seguimiento:');
+          if (magicUrl) {
+            lines.push('Mientras tanto, entra a tu panel con un clic:', magicUrl);
           } else {
             lines.push('Cuando te contactemos también te ayudaremos con el acceso al panel.');
           }
-          lines.push(loginUrl);
           generatedText = lines.join('\n\n');
         } else if (!generatedText) {
-          generatedText = knownClient || result.existingAccount
-            ? '¡Listo! Registré tu solicitud con tu cuenta. Puedes seguirla desde Mi Panel.'
-            : result.accountCreated
-              ? '¡Excelente! Registré tu trámite y te creamos una cuenta. Revisa tu correo con el acceso.'
-              : '¡Excelente! He registrado tu solicitud.';
+          if (magicUrl) {
+            generatedText = [
+              `¡Listo! Registré tu trámite de ${leadData.serviceName}.`,
+              'Entra a tu panel con un clic:',
+              magicUrl,
+            ].join('\n\n');
+          } else {
+            generatedText = knownClient || result.existingAccount
+              ? '¡Listo! Registré tu solicitud con tu cuenta. Puedes seguirla desde Mi Panel.'
+              : result.accountCreated
+                ? '¡Excelente! Registré tu trámite y te creamos una cuenta. Revisa tu correo con el acceso.'
+                : '¡Excelente! He registrado tu solicitud.';
+          }
         }
 
         if (result.dealId) {

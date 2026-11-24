@@ -303,6 +303,47 @@ router.post('/login', async (req, res) => {
   }
 });
 
+/** Link mágico de un solo uso (cliente) → JWT de sesión */
+router.post('/magic-login/:token', async (req, res) => {
+  try {
+    const raw = String(req.params.token || '').trim();
+    if (!raw || raw.length < 32) {
+      return res.status(400).json({ error: 'Link inválido' });
+    }
+
+    const user = await get(
+      `SELECT * FROM users
+       WHERE magic_login_token = ? AND role = 'cliente'
+         AND magic_login_expires_at IS NOT NULL
+         AND magic_login_expires_at > NOW()
+       LIMIT 1`,
+      [raw],
+    );
+    if (!user) {
+      return res.status(401).json({ error: 'Este link ya expiró o fue usado. Inicia sesión con tu correo.' });
+    }
+
+    await run(
+      'UPDATE users SET magic_login_token = NULL, magic_login_expires_at = NULL, last_seen_at = NOW() WHERE id = ?',
+      [user.id],
+    );
+
+    if (user.permissions && typeof user.permissions === 'string') {
+      try { user.permissions = JSON.parse(user.permissions); } catch { /* ignore */ }
+    }
+    const subscriptionStatus = await getOrgSubscriptionStatus(user.id, user.parent_id);
+    const { password_hash, status: _s, magic_login_token, magic_login_expires_at, ...safe } = user;
+    safe.status = subscriptionStatus;
+    safe.needsLegalAcceptance = !user.terms_accepted_at || !user.privacy_accepted_at;
+    safe.payment_failed_count = user.payment_failed_count || 0;
+
+    res.json({ token: signToken(safe), user: safe });
+  } catch (err) {
+    console.error('magic-login error:', err);
+    res.status(500).json({ error: 'No se pudo iniciar sesión con el link' });
+  }
+});
+
 // ─── FORGOT PASSWORD ─────────────────────────────────────────
 router.post('/forgot-password', async (req, res) => {
   try {

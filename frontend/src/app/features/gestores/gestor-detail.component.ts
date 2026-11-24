@@ -68,6 +68,7 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
       const url = match[1].replace(/[.,);]+$/, '');
       let label = 'Abrir enlace';
       if (/\/pay\/mp\//i.test(url)) label = 'Pagar ahora';
+      else if (/\/login\/magic\//i.test(url)) label = 'Entrar a mi panel';
       else if (/\/login/i.test(url) || /\/panel\/cliente/i.test(url)) label = 'Ir a mi panel';
       parts.push({ type: 'link', value: url, label });
       last = match.index + match[1].length;

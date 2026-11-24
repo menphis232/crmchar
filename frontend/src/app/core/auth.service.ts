@@ -29,6 +29,13 @@ export class AuthService {
     );
   }
 
+  /** Entrada con link mágico de un solo uso (cliente). */
+  magicLogin(token: string) {
+    return this.http.post<{ token: string; user: User }>(`${environment.apiUrl}/auth/magic-login/${token}`, {}).pipe(
+      tap(res => this.setSession(res.token, res.user))
+    );
+  }
+
   forgotPassword(email: string) {
     return this.http.post<{ success: boolean }>(`${environment.apiUrl}/auth/forgot-password`, { email });
   }
