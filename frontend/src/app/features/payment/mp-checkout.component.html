@@ -5,10 +5,10 @@
         <div class="mp-logo-wrap" aria-label="Mercado Pago">
           <img
             class="mp-logo"
-            src="assets/brand/mercadopago-logo.svg"
+            src="assets/brand/mercadopago-logo.png"
             alt="Mercado Pago"
-            width="180"
-            height="33"
+            width="160"
+            height="36"
           >
         </div>
         <span class="mp-badge">Pago seguro</span>
@@ -40,11 +40,11 @@
           <div class="mp-icon success">✓</div>
           <h2>¡Pago realizado!</h2>
           @if (mode === 'pending') {
-            <p>Tu trámite ya quedó creado automáticamente. Te enviamos el acceso al panel por correo para dar seguimiento sin esperar a nadie.</p>
+            <p>Tu trámite ya quedó creado. Te llevamos a tu panel…</p>
           } @else {
-            <p>Tu pago fue procesado correctamente. Recibirás tu comprobante por correo y podrás descargarlo en tu panel de cliente.</p>
+            <p>Pago confirmado. Redirigiendo a tu panel…</p>
           }
-          <a href="/panel/cliente" class="mp-btn">Ir a mi panel</a>
+          <a href="/panel/cliente" class="mp-btn">Ir ahora</a>
         </div>
       }
 

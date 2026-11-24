@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { loadMercadoPago } from '@mercadopago/sdk-js';
 import { MpService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-mp-checkout',
@@ -35,8 +36,14 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   private paymentInfoReady = false;
   private viewReady = false;
   private initStarted = false;
+  private redirectTimer: ReturnType<typeof setTimeout> | null = null;
 
-  constructor(private route: ActivatedRoute, private mpService: MpService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private mpService: MpService,
+    private auth: AuthService,
+  ) {}
 
   ngOnInit() {
     this.token = this.route.snapshot.paramMap.get('token') || '';
@@ -77,8 +84,21 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
+    if (this.redirectTimer) clearTimeout(this.redirectTimer);
     this.brickController?.unmount?.();
     this.brickController = null;
+  }
+
+  private goToPanelAfterPayment() {
+    this.redirectTimer = setTimeout(() => {
+      if (this.auth.isLoggedIn() && this.auth.user()?.role === 'cliente') {
+        void this.router.navigateByUrl('/panel/cliente');
+        return;
+      }
+      void this.router.navigate(['/login/cliente'], {
+        queryParams: { next: '/panel/cliente' },
+      });
+    }, 1600);
   }
 
   private tryInitBrick() {
@@ -169,6 +189,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
                   this.processing.set(false);
                   if (res.success || res.status === 'processed' || res.status === 'approved') {
                     this.success.set(true);
+                    this.goToPanelAfterPayment();
                     resolve();
                     return;
                   }

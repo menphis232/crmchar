@@ -37,15 +37,19 @@
 .mp-logo-wrap {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   background: #fff;
   border-radius: 10px;
-  padding: 6px 10px;
+  padding: 8px 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  max-width: min(220px, 70%);
 }
 .mp-logo {
   display: block;
-  height: 28px;
+  height: 32px;
   width: auto;
+  max-width: 100%;
+  object-fit: contain;
 }
 
 .mp-badge {
@@ -113,6 +117,7 @@
 
 .mp-brick {
   min-height: 420px;
+  overflow: visible;
 }
 
 .mp-brick--hidden {
@@ -120,6 +125,22 @@
   height: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+/* Iconos de marca (Visa/Amex/etc.) del Brick: evitar recorte */
+:host ::ng-deep #cardPaymentBrick_container img,
+:host ::ng-deep #cardPaymentBrick_container svg {
+  object-fit: contain !important;
+  max-height: 28px !important;
+  width: auto !important;
+  max-width: 48px !important;
+  overflow: visible !important;
+}
+:host ::ng-deep #cardPaymentBrick_container [class*="icon"],
+:host ::ng-deep #cardPaymentBrick_container [class*="payment-method"],
+:host ::ng-deep #cardPaymentBrick_container [class*="PaymentMethod"] {
+  overflow: visible !important;
+  flex-shrink: 0 !important;
 }
 
 .mp-status {
