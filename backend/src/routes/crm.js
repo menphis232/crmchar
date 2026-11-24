@@ -2953,6 +2953,7 @@ router.get('/peritos/overview', async (req, res) => {
     };
     const total = status === 'pagado' ? totals.pagado : totals.pendiente;
 
+    // LIMIT/OFFSET van interpolados: mysql2 falla con placeholders (ER_WRONG_ARGUMENTS).
     const rows = await query(
       `SELECT d.id, d.title, d.estimated_value, d.perito_stage, d.perito_poliza_status,
               d.perito_service_cost, d.perito_service_paid,
@@ -2963,8 +2964,8 @@ router.get('/peritos/overview', async (req, res) => {
        WHERE d.user_id = ? AND d.deal_type = 'tramite' AND d.perito_id IS NOT NULL
          AND COALESCE(d.perito_service_paid, 'pendiente') = ?
        ORDER BY d.updated_at DESC
-       LIMIT ? OFFSET ?`,
-      [req.orgId, status, limit, offset],
+       LIMIT ${limit} OFFSET ${offset}`,
+      [req.orgId, status],
     );
 
     res.json({
