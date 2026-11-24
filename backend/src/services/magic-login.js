@@ -43,16 +43,30 @@ export async function createMagicLoginUrlByEmail(email, opts) {
   return createMagicLoginUrl(user.id, opts);
 }
 
-/** Cliente vinculado al deal (por email del contacto). */
+/** Cliente vinculado al deal (email del contacto, o teléfono). */
 export async function resolveClienteUserIdForDeal(dealId) {
-  const row = await get(
+  const byEmail = await get(
     `SELECT u.id AS user_id
      FROM crm_deals d
      JOIN contacts c ON c.id = d.contact_id
-     JOIN users u ON u.email = c.email AND u.role = 'cliente'
+     JOIN users u ON u.role = 'cliente' AND c.email IS NOT NULL AND LOWER(u.email) = LOWER(c.email)
      WHERE d.id = ?
      LIMIT 1`,
     [dealId],
   );
-  return row?.user_id || null;
+  if (byEmail?.user_id) return byEmail.user_id;
+
+  const byPhone = await get(
+    `SELECT u.id AS user_id
+     FROM crm_deals d
+     JOIN contacts c ON c.id = d.contact_id
+     JOIN users u ON u.role = 'cliente' AND u.phone IS NOT NULL AND c.phone IS NOT NULL
+       AND RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(u.phone,''),' ',''),'-',''),'+',''),'(',''),')',''), 10)
+         = RIGHT(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(c.phone,''),' ',''),'-',''),'+',''),'(',''),')',''), 10)
+     WHERE d.id = ?
+     ORDER BY u.created_at DESC
+     LIMIT 1`,
+    [dealId],
+  );
+  return byPhone?.user_id || null;
 }

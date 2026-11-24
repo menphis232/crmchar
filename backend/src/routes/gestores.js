@@ -26,6 +26,7 @@ import {
   promoBannersFromSettings,
   syncLegacyPromoFields,
 } from '../utils/client-promo-banners.js';
+import { normalizeMxPhone } from '../utils/phone.js';
 const router = Router();
 
 /** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
@@ -1213,25 +1214,56 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
   });
 
   // 2) Si no tiene cuenta → crear usuario (después del trámite)
+  // Incluye teléfono para que el panel cliente pueda matchear el contacto del trámite.
   let accountCreated = false;
   let existingAccount = false;
   let clientUserId = null;
   let pendingTempPassword = null;
+  const normalizedPhone = normalizeMxPhone(clientPhone) || null;
   if (clientEmail) {
-    const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
+    const emailNorm = String(clientEmail).trim().toLowerCase();
+    // Buscar solo por email: mismo teléfono con otro correo = otra cuenta de panel.
+    const existingUser = await get('SELECT id, phone FROM users WHERE email = ?', [emailNorm]);
     if (existingUser) {
       existingAccount = true;
       clientUserId = existingUser.id;
+      if (normalizedPhone && !existingUser.phone) {
+        await run('UPDATE users SET phone = ? WHERE id = ?', [normalizedPhone, existingUser.id]);
+      }
     } else {
       pendingTempPassword = Math.random().toString(36).slice(-8);
       const hash = bcrypt.hashSync(pendingTempPassword, 10);
       const userId = uuid();
       await run(
-        'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
-        [userId, clientEmail, hash, 'cliente', clientName],
+        'INSERT INTO users (id, email, phone, password_hash, role, name) VALUES (?, ?, ?, ?, ?, ?)',
+        [userId, emailNorm, normalizedPhone, hash, 'cliente', clientName],
       );
       accountCreated = true;
       clientUserId = userId;
+    }
+
+    // Asegura que el contacto del deal tenga el email/tel con el que el cliente entra al panel
+    if (dealId) {
+      const dealContact = await get(
+        'SELECT c.id, c.email, c.phone FROM crm_deals d JOIN contacts c ON c.id = d.contact_id WHERE d.id = ?',
+        [dealId],
+      );
+      if (dealContact) {
+        const sets = [];
+        const params = [];
+        if (emailNorm && String(dealContact.email || '').toLowerCase() !== emailNorm) {
+          sets.push('email = ?');
+          params.push(emailNorm);
+        }
+        if (normalizedPhone && !dealContact.phone) {
+          sets.push('phone = ?');
+          params.push(normalizedPhone);
+        }
+        if (sets.length) {
+          params.push(dealContact.id);
+          await run(`UPDATE contacts SET ${sets.join(', ')} WHERE id = ?`, params);
+        }
+      }
     }
   }
 

@@ -111,6 +111,16 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
       'SELECT * FROM contacts WHERE user_id = ? AND phone = ? AND pipeline = ? LIMIT 1',
       [userId, phone, pipe],
     );
+    // Mismo teléfono pero otro correo = otro cliente (no reutilizar el contacto viejo).
+    // Si no, el trámite queda en el email anterior y el panel del nuevo usuario no lo ve.
+    if (
+      existing
+      && email
+      && existing.email
+      && existing.email.toLowerCase() !== email.toLowerCase()
+    ) {
+      existing = null;
+    }
   }
 
   if (existing) {
@@ -124,7 +134,7 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
       sets.push('name = ?');
       params.push(trimmedName);
     }
-    if (email && !existing.email) {
+    if (email && (!existing.email || existing.email.toLowerCase() !== email.toLowerCase())) {
       sets.push('email = ?');
       params.push(email.toLowerCase());
     }
