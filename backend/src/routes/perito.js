@@ -254,30 +254,6 @@ peritoRouter.patch('/deals/:id/service-cost', async (req, res) => {
   }
 });
 
-peritoRouter.patch('/deals/:id/service-paid', async (req, res) => {
-  try {
-    const status = req.body?.status === 'pendiente' ? 'pendiente' : 'pagado';
-    const deal = await loadPeritoDeal(req.user.id, req.params.id);
-    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
-
-    await run(
-      'UPDATE crm_deals SET perito_service_paid = ?, updated_at = NOW() WHERE id = ? AND perito_id = ?',
-      [status, req.params.id, req.user.id],
-    );
-
-    notifyGestorPeritoUpdate(req.user.parent_id, {
-      dealId: req.params.id,
-      title: 'Pago de servicio',
-      body: `${req.user.name || 'El perito'} marcó el costo de servicio de "${deal.title}" como ${status === 'pagado' ? 'pagado' : 'pendiente'}`,
-    });
-
-    res.json({ ok: true, peritoServicePaid: status });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Error al actualizar el pago' });
-  }
-});
-
 peritoRouter.post('/deals/:id/notes', async (req, res) => {
   try {
     const note = (req.body.note || '').trim();

@@ -253,16 +253,16 @@
                     Pago servicio:
                     <strong>{{ d.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}</strong>
                   </span>
-                  @if (d.peritoServicePaid !== 'pagado') {
-                    <button
-                      type="button"
-                      class="btn-copy small"
-                      (click)="markPeritoServicePaid()"
-                      [disabled]="markingPeritoServicePaid"
-                    >
-                      {{ markingPeritoServicePaid ? 'Marcando…' : 'Marcar como pagado' }}
-                    </button>
-                  }
+                  <button
+                    type="button"
+                    class="btn-copy small"
+                    (click)="setPeritoServicePaid(d.peritoServicePaid === 'pagado' ? 'pendiente' : 'pagado')"
+                    [disabled]="markingPeritoServicePaid"
+                  >
+                    {{ markingPeritoServicePaid
+                      ? 'Guardando…'
+                      : (d.peritoServicePaid === 'pagado' ? 'Marcar pendiente' : 'Marcar como pagado') }}
+                  </button>
                 </div>
               }
             </div>

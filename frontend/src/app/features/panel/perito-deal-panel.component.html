@@ -59,16 +59,6 @@
             <span class="perito-paid-status" [class.is-paid]="data.deal.peritoServicePaid === 'pagado'">
               {{ data.deal.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente de pago' }}
             </span>
-            @if (data.deal.peritoServicePaid !== 'pagado') {
-              <button
-                type="button"
-                class="btn-primary"
-                (click)="markServicePaid()"
-                [disabled]="markingPaid()"
-              >
-                {{ markingPaid() ? 'Marcando…' : 'Marcar como pagado' }}
-              </button>
-            }
           </div>
         </section>
 

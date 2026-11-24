@@ -867,10 +867,6 @@ export class PeritoService {
     return this.http.patch<{ ok: boolean; peritoServiceCost: number | null }>(`${this.base}/deals/${dealId}/service-cost`, { cost });
   }
 
-  markServicePaid(dealId: string, status: 'pendiente' | 'pagado' = 'pagado') {
-    return this.http.patch<{ ok: boolean; peritoServicePaid: string }>(`${this.base}/deals/${dealId}/service-paid`, { status });
-  }
-
   addNote(dealId: string, note: string) {
     return this.http.post<{ id: string; note: string; createdAt: string }>(`${this.base}/deals/${dealId}/notes`, { note });
   }

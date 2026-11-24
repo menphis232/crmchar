@@ -2187,20 +2187,20 @@ export class CrmDealPanelComponent implements OnDestroy {
     });
   }
 
-  markPeritoServicePaid() {
+  setPeritoServicePaid(status: 'pendiente' | 'pagado') {
     const d = this.deal();
-    if (!d || !this.isOwner() || d.peritoServicePaid === 'pagado') return;
+    if (!d || !this.isOwner() || d.peritoServicePaid === status) return;
     this.markingPeritoServicePaid = true;
-    this.crmService.updateDeal(d.id, { peritoServicePaid: 'pagado' }).subscribe({
+    this.crmService.updateDeal(d.id, { peritoServicePaid: status }).subscribe({
       next: () => {
         this.markingPeritoServicePaid = false;
         this.loadDeal(d.id);
-        this.toast.success('Costo marcado como pagado');
+        this.toast.success(status === 'pagado' ? 'Marcado como pagado' : 'Marcado como pendiente');
         this.updated.emit();
       },
       error: (e) => {
         this.markingPeritoServicePaid = false;
-        this.toast.error(e.error?.error || 'Error al marcar como pagado');
+        this.toast.error(e.error?.error || 'Error al actualizar el pago');
       },
     });
   }

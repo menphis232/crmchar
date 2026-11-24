@@ -43,7 +43,6 @@ export class PeritoDealPanelComponent implements OnInit {
   uploading = signal<string | null>(null);
   serviceCostModel: number | null = null;
   savingCost = signal(false);
-  markingPaid = signal(false);
   stages = PERITO_STAGES.map((id) => ({ id, label: PERITO_STAGE_LABELS[id] }));
   readonly uploadTypes = ['poliza_pago', 'tramite_listo'] as const;
 
@@ -154,24 +153,6 @@ export class PeritoDealPanelComponent implements OnInit {
       error: (e) => {
         this.savingCost.set(false);
         this.toast.error(e.error?.error || 'Error al guardar el costo');
-      },
-    });
-  }
-
-  markServicePaid() {
-    const d = this.detail()?.deal;
-    if (!d || d.peritoServicePaid === 'pagado') return;
-    this.markingPaid.set(true);
-    this.peritoService.markServicePaid(d.id, 'pagado').subscribe({
-      next: () => {
-        this.markingPaid.set(false);
-        this.toast.success('Marcado como pagado');
-        this.load();
-        this.updated.emit();
-      },
-      error: (e) => {
-        this.markingPaid.set(false);
-        this.toast.error(e.error?.error || 'Error al marcar como pagado');
       },
     });
   }
