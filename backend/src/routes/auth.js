@@ -354,7 +354,10 @@ router.get('/me', authRequired, async (req, res) => {
 
     user.status = await getOrgSubscriptionStatus(user.id, user.parent_id);
     user.needsLegalAcceptance = !user.terms_accepted_at || !user.privacy_accepted_at;
-    await run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
+    // No contamina last_seen cuando el gestor entra al panel de cliente/perito.
+    if (!req.user.impersonatedBy) {
+      await run('UPDATE users SET last_seen_at = NOW() WHERE id = ?', [user.id]).catch(() => {});
+    }
     if (user.parent_id) {
       const org = await get('SELECT payment_failed_count FROM users WHERE id = ?', [user.parent_id]);
       user.payment_failed_count = org?.payment_failed_count || 0;

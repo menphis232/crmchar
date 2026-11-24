@@ -75,17 +75,17 @@ export class AuthService {
     this.router.navigate([target]);
   }
 
-  /** Entra al panel cliente conservando la sesión del gestor para poder volver. */
+  /** Entra al panel de cliente/perito conservando la sesión del gestor para poder volver. */
   startImpersonation(token: string, user: User) {
     const currentToken = this.getToken();
     const currentUser = this.user();
-    if (currentToken && currentUser && currentUser.role !== 'cliente') {
+    if (currentToken && currentUser && !['cliente', 'perito'].includes(currentUser.role)) {
       localStorage.setItem(IMPERSONATOR_TOKEN_KEY, currentToken);
       localStorage.setItem(IMPERSONATOR_USER_KEY, JSON.stringify(currentUser));
     }
     this.setSession(token, { ...user, needsLegalAcceptance: false });
     this.isImpersonating.set(true);
-    this.router.navigateByUrl('/panel/cliente');
+    this.router.navigateByUrl(this.panelPathByRole(user.role) || '/panel/cliente');
   }
 
   /** Restaura la sesión del gestor y vuelve a su panel. */

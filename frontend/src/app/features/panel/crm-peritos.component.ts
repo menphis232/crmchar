@@ -1,8 +1,10 @@
-import { Component, OnInit, output, signal } from '@angular/core';
+import { Component, OnInit, output, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucidePlus } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
+import { AuthService } from '../../core/auth.service';
+import { ToastService } from '../../core/toast.service';
 import { PeritoAccount, PeritoOverviewItem, PeritoPerformance } from '../../models';
 import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 
@@ -16,12 +18,17 @@ import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
 export class CrmPeritosComponent implements OnInit {
   openDeal = output<string>();
 
+  private crmService = inject(CrmService);
+  private auth = inject(AuthService);
+  private toast = inject(ToastService);
+
   peritos = signal<PeritoAccount[]>([]);
   performance = signal<PeritoPerformance[]>([]);
   overview = signal<PeritoOverviewItem[]>([]);
   showForm = signal(false);
   editingId = signal<string | null>(null);
   message = signal('');
+  impersonatingId = signal<string | null>(null);
   form = { name: '', phone: '', password: '' };
 
   ngOnInit() {
@@ -42,8 +49,6 @@ export class CrmPeritosComponent implements OnInit {
       error: () => {},
     });
   }
-
-  constructor(private crmService: CrmService) {}
 
   openForm(perito?: PeritoAccount) {
     this.showForm.set(true);
@@ -117,6 +122,34 @@ export class CrmPeritosComponent implements OnInit {
         this.reload();
       },
       error: (e) => this.message.set(e.error?.error || 'Error al eliminar'),
+    });
+  }
+
+  enterPeritoPanel(perito: PeritoAccount) {
+    if (!perito?.id || this.impersonatingId()) return;
+    this.impersonatingId.set(perito.id);
+    this.crmService.impersonatePerito(perito.id).subscribe({
+      next: (res) => {
+        this.impersonatingId.set(null);
+        this.auth.startImpersonation(res.token, res.user);
+      },
+      error: (err) => {
+        this.impersonatingId.set(null);
+        this.toast.error(err?.error?.error || 'No se pudo abrir el panel del perito');
+      },
+    });
+  }
+
+  formatLastSeen(value: string | null | undefined): string {
+    if (!value) return 'Nunca';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'Nunca';
+    return d.toLocaleString('es-MX', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
   }
 

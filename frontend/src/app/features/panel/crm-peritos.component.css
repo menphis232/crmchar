@@ -348,7 +348,7 @@
   text-overflow: ellipsis;
 }
 
-.member-info span {
+.member-phone {
   font-size: 13px;
   color: #676879;
   white-space: nowrap;
@@ -357,10 +357,76 @@
   display: block;
 }
 
+.member-activity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 8px;
+}
+
+.activity-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #676879;
+}
+
+.activity-status.online {
+  color: #037f4c;
+}
+
+.activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #c5c7d0;
+  flex-shrink: 0;
+}
+
+.activity-dot.online {
+  background: #00c875;
+  box-shadow: 0 0 0 3px rgba(0, 200, 117, 0.2);
+}
+
+.activity-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  background: #f0f1f5;
+  color: #676879;
+}
+
+.activity-pill.yes {
+  background: rgba(0, 200, 117, 0.12);
+  color: #037f4c;
+}
+
+.activity-pill.no {
+  background: rgba(255, 153, 0, 0.12);
+  color: #c77700;
+}
+
+.activity-seen {
+  font-size: 12px;
+  color: #676879;
+}
+
+.team-member-card.is-online {
+  border-left-color: #00c875;
+}
+
 .member-actions {
   display: flex;
   gap: 6px;
   flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .member-btn {
@@ -379,6 +445,11 @@
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
+.member-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
 .member-btn svg {
   width: 14px;
   height: 14px;
@@ -389,10 +460,22 @@
   stroke-linejoin: round;
 }
 
-.member-btn:hover {
+.member-btn:hover:not(:disabled) {
   background: #f5f6f8;
   color: #0073ea;
   border-color: #0073ea;
+}
+
+.member-btn--enter {
+  background: #0073ea;
+  border-color: #0073ea;
+  color: #fff;
+}
+
+.member-btn--enter:hover:not(:disabled) {
+  background: #0060c2;
+  border-color: #0060c2;
+  color: #fff;
 }
 
 .member-btn--delete {
@@ -400,7 +483,7 @@
   border-color: rgba(248, 113, 113, 0.35);
 }
 
-.member-btn--delete:hover {
+.member-btn--delete:hover:not(:disabled) {
   background: #dc2626;
   border-color: #dc2626;
   color: #ffffff;

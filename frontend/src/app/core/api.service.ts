@@ -183,6 +183,9 @@ export class CrmService {
     return this.http.put<{ ok: boolean }>(`${this.base}/peritos/${id}`, data);
   }
   deletePerito(id: string) { return this.http.delete<{ ok: boolean }>(`${this.base}/peritos/${id}`); }
+  impersonatePerito(peritoId: string) {
+    return this.http.post<{ token: string; user: any }>(`${this.base}/peritos/${peritoId}/impersonate`, {});
+  }
   getPeritosForAssign() { return this.http.get<PeritoAssignOption[]>(`${this.base}/peritos/list-assign`); }
   getPeritoPerformance() { return this.http.get<PeritoPerformance[]>(`${this.base}/peritos/performance`); }
   getPeritoOverview() { return this.http.get<PeritoOverviewItem[]>(`${this.base}/peritos/overview`); }

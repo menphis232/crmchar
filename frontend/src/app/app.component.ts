@@ -15,7 +15,7 @@ import { LegalAcceptanceModalComponent } from './shared/legal-acceptance-modal.c
       <div class="impersonation-bar" role="status">
         <span>
           Viendo el panel de
-          <strong>{{ auth.user()?.name || 'cliente' }}</strong>
+          <strong>{{ auth.user()?.name || 'usuario' }}</strong>
         </span>
         <button type="button" (click)="auth.stopImpersonation()">Volver al panel</button>
       </div>

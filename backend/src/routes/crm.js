@@ -2895,16 +2895,53 @@ router.get('/peritos/overview', async (req, res) => {
 router.get('/peritos', gestorOwnerOnly, async (req, res) => {
   try {
     const rows = await query(
-      `SELECT id, email, phone, name, created_at AS createdAt FROM users
+      `SELECT id, email, phone, name, last_seen_at, created_at AS createdAt FROM users
        WHERE role = 'perito' AND parent_id = ? ORDER BY name ASC`,
       [req.user.id],
     );
     res.json(rows.map(r => ({
-      ...r,
+      id: r.id,
       email: r.email?.endsWith('@peritos.tramitesmx.local') ? null : r.email,
+      phone: r.phone || null,
+      name: r.name,
+      createdAt: r.createdAt,
+      lastSeenAt: r.last_seen_at || null,
+      hasLoggedIn: !!r.last_seen_at,
+      online: isUserOnline(r.id),
     })));
   } catch (err) {
     res.status(500).json({ error: 'Error al listar peritos' });
+  }
+});
+
+router.post('/peritos/:id/impersonate', gestorOwnerOnly, async (req, res) => {
+  try {
+    const perito = await get(
+      "SELECT * FROM users WHERE id = ? AND role = 'perito' AND parent_id = ?",
+      [req.params.id, req.user.id],
+    );
+    if (!perito) return res.status(404).json({ error: 'Perito no encontrado' });
+    if (perito.status === 'deactivated') {
+      return res.status(400).json({ error: 'La cuenta del perito está desactivada' });
+    }
+
+    const { password_hash, ...safe } = perito;
+    if (safe.permissions && typeof safe.permissions === 'string') {
+      try { safe.permissions = JSON.parse(safe.permissions); } catch { /* ignore */ }
+    }
+    safe.needsLegalAcceptance = false;
+    safe.impersonatedBy = req.user.id;
+    safe.impersonatorName = req.user.name || '';
+
+    const token = signToken(safe, {
+      impersonatedBy: req.user.id,
+      impersonatorName: safe.impersonatorName,
+    });
+
+    res.json({ token, user: safe });
+  } catch (err) {
+    console.error('perito impersonate:', err);
+    res.status(500).json({ error: 'No se pudo abrir el panel del perito' });
   }
 });
 

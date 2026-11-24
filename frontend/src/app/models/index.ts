@@ -577,6 +577,9 @@ export interface PeritoAccount {
   phone: string | null;
   name: string;
   createdAt?: string;
+  lastSeenAt?: string | null;
+  hasLoggedIn?: boolean;
+  online?: boolean;
 }
 
 export interface PeritoPerformance {
