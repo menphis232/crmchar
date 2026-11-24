@@ -177,7 +177,7 @@ router.get('/payment-info/:token', async (req, res) => {
     const token = req.params.token;
 
     const dealRow = await get(
-      `SELECT d.id, d.title, d.estimated_value, d.stage,
+      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status,
               u.mp_public_key, u.name AS gestor_name
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
@@ -189,8 +189,8 @@ router.get('/payment-info/:token', async (req, res) => {
       if (!dealRow.mp_public_key) {
         return res.status(400).json({ error: 'El gestor no ha configurado MercadoPago' });
       }
-      if (dealRow.stage === 'completado') {
-        return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+      if (dealRow.payment_status === 'paid' || dealRow.stage === 'completado') {
+        return res.status(409).json({ error: 'Este trámite ya fue pagado. No es necesario volver a pagar.' });
       }
       return res.json({
         publicKey: dealRow.mp_public_key,
@@ -249,7 +249,7 @@ router.post('/process-payment/:token', async (req, res) => {
     const token = req.params.token;
     let kind = 'deal';
     let row = await get(
-      `SELECT d.id, d.title, d.estimated_value, d.stage, d.user_id,
+      `SELECT d.id, d.title, d.estimated_value, d.stage, d.payment_status, d.user_id,
               u.mp_access_token
        FROM crm_deals d
        JOIN users u ON u.id = d.user_id
@@ -258,8 +258,8 @@ router.post('/process-payment/:token', async (req, res) => {
     );
 
     if (row) {
-      if (row.stage === 'completado') {
-        return res.status(409).json({ error: 'Este trámite ya fue pagado' });
+      if (row.payment_status === 'paid' || row.stage === 'completado') {
+        return res.status(409).json({ error: 'Este trámite ya fue pagado. No es necesario volver a pagar.' });
       }
     } else {
       const pending = await findPendingByToken(token);

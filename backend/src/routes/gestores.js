@@ -1267,29 +1267,8 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     await run('UPDATE crm_deals SET mp_payment_token = ? WHERE id = ?', [token, dealId]);
     paymentUrl = `${getFrontendBase()}/pay/mp/${token}`;
     requiresPayment = true;
-
-    if (clientEmail) {
-      const html = `
-        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
-          Tu trámite de <strong>${serviceName}</strong> ya está registrado. Completa el pago seguro para continuar:
-        </p>
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${paymentUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Pagar $${estimatedValue.toFixed(2)} MXN</a>
-        </div>
-      `;
-      try {
-        await sendEmail(
-          clientEmail,
-          `Completa el pago de ${serviceName}`,
-          `Paga tu trámite aquí: ${paymentUrl}`,
-          html,
-          gestor.user_id,
-        );
-      } catch (e) {
-        console.error('No se pudo enviar correo de pago:', e);
-      }
-    }
+    // No enviar correo "Completa el pago": el link ya va en el chat/formulario.
+    // Tras pagar se envía el comprobante; un mail de cobro aquí confunde si el cliente ya pagó.
   } else if (estimatedValue <= 0) {
     needsManualPaymentLink = true;
 

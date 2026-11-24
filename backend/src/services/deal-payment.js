@@ -102,11 +102,13 @@ export async function finalizeDealPayment(dealId, {
     : resolvePaymentDate(paidAt);
 
   // Primero marcar pagado (no depender del PDF/correo)
+  // Conservamos mp_payment_token para que un link viejo del correo diga "ya pagado"
+  // en lugar de "no encontrado"; el cobro se bloquea con payment_status.
   if (shouldKeepStage) {
     await run(
       `UPDATE crm_deals
        SET payment_status = 'paid', estimated_value = ?,
-           mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
+           mp_order_id = COALESCE(?, mp_order_id)
        WHERE id = ?`,
       [paidAmount, mpOrderId, dealId],
     );
@@ -114,7 +116,7 @@ export async function finalizeDealPayment(dealId, {
     await run(
       `UPDATE crm_deals
        SET payment_status = 'paid', estimated_value = ?, stage = 'completado', stage_changed_at = NOW(),
-           mp_order_id = COALESCE(?, mp_order_id), mp_payment_token = NULL
+           mp_order_id = COALESCE(?, mp_order_id)
        WHERE id = ?`,
       [paidAmount, mpOrderId, dealId],
     );
