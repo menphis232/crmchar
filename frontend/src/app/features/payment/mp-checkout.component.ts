@@ -89,16 +89,33 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
     this.brickController = null;
   }
 
-  private goToPanelAfterPayment() {
+  private goToPanelAfterPayment(magicLoginToken?: string | null) {
+    const enter = () => {
+      void this.router.navigateByUrl('/panel/cliente');
+    };
+
+    if (magicLoginToken) {
+      this.auth.magicLogin(magicLoginToken).subscribe({
+        next: () => enter(),
+        error: () => {
+          // Si el magic falla, al menos ir al login
+          void this.router.navigate(['/login/cliente'], {
+            queryParams: { next: '/panel/cliente' },
+          });
+        },
+      });
+      return;
+    }
+
     this.redirectTimer = setTimeout(() => {
       if (this.auth.isLoggedIn() && this.auth.user()?.role === 'cliente') {
-        void this.router.navigateByUrl('/panel/cliente');
+        enter();
         return;
       }
       void this.router.navigate(['/login/cliente'], {
         queryParams: { next: '/panel/cliente' },
       });
-    }, 1600);
+    }, 1200);
   }
 
   private tryInitBrick() {
@@ -189,7 +206,7 @@ export class MpCheckoutComponent implements OnInit, AfterViewInit, OnDestroy {
                   this.processing.set(false);
                   if (res.success || res.status === 'processed' || res.status === 'approved') {
                     this.success.set(true);
-                    this.goToPanelAfterPayment();
+                    this.goToPanelAfterPayment(res.magicLoginToken);
                     resolve();
                     return;
                   }

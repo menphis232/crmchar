@@ -933,7 +933,15 @@ export class MpService {
     identificationType?: string;
     identificationNumber?: string;
   }) {
-    return this.http.post<{ success: boolean; status: string; orderId?: string; requiresAction?: boolean; actionUrl?: string; message?: string }>(`${this.base}/process-payment/${token}`, body);
+    return this.http.post<{
+      success: boolean;
+      status: string;
+      orderId?: string;
+      requiresAction?: boolean;
+      actionUrl?: string;
+      message?: string;
+      magicLoginToken?: string | null;
+    }>(`${this.base}/process-payment/${token}`, body);
   }
 }
 

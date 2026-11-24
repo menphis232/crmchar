@@ -10,6 +10,10 @@ import {
   findPendingByOrderId,
   fulfillPendingCheckout,
 } from '../services/mp-pending-checkout.js';
+import {
+  createMagicLoginToken,
+  resolveClienteUserIdForDeal,
+} from '../services/magic-login.js';
 
 const router = express.Router();
 
@@ -87,9 +91,11 @@ async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal'
   const paymentDetail = payment?.status_detail;
 
   if (isOrderPaid(orderResult)) {
+    let dealIdForLogin = kind === 'deal' ? row.id : null;
     try {
       if (kind === 'pending') {
-        await fulfillPendingCheckout(row, { mpOrderId: orderId || null });
+        const fulfilled = await fulfillPendingCheckout(row, { mpOrderId: orderId || null });
+        dealIdForLogin = fulfilled?.dealId || null;
       } else {
         // Cobro de cliente: marcar pagado sin cerrar el trámite
         await finalizeDealPayment(row.id, {
@@ -102,7 +108,26 @@ async function handleOrderResponse(orderResult, row, res, mpErr, { kind = 'deal'
     } catch (finalizeErr) {
       console.error('finalize payment error:', finalizeErr);
     }
-    return res.json({ success: true, status, orderId, createdDeal: kind === 'pending' });
+
+    let magicLoginToken = null;
+    if (dealIdForLogin) {
+      try {
+        const clientUserId = await resolveClienteUserIdForDeal(dealIdForLogin);
+        if (clientUserId) {
+          magicLoginToken = await createMagicLoginToken(clientUserId);
+        }
+      } catch (magicErr) {
+        console.error('magic login after payment error:', magicErr);
+      }
+    }
+
+    return res.json({
+      success: true,
+      status,
+      orderId,
+      createdDeal: kind === 'pending',
+      magicLoginToken,
+    });
   }
 
   if (status === 'requires_action') {
