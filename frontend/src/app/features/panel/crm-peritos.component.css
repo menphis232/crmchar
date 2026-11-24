@@ -127,14 +127,16 @@
   border-radius: 999px;
   background: #f0f1f5;
   color: #323338;
+  -webkit-text-fill-color: #323338;
   font-size: 12px;
   font-weight: 700;
   padding: 0 6px;
 }
 
 .perito-pay-tab.active .perito-pay-count {
-  background: #0073ea;
-  color: #fff;
+  background: #0073ea !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 .col-actions {

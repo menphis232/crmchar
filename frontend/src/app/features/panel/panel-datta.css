@@ -782,6 +782,13 @@
   text-transform: none !important;
 }
 
+:host.panel-datta .perito-pay-tab.active .perito-pay-count,
+:host.panel-datta ::ng-deep .perito-pay-tab.active .perito-pay-count {
+  background: var(--mon-primary) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
 :host.panel-datta .btn-copy *,
 :host.panel-datta ::ng-deep .btn-copy *,
 :host.panel-datta .btn-nuevo-lead *,
