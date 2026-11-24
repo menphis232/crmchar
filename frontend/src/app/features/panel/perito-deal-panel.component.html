@@ -1,18 +1,29 @@
-<div class="perito-panel-overlay" (click)="close()">
-  <div class="perito-panel" (click)="$event.stopPropagation()">
-    <header class="perito-panel-header">
-      <h2>{{ detail()?.deal?.title || 'Trámite' }}</h2>
-      <button type="button" class="perito-close-btn" (click)="close()" aria-label="Cerrar">
+@if (loading()) {
+  <div class="deal-page">
+    <div class="deal-page-toolbar">
+      <button type="button" class="deal-back-btn" (click)="close()">← Volver</button>
+    </div>
+    <p class="perito-loading">Cargando…</p>
+  </div>
+} @else if (detail(); as data) {
+  <div class="deal-page">
+    <div class="deal-page-toolbar">
+      <button type="button" class="deal-back-btn" (click)="close()">← Volver</button>
+      <button type="button" class="deal-panel-close" (click)="close()" aria-label="Cerrar">
         <svg lucideX [size]="18" aria-hidden="true"></svg>
       </button>
-    </header>
+    </div>
 
-    @if (loading()) {
-      <p class="perito-loading">Cargando…</p>
-    } @else {
-      @if (detail(); as data) {
-      <div class="perito-panel-body">
-        <section class="perito-section">
+    <div class="deal-panel">
+      <div class="deal-panel-header">
+        <div style="flex:1;min-width:0;">
+          <p class="deal-panel-eyebrow">Detalle del trámite</p>
+          <h3>{{ data.deal.title || 'Trámite' }}</h3>
+        </div>
+      </div>
+
+      <div class="deal-panel-body">
+        <section class="deal-section">
           <h4>Etapa</h4>
           <select [ngModel]="data.deal.peritoStage || 'tramite'" (ngModelChange)="changeStage($event)">
             @for (s of stages; track s.id) {
@@ -21,7 +32,7 @@
           </select>
         </section>
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Estatus póliza de pago</h4>
           <select [ngModel]="data.deal.peritoPolizaStatus" (ngModelChange)="changePoliza($event)">
             <option value="pendiente">Pendiente</option>
@@ -30,13 +41,13 @@
         </section>
 
         @if (data.deal.internalNotes) {
-          <section class="perito-section">
+          <section class="deal-section">
             <h4>Notas del gestor</h4>
             <p class="perito-notes-gestor">{{ data.deal.internalNotes }}</p>
           </section>
         }
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Documentos del gestor</h4>
           @if (data.documents.gestor.length) {
             <ul class="perito-doc-list">
@@ -54,7 +65,7 @@
           }
         </section>
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Documentos del cliente</h4>
           @if (data.documents.client.length) {
             <ul class="perito-doc-list">
@@ -72,13 +83,13 @@
           }
         </section>
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Mis archivos</h4>
           @for (type of ['poliza_pago', 'tramite_listo', 'guia_paqueteria']; track type) {
             <div class="perito-upload-block">
               <div class="perito-upload-head">
                 <span>{{ uploadLabel(type) }}</span>
-                <label class="btn-copy small btn-with-icon">
+                <label class="btn-upload btn-with-icon">
                   <svg lucideUpload [size]="14" aria-hidden="true"></svg>
                   {{ uploading() === type ? 'Subiendo…' : 'Subir' }}
                   <input type="file" accept="image/*,.pdf" hidden (change)="onUpload(type, $any($event.target))" [disabled]="uploading() === type">
@@ -103,7 +114,7 @@
           }
         </section>
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Chat con gestoría</h4>
           <div class="perito-staff-chat">
             <div class="perito-staff-messages" id="perito-staff-chat-box">
@@ -125,16 +136,16 @@
             </div>
             <div class="perito-staff-input">
               <input type="text" [(ngModel)]="newStaffMessage" placeholder="Escribe a la gestoría…" (keyup.enter)="sendStaffMessage()">
-              <button type="button" class="btn-copy small" (click)="sendStaffMessage()" [disabled]="!newStaffMessage.trim()">Enviar</button>
+              <button type="button" class="btn-primary" (click)="sendStaffMessage()" [disabled]="!newStaffMessage.trim()">Enviar</button>
             </div>
           </div>
         </section>
 
-        <section class="perito-section">
+        <section class="deal-section">
           <h4>Notas</h4>
           <div class="perito-note-form">
             <textarea [(ngModel)]="newNote" rows="2" placeholder="Agregar nota…"></textarea>
-            <button type="button" class="btn-copy small" (click)="saveNote()" [disabled]="!newNote.trim()">Guardar nota</button>
+            <button type="button" class="btn-primary" (click)="saveNote()" [disabled]="!newNote.trim()">Guardar nota</button>
           </div>
           @if (data.notes.length) {
             <ul class="perito-notes-list">
@@ -151,7 +162,6 @@
           }
         </section>
       </div>
-      }
-    }
+    </div>
   </div>
-</div>
+}

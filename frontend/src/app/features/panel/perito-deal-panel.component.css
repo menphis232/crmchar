@@ -1,181 +1,165 @@
-.perito-panel-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: flex-end;
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  --mon-primary: #0073ea;
+  color-scheme: light;
+  font-family: 'Figtree', system-ui, sans-serif;
+  color: #323338;
 }
 
-.perito-panel {
-  width: min(480px, 100%);
-  height: 100%;
-  background: #0a0a0a;
-  border-left: 1px solid rgba(255, 255, 255, 0.12);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
+.deal-page {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+  box-sizing: border-box;
 }
 
-.perito-panel-header {
+.deal-page-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  margin: 0 0 12px;
+}
+
+.deal-back-btn {
+  border: none;
+  background: transparent;
+  color: #0073ea;
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.deal-back-btn:hover {
+  text-decoration: underline;
+}
+
+.deal-panel-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #676879;
+  cursor: pointer;
+}
+
+.deal-panel-close:hover {
+  color: #0073ea;
+  border-color: #0073ea;
+  background: #e5f4ff;
+}
+
+.deal-panel {
+  position: static;
+  width: 100%;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #323338;
+  overflow: visible;
+  display: block;
+  padding: 0;
+}
+
+.deal-panel-header {
+  background: #fff;
+  border: 1px solid #e6e9ef;
+  border-radius: 12px;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  background: #111;
-  flex-shrink: 0;
+  margin-bottom: 12px;
 }
 
-.perito-panel-header h2 {
-  margin: 0;
-  font-family: var(--f-display, 'Spartan', sans-serif);
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
+.deal-panel-eyebrow {
+  margin: 0 0 4px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #fff;
+  color: #676879;
+  font-weight: 600;
 }
 
-.perito-panel-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 18px 20px 32px;
+.deal-panel-header h3 {
+  margin: 0;
+  color: #323338;
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.deal-panel-body {
+  background: transparent;
+  color: #323338;
+  overflow: visible;
+  padding: 8px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.perito-section {
-  background: #141414;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.deal-section {
+  background: #fff;
+  border: 1px solid #e6e9ef;
   border-radius: 12px;
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
-.perito-section h4 {
+.deal-section h4 {
   margin: 0 0 10px;
-  font-family: var(--f-display, 'Spartan', sans-serif);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  color: #676879;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.42);
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.perito-section select,
-.perito-note-form textarea {
+.deal-section select,
+.perito-note-form textarea,
+.perito-staff-input input {
   width: 100%;
-  background: #0d0d0d;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #fff;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #c5c7d0;
+  color: #323338;
   border-radius: 8px;
   padding: 9px 11px;
   font: inherit;
   font-size: 13px;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
-.perito-section select {
+.deal-section select {
   cursor: pointer;
   appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23676879' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 14px;
   padding-right: 32px;
 }
 
-.perito-section select:focus,
-.perito-note-form textarea:focus {
+.deal-section select:focus,
+.perito-note-form textarea:focus,
+.perito-staff-input input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.4);
-}
-
-.perito-staff-chat {
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  overflow: hidden;
-  background: #0d0d0d;
-}
-
-.perito-staff-messages {
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.perito-staff-msg {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  padding: 8px 10px;
-  max-width: 92%;
-}
-
-.perito-staff-msg.own {
-  align-self: flex-end;
-  background: rgba(200, 169, 74, 0.12);
-  border-color: rgba(200, 169, 74, 0.28);
-}
-
-.perito-staff-msg-meta {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 10px;
-  opacity: 0.7;
-  margin-bottom: 4px;
-}
-
-.perito-staff-msg p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-}
-
-.perito-staff-msg a {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: #c8a94a;
-}
-
-.perito-staff-input {
-  display: flex;
-  gap: 8px;
-  padding: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.perito-staff-input input {
-  flex: 1;
-  min-width: 0;
-  background: #151515;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 6px;
-  color: #fff;
-  padding: 8px 10px;
-  font-size: 13px;
-}
-
-.perito-value {
-  font-family: var(--f-display, 'Spartan', sans-serif);
-  font-size: 1.4rem;
-  font-weight: 800;
-  color: #fff;
-  margin: 0;
+  border-color: #0073ea;
+  box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.12);
 }
 
 .perito-notes-gestor {
   margin: 0;
   white-space: pre-wrap;
-  color: rgba(255, 255, 255, 0.8);
+  color: #323338;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -194,33 +178,32 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #fff;
+  color: #0073ea;
   font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.15s ease;
 }
 
 .perito-doc-list a:hover {
-  border-bottom-color: rgba(255, 255, 255, 0.4);
+  text-decoration: underline;
 }
 
 .perito-doc-list a svg {
-  color: rgba(255, 255, 255, 0.5);
+  color: #0073ea;
   flex-shrink: 0;
 }
 
 .perito-empty {
   margin: 0;
-  color: rgba(255, 255, 255, 0.38);
+  color: #9ca0ad;
   font-size: 13px;
 }
 
 .perito-upload-block {
   margin-bottom: 10px;
   padding: 12px;
-  background: #0d0d0d;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #f7f8fa;
+  border: 1px solid #e6e9ef;
   border-radius: 10px;
 }
 
@@ -235,7 +218,7 @@
   gap: 10px;
   font-size: 13px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.85);
+  color: #323338;
 }
 
 .perito-upload-item {
@@ -244,7 +227,7 @@
   gap: 8px;
   margin-top: 10px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid #e6e9ef;
 }
 
 .perito-thumb {
@@ -252,20 +235,22 @@
   max-height: 72px;
   border-radius: 6px;
   object-fit: cover;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid #e6e9ef;
 }
 
 .perito-file-link {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #0073ea;
   font-size: 13px;
+  font-weight: 600;
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .perito-note-form {
@@ -278,10 +263,6 @@
 .perito-note-form textarea {
   resize: vertical;
   min-height: 56px;
-}
-
-.perito-note-form .btn-copy {
-  align-self: flex-end;
 }
 
 .perito-notes-list {
@@ -297,7 +278,7 @@
   display: flex;
   gap: 8px;
   padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid #e6e9ef;
 }
 
 .perito-notes-list li:first-child {
@@ -306,7 +287,7 @@
 }
 
 .perito-notes-list svg {
-  color: rgba(255, 255, 255, 0.35);
+  color: #9ca0ad;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -314,80 +295,116 @@
 .perito-notes-list p {
   margin: 0 0 4px;
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.85);
+  color: #323338;
   white-space: pre-wrap;
 }
 
 .perito-notes-list time {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
+  color: #9ca0ad;
 }
 
 .perito-loading {
-  padding: 24px;
-  color: rgba(255, 255, 255, 0.5);
+  padding: 24px 0;
+  color: #676879;
 }
 
-/* ── Botones alineados con la línea gráfica del panel gestor ── */
-.btn-copy {
+.perito-staff-chat {
+  border: 1px solid #e6e9ef;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f7f8fa;
+}
+
+.perito-staff-messages {
+  max-height: 280px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.perito-staff-msg {
+  background: #fff;
+  border: 1px solid #e6e9ef;
+  border-radius: 8px;
+  padding: 8px 10px;
+  max-width: 92%;
+}
+
+.perito-staff-msg.own {
+  align-self: flex-end;
+  background: #e5f4ff;
+  border-color: #b3dbfd;
+}
+
+.perito-staff-msg-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  color: #676879;
+  margin-bottom: 4px;
+}
+
+.perito-staff-msg p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #323338;
+}
+
+.perito-staff-msg a {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: #0073ea;
+  font-weight: 600;
+}
+
+.perito-staff-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #e6e9ef;
+  background: #fff;
+}
+
+.perito-staff-input input {
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-primary,
+.btn-upload {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #ffffff;
-  color: #000000;
-  border: 2px solid #ffffff;
+  background: #0073ea;
+  color: #fff;
+  border: 1px solid #0073ea;
   border-radius: 8px;
-  font-family: var(--f-display, 'Spartan', sans-serif);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 8px 16px;
+  font-family: 'Figtree', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
-.btn-copy:hover {
-  background: transparent;
-  color: #ffffff;
+.btn-primary:hover,
+.btn-upload:hover {
+  background: #0060c2;
+  border-color: #0060c2;
 }
 
-.btn-copy:disabled {
-  opacity: 0.4;
+.btn-primary:disabled,
+.btn-upload:disabled,
+label.btn-upload:has(input:disabled) {
+  opacity: 0.45;
   cursor: not-allowed;
   pointer-events: none;
-}
-
-.btn-copy.small {
-  padding: 6px 12px;
-  font-size: 10px;
-}
-
-.btn-ghost {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 8px;
-  font-family: var(--f-ui, 'Spartan', sans-serif);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 12px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.45);
-}
-
-.btn-ghost.small {
-  padding: 6px 9px;
-  font-size: 11px;
 }
 
 .btn-with-icon {
@@ -396,35 +413,9 @@
   gap: 6px;
 }
 
-label.btn-copy {
+label.btn-upload {
   cursor: pointer;
-}
-
-label.btn-copy.disabled,
-label.btn-copy:has(input:disabled) {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.perito-close-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  flex-shrink: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.perito-close-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.4);
+  margin: 0;
 }
 
 .perito-icon-btn {
@@ -434,16 +425,15 @@ label.btn-copy:has(input:disabled) {
   width: 30px;
   height: 30px;
   flex-shrink: 0;
-  background: transparent;
-  color: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #fff;
+  color: #9ca0ad;
+  border: 1px solid #e6e9ef;
   border-radius: 7px;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .perito-icon-btn:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ff8a8a;
-  border-color: rgba(239, 68, 68, 0.35);
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
 }
