@@ -59,6 +59,16 @@
             <span class="perito-paid-status" [class.is-paid]="data.deal.peritoServicePaid === 'pagado'">
               {{ data.deal.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente de pago' }}
             </span>
+            @if (data.deal.peritoServicePaid === 'pagado' && data.deal.peritoServiceReceiptUrl) {
+              <a
+                class="perito-receipt-link"
+                [href]="data.deal.peritoServiceReceiptUrl"
+                target="_blank"
+                rel="noopener"
+              >
+                {{ data.deal.peritoServiceReceiptName || 'Ver comprobante' }}
+              </a>
+            }
           </div>
         </section>
 

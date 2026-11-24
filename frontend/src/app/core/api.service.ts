@@ -5,7 +5,7 @@ import { environment } from '../../environments/environment';
 import {
   AdminStats, Auto, AutoInquiry, AutoPrivateDocument, AutoStatus, ConcesionariaDashboard, DealerProfile,
   ClientPromoBanner, ClientPromoBannerDto, CrmContact, CrmContact360, CrmContactVehicle, CrmContactVehicleDocument, CrmContactsPage, CrmVerificationAlert, CrmDashboard, CrmDeal, CrmTeamMember, CrmTeamPerformance, CrmTodayInbox, CrmTask, CrmDocument, DealerReview, Gestor, GestorReview, MakeFilter, ManagedUser,
-  PeritoAccount, PeritoAssignOption, PeritoDeal, PeritoDealDetail, PeritoOverviewItem, PeritoPerformance,
+  PeritoAccount, PeritoAssignOption, PeritoDeal, PeritoDealDetail, PeritoOverviewItem, PeritoOverviewResponse, PeritoPerformance,
   MessageTemplate, SiteSettings, StateFilter, SupportMessage, SupportThread, FinTransaction, FinDashboard, BillingSummary, BillingInvoice, BillingPaymentMethod
 } from '../models';
 import { resolveThemeFont } from '../shared/theme-fonts';
@@ -188,7 +188,19 @@ export class CrmService {
   }
   getPeritosForAssign() { return this.http.get<PeritoAssignOption[]>(`${this.base}/peritos/list-assign`); }
   getPeritoPerformance() { return this.http.get<PeritoPerformance[]>(`${this.base}/peritos/performance`); }
-  getPeritoOverview() { return this.http.get<PeritoOverviewItem[]>(`${this.base}/peritos/overview`); }
+  getPeritoOverview(params?: { status?: 'pendiente' | 'pagado'; page?: number; limit?: number }) {
+    let httpParams = new HttpParams();
+    if (params?.status) httpParams = httpParams.set('status', params.status);
+    if (params?.page) httpParams = httpParams.set('page', String(params.page));
+    if (params?.limit) httpParams = httpParams.set('limit', String(params.limit));
+    return this.http.get<PeritoOverviewResponse>(`${this.base}/peritos/overview`, { params: httpParams });
+  }
+  markPeritoServicePaid(dealId: string, data?: { receiptUrl?: string; receiptName?: string }) {
+    return this.http.post<{ ok: boolean; item: PeritoOverviewItem }>(
+      `${this.base}/peritos/deals/${dealId}/mark-service-paid`,
+      data || {},
+    );
+  }
   registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string; paidAt?: string }) {
     return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-payment`, data);
   }

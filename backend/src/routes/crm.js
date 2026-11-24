@@ -953,45 +953,18 @@ router.patch('/deals/:id', async (req, res) => {
         const cost = costRaw === null || costRaw === '' || costRaw === undefined
           ? null
           : Number(costRaw);
-        if (cost != null && Number.isFinite(cost) && cost > 0) {
-          const existing = await get(
-            `SELECT id FROM fin_transactions
-             WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'
-             LIMIT 1`,
-            [req.params.id, uid],
-          );
-          if (!existing) {
-            const peritoUserId = peritoId !== undefined ? peritoId : deal.perito_id;
-            let peritoName = 'perito';
-            if (peritoUserId) {
-              const perito = await get('SELECT name FROM users WHERE id = ?', [peritoUserId]);
-              if (perito?.name) peritoName = perito.name;
-            }
-            const contact = deal.contact_id
-              ? await get('SELECT name FROM contacts WHERE id = ?', [deal.contact_id])
-              : null;
-            const title = deal.title || 'Trámite';
-            const clientPart = contact?.name ? ` · Cliente: ${contact.name}` : '';
-            const description = `Pago servicio perito — ${peritoName} — ${title}${clientPart}`;
-            await run(
-              `INSERT INTO fin_transactions
-                 (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia)
-               VALUES (?, ?, ?, 'expense', ?, ?, 'pago_perito', CURDATE(), 'general', ?)`,
-              [
-                uuid(),
-                uid,
-                req.params.id,
-                cost,
-                description.slice(0, 255),
-                `PERITO-${String(req.params.id).slice(0, 8)}`,
-              ],
-            );
-          }
-        }
+        await ensurePeritoServiceExpense({
+          ...deal,
+          id: req.params.id,
+          perito_service_cost: cost,
+          perito_id: peritoId !== undefined ? peritoId : deal.perito_id,
+        }, uid);
       } else {
+        await clearPeritoServiceExpense(req.params.id, uid);
         await run(
-          `DELETE FROM fin_transactions
-           WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'`,
+          `UPDATE crm_deals
+           SET perito_service_receipt_url = NULL, perito_service_receipt_name = NULL, updated_at = NOW()
+           WHERE id = ? AND user_id = ?`,
           [req.params.id, uid],
         );
       }
@@ -2880,6 +2853,44 @@ function gestorOwnerOnly(req, res, next) {
   next();
 }
 
+/** Crea (idempotente) el gasto de pago a perito en Finanzas. */
+async function ensurePeritoServiceExpense(deal, userId) {
+  const cost = deal.perito_service_cost != null ? Number(deal.perito_service_cost) : null;
+  if (cost == null || !Number.isFinite(cost) || cost <= 0) return;
+  const existing = await get(
+    `SELECT id FROM fin_transactions
+     WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'
+     LIMIT 1`,
+    [deal.id, userId],
+  );
+  if (existing) return;
+  let peritoName = 'perito';
+  if (deal.perito_id) {
+    const perito = await get('SELECT name FROM users WHERE id = ?', [deal.perito_id]);
+    if (perito?.name) peritoName = perito.name;
+  }
+  const contact = deal.contact_id
+    ? await get('SELECT name FROM contacts WHERE id = ?', [deal.contact_id])
+    : null;
+  const title = deal.title || 'Trámite';
+  const clientPart = contact?.name ? ` · Cliente: ${contact.name}` : '';
+  const description = `Pago servicio perito — ${peritoName} — ${title}${clientPart}`;
+  await run(
+    `INSERT INTO fin_transactions
+       (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia)
+     VALUES (?, ?, ?, 'expense', ?, ?, 'pago_perito', CURDATE(), 'general', ?)`,
+    [uuid(), userId, deal.id, cost, description.slice(0, 255), `PERITO-${String(deal.id).slice(0, 8)}`],
+  );
+}
+
+async function clearPeritoServiceExpense(dealId, userId) {
+  await run(
+    `DELETE FROM fin_transactions
+     WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'`,
+    [dealId, userId],
+  );
+}
+
 router.get('/peritos/list-assign', async (req, res) => {
   try {
     if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
@@ -2923,29 +2934,132 @@ router.get('/peritos/performance', gestorOwnerOnly, async (req, res) => {
 router.get('/peritos/overview', async (req, res) => {
   try {
     if (req.user.role !== 'gestor') return res.status(403).json({ error: 'No autorizado' });
+    const status = req.query.status === 'pagado' ? 'pagado' : 'pendiente';
+    const page = Math.max(1, parseInt(String(req.query.page || '1'), 10) || 1);
+    const limit = Math.min(50, Math.max(5, parseInt(String(req.query.limit || '15'), 10) || 15));
+    const offset = (page - 1) * limit;
+
+    const countRows = await query(
+      `SELECT
+         SUM(CASE WHEN COALESCE(d.perito_service_paid, 'pendiente') = 'pendiente' THEN 1 ELSE 0 END) AS pendiente,
+         SUM(CASE WHEN d.perito_service_paid = 'pagado' THEN 1 ELSE 0 END) AS pagado
+       FROM crm_deals d
+       WHERE d.user_id = ? AND d.deal_type = 'tramite' AND d.perito_id IS NOT NULL`,
+      [req.orgId],
+    );
+    const totals = {
+      pendiente: Number(countRows[0]?.pendiente || 0),
+      pagado: Number(countRows[0]?.pagado || 0),
+    };
+    const total = status === 'pagado' ? totals.pagado : totals.pendiente;
+
     const rows = await query(
       `SELECT d.id, d.title, d.estimated_value, d.perito_stage, d.perito_poliza_status,
+              d.perito_service_cost, d.perito_service_paid,
+              d.perito_service_receipt_url, d.perito_service_receipt_name,
               d.perito_assigned_at, d.perito_completed_at, p.name AS perito_name, p.id AS perito_id
        FROM crm_deals d
        LEFT JOIN users p ON p.id = d.perito_id
        WHERE d.user_id = ? AND d.deal_type = 'tramite' AND d.perito_id IS NOT NULL
-       ORDER BY d.updated_at DESC LIMIT 200`,
-      [req.orgId],
+         AND COALESCE(d.perito_service_paid, 'pendiente') = ?
+       ORDER BY d.updated_at DESC
+       LIMIT ? OFFSET ?`,
+      [req.orgId, status, limit, offset],
     );
-    res.json(rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      estimatedValue: Number(r.estimated_value || 0),
-      peritoId: r.perito_id,
-      peritoName: r.perito_name,
-      peritoStage: r.perito_stage || 'tramite',
-      peritoStageLabel: PERITO_STAGE_LABELS[r.perito_stage] || PERITO_STAGE_LABELS.tramite,
-      peritoPolizaStatus: r.perito_poliza_status || 'pendiente',
-      peritoAssignedAt: r.perito_assigned_at,
-      peritoCompletedAt: r.perito_completed_at,
-    })));
+
+    res.json({
+      items: rows.map((r) => ({
+        id: r.id,
+        title: r.title,
+        estimatedValue: Number(r.estimated_value || 0),
+        peritoId: r.perito_id,
+        peritoName: r.perito_name,
+        peritoStage: r.perito_stage || 'tramite',
+        peritoStageLabel: PERITO_STAGE_LABELS[r.perito_stage] || PERITO_STAGE_LABELS.tramite,
+        peritoPolizaStatus: r.perito_poliza_status || 'pendiente',
+        peritoServiceCost: r.perito_service_cost != null ? Number(r.perito_service_cost) : null,
+        peritoServicePaid: r.perito_service_paid === 'pagado' ? 'pagado' : 'pendiente',
+        peritoServiceReceiptUrl: r.perito_service_receipt_url || null,
+        peritoServiceReceiptName: r.perito_service_receipt_name || null,
+        peritoAssignedAt: r.perito_assigned_at,
+        peritoCompletedAt: r.perito_completed_at,
+      })),
+      totals,
+      page,
+      limit,
+      total,
+      pages: Math.max(1, Math.ceil(total / limit)),
+    });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Error al cargar seguimiento de peritos' });
+  }
+});
+
+router.post('/peritos/deals/:id/mark-service-paid', gestorOwnerOnly, async (req, res) => {
+  try {
+    const deal = await get(
+      `SELECT id, title, contact_id, perito_id, perito_service_cost, perito_service_paid,
+              perito_service_receipt_url, perito_service_receipt_name
+       FROM crm_deals
+       WHERE id = ? AND user_id = ? AND deal_type = 'tramite' AND perito_id IS NOT NULL`,
+      [req.params.id, req.user.id],
+    );
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+
+    const receiptUrl = typeof req.body?.receiptUrl === 'string' ? req.body.receiptUrl.trim() : '';
+    const receiptName = typeof req.body?.receiptName === 'string' ? req.body.receiptName.trim() : '';
+
+    await run(
+      `UPDATE crm_deals
+       SET perito_service_paid = 'pagado',
+           perito_service_receipt_url = COALESCE(?, perito_service_receipt_url),
+           perito_service_receipt_name = COALESCE(?, perito_service_receipt_name),
+           updated_at = NOW()
+       WHERE id = ? AND user_id = ?`,
+      [
+        receiptUrl || null,
+        receiptUrl ? (receiptName || 'Comprobante de pago') : null,
+        deal.id,
+        req.user.id,
+      ],
+    );
+
+    await ensurePeritoServiceExpense(deal, req.user.id);
+
+    const updated = await get(
+      `SELECT d.id, d.title, d.estimated_value, d.perito_stage, d.perito_poliza_status,
+              d.perito_service_cost, d.perito_service_paid,
+              d.perito_service_receipt_url, d.perito_service_receipt_name,
+              d.perito_assigned_at, d.perito_completed_at, p.name AS perito_name, p.id AS perito_id
+       FROM crm_deals d
+       LEFT JOIN users p ON p.id = d.perito_id
+       WHERE d.id = ?`,
+      [deal.id],
+    );
+
+    res.json({
+      ok: true,
+      item: {
+        id: updated.id,
+        title: updated.title,
+        estimatedValue: Number(updated.estimated_value || 0),
+        peritoId: updated.perito_id,
+        peritoName: updated.perito_name,
+        peritoStage: updated.perito_stage || 'tramite',
+        peritoStageLabel: PERITO_STAGE_LABELS[updated.perito_stage] || PERITO_STAGE_LABELS.tramite,
+        peritoPolizaStatus: updated.perito_poliza_status || 'pendiente',
+        peritoServiceCost: updated.perito_service_cost != null ? Number(updated.perito_service_cost) : null,
+        peritoServicePaid: 'pagado',
+        peritoServiceReceiptUrl: updated.perito_service_receipt_url || null,
+        peritoServiceReceiptName: updated.perito_service_receipt_name || null,
+        peritoAssignedAt: updated.perito_assigned_at,
+        peritoCompletedAt: updated.perito_completed_at,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'No se pudo marcar como pagado' });
   }
 });
 

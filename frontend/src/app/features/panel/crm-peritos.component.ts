@@ -2,7 +2,7 @@ import { Component, OnInit, output, signal, inject } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { LucidePlus } from '@lucide/angular';
-import { CrmService } from '../../core/api.service';
+import { CrmService, UploadService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PeritoAccount, PeritoOverviewItem, PeritoPerformance } from '../../models';
@@ -19,16 +19,27 @@ export class CrmPeritosComponent implements OnInit {
   openDeal = output<string>();
 
   private crmService = inject(CrmService);
+  private uploadService = inject(UploadService);
   private auth = inject(AuthService);
   private toast = inject(ToastService);
 
   peritos = signal<PeritoAccount[]>([]);
   performance = signal<PeritoPerformance[]>([]);
   overview = signal<PeritoOverviewItem[]>([]);
+  overviewTab = signal<'pendiente' | 'pagado'>('pendiente');
+  overviewPage = signal(1);
+  overviewPages = signal(1);
+  overviewTotal = signal(0);
+  overviewTotals = signal({ pendiente: 0, pagado: 0 });
+  overviewLoading = signal(false);
   showForm = signal(false);
   editingId = signal<string | null>(null);
   message = signal('');
   impersonatingId = signal<string | null>(null);
+  markingPaidId = signal<string | null>(null);
+  payModalItem = signal<PeritoOverviewItem | null>(null);
+  payReceiptFile: File | null = null;
+  payUploading = signal(false);
   form = { name: '', phone: '', password: '' };
 
   ngOnInit() {
@@ -44,9 +55,114 @@ export class CrmPeritosComponent implements OnInit {
       next: (p) => this.performance.set(p),
       error: () => {},
     });
-    this.crmService.getPeritoOverview().subscribe({
-      next: (o) => this.overview.set(o),
-      error: () => {},
+    this.loadOverview();
+  }
+
+  loadOverview() {
+    this.overviewLoading.set(true);
+    this.crmService.getPeritoOverview({
+      status: this.overviewTab(),
+      page: this.overviewPage(),
+      limit: 15,
+    }).subscribe({
+      next: (res) => {
+        this.overview.set(res.items || []);
+        this.overviewTotals.set(res.totals || { pendiente: 0, pagado: 0 });
+        this.overviewTotal.set(res.total || 0);
+        this.overviewPages.set(res.pages || 1);
+        this.overviewPage.set(res.page || 1);
+        this.overviewLoading.set(false);
+      },
+      error: () => {
+        this.overview.set([]);
+        this.overviewLoading.set(false);
+      },
+    });
+  }
+
+  setOverviewTab(tab: 'pendiente' | 'pagado') {
+    if (this.overviewTab() === tab) return;
+    this.overviewTab.set(tab);
+    this.overviewPage.set(1);
+    this.loadOverview();
+  }
+
+  setOverviewPage(page: number) {
+    const next = Math.min(Math.max(1, page), this.overviewPages());
+    if (next === this.overviewPage()) return;
+    this.overviewPage.set(next);
+    this.loadOverview();
+  }
+
+  overviewRangeLabel(): string {
+    const total = this.overviewTotal();
+    if (!total) return '0 trámites';
+    const page = this.overviewPage();
+    const limit = 15;
+    const from = (page - 1) * limit + 1;
+    const to = Math.min(page * limit, total);
+    return `${from}–${to} de ${total}`;
+  }
+
+  openPayModal(item: PeritoOverviewItem, event: Event) {
+    event.stopPropagation();
+    if (item.peritoServicePaid === 'pagado' || this.markingPaidId()) return;
+    this.payReceiptFile = null;
+    this.payModalItem.set(item);
+  }
+
+  closePayModal() {
+    if (this.payUploading() || this.markingPaidId()) return;
+    this.payModalItem.set(null);
+    this.payReceiptFile = null;
+  }
+
+  onPayReceiptSelected(input: HTMLInputElement) {
+    this.payReceiptFile = input.files?.[0] || null;
+  }
+
+  confirmMarkPaid() {
+    const item = this.payModalItem();
+    if (!item || this.markingPaidId()) return;
+    const file = this.payReceiptFile;
+    if (file) {
+      this.payUploading.set(true);
+      const isPdf = /\.pdf$/i.test(file.name) || file.type === 'application/pdf';
+      const upload$ = isPdf
+        ? this.uploadService.uploadDocument(file)
+        : this.uploadService.uploadFile(file);
+      upload$.subscribe({
+        next: (res) => {
+          this.payUploading.set(false);
+          this.doMarkPaid(item.id, {
+            receiptUrl: res.url,
+            receiptName: file.name,
+          });
+        },
+        error: () => {
+          this.payUploading.set(false);
+          this.toast.error('No se pudo subir el comprobante');
+        },
+      });
+      return;
+    }
+    this.doMarkPaid(item.id);
+  }
+
+  private doMarkPaid(dealId: string, data?: { receiptUrl?: string; receiptName?: string }) {
+    this.markingPaidId.set(dealId);
+    this.crmService.markPeritoServicePaid(dealId, data).subscribe({
+      next: () => {
+        this.markingPaidId.set(null);
+        this.payModalItem.set(null);
+        this.payReceiptFile = null;
+        this.toast.success('Marcado como pagado');
+        this.loadOverview();
+      },
+      error: (err) => {
+        this.markingPaidId.set(null);
+        this.toast.error(err?.error?.error || 'No se pudo marcar como pagado');
+      },
     });
   }
 

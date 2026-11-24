@@ -567,6 +567,8 @@ export interface CrmDeal {
   peritoPolizaStatus?: 'pendiente' | 'pagado';
   peritoServiceCost?: number | null;
   peritoServicePaid?: 'pendiente' | 'pagado';
+  peritoServiceReceiptUrl?: string | null;
+  peritoServiceReceiptName?: string | null;
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
 }
@@ -600,8 +602,21 @@ export interface PeritoOverviewItem {
   peritoStage: string;
   peritoStageLabel: string;
   peritoPolizaStatus: 'pendiente' | 'pagado';
+  peritoServiceCost?: number | null;
+  peritoServicePaid?: 'pendiente' | 'pagado';
+  peritoServiceReceiptUrl?: string | null;
+  peritoServiceReceiptName?: string | null;
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
+}
+
+export interface PeritoOverviewResponse {
+  items: PeritoOverviewItem[];
+  totals: { pendiente: number; pagado: number };
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
 }
 
 export interface PeritoDeal {
@@ -613,6 +628,8 @@ export interface PeritoDeal {
   peritoPolizaStatus: 'pendiente' | 'pagado';
   peritoServiceCost?: number | null;
   peritoServicePaid?: 'pendiente' | 'pagado';
+  peritoServiceReceiptUrl?: string | null;
+  peritoServiceReceiptName?: string | null;
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
   contactName?: string | null;

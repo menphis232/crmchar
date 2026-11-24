@@ -1,40 +1,155 @@
-@if (overview().length) {
-  <div class="mon-board">
-    <header class="mon-board-head">
-      <div>
-        <h2 class="mon-board-title">Seguimiento de trámites con perito</h2>
-        <p class="mon-board-desc">Estado actual de los trámites asignados a peritos. Haz clic en una fila para abrir el trámite.</p>
-      </div>
-      <button type="button" class="mon-tool-btn" (click)="reload()" title="Actualizar">Actualizar</button>
-    </header>
+<div class="mon-board">
+  <header class="mon-board-head">
+    <div>
+      <h2 class="mon-board-title">Seguimiento de trámites con perito</h2>
+      <p class="mon-board-desc">Trámites asignados a peritos. Marca el pago del servicio desde aquí.</p>
+    </div>
+    <button type="button" class="mon-tool-btn" (click)="loadOverview()" title="Actualizar">Actualizar</button>
+  </header>
 
-    <div class="mon-table-wrap">
-      <table class="mon-table">
-        <thead>
-          <tr>
-            <th>Trámite</th>
-            <th>Perito</th>
-            <th>Etapa</th>
-            <th>Póliza</th>
-            <th class="col-num">Costo</th>
+  <div class="perito-pay-tabs" role="tablist" aria-label="Estatus de pago del servicio">
+    <button
+      type="button"
+      role="tab"
+      class="perito-pay-tab"
+      [class.active]="overviewTab() === 'pendiente'"
+      [attr.aria-selected]="overviewTab() === 'pendiente'"
+      (click)="setOverviewTab('pendiente')"
+    >
+      Pendientes
+      <span class="perito-pay-count">{{ overviewTotals().pendiente }}</span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="perito-pay-tab"
+      [class.active]="overviewTab() === 'pagado'"
+      [attr.aria-selected]="overviewTab() === 'pagado'"
+      (click)="setOverviewTab('pagado')"
+    >
+      Pagados
+      <span class="perito-pay-count">{{ overviewTotals().pagado }}</span>
+    </button>
+  </div>
+
+  <div class="mon-table-wrap">
+    <table class="mon-table">
+      <thead>
+        <tr>
+          <th>Trámite</th>
+          <th>Perito</th>
+          <th>Etapa</th>
+          <th class="col-num">Costo servicio</th>
+          <th>Pago</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of overview(); track item.id) {
+          <tr class="row-clickable" (click)="openDeal.emit(item.id)">
+            <td><span class="cell-strong">{{ item.title }}</span></td>
+            <td>{{ item.peritoName }}</td>
+            <td>{{ stageLabel(item.peritoStage) }}</td>
+            <td class="col-num">
+              {{ item.peritoServiceCost != null ? (item.peritoServiceCost | currency:'MXN':'symbol-narrow':'1.0-2') : '—' }}
+            </td>
+            <td>
+              <span class="status-pill" [class.paid]="item.peritoServicePaid === 'pagado'">
+                {{ item.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}
+              </span>
+            </td>
+            <td class="col-actions" (click)="$event.stopPropagation()">
+              @if (item.peritoServicePaid !== 'pagado') {
+                <button
+                  type="button"
+                  class="member-btn member-btn--enter"
+                  (click)="openPayModal(item, $event)"
+                  [disabled]="markingPaidId() === item.id"
+                >
+                  {{ markingPaidId() === item.id ? 'Guardando…' : 'Pagado' }}
+                </button>
+              } @else if (item.peritoServiceReceiptUrl) {
+                <a
+                  class="receipt-link"
+                  [href]="item.peritoServiceReceiptUrl"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Comprobante
+                </a>
+              } @else {
+                <span class="muted-cell">Sin comprobante</span>
+              }
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          @for (item of overview(); track item.id) {
-            <tr class="row-clickable" (click)="openDeal.emit(item.id)">
-              <td><span class="cell-strong">{{ item.title }}</span></td>
-              <td>{{ item.peritoName }}</td>
-              <td>{{ stageLabel(item.peritoStage) }}</td>
-              <td>
-                <span class="status-pill" [class.paid]="item.peritoPolizaStatus === 'pagado'">
-                  {{ item.peritoPolizaStatus === 'pagado' ? 'Pagada' : 'Pendiente' }}
-                </span>
-              </td>
-              <td class="col-num">{{ item.estimatedValue | currency:'MXN':'symbol-narrow':'1.0-0' }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+        } @empty {
+          <tr>
+            <td colspan="6" class="empty-cell">
+              @if (overviewLoading()) {
+                Cargando…
+              } @else if (overviewTab() === 'pendiente') {
+                No hay trámites pendientes de pago al perito.
+              } @else {
+                No hay trámites marcados como pagados.
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (overviewTotal() > 0) {
+    <div class="overview-pager">
+      <span class="overview-pager-info">{{ overviewRangeLabel() }}</span>
+      <div class="overview-pager-actions">
+        <button type="button" class="mon-tool-btn" [disabled]="overviewPage() <= 1" (click)="setOverviewPage(overviewPage() - 1)">
+          Anterior
+        </button>
+        <span class="overview-pager-page">Pág. {{ overviewPage() }} / {{ overviewPages() }}</span>
+        <button type="button" class="mon-tool-btn" [disabled]="overviewPage() >= overviewPages()" (click)="setOverviewPage(overviewPage() + 1)">
+          Siguiente
+        </button>
+      </div>
+    </div>
+  }
+</div>
+
+@if (payModalItem(); as payItem) {
+  <div class="pay-modal-backdrop" (click)="closePayModal()">
+    <div class="pay-modal" role="dialog" aria-modal="true" aria-labelledby="pay-modal-title" (click)="$event.stopPropagation()">
+      <h3 id="pay-modal-title">Marcar como pagado</h3>
+      <p class="pay-modal-desc">
+        {{ payItem.title }} · {{ payItem.peritoName }}
+        @if (payItem.peritoServiceCost != null) {
+          · {{ payItem.peritoServiceCost | currency:'MXN':'symbol-narrow':'1.0-2' }}
+        }
+      </p>
+      <div class="form-group">
+        <label for="pay-receipt">Comprobante de pago (opcional)</label>
+        <input
+          id="pay-receipt"
+          type="file"
+          accept="image/*,.pdf,application/pdf"
+          (change)="onPayReceiptSelected($any($event.target))"
+        >
+        @if (payReceiptFile) {
+          <span class="pay-file-name">{{ payReceiptFile.name }}</span>
+        }
+      </div>
+      <div class="pay-modal-actions">
+        <button type="button" class="mon-tool-btn" (click)="closePayModal()" [disabled]="payUploading() || !!markingPaidId()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="member-btn member-btn--enter"
+          (click)="confirmMarkPaid()"
+          [disabled]="payUploading() || !!markingPaidId()"
+        >
+          {{ payUploading() ? 'Subiendo…' : (markingPaidId() ? 'Guardando…' : 'Confirmar pagado') }}
+        </button>
+      </div>
     </div>
   </div>
 }

@@ -315,6 +315,19 @@
   background: #e7f8ef;
 }
 
+.perito-receipt-link {
+  display: inline-flex;
+  margin-left: 10px;
+  color: #0073ea;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.perito-receipt-link:hover {
+  text-decoration: underline;
+}
+
 .perito-note-form {
   display: flex;
   flex-direction: column;

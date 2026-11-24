@@ -696,6 +696,8 @@ export function dealRow(row) {
     peritoPolizaStatus: row.perito_poliza_status || 'pendiente',
     peritoServiceCost: row.perito_service_cost != null ? Number(row.perito_service_cost) : null,
     peritoServicePaid: row.perito_service_paid === 'pagado' ? 'pagado' : 'pendiente',
+    peritoServiceReceiptUrl: row.perito_service_receipt_url || null,
+    peritoServiceReceiptName: row.perito_service_receipt_name || null,
     peritoAssignedAt: row.perito_assigned_at || null,
     peritoCompletedAt: row.perito_completed_at || null,
   };
