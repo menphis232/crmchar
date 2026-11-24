@@ -524,7 +524,20 @@
           <div class="chatbot-messages" id="chatbot-messages">
             @for (msg of chatHistory; track $index) {
               <div class="chat-msg" [class.user]="msg.role === 'user'" [class.model]="msg.role === 'model'">
-                {{ msg.content }}
+                @for (part of chatParts(msg.content); track $index) {
+                  @if (part.type === 'text') {
+                    <span class="chat-msg-text">{{ part.value }}</span>
+                  } @else {
+                    <a class="chat-msg-cta"
+                       [href]="part.value"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       [style.background]="gestor()?.chatbot_btn_color || '#4F46E5'"
+                       [style.color]="gestor()?.chatbot_text_color || '#FFFFFF'">
+                      {{ part.label || 'Abrir enlace' }}
+                    </a>
+                  }
+                }
               </div>
             }
             @if (isChatLoading) {
@@ -536,10 +549,10 @@
             }
             @if (leadCreated) {
               <div class="chat-success-banner">
-                <svg lucideCircleCheck [size]="16" class="chat-success-icon" aria-hidden="true"></svg>
+                <svg lucideCircleCheck [size]="18" class="chat-success-icon" aria-hidden="true"></svg>
                 <div>
-                  ¡Tu solicitud fue registrada exitosamente!
-                  <small>Revisa tu correo — te enviamos tus credenciales de acceso para dar seguimiento.</small>
+                  <strong>¡Solicitud registrada!</strong>
+                  <small>Revisa tu correo con el acceso al panel para dar seguimiento.</small>
                 </div>
               </div>
             }

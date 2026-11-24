@@ -55,6 +55,29 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
   isChatLoading = false;
   leadCreated = false;
 
+  /** Partes de un mensaje (texto + CTAs de links) para no romper el bubble con URLs largas. */
+  chatParts(content: string): { type: 'text' | 'link'; value: string; label?: string }[] {
+    const parts: { type: 'text' | 'link'; value: string; label?: string }[] = [];
+    const re = /(https?:\/\/[^\s<>"']+)/gi;
+    let last = 0;
+    let match: RegExpExecArray | null;
+    while ((match = re.exec(content)) !== null) {
+      if (match.index > last) {
+        parts.push({ type: 'text', value: content.slice(last, match.index) });
+      }
+      const url = match[1].replace(/[.,);]+$/, '');
+      let label = 'Abrir enlace';
+      if (/\/pay\/mp\//i.test(url)) label = 'Pagar ahora';
+      else if (/\/login/i.test(url) || /\/panel\/cliente/i.test(url)) label = 'Ir a mi panel';
+      parts.push({ type: 'link', value: url, label });
+      last = match.index + match[1].length;
+    }
+    if (last < content.length) {
+      parts.push({ type: 'text', value: content.slice(last) });
+    }
+    return parts.length ? parts : [{ type: 'text', value: content }];
+  }
+
   constructor(private route: ActivatedRoute, private gestoresService: GestoresService, private http: HttpClient) {}
 
   safeMapUrl = computed(() => {
