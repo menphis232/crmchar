@@ -25,7 +25,6 @@ import {
   promoBannersFromSettings,
   syncLegacyPromoFields,
 } from '../utils/client-promo-banners.js';
-import { createPendingCheckout } from '../services/mp-pending-checkout.js';
 const router = Router();
 
 /** Slug(s) de la consultoría autorizada a gestionar el banner del panel cliente. */
@@ -1188,97 +1187,7 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     [gestor.user_id],
   );
 
-  // Flujo automatizado: cobro primero → al pagar se crea el trámite
-  if (
-    estimatedValue > 0
-    && owner?.mp_access_token
-    && owner?.mp_public_key
-  ) {
-    const pending = await createPendingCheckout({
-      gestor,
-      clientName,
-      clientEmail,
-      clientPhone,
-      location,
-      serviceName,
-      amount: estimatedValue,
-      customData,
-    });
-
-    if (clientEmail) {
-      const html = `
-        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
-          Para activar tu trámite de <strong>${serviceName}</strong> realiza el pago seguro aquí:
-        </p>
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${pending.paymentUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Pagar $${estimatedValue.toFixed(2)} MXN</a>
-        </div>
-        <p style="color: #a0aec0; font-size: 14px; line-height: 1.6; text-align: center;">
-          Al confirmarse el pago, tu trámite se crea automáticamente y te enviamos acceso al panel.
-        </p>
-      `;
-      try {
-        await sendEmail(
-          clientEmail,
-          `Completa el pago de ${serviceName}`,
-          `Paga para activar tu trámite: ${pending.paymentUrl}`,
-          html,
-          gestor.user_id,
-        );
-      } catch (e) {
-        console.error('No se pudo enviar correo de pago pendiente:', e);
-      }
-    }
-
-    return {
-      id: pending.id,
-      dealId: null,
-      requiresPayment: true,
-      paymentUrl: pending.paymentUrl,
-      amount: pending.amount,
-    };
-  }
-
-  // Fallback: sin MP o servicio sin precio → crear trámite directo (legado)
-  if (clientEmail) {
-    const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
-    if (!existingUser) {
-      const tempPassword = Math.random().toString(36).slice(-8);
-      const hash = bcrypt.hashSync(tempPassword, 10);
-      const userId = uuid();
-      await run(
-        'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
-        [userId, clientEmail, hash, 'cliente', clientName]
-      );
-
-      const loginUrl = `${getFrontendBase()}/login/cliente`;
-      const html = `
-        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Hemos recibido tu solicitud para el trámite de <strong>${serviceName}</strong> con el gestor ${gestor.name || owner?.name || 'asignado'}.</p>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te hemos creado una cuenta para que puedas hacer seguimiento a tu trámite, chatear con tu gestor y subir documentos.</p>
-
-        <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
-          <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
-          <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
-            <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
-            <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
-          </ul>
-        </div>
-
-        <div style="text-align: center; margin: 40px 0;">
-          <a href="${loginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
-        </div>
-        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6; text-align: center;">Por favor cambia tu contraseña lo antes posible en la sección de Ajustes.</p>
-      `;
-      try {
-        await sendEmail(clientEmail, 'Tu cuenta ha sido creada - Seguimiento de trámite', 'Tu cuenta ha sido creada', html, gestor.user_id);
-      } catch (e) {
-        console.error('No se pudo enviar el correo:', e);
-      }
-    }
-  }
-
+  // 1) Siempre crear trámite primero
   const id = uuid();
   await run(
     `INSERT INTO solicitudes (id, gestor_id, client_name, service_name, location, client_email, client_phone, custom_data)
@@ -1295,12 +1204,95 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
       .join('\n\n');
   }
 
-  const dealId = await createDealFromSolicitud(solicitud, gestor.user_id, { clientEmail, clientPhone, estimatedValue, clientMessage });
+  const dealId = await createDealFromSolicitud(solicitud, gestor.user_id, {
+    clientEmail,
+    clientPhone,
+    estimatedValue,
+    clientMessage,
+  });
+
+  // 2) Si no tiene cuenta → crear usuario (después del trámite)
+  let accountCreated = false;
+  let existingAccount = false;
+  if (clientEmail) {
+    const existingUser = await get('SELECT id FROM users WHERE email = ?', [clientEmail]);
+    if (existingUser) {
+      existingAccount = true;
+    } else {
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hash = bcrypt.hashSync(tempPassword, 10);
+      const userId = uuid();
+      await run(
+        'INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)',
+        [userId, clientEmail, hash, 'cliente', clientName],
+      );
+      accountCreated = true;
+
+      const loginUrl = `${getFrontendBase()}/login/cliente`;
+      const html = `
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Ya registramos tu trámite de <strong>${serviceName}</strong> con ${gestor.name || owner?.name || 'tu gestor'}.</p>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">Te creamos una cuenta para seguir el avance, chatear y subir documentos.</p>
+        <div style="background-color: #0f1117; border: 1px dashed #c8a94a; border-radius: 8px; padding: 20px; margin: 30px 0;">
+          <p style="color: #a0aec0; font-size: 13px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 1px;">Tus credenciales de acceso:</p>
+          <ul style="color: #c8a94a; font-size: 16px; margin: 0; padding-left: 20px;">
+            <li style="margin-bottom: 5px;"><strong>Usuario/Email:</strong> <span style="color: #ffffff;">${clientEmail}</span></li>
+            <li><strong>Contraseña provisional:</strong> <span style="color: #ffffff;">${tempPassword}</span></li>
+          </ul>
+        </div>
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${loginUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Iniciar Sesión Ahora</a>
+        </div>
+      `;
+      try {
+        await sendEmail(clientEmail, 'Tu trámite y cuenta ya están listos', 'Tu cuenta ha sido creada', html, gestor.user_id);
+      } catch (e) {
+        console.error('No se pudo enviar el correo de cuenta:', e);
+      }
+    }
+  }
+
+  // 3) Luego el pago (con o sin cuenta previa)
+  let paymentUrl = null;
+  let requiresPayment = false;
+  if (
+    estimatedValue > 0
+    && owner?.mp_access_token
+    && owner?.mp_public_key
+  ) {
+    const token = uuid();
+    await run('UPDATE crm_deals SET mp_payment_token = ? WHERE id = ?', [token, dealId]);
+    paymentUrl = `${getFrontendBase()}/pay/mp/${token}`;
+    requiresPayment = true;
+
+    if (clientEmail) {
+      const html = `
+        <h2 style="color: #ffffff; font-size: 20px; font-weight: 500;">Hola ${clientName},</h2>
+        <p style="color: #a0aec0; font-size: 15px; line-height: 1.6;">
+          Tu trámite de <strong>${serviceName}</strong> ya está registrado. Completa el pago seguro para continuar:
+        </p>
+        <div style="text-align: center; margin: 40px 0;">
+          <a href="${paymentUrl}" style="background: linear-gradient(135deg, #c8a94a, #d4af37); color: #000; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 15px; display: inline-block;">Pagar $${estimatedValue.toFixed(2)} MXN</a>
+        </div>
+      `;
+      try {
+        await sendEmail(
+          clientEmail,
+          `Completa el pago de ${serviceName}`,
+          `Paga tu trámite aquí: ${paymentUrl}`,
+          html,
+          gestor.user_id,
+        );
+      } catch (e) {
+        console.error('No se pudo enviar correo de pago:', e);
+      }
+    }
+  }
 
   const notifId = uuid();
   await run(
     'INSERT INTO notifications (id, user_id, type, title, body, ref_id) VALUES (?, ?, ?, ?, ?, ?)',
-    [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`, dealId]
+    [notifId, gestor.user_id, 'nuevo_lead', 'Nueva Solicitud Recibida', `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`, dealId],
   );
 
   await notifyGestorNewLeadByEmail(gestor.user_id, {
@@ -1312,7 +1304,15 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
     dealId,
   });
 
-  return { id, dealId, requiresPayment: false };
+  return {
+    id,
+    dealId,
+    requiresPayment,
+    paymentUrl,
+    amount: estimatedValue,
+    accountCreated,
+    existingAccount,
+  };
 }
 
 router.post('/:id/solicitudes', async (req, res) => {
@@ -1327,16 +1327,6 @@ router.post('/:id/solicitudes', async (req, res) => {
 
     const result = await processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData);
 
-    if (result.requiresPayment) {
-      return res.status(201).json({
-        id: result.id,
-        status: 'pendiente_pago',
-        requiresPayment: true,
-        paymentUrl: result.paymentUrl,
-        amount: result.amount,
-      });
-    }
-
     const io = req.app.get('io');
     if (io) {
       io.to('user_' + gestor.user_id).emit('notification', {
@@ -1346,11 +1336,19 @@ router.post('/:id/solicitudes', async (req, res) => {
         body: `Tienes un nuevo trámite de ${serviceName} de ${clientName}.`,
         ref_id: result.dealId,
         is_read: 0,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
       });
     }
 
-    res.status(201).json({ id: result.id, status: 'nuevo', dealId: result.dealId });
+    res.status(201).json({
+      id: result.id,
+      status: result.requiresPayment ? 'pendiente_pago' : 'nuevo',
+      dealId: result.dealId,
+      requiresPayment: !!result.requiresPayment,
+      paymentUrl: result.paymentUrl || null,
+      amount: result.amount || 0,
+      accountCreated: !!result.accountCreated,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al crear solicitud' });
@@ -1502,7 +1500,7 @@ ${servicesText || 'No hay servicios listados.'}
 ${trainingText ? `\n${trainingText}\n` : ''}
 Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas.
 4. NUNCA inventes precios o servicios.
-5. El flujo es automatizado: al registrar la solicitud el sistema puede enviar un link de pago. NO digas que "alguien los contactará" como paso obligatorio; di que al pagar el trámite se activa solo.
+5. El flujo es automatizado: primero se registra el trámite; si el cliente no tiene cuenta se le crea; después se le pide el pago con un link. NO digas que deben pagar antes de registrar el trámite.
 `;
 
     if (knownClient) {
@@ -1558,19 +1556,25 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
 
         if (result.requiresPayment && result.paymentUrl) {
           const amountTxt = Number(result.amount || 0).toFixed(2);
-          generatedText = [
-            'Perfecto, ya tengo tus datos.',
-            `Para activar tu trámite de ${leadData.serviceName} realiza el pago de $${amountTxt} MXN aquí:`,
-            result.paymentUrl,
-            'Al confirmarse el pago, el trámite se crea solo y te enviamos acceso a tu panel. No necesitas esperar a nadie.',
-          ].join('\n\n');
+          const lines = [
+            `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
+          ];
+          if (result.accountCreated) {
+            lines.push('También te creamos una cuenta; revisa tu correo con el acceso al panel.');
+          } else if (result.existingAccount || knownClient) {
+            lines.push('Puedes seguirlo desde tu panel de cliente.');
+          }
+          lines.push(`Para continuar, realiza el pago de $${amountTxt} MXN aquí:`, result.paymentUrl);
+          generatedText = lines.join('\n\n');
         } else if (!generatedText) {
-          generatedText = knownClient
-            ? '¡Listo! Registré tu solicitud con tu cuenta. Pronto el gestor se pondrá en contacto contigo; también puedes seguirla desde Mi Panel.'
-            : '¡Excelente! He registrado tu solicitud. Te hemos enviado un correo con los detalles y pronto nos pondremos en contacto contigo.';
+          generatedText = knownClient || result.existingAccount
+            ? '¡Listo! Registré tu solicitud con tu cuenta. Puedes seguirla desde Mi Panel.'
+            : result.accountCreated
+              ? '¡Excelente! Registré tu trámite y te creamos una cuenta. Revisa tu correo con el acceso.'
+              : '¡Excelente! He registrado tu solicitud.';
         }
 
-        if (!result.requiresPayment && result.dealId) {
+        if (result.dealId) {
           const io = req.app.get('io');
           if (io) {
             io.to('user_' + gestor.user_id).emit('notification', {

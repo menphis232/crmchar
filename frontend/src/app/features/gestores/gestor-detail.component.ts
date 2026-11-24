@@ -174,7 +174,12 @@ export class GestorDetailComponent implements OnInit, OnDestroy {
     this.gestoresService.createSolicitud(g.id, { ...this.solicitudForm, customData: this.customData }).subscribe({
       next: (res) => {
         if (res?.requiresPayment && res.paymentUrl) {
-          this.toast.success('Te llevamos al pago seguro. Al confirmarse, tu trámite se crea solo.', 'Continúa con el pago');
+          this.toast.success(
+            res.accountCreated
+              ? 'Trámite y cuenta listos. Continúa con el pago.'
+              : 'Trámite registrado. Continúa con el pago.',
+            'Continúa con el pago',
+          );
           window.location.href = res.paymentUrl;
           return;
         }
