@@ -940,6 +940,63 @@ router.patch('/deals/:id', async (req, res) => {
     params.push(req.params.id, uid);
     await run(`UPDATE crm_deals SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`, params);
 
+    // Pago a perito → gasto automático en Finanzas (y se revierte si vuelve a pendiente).
+    if (
+      peritoServicePaid !== undefined
+      && role === 'gestor'
+      && peritoServicePaid !== (deal.perito_service_paid === 'pagado' ? 'pagado' : 'pendiente')
+    ) {
+      if (peritoServicePaid === 'pagado') {
+        const costRaw = peritoServiceCost !== undefined
+          ? peritoServiceCost
+          : deal.perito_service_cost;
+        const cost = costRaw === null || costRaw === '' || costRaw === undefined
+          ? null
+          : Number(costRaw);
+        if (cost != null && Number.isFinite(cost) && cost > 0) {
+          const existing = await get(
+            `SELECT id FROM fin_transactions
+             WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'
+             LIMIT 1`,
+            [req.params.id, uid],
+          );
+          if (!existing) {
+            const peritoUserId = peritoId !== undefined ? peritoId : deal.perito_id;
+            let peritoName = 'perito';
+            if (peritoUserId) {
+              const perito = await get('SELECT name FROM users WHERE id = ?', [peritoUserId]);
+              if (perito?.name) peritoName = perito.name;
+            }
+            const contact = deal.contact_id
+              ? await get('SELECT name FROM contacts WHERE id = ?', [deal.contact_id])
+              : null;
+            const title = deal.title || 'Trámite';
+            const clientPart = contact?.name ? ` · Cliente: ${contact.name}` : '';
+            const description = `Pago servicio perito — ${peritoName} — ${title}${clientPart}`;
+            await run(
+              `INSERT INTO fin_transactions
+                 (id, user_id, deal_id, type, amount, description, category, date, payment_method, referencia)
+               VALUES (?, ?, ?, 'expense', ?, ?, 'pago_perito', CURDATE(), 'general', ?)`,
+              [
+                uuid(),
+                uid,
+                req.params.id,
+                cost,
+                description.slice(0, 255),
+                `PERITO-${String(req.params.id).slice(0, 8)}`,
+              ],
+            );
+          }
+        }
+      } else {
+        await run(
+          `DELETE FROM fin_transactions
+           WHERE deal_id = ? AND user_id = ? AND category = 'pago_perito' AND type = 'expense'`,
+          [req.params.id, uid],
+        );
+      }
+    }
+
     // FASE 3.2: Review Email Simulation
     if (stage === 'completado' && oldStage !== 'completado') {
       const contact = await get('SELECT email FROM contacts WHERE id = ?', [deal.contact_id]);
