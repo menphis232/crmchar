@@ -5,7 +5,8 @@
     </div>
     <p class="perito-loading">Cargando…</p>
   </div>
-} @else if (detail(); as data) {
+} @else if (detail()) {
+  @if (detail(); as data) {
   <div class="deal-page">
     <div class="deal-page-toolbar">
       <button type="button" class="deal-back-btn" (click)="close()">← Volver</button>
@@ -164,4 +165,5 @@
       </div>
     </div>
   </div>
+  }
 }
