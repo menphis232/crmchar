@@ -74,12 +74,7 @@
           }
         }
 
-        @if (role() === 'perito') {
-          <div class="form-group">
-            <label for="login-phone">Teléfono</label>
-            <input id="login-phone" type="tel" inputmode="numeric" [(ngModel)]="email" placeholder="10 dígitos, ej. 5530162526" autocomplete="tel">
-          </div>
-        } @else if (role() === 'cliente') {
+        @if (role() === 'cliente' || (role() === 'gestor' && mode() === 'login')) {
           <div class="form-group">
             <label for="login-email">Correo o teléfono</label>
             <input id="login-email" type="text" [(ngModel)]="email" placeholder="correo o teléfono" autocomplete="username">
@@ -94,9 +89,7 @@
           <label for="login-password">Contraseña</label>
           <input id="login-password" type="password" [(ngModel)]="password" placeholder="Mínimo 6 caracteres"
             [attr.autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'">
-          @if (mode() === 'login' && role() === 'perito') {
-            <p class="auth-hint">¿Olvidaste tu contraseña? Pídele a tu gestoría que te asigne una nueva.</p>
-          } @else if (mode() === 'login' && role() === 'cliente') {
+          @if (mode() === 'login' && role() === 'cliente') {
             <div class="forgot-row">
               <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña de correo?</button>
             </div>
@@ -107,7 +100,7 @@
           }
         </div>
 
-        @if (mode() === 'register' && role() !== 'admin' && role() !== 'perito') {
+        @if (mode() === 'register' && role() !== 'admin') {
           <div class="legal-accept">
             <label class="legal-check">
               <input type="checkbox" [(ngModel)]="acceptTerms" name="acceptTerms" />
@@ -143,9 +136,9 @@
         </button>
 
         <div class="auth-links">
-          @if (mode() === 'login' && role() !== 'admin' && role() !== 'perito') {
+          @if (mode() === 'login' && role() !== 'admin') {
             <button type="button" class="link-btn" (click)="mode.set('register')">¿No tienes cuenta? Regístrate</button>
-          } @else if (role() !== 'admin' && role() !== 'perito') {
+          } @else if (role() !== 'admin') {
             <button type="button" class="link-btn" (click)="mode.set('login')">¿Ya tienes cuenta? Inicia sesión</button>
           }
         </div>

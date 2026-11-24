@@ -107,7 +107,7 @@ export class AuthService {
     const path = this.router.url.split('?')[0];
     if (path.startsWith('/panel/concesionaria')) return '/login/concesionaria';
     if (path.startsWith('/panel/gestor')) return '/login/gestor';
-    if (path.startsWith('/panel/perito')) return '/login/perito';
+    if (path.startsWith('/panel/perito')) return '/login/gestor';
     if (path.startsWith('/panel/cliente')) return '/login/cliente';
     return '/login/cliente';
   }
