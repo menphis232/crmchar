@@ -1762,8 +1762,6 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
       circulationCardName,
     } = req.body;
-    if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
-
     const pipeline = pipelineForRole(req.user.role);
     const contact = await get('SELECT id FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?', [req.params.id, uid, pipeline]);
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
@@ -1778,7 +1776,7 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.params.id, uid,
-      String(plate).trim().toUpperCase(),
+      String(plate || '').trim().toUpperCase(),
       circulationCardName?.trim() || null,
       make?.trim() || null,
       model?.trim() || null,

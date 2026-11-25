@@ -647,7 +647,6 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
       circulationCardName,
     } = req.body;
-    if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
     if (!make?.trim() || !model?.trim() || year == null || year === '') {
       return res.status(400).json({ error: 'Selecciona marca, submarca y año' });
     }
@@ -676,7 +675,7 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         id, contact.id, contact.user_id,
-        String(plate).trim().toUpperCase(),
+        String(plate || '').trim().toUpperCase(),
         circName,
         make.trim(),
         model.trim(),

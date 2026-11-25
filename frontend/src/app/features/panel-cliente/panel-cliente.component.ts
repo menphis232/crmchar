@@ -788,17 +788,13 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   }
 
   addVehicle() {
-    if (!this.newPlate.trim()) {
-      this.toast.warning('Indica la placa del vehículo', 'Datos incompletos');
-      return;
-    }
     if (!this.newMake || !this.newModel || !this.newYear) {
       this.toast.warning('Selecciona marca, submarca y año', 'Datos incompletos');
       return;
     }
     this.isAddingVehicle.set(true);
     this.http.post<CrmContactVehicle>(`${environment.apiUrl}/client/vehicles`, {
-      plate: this.newPlate.trim(),
+      plate: this.newPlate.trim() || '',
       circulationCardName: this.newCirculationCardName.trim() || undefined,
       make: this.newMake,
       model: this.newModel,

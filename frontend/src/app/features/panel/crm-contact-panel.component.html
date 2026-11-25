@@ -130,7 +130,7 @@
             <div class="vehicle-card">
               <div class="vehicle-card-top">
                 <div>
-                  <span class="vehicle-plate">{{ v.plate }}</span>
+                  <span class="vehicle-plate">{{ v.plate || 'Sin placa' }}</span>
                   @if (v.make || v.model || v.year) {
                     <p class="vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
                   }
@@ -312,8 +312,8 @@
                   />
                 </div>
                 <div>
-                  <label>Placa</label>
-                  <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
+                  <label>Placa (opcional)</label>
+                  <input type="text" [(ngModel)]="newPlate" placeholder="Si aún no tiene, déjala vacía" style="text-transform:uppercase;">
                 </div>
                 <div>
                   <label>Tarjeta de circulación a nombre de</label>

@@ -69,7 +69,6 @@ async function createClientVehicle(user, data) {
     plate, make, model, year, state, engomadoColor, vehicleNotes,
     insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
   } = data;
-  if (!plate?.trim()) throw new Error('Falta la placa');
   if (!make?.trim() || !model?.trim() || year == null || year === '') {
     throw new Error('Faltan marca, submarca o año');
   }
@@ -97,7 +96,7 @@ async function createClientVehicle(user, data) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id, contact.id, contact.user_id,
-        String(plate).trim().toUpperCase(),
+        String(plate || '').trim().toUpperCase(),
         make.trim(), model.trim(), Number(year),
         state || null, engomado, vehicleNotes || null,
         insExpiry, tenencia, tenenciaYear, hologram, nextVerDate,
@@ -118,11 +117,11 @@ ACCIONES DEL PANEL (si el usuario lo pide)
 IMPORTANTE — REGISTRAR VEHÍCULO EN "MIS VEHÍCULOS":
 Esto es guardar el auto en el panel del cliente, NO es un trámite de REPUVE ni alta vehicular.
 Campos del formulario real del panel:
-  OBLIGATORIOS: plate (placa), make (marca), model (submarca/modelo), year (año)
-  OPCIONALES (no preguntes si el usuario no los menciona): state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente), verificationHologram (00|0|1|2|exento), nextVerificationDate (fecha YYYY-MM-DD)
+  OBLIGATORIOS: make (marca), model (submarca/modelo), year (año)
+  OPCIONALES (no preguntes si el usuario no los menciona): plate (placa; puede ir vacío si aún no tiene), state (estado de placas), engomadoColor (amarillo|rosa|rojo|verde|azul), insuranceExpiry (fecha YYYY-MM-DD), tenenciaStatus (si|no|pendiente), verificationHologram (00|0|1|2|exento), nextVerificationDate (fecha YYYY-MM-DD)
 NUNCA pidas para registrar en el panel: NIV, VIN, número de serie, factura, tarjeta de circulación, CURP, RFC ni documentos físicos.
 NUNCA inventes ni sugieras una marca/modelo/año/placa de ejemplo (nada de "Nissan Sentra 2020" ni placas ficticias). Usa solo los datos que el usuario diga, o pregunta por los que falten.
-Si el usuario ya dio marca, modelo, año y placa, ejecuta [CREATE_VEHICLE] de inmediato sin más preguntas.
+Si el usuario ya dio marca, modelo y año, ejecuta [CREATE_VEHICLE] de inmediato (placa opcional).
 Solo pregunta por el dato obligatorio que falte (máximo una pregunta corta).
 
 Cuando el usuario pida crear, actualizar o eliminar algo del panel, usa el bloque correspondiente.
@@ -130,7 +129,7 @@ NO subas archivos (documentos con archivo requieren subirlos manualmente en el p
 
 **Registrar vehículo en Mis Vehículos**
 [CREATE_VEHICLE]
-{ "plate": "PLACA_DEL_USUARIO", "make": "MARCA", "model": "MODELO", "year": 2024 }
+{ "plate": "PLACA_O_VACIO", "make": "MARCA", "model": "MODELO", "year": 2024 }
 [/CREATE_VEHICLE]
 
 **Actualizar vehículo** (solo campos del formulario; vehicle_id del listado)

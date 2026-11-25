@@ -752,17 +752,14 @@ export class CrmContactPanelComponent {
 
   addVehicle() {
     const id = this.contactId();
-    if (!id || !this.newPlate.trim()) {
-      this.toast.error('Indica la placa del vehículo');
-      return;
-    }
+    if (!id) return;
     if (!this.newMake || !this.newModel || !this.newYear) {
       this.toast.error('Selecciona marca, submarca y año');
       return;
     }
     this.isAddingVehicle.set(true);
     this.crmService.addContactVehicle(id, {
-      plate: this.newPlate.trim(),
+      plate: this.newPlate.trim() || '',
       circulationCardName: this.newCirculationCardName.trim() || undefined,
       make: this.newMake,
       model: this.newModel,

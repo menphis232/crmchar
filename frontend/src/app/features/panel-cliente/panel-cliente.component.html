@@ -544,7 +544,7 @@
             <select class="client-wallet-input" [(ngModel)]="walletForm.vehicleId">
               <option value="">Sin vehículo (documento personal)</option>
               @for (v of vehicles(); track v.id) {
-                <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate }}</option>
+                <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate || 'Sin placa' }}</option>
               }
             </select>
             <input type="text" class="client-wallet-input" [(ngModel)]="walletForm.notes" placeholder="Notas (opcional)">
@@ -658,7 +658,7 @@
                     <div class="wdoc-associate-panel" (click)="$event.stopPropagation()">
                       <select class="client-wallet-input" [(ngModel)]="associateVehicleId">
                         @for (v of vehicles(); track v.id) {
-                          <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate }}</option>
+                          <option [value]="v.id">{{ formatVehicleLabel(v) }} — {{ v.plate || 'Sin placa' }}</option>
                         }
                       </select>
                       <div class="wdoc-associate-actions">
@@ -748,7 +748,7 @@
                   } @else {
                     <strong class="client-vehicle-name">Mi vehículo</strong>
                   }
-                  <p class="client-vehicle-plate">{{ v.plate }}</p>
+                  <p class="client-vehicle-plate">{{ v.plate || 'Sin placa' }}</p>
                   @if (isEditingVehicle(v) && (v.engomadoColor || v.tenenciaStatus || v.insuranceExpiry)) {
                     <div class="client-vehicle-tags">
                       @if (v.engomadoColor) {
@@ -1038,8 +1038,8 @@
                 [(year)]="newYear"
               />
               <div>
-                <label>Placa</label>
-                <input type="text" class="client-wallet-input" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
+                <label>Placa (opcional)</label>
+                <input type="text" class="client-wallet-input" [(ngModel)]="newPlate" placeholder="Si aún no tiene, déjala vacía" style="text-transform:uppercase;">
               </div>
               <div>
                 <label>Tarjeta de circulación a nombre de</label>
