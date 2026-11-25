@@ -645,6 +645,7 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
     const {
       plate, make, model, year, state, engomadoColor, vehicleNotes,
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+      circulationCardName,
     } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
     if (!make?.trim() || !model?.trim() || year == null || year === '') {
@@ -655,6 +656,7 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
     const tenenciaYear = tenencia ? new Date().getFullYear() : null;
     const hologram = normalizeVerificationHologram(verificationHologram);
     const nextVerDate = normalizeNextVerificationDate(nextVerificationDate);
+    const circName = circulationCardName?.trim() || null;
 
     const contacts = await ensureClientVehicleContacts(req.user);
     if (!contacts.length) {
@@ -668,13 +670,14 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
       const id = uuid();
       await run(`
         INSERT INTO contact_vehicles (
-          id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes,
+          id, contact_id, user_id, plate, circulation_card_name, make, model, year, state, engomado_color, vehicle_notes,
           insurance_expiry, tenencia_2026, tenencia_year, verification_hologram, next_verification_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         id, contact.id, contact.user_id,
         String(plate).trim().toUpperCase(),
+        circName,
         make.trim(),
         model.trim(),
         Number(year),
@@ -708,6 +711,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
     const {
       plate, make, model, year, state, engomadoColor, vehicleNotes,
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+      circulationCardName,
     } = req.body;
     const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
     const plateKey = plate ? String(plate).trim().toUpperCase() : row?.plate;
@@ -724,6 +728,9 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
       : undefined;
     const nextVerDate = nextVerificationDate !== undefined
       ? normalizeNextVerificationDate(nextVerificationDate)
+      : undefined;
+    const circName = circulationCardName !== undefined
+      ? (circulationCardName && String(circulationCardName).trim() ? String(circulationCardName).trim() : null)
       : undefined;
     const match = await predicateFor(req.user);
 
@@ -742,6 +749,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
            cv.tenencia_year = ${tenenciaYear !== undefined ? '?' : 'cv.tenencia_year'},
            cv.verification_hologram = ${hologram !== undefined ? '?' : 'cv.verification_hologram'},
            cv.next_verification_date = ${nextVerDate !== undefined ? '?' : 'cv.next_verification_date'},
+           cv.circulation_card_name = ${circName !== undefined ? '?' : 'cv.circulation_card_name'},
            cv.updated_at = NOW()
        WHERE ${match.sql} AND UPPER(cv.plate) = UPPER(?)`,
       [
@@ -757,6 +765,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
         ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
         ...(hologram !== undefined ? [hologram] : []),
         ...(nextVerDate !== undefined ? [nextVerDate] : []),
+        ...(circName !== undefined ? [circName] : []),
         ...match.params,
         plateKey,
       ],

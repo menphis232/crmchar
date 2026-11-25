@@ -468,6 +468,7 @@ export interface CrmContactVehicle {
   id: string;
   contactId: string;
   plate: string;
+  circulationCardName?: string | null;
   make?: string;
   model?: string;
   year?: number | null;

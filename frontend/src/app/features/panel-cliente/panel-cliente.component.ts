@@ -280,6 +280,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   /** Vehículo en modo edición; null = solo lectura. */
   editingVehicleId = signal<string | null>(null);
   newPlate = '';
+  newCirculationCardName = '';
   newMake = '';
   newModel = '';
   newYear: number | null = null;
@@ -798,6 +799,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     this.isAddingVehicle.set(true);
     this.http.post<CrmContactVehicle>(`${environment.apiUrl}/client/vehicles`, {
       plate: this.newPlate.trim(),
+      circulationCardName: this.newCirculationCardName.trim() || undefined,
       make: this.newMake,
       model: this.newModel,
       year: this.newYear,
@@ -833,6 +835,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   private resetNewVehicleForm() {
     this.newPlate = '';
+    this.newCirculationCardName = '';
     this.newMake = '';
     this.newModel = '';
     this.newYear = null;

@@ -366,6 +366,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   } | null>(null);
   regeneratingClientAccess = signal(false);
   manualLeadServices = signal<{ name: string; price: number | null; isPublic?: boolean }[]>([]);
+  manualLeadError = signal<string | null>(null);
   manualLead = {
     clientName: '',
     clientEmail: '',
@@ -378,6 +379,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     quantity: 1 as string | number,
     stage: 'nuevo',
     vehicleId: '' as string,
+    contactId: '' as string,
   };
   manualLeadVehicles = signal<Array<{
     id: string;
@@ -1010,6 +1012,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   openManualLeadForm() {
+    this.manualLeadError.set(null);
     this.manualLead = {
       clientName: '',
       clientEmail: '',
@@ -1022,6 +1025,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       quantity: 1,
       stage: 'nuevo',
       vehicleId: '',
+      contactId: '',
     };
     this.manualLeadVehicles.set([]);
     this.prepareManualLeadServices();
@@ -1036,6 +1040,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     vehicles?: Array<{ id: string; plate: string; make?: string | null; model?: string | null; year?: number | null }>;
   }) {
     this.selectedContactId.set(null);
+    this.manualLeadError.set(null);
     const vehicles = contact.vehicles || [];
     this.manualLeadVehicles.set(vehicles);
     this.manualLead = {
@@ -1050,6 +1055,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       quantity: 1,
       stage: 'nuevo',
       vehicleId: vehicles.length === 1 ? vehicles[0].id : '',
+      contactId: contact.contactId || '',
     };
     this.prepareManualLeadServices();
     this.showManualLeadForm.set(true);
@@ -1087,6 +1093,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
   closeManualLeadForm() {
     this.showManualLeadForm.set(false);
+    this.manualLeadError.set(null);
   }
 
   copyClientAccess() {
@@ -1127,8 +1134,11 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   saveManualLead() {
+    this.manualLeadError.set(null);
     if (!this.manualLead.clientName.trim()) {
-      this.toast.warning('El nombre del cliente es obligatorio');
+      const msg = 'El nombre del cliente es obligatorio';
+      this.manualLeadError.set(msg);
+      this.toast.warning(msg);
       return;
     }
     const qty = Math.max(1, Math.min(50, Math.floor(Number(this.manualLead.quantity) || 1)));
@@ -1137,7 +1147,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     const unitRaw = this.manualLead.estimatedValue === '' ? NaN : Number(this.manualLead.estimatedValue);
     const estimatedValue = Number.isFinite(unitRaw) && unitRaw >= 0 ? unitRaw : undefined;
     if (qty > 1 && (estimatedValue === undefined || estimatedValue <= 0)) {
-      this.toast.warning('Indica el precio unitario: se usará en cada trámite para poder registrar el pago.');
+      const msg = 'Indica el precio unitario: se usará en cada trámite para poder registrar el pago.';
+      this.manualLeadError.set(msg);
+      this.toast.warning(msg);
       return;
     }
     this.savingManualLead.set(true);
@@ -1152,6 +1164,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       estimatedValue,
       stage: this.manualLead.stage || 'nuevo',
       vehicleId: this.manualLead.vehicleId || undefined,
+      contactId: this.manualLead.contactId || undefined,
     };
 
     const createOne = (index: number) => {
@@ -1168,7 +1181,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         emailed?: boolean;
         whatsappUrl?: string | null;
       } | null = null;
-      let contactId: string | null = null;
+      let contactId: string | null = this.manualLead.contactId || null;
       let lastDealId: string | null = null;
 
       for (let i = 1; i <= qty; i++) {
@@ -1182,6 +1195,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       }
 
       this.savingManualLead.set(false);
+      this.manualLeadError.set(null);
       this.showManualLeadForm.set(false);
       if (firstAccess?.login) {
         this.clientAccessNotice.set({ ...firstAccess, contactId });
@@ -1203,7 +1217,9 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
 
     run().catch((e) => {
       this.savingManualLead.set(false);
-      this.toast.error(e?.error?.error || 'Error al crear trámite');
+      const msg = e?.error?.error || e?.message || 'Error al crear trámite';
+      this.manualLeadError.set(msg);
+      this.toast.error(msg);
     });
   }
 

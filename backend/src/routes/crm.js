@@ -521,7 +521,7 @@ router.post('/deals', async (req, res) => {
     const uid = req.orgId;
     const {
       clientName, clientEmail, clientPhone, title, autoId, serviceName, location,
-      message, estimatedValue, stage, vehicleId,
+      message, estimatedValue, stage, vehicleId, contactId,
     } = req.body;
 
     if (!clientName?.trim()) {
@@ -566,6 +566,7 @@ router.post('/deals', async (req, res) => {
         message,
         estimatedValue,
         vehicleId: vehicleId || null,
+        contactId: contactId || null,
         stage: dealStage,
       });
       dealId = created.dealId;
@@ -1722,6 +1723,7 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
     const {
       plate, state, engomadoColor, vehicleNotes, make, model, year,
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+      circulationCardName,
     } = req.body;
     if (!plate?.trim()) return res.status(400).json({ error: 'Indica la placa' });
 
@@ -1733,13 +1735,14 @@ router.post('/contacts/:id/vehicles', async (req, res) => {
     const id = uuid();
     await run(`
       INSERT INTO contact_vehicles (
-        id, contact_id, user_id, plate, make, model, year, state, engomado_color, vehicle_notes,
+        id, contact_id, user_id, plate, circulation_card_name, make, model, year, state, engomado_color, vehicle_notes,
         insurance_expiry, tenencia_2026, tenencia_year, verification_hologram, next_verification_date
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       id, req.params.id, uid,
       String(plate).trim().toUpperCase(),
+      circulationCardName?.trim() || null,
       make?.trim() || null,
       model?.trim() || null,
       year != null && year !== '' ? Number(year) : null,
@@ -1767,6 +1770,7 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
     const {
       plate, state, engomadoColor, vehicleNotes, make, model, year,
       insuranceExpiry, tenenciaStatus, verificationHologram, nextVerificationDate,
+      circulationCardName,
     } = req.body;
     const insExpiry = insuranceExpiry !== undefined
       ? (insuranceExpiry && String(insuranceExpiry).trim() ? String(insuranceExpiry).slice(0, 10) : null)
@@ -1780,6 +1784,9 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       : undefined;
     const nextVerDate = nextVerificationDate !== undefined
       ? normalizeNextVerificationDate(nextVerificationDate)
+      : undefined;
+    const circName = circulationCardName !== undefined
+      ? (circulationCardName && String(circulationCardName).trim() ? String(circulationCardName).trim() : null)
       : undefined;
     const result = await run(`
       UPDATE contact_vehicles SET
@@ -1795,6 +1802,7 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
         tenencia_year = ${tenenciaYear !== undefined ? '?' : 'tenencia_year'},
         verification_hologram = ${hologram !== undefined ? '?' : 'verification_hologram'},
         next_verification_date = ${nextVerDate !== undefined ? '?' : 'next_verification_date'},
+        circulation_card_name = ${circName !== undefined ? '?' : 'circulation_card_name'},
         updated_at = NOW()
       WHERE id = ? AND user_id = ?
     `, [
@@ -1810,6 +1818,7 @@ router.patch('/contact-vehicles/:id', async (req, res) => {
       ...(tenenciaYear !== undefined ? [tenenciaYear] : []),
       ...(hologram !== undefined ? [hologram] : []),
       ...(nextVerDate !== undefined ? [nextVerDate] : []),
+      ...(circName !== undefined ? [circName] : []),
       req.params.id,
       uid,
     ]);

@@ -833,6 +833,16 @@
                       }
                     </select>
                   </div>
+                  <div class="full">
+                    <label>Tarjeta de circulación a nombre de</label>
+                    <input
+                      type="text"
+                      class="client-wallet-input"
+                      [ngModel]="v.circulationCardName || ''"
+                      (change)="updateClientVehicle(v, 'circulationCardName', $any($event.target).value)"
+                      placeholder="Nombre como aparece en la tarjeta"
+                    >
+                  </div>
                   <div>
                     <label>Holograma de verificación</label>
                     <select [ngModel]="v.verificationHologram || ''" (ngModelChange)="updateClientVehicle(v, 'verificationHologram', $event)">
@@ -841,6 +851,7 @@
                         <option [value]="h.value">{{ h.label }}</option>
                       }
                     </select>
+                    <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
                   </div>
                   <div>
                     <label>Fecha de próxima verificación</label>
@@ -852,6 +863,10 @@
                 </div>
               } @else {
                 <dl class="client-vehicle-facts">
+                  <div class="client-vehicle-fact">
+                    <dt>Tarjeta de circulación a nombre de</dt>
+                    <dd>{{ vehicleFact(v.circulationCardName) }}</dd>
+                  </div>
                   <div class="client-vehicle-fact">
                     <dt>Marca</dt>
                     <dd>{{ vehicleFact(v.make) }}</dd>
@@ -1027,6 +1042,10 @@
                 <input type="text" class="client-wallet-input" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
               </div>
               <div>
+                <label>Tarjeta de circulación a nombre de</label>
+                <input type="text" class="client-wallet-input" [(ngModel)]="newCirculationCardName" placeholder="Nombre como aparece en la tarjeta">
+              </div>
+              <div>
                 <label>Estado (placas)</label>
                 <select class="client-wallet-input" [(ngModel)]="newVehicleState">
                   <option value="">—</option>
@@ -1068,6 +1087,7 @@
                     <option [value]="h.value">{{ h.label }}</option>
                   }
                 </select>
+                <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
               </div>
               <div>
                 <label>Fecha de próxima verificación</label>

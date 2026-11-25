@@ -2616,6 +2616,14 @@ select.client-wallet-input option {
   -webkit-text-fill-color: #ef4444 !important;
   background: rgba(239, 68, 68, 0.08) !important;
 }
+.field-important-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c05621;
+  line-height: 1.35;
+}
+
 .expiry-alert {
   margin: 6px 0 0;
   font-size: 12px;

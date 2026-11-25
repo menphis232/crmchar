@@ -466,6 +466,7 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     message,
     estimatedValue,
     vehicleId = null,
+    contactId = null,
     stage = 'nuevo',
   } = data;
 
@@ -501,13 +502,32 @@ export async function createManualTramiteDeal(gestorUserId, data) {
     serviceName: dealTitle,
   });
 
-  const contact = await findOrCreateContact(gestorUserId, {
-    name: clientName.trim(),
-    email: clientEmail?.trim() || null,
-    phone: cleanPhone || clientPhone?.trim() || null,
-    source: 'manual',
-    pipeline: 'tramite',
-  });
+  let contact = null;
+  if (contactId) {
+    contact = await get(
+      `SELECT id, name, email, phone FROM contacts
+       WHERE id = ? AND user_id = ? AND pipeline = 'tramite'`,
+      [contactId, gestorUserId],
+    );
+    if (!contact) throw new Error('Contacto no encontrado');
+    // Actualiza datos básicos si el gestor los cambió en el formulario
+    const nextName = clientName.trim() || contact.name;
+    const nextEmail = clientEmail?.trim()?.toLowerCase() || contact.email || null;
+    const nextPhone = cleanPhone || clientPhone?.trim() || contact.phone || null;
+    await run(
+      'UPDATE contacts SET name = ?, email = ?, phone = ?, updated_at = NOW() WHERE id = ? AND user_id = ?',
+      [nextName, nextEmail, nextPhone, contact.id, gestorUserId],
+    );
+    contact = { ...contact, name: nextName, email: nextEmail, phone: nextPhone };
+  } else {
+    contact = await findOrCreateContact(gestorUserId, {
+      name: clientName.trim(),
+      email: clientEmail?.trim() || null,
+      phone: cleanPhone || clientPhone?.trim() || null,
+      source: 'manual',
+      pipeline: 'tramite',
+    });
+  }
 
   const solicitudId = uuid();
   const solStatus = mapDealStageToSolicitudStatus(stage);

@@ -145,6 +145,15 @@
                     (yearChange)="updateVehicle(v, 'year', $event)"
                   />
                 </div>
+                <div class="full">
+                  <label>Tarjeta de circulación a nombre de</label>
+                  <input
+                    type="text"
+                    [ngModel]="v.circulationCardName || ''"
+                    (change)="updateVehicle(v, 'circulationCardName', $any($event.target).value)"
+                    placeholder="Nombre como aparece en la tarjeta"
+                  >
+                </div>
                 <div>
                   <label>Estado (placas)</label>
                   <select [ngModel]="v.state || ''" (ngModelChange)="updateVehicle(v, 'state', $event)">
@@ -200,6 +209,7 @@
                       <option [value]="h.value">{{ h.label }}</option>
                     }
                   </select>
+                  <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
                 </div>
                 <div>
                   <label>Fecha de próxima verificación</label>
@@ -299,6 +309,10 @@
                   <input type="text" [(ngModel)]="newPlate" placeholder="ABC-12-34" style="text-transform:uppercase;">
                 </div>
                 <div>
+                  <label>Tarjeta de circulación a nombre de</label>
+                  <input type="text" [(ngModel)]="newCirculationCardName" placeholder="Nombre como aparece en la tarjeta">
+                </div>
+                <div>
                   <label>Estado</label>
                   <select [(ngModel)]="newVehicleState">
                     <option value="">—</option>
@@ -340,6 +354,7 @@
                       <option [value]="h.value">{{ h.label }}</option>
                     }
                   </select>
+                  <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
                 </div>
                 <div>
                   <label>Fecha de próxima verificación</label>

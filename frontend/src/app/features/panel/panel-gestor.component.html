@@ -2098,6 +2098,10 @@
         </div>
       </div>
 
+      @if (manualLeadError(); as leadErr) {
+        <p class="mon-lead-error" role="alert">{{ leadErr }}</p>
+      }
+
       <div class="mon-lead-actions">
         <button type="button" class="mon-access-btn" (click)="closeManualLeadForm()">Cancelar</button>
         <button type="button" class="mon-access-btn mon-access-btn--primary" (click)="saveManualLead()" [disabled]="savingManualLead()">

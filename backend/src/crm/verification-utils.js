@@ -100,6 +100,7 @@ export function vehicleRowWithVerification(row) {
     id: row.id,
     contactId: row.contact_id,
     plate: row.plate,
+    circulationCardName: row.circulation_card_name || null,
     make: row.make,
     model: row.model,
     year: row.year != null ? Number(row.year) : null,

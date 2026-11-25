@@ -2580,12 +2580,34 @@
   color: #e2445c !important;
 }
 
+.mon-lead-error {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #f8b4b4;
+  background: #fff5f5;
+  color: #c81e1e;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .mon-lead-actions {
   display: flex;
   gap: 10px;
   justify-content: flex-end;
   flex-wrap: wrap;
   margin-top: 16px;
+  position: sticky;
+  bottom: 0;
+  padding-top: 12px;
+  background: #fff;
+}
+
+.field-important-hint {
+  margin: 6px 0 0 !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #c05621 !important;
 }
 
 /* Modal acceso cliente */

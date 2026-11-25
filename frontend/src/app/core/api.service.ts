@@ -161,6 +161,7 @@ export class CrmService {
     estimatedValue?: number;
     stage?: string;
     vehicleId?: string | null;
+    contactId?: string | null;
   }) {
     return this.http.post<CrmDeal>(`${this.base}/deals`, data);
   }
@@ -268,6 +269,7 @@ export class CrmService {
     tenenciaStatus?: string | null;
     verificationHologram?: string | null;
     nextVerificationDate?: string | null;
+    circulationCardName?: string | null;
   }) {
     return this.http.post<CrmContactVehicle>(`${this.base}/contacts/${contactId}/vehicles`, data);
   }
@@ -283,6 +285,7 @@ export class CrmService {
     tenenciaStatus: string | null;
     verificationHologram: string | null;
     nextVerificationDate: string | null;
+    circulationCardName: string | null;
   }>) {
     return this.http.patch<CrmContactVehicle>(`${this.base}/contact-vehicles/${vehicleId}`, data);
   }

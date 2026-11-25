@@ -130,7 +130,11 @@ html[data-theme='light'] .swal-delete-item {
   color: #323338 !important;
 }
 
-/* Toast styles */
+/* Toast styles — por encima de modales del panel (z-index ~4100) */
+.swal2-container {
+  z-index: 20000 !important;
+}
+
 .swal2-toast.swal-dark-toast {
   background: #111111 !important;
   border: 1px solid rgba(255,255,255,0.1) !important;

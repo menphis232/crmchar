@@ -546,6 +546,7 @@ export class CrmContactPanelComponent {
   }
 
   newPlate = '';
+  newCirculationCardName = '';
   newMake = '';
   newModel = '';
   newYear: number | null = null;
@@ -736,6 +737,7 @@ export class CrmContactPanelComponent {
 
   private resetNewVehicleForm() {
     this.newPlate = '';
+    this.newCirculationCardName = '';
     this.newMake = '';
     this.newModel = '';
     this.newYear = null;
@@ -761,6 +763,7 @@ export class CrmContactPanelComponent {
     this.isAddingVehicle.set(true);
     this.crmService.addContactVehicle(id, {
       plate: this.newPlate.trim(),
+      circulationCardName: this.newCirculationCardName.trim() || undefined,
       make: this.newMake,
       model: this.newModel,
       year: this.newYear,
