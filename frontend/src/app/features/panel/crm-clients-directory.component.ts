@@ -1,4 +1,4 @@
-import { Component, input, output, signal, OnInit, inject } from '@angular/core';
+import { Component, input, output, signal, OnInit, inject, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LucideChevronLeft, LucideChevronRight, LucideLogIn, LucidePencil, LucidePlus, LucideSearch, LucideTrash2 } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
@@ -463,6 +463,8 @@ export class CrmClientsDirectoryComponent implements OnInit {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   canImpersonate = input(false);
+  /** Búsqueda venida del buscador global del panel. */
+  seedQuery = input('');
   openContact = output<string>();
   impersonatingId = signal<string | null>(null);
 
@@ -488,11 +490,21 @@ export class CrmClientsDirectoryComponent implements OnInit {
 
   form: ClientForm = emptyForm();
   collapsedGroups = signal<Record<string, boolean>>({});
+  private lastSeedApplied = '';
 
-  constructor(private crmService: CrmService) {}
+  constructor(private crmService: CrmService) {
+    effect(() => {
+      const q = String(this.seedQuery() || '').trim();
+      if (!q || q === this.lastSeedApplied) return;
+      this.lastSeedApplied = q;
+      this.search.set(q);
+      this.currentPage.set(1);
+      this.load(1);
+    });
+  }
 
   ngOnInit() {
-    this.load();
+    if (!String(this.seedQuery() || '').trim()) this.load();
   }
 
   contactGroups(): { id: string; label: string; color: string; items: CrmContact[] }[] {

@@ -28,7 +28,7 @@
       <img [src]="tvmLogo" alt="Trámites Vehiculares de México" class="dash-brand-logo" />
     </a>
   }
-  <label class="mon-top-search" for="gestor-global-search">
+  <div class="mon-top-search" role="search">
     <svg lucideSearch [size]="16" aria-hidden="true"></svg>
     <input
       #globalSearchInput
@@ -37,12 +37,43 @@
       type="search"
       name="globalSearch"
       autocomplete="off"
-      placeholder="Busca lo que quieras..."
+      placeholder="Cliente, teléfono, trámite..."
       [(ngModel)]="globalSearch"
+      (input)="onGlobalSearchInput()"
+      (focus)="onGlobalSearchInput()"
       (keydown.enter)="runGlobalSearch()"
     />
     <kbd aria-hidden="true">Ctrl K</kbd>
-  </label>
+    @if (globalSearchOpen() && globalSearch.trim()) {
+      <div class="mon-top-search-dropdown" role="listbox">
+        @if (globalSearchLoading()) {
+          <p class="mon-top-search-empty">Buscando…</p>
+        } @else {
+          @if (globalSearchContacts().length) {
+            <p class="mon-top-search-section">Clientes</p>
+            @for (c of globalSearchContacts(); track c.id) {
+              <button type="button" class="mon-top-search-item" (click)="pickGlobalContact(c.id)">
+                <strong>{{ c.name }}</strong>
+                <span>{{ c.phone || c.email || 'Contacto' }}</span>
+              </button>
+            }
+          }
+          @if (globalSearchDeals().length) {
+            <p class="mon-top-search-section">Trámites</p>
+            @for (d of globalSearchDeals(); track d.id) {
+              <button type="button" class="mon-top-search-item" (click)="pickGlobalDeal(d.id)">
+                <strong>{{ d.title }}</strong>
+                <span>{{ d.contactName || 'Trámite' }}</span>
+              </button>
+            }
+          }
+          @if (!globalSearchContacts().length && !globalSearchDeals().length) {
+            <p class="mon-top-search-empty">Sin resultados en clientes ni trámites</p>
+          }
+        }
+      </div>
+    }
+  </div>
   <div class="dash-user">
     <app-theme-switch />
     <app-notification-bell />
@@ -456,6 +487,7 @@
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
       <app-crm-clients-directory
         [canImpersonate]="canManageClientPromoBanner()"
+        [seedQuery]="clientsSeedQuery()"
         (openContact)="openClientContact($event)"
       />
     }

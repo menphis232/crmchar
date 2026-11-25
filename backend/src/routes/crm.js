@@ -493,9 +493,13 @@ router.get('/deals', async (req, res) => {
       }
     }
     if (q) {
-      sql += ' AND (c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR d.title LIKE ? OR cv.plate LIKE ? OR cv.make LIKE ? OR cv.model LIKE ?)';
+      sql += ` AND (
+        c.name LIKE ? OR c.email LIKE ? OR c.phone LIKE ? OR c.whatsapp LIKE ?
+        OR d.title LIKE ? OR d.tracking_code LIKE ?
+        OR cv.plate LIKE ? OR cv.make LIKE ? OR cv.model LIKE ?
+      )`;
       const term = `%${q}%`;
-      params.push(term, term, term, term, term, term, term);
+      params.push(term, term, term, term, term, term, term, term, term);
     }
     sql += ' ORDER BY d.updated_at DESC';
 

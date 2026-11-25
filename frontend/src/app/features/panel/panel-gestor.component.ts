@@ -244,6 +244,12 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   selectedContactId = signal<string | null>(null);
   searchQuery = '';
   globalSearch = '';
+  clientsSeedQuery = signal('');
+  globalSearchOpen = signal(false);
+  globalSearchLoading = signal(false);
+  globalSearchContacts = signal<{ id: string; name: string; email?: string; phone?: string }[]>([]);
+  globalSearchDeals = signal<{ id: string; title: string; contactName?: string; stage?: string }[]>([]);
+  private globalSearchTimer: ReturnType<typeof setTimeout> | null = null;
   @ViewChild('globalSearchInput') globalSearchInput?: ElementRef<HTMLInputElement>;
   filterStage = '';
   bio = '';
@@ -2380,6 +2386,69 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     el.select();
   }
 
+  onGlobalSearchInput() {
+    const q = this.globalSearch.trim();
+    if (this.globalSearchTimer) clearTimeout(this.globalSearchTimer);
+    if (!q) {
+      this.clearGlobalSearchResults();
+      return;
+    }
+    this.globalSearchTimer = setTimeout(() => this.fetchGlobalSearch(q), 280);
+  }
+
+  private clearGlobalSearchResults() {
+    this.globalSearchOpen.set(false);
+    this.globalSearchLoading.set(false);
+    this.globalSearchContacts.set([]);
+    this.globalSearchDeals.set([]);
+  }
+
+  private fetchGlobalSearch(q: string) {
+    this.globalSearchLoading.set(true);
+    this.globalSearchOpen.set(true);
+    let pending = 2;
+    const done = () => {
+      pending -= 1;
+      if (pending <= 0) this.globalSearchLoading.set(false);
+    };
+
+    this.crmService.getContacts({ q, page: 1, limit: 8 }).subscribe({
+      next: (res) => {
+        this.globalSearchContacts.set(
+          (res.contacts || []).map((c) => ({
+            id: c.id,
+            name: c.name || 'Sin nombre',
+            email: c.email || undefined,
+            phone: c.phone || undefined,
+          })),
+        );
+        done();
+      },
+      error: () => {
+        this.globalSearchContacts.set([]);
+        done();
+      },
+    });
+
+    this.crmService.getDeals({ q }).subscribe({
+      next: (deals) => {
+        this.globalSearchDeals.set(
+          (deals || []).slice(0, 8).map((d) => ({
+            id: d.id,
+            title: d.title || 'Trámite',
+            contactName: d.contactName || (d as any).contact_name || undefined,
+            stage: d.stage,
+          })),
+        );
+        done();
+      },
+      error: () => {
+        this.globalSearchDeals.set([]);
+        done();
+      },
+    });
+  }
+
   runGlobalSearch() {
     const q = this.globalSearch.trim();
     if (!q) {
@@ -2387,18 +2456,101 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       return;
     }
     this.searchQuery = q;
+    this.clientsSeedQuery.set(q);
     this.isMobileMenuOpen.set(false);
-    if (this.hasPerm('pipeline')) {
-      if (this.tab() === 'pipeline') {
-        this.loadDeals();
-      } else {
-        this.setTab('pipeline');
+    this.globalSearchLoading.set(true);
+    this.globalSearchOpen.set(true);
+
+    let contactsDone = false;
+    let dealsDone = false;
+    let contacts: { id: string; name: string; email?: string; phone?: string }[] = [];
+    let deals: { id: string; title: string; contactName?: string; stage?: string }[] = [];
+
+    const finish = () => {
+      if (!contactsDone || !dealsDone) return;
+      this.globalSearchLoading.set(false);
+      this.globalSearchContacts.set(contacts);
+      this.globalSearchDeals.set(deals);
+
+      const hasContacts = contacts.length > 0;
+      const hasDeals = deals.length > 0;
+
+      if (!hasContacts && !hasDeals) {
+        this.toast.info('No se encontraron clientes ni trámites con esa búsqueda');
+        return;
       }
-      return;
-    }
-    if (this.hasPerm('clientes')) {
+      // Solo clientes → Contactos; solo trámites o ambos → Pipeline + dropdown
+      if (hasContacts && !hasDeals && this.hasPerm('clientes')) {
+        this.globalSearchOpen.set(false);
+        if (this.tab() !== 'clientes') this.setTab('clientes');
+        return;
+      }
+      if (hasDeals && this.hasPerm('pipeline')) {
+        if (this.tab() === 'pipeline') this.loadDeals();
+        else this.setTab('pipeline');
+      }
+    };
+
+    this.crmService.getContacts({ q, page: 1, limit: 8 }).subscribe({
+      next: (res) => {
+        contacts = (res.contacts || []).map((c) => ({
+          id: c.id,
+          name: c.name || 'Sin nombre',
+          email: c.email || undefined,
+          phone: c.phone || undefined,
+        }));
+        contactsDone = true;
+        finish();
+      },
+      error: () => {
+        contacts = [];
+        contactsDone = true;
+        finish();
+      },
+    });
+
+    this.crmService.getDeals({ q }).subscribe({
+      next: (rows) => {
+        deals = (rows || []).slice(0, 8).map((d) => ({
+          id: d.id,
+          title: d.title || 'Trámite',
+          contactName: d.contactName || undefined,
+          stage: d.stage,
+        }));
+        dealsDone = true;
+        finish();
+      },
+      error: () => {
+        deals = [];
+        dealsDone = true;
+        finish();
+      },
+    });
+  }
+
+  pickGlobalContact(contactId: string) {
+    this.globalSearchOpen.set(false);
+    this.clientsSeedQuery.set(this.globalSearch.trim());
+    if (this.hasPerm('clientes') && this.tab() !== 'clientes') {
       this.setTab('clientes');
     }
+    this.openClientContact(contactId);
+  }
+
+  pickGlobalDeal(dealId: string) {
+    this.globalSearchOpen.set(false);
+    this.searchQuery = this.globalSearch.trim();
+    if (this.hasPerm('pipeline')) {
+      if (this.tab() !== 'pipeline') this.setTab('pipeline');
+      else this.loadDeals();
+      this.openDeal(dealId);
+    }
+  }
+
+  @HostListener('document:click', ['$event'])
+  onGlobalSearchClickOutside(ev: MouseEvent) {
+    const root = (ev.target as HTMLElement | null)?.closest?.('.mon-top-search');
+    if (!root) this.globalSearchOpen.set(false);
   }
 
   // --- AUTOMATIONS ---
