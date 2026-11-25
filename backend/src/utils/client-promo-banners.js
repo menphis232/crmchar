@@ -221,20 +221,51 @@ export async function loadPanelClienteSettings() {
 }
 
 /**
+ * JWT del cliente no incluye phone; sin él el match por teléfono falla
+ * (cuentas @clientes.tramitesmx.local). Hidratamos desde users.
+ */
+async function hydrateClientUser(user) {
+  if (!user?.id) return user || {};
+  try {
+    const row = await get('SELECT id, email, phone, name, role FROM users WHERE id = ?', [user.id]);
+    if (!row) return user;
+    return {
+      ...user,
+      email: row.email || user.email,
+      phone: row.phone || user.phone || null,
+      name: row.name || user.name,
+      role: row.role || user.role,
+    };
+  } catch {
+    return user;
+  }
+}
+
+/**
  * Contexto de audiencia del cliente autenticado.
- * - states: vehículos + ubicación de solicitudes/trámites (ej. Morelos)
+ * - states: vehículos + residence_state del contacto + ubicación de solicitudes
  * - serviceNames / paidServiceNames: títulos de trámites
  * - hasPurchased: tiene al menos un trámite pagado
  */
 export async function resolveClientPromoAudience(user) {
-  const match = clientContactPredicate(user);
+  const fullUser = await hydrateClientUser(user);
+  const match = clientContactPredicate(fullUser);
+
   const vehicleRows = await query(
     `SELECT DISTINCT cv.state AS state
      FROM contact_vehicles cv
      JOIN contacts c ON c.id = cv.contact_id
      WHERE cv.state IS NOT NULL AND TRIM(cv.state) <> ''
        AND (${match.sql} OR cv.user_id = ?)`,
-    [...match.params, user.id],
+    [...match.params, fullUser.id],
+  ).catch(() => []);
+
+  const residenceRows = await query(
+    `SELECT DISTINCT c.residence_state AS state
+     FROM contacts c
+     WHERE (${match.sql})
+       AND c.residence_state IS NOT NULL AND TRIM(c.residence_state) <> ''`,
+    match.params,
   ).catch(() => []);
 
   const locationRows = await query(
@@ -249,6 +280,7 @@ export async function resolveClientPromoAudience(user) {
 
   const states = [...new Set([
     ...(vehicleRows || []).map((r) => String(r.state || '').trim()).filter(Boolean),
+    ...(residenceRows || []).map((r) => String(r.state || '').trim()).filter(Boolean),
     ...(locationRows || []).flatMap((r) => extractStatesFromText(r.location)),
   ])];
 
@@ -271,7 +303,7 @@ export async function resolveClientPromoAudience(user) {
   )];
 
   return {
-    userId: user.id,
+    userId: fullUser.id,
     states,
     serviceNames,
     paidServiceNames,
