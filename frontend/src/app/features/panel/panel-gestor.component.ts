@@ -181,6 +181,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly serviceImageSizeLabel = GESTOR_SERVICE_IMAGE_SIZE_LABEL;
   serviceImageCropFile = signal<File | null>(null);
   isUploadingServiceImage = signal(false);
+  isSavingService = signal(false);
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
   private socketService = inject(SocketService);
@@ -2157,7 +2158,27 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   saveService() {
-    if (!this.serviceForm.name || !this.serviceForm.timeEstimate) return;
+    if (this.isSavingService()) return;
+
+    const name = String(this.serviceForm.name || '').trim();
+    const timeEstimate = String(this.serviceForm.timeEstimate || '').trim();
+    this.serviceForm.name = name;
+    this.serviceForm.timeEstimate = timeEstimate;
+
+    if (!name || !timeEstimate) {
+      const missing = [
+        !name ? 'nombre del trámite' : null,
+        !timeEstimate ? 'tiempo estimado' : null,
+      ].filter(Boolean).join(' y ');
+      this.toast.warning(`Completa ${missing} para guardar el servicio.`, 'Faltan datos');
+      setTimeout(() => {
+        const el = document.getElementById(!name ? 'service-form-name' : 'service-form-time');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        (el as HTMLInputElement | null)?.focus();
+      }, 50);
+      return;
+    }
+
     const docs = this.checklistTexts(this.serviceDocs);
     const includes = this.checklistTexts(this.serviceIncludesList);
     const bonus = this.checklistTexts(this.serviceBonusList);
@@ -2171,8 +2192,8 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       includes?: string[];
       bonus?: string[];
     } = {
-      name: this.serviceForm.name,
-      timeEstimate: this.serviceForm.timeEstimate,
+      name,
+      timeEstimate,
       price: this.serviceForm.price,
       imageUrl: this.serviceForm.imageUrl || null,
       isPublic: this.serviceForm.isPublic !== false,
@@ -2181,19 +2202,31 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     if (includes.length > 0) payload.includes = includes;
     if (bonus.length > 0) payload.bonus = bonus;
 
-    const onSuccess = (msg: string) => {
+    const wasEdit = !!this.editingServiceId;
+    const onSuccess = () => {
+      this.isSavingService.set(false);
       this.resetServiceForm();
       this.loadProfile();
+      const msg = wasEdit ? 'Servicio actualizado correctamente.' : 'Servicio guardado. Ya aparece en tu catálogo.';
       this.message.set(msg);
+      this.toast.success(msg, wasEdit ? 'Servicio actualizado' : 'Servicio guardado');
+      setTimeout(() => {
+        document.getElementById('service-edit-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 80);
     };
 
+    this.isSavingService.set(true);
+    const onError = () => this.isSavingService.set(false);
     if (this.editingServiceId) {
       this.gestoresService.updateService(this.editingServiceId, payload).subscribe({
-        next: () => onSuccess('Servicio actualizado'),
+        next: () => onSuccess(),
+        error: () => onError(),
       });
     } else {
       this.gestoresService.addService(payload).subscribe({
-        next: () => onSuccess('Servicio agregado'),
+        next: () => onSuccess(),
+        error: () => onError(),
       });
     }
   }
