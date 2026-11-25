@@ -1647,6 +1647,25 @@ async function migrate() {
       console.log('Migración v78 (tarjeta de circulación a nombre de) aplicada.');
     }
 
+    const v79Path = path.join(__dirname, '..', 'sql', 'migration-v79-registration-source.sql');
+    if (fs.existsSync(v79Path)) {
+      const v79 = fs.readFileSync(v79Path, 'utf8');
+      const conn79 = await mysql.createConnection({
+        host: process.env.DB_HOST || 'db',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD || 'root',
+        database: process.env.DB_NAME || 'tramites_vehiculares',
+        multipleStatements: true,
+      });
+      for (const stmt of v79.split(';').map(s => s.trim()).filter(Boolean)) {
+        try { await conn79.query(stmt); } catch (e) {
+          if (!['ER_DUP_FIELDNAME', 'ER_TABLE_EXISTS_ERROR', 'ER_DUP_KEYNAME', 'ER_DUP_ENTRY'].includes(e.code)) throw e;
+        }
+      }
+      await conn79.end();
+      console.log('Migración v79 (registration_source) aplicada.');
+    }
+
     console.log('Todas las migraciones completadas.');
     process.exit(0);
 }

@@ -403,7 +403,8 @@ export async function ensureClientUser({ clientName, clientEmail, clientPhone, g
   const loginEmail = email || clienteInternalEmail(phone);
   const login = email || phone;
   await run(
-    'INSERT INTO users (id, email, phone, password_hash, role, name, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    `INSERT INTO users (id, email, phone, password_hash, role, name, status, registration_source)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 'gestor')`,
     [userId, loginEmail, phone, bcrypt.hashSync(password, 10), 'cliente', name, 'active'],
   );
 
@@ -586,6 +587,14 @@ export async function createManualTramiteDeal(gestorUserId, data) {
 
 export function contactRow(row) {
   if (!row) return null;
+  const regSource = row.client_registration_source || row.registration_source || null;
+  const userCreatedAt = row.client_user_created_at || null;
+  let registrationLabel = null;
+  if (regSource === 'self') {
+    const createdMs = userCreatedAt ? new Date(userCreatedAt).getTime() : 0;
+    const isNew = createdMs && (Date.now() - createdMs) < 14 * 24 * 60 * 60 * 1000;
+    registrationLabel = isNew ? 'Usuario nuevo' : 'Registro propio';
+  }
   return {
     id: row.id,
     name: row.name,
@@ -601,6 +610,9 @@ export function contactRow(row) {
     vehicleCount: row.vehicleCount != null ? Number(row.vehicleCount) : undefined,
     plates: row.plates || undefined,
     createdAt: row.created_at,
+    registrationSource: regSource,
+    registrationLabel,
+    clientUserCreatedAt: userCreatedAt,
   };
 }
 

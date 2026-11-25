@@ -164,7 +164,12 @@
                 <tr (click)="openContact.emit(c.id)">
                   <td>
                     <button type="button" class="mon-deal-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
-                    <div class="mon-muted client-state">{{ c.residenceState || 'Sin estado' }}</div>
+                    <div class="mon-muted client-state">
+                      {{ c.residenceState || 'Sin estado' }}
+                      @if (c.registrationLabel) {
+                        <span class="reg-source-chip" [class.reg-source-chip--new]="c.registrationLabel === 'Usuario nuevo'">{{ c.registrationLabel }}</span>
+                      }
+                    </div>
                   </td>
                   <td class="mon-muted">{{ c.phone || '—' }}</td>
                   <td class="mon-muted client-email">{{ c.email || '—' }}</td>

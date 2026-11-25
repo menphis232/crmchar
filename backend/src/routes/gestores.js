@@ -1303,7 +1303,8 @@ async function processLeadCreation(gestor, clientName, clientEmail, clientPhone,
       const hash = bcrypt.hashSync(pendingTempPassword, 10);
       const userId = uuid();
       await run(
-        'INSERT INTO users (id, email, phone, password_hash, role, name) VALUES (?, ?, ?, ?, ?, ?)',
+        `INSERT INTO users (id, email, phone, password_hash, role, name, registration_source)
+         VALUES (?, ?, ?, ?, ?, ?, 'lead')`,
         [userId, emailNorm, normalizedPhone, hash, 'cliente', clientName],
       );
       accountCreated = true;

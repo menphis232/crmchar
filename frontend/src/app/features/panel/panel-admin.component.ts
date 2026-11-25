@@ -66,6 +66,7 @@ export class PanelAdminComponent implements OnInit {
   stats = signal<AdminStats | null>(null);
   managedUsers = signal<ManagedUser[]>([]);
   userFilter = signal<'gestor' | 'concesionaria' | 'cliente'>('cliente');
+  registrationFilter = signal<'all' | 'self' | 'gestor'>('all');
   selectedUser = signal<ManagedUser | null>(null);
   newPassword = '';
   editName = '';
@@ -382,7 +383,13 @@ export class PanelAdminComponent implements OnInit {
   }
 
   loadUsers() {
-    this.adminService.getManagedUsers(this.userFilter()).subscribe({
+    const reg = this.userFilter() === 'cliente' && this.registrationFilter() !== 'all'
+      ? this.registrationFilter()
+      : undefined;
+    this.adminService.getManagedUsers(
+      this.userFilter(),
+      reg === 'self' || reg === 'gestor' ? reg : undefined,
+    ).subscribe({
       next: u => {
         this.managedUsers.set(u);
         const selected = this.selectedUser();
@@ -400,8 +407,14 @@ export class PanelAdminComponent implements OnInit {
     const role = tab === 'users' ? 'cliente' : tab === 'gestores' ? 'gestor' : 'concesionaria';
     this.tab.set(tab);
     this.userFilter.set(role);
+    this.registrationFilter.set('all');
     this.loadUsers();
     this.isMobileMenuOpen.set(false);
+  }
+
+  setRegistrationFilter(filter: 'all' | 'self' | 'gestor') {
+    this.registrationFilter.set(filter);
+    this.loadUsers();
   }
 
   managedUsersTitle() {

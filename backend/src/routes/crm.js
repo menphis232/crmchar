@@ -1116,6 +1116,25 @@ router.get('/contacts/:id', async (req, res) => {
     );
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
 
+    const linkedClient = await get(
+      `SELECT registration_source AS client_registration_source, created_at AS client_user_created_at
+       FROM users
+       WHERE role = 'cliente' AND (
+         (? IS NOT NULL AND ? != '' AND LOWER(email) = LOWER(?))
+         OR (? IS NOT NULL AND ? != '' AND phone = ?)
+       )
+       ORDER BY CASE WHEN registration_source = 'self' THEN 0 ELSE 1 END, created_at DESC
+       LIMIT 1`,
+      [
+        contact.email, contact.email, contact.email,
+        contact.phone, contact.phone, contact.phone,
+      ],
+    );
+    if (linkedClient) {
+      contact.client_registration_source = linkedClient.client_registration_source;
+      contact.client_user_created_at = linkedClient.client_user_created_at;
+    }
+
     const access = dealAccessFilter(req.user);
     const deals = await query(`
       SELECT d.*, ${DEAL_VEHICLE_SELECT}, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
@@ -1279,7 +1298,25 @@ router.get('/contacts', async (req, res) => {
           COALESCE(cv.state, ''), '|',
           COALESCE(DATE_FORMAT(cv.insurance_expiry, '%Y-%m-%d'), '')
         ) ORDER BY cv.plate SEPARATOR ';;') as vehicleSummary,
-        GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites
+        GROUP_CONCAT(DISTINCT d.title ORDER BY d.title SEPARATOR ', ') as tramites,
+        (
+          SELECT u.registration_source FROM users u
+          WHERE u.role = 'cliente' AND (
+            (c.email IS NOT NULL AND c.email != '' AND LOWER(u.email) = LOWER(c.email))
+            OR (c.phone IS NOT NULL AND c.phone != '' AND u.phone = c.phone)
+          )
+          ORDER BY CASE WHEN u.registration_source = 'self' THEN 0 ELSE 1 END, u.created_at DESC
+          LIMIT 1
+        ) AS client_registration_source,
+        (
+          SELECT u.created_at FROM users u
+          WHERE u.role = 'cliente' AND (
+            (c.email IS NOT NULL AND c.email != '' AND LOWER(u.email) = LOWER(c.email))
+            OR (c.phone IS NOT NULL AND c.phone != '' AND u.phone = c.phone)
+          )
+          ORDER BY CASE WHEN u.registration_source = 'self' THEN 0 ELSE 1 END, u.created_at DESC
+          LIMIT 1
+        ) AS client_user_created_at
       FROM contacts c
       LEFT JOIN crm_deals d ON d.contact_id = c.id AND d.user_id = ? AND d.deal_type = ?${dealJoinAccess.sql}
       LEFT JOIN contact_vehicles cv ON cv.contact_id = c.id

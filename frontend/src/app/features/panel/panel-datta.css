@@ -2610,6 +2610,25 @@
   color: #c05621 !important;
 }
 
+.reg-source-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  background: #fff7ed;
+  color: #c05621;
+  border: 1px solid #fed7aa;
+}
+.reg-source-chip--new {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
 /* Modal acceso cliente */
 .mon-access-overlay.modal-overlay {
   z-index: 4100 !important;

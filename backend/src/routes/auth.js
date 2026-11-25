@@ -123,11 +123,12 @@ router.post('/register', async (req, res) => {
     if (needsPayment) initialStatus = 'pending_payment';
 
     const hash = bcrypt.hashSync(password, 10);
+    // Registro público = origen "self" (campañas / login con Regístrate)
     await run(
       `INSERT INTO users (
-         id, email, password_hash, role, name, status, phone,
+         id, email, password_hash, role, name, status, phone, registration_source,
          terms_accepted_at, privacy_accepted_at, last_seen_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, 'self', NOW(), NOW(), NOW())`,
       [userId, email.toLowerCase(), hash, role, displayName, initialStatus, phoneValue || null],
     );
 

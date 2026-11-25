@@ -539,9 +539,10 @@ export class AdminService {
 
   getStats() { return this.http.get<AdminStats>(`${this.base}/stats`); }
   getUsers() { return this.http.get(`${this.base}/users`); }
-  getManagedUsers(role?: 'gestor' | 'concesionaria' | 'cliente') {
+  getManagedUsers(role?: 'gestor' | 'concesionaria' | 'cliente', registrationSource?: 'self' | 'gestor') {
     let params = new HttpParams();
     if (role) params = params.set('role', role);
+    if (registrationSource) params = params.set('registrationSource', registrationSource);
     return this.http.get<ManagedUser[]>(`${this.base}/users/managed`, { params });
   }
   resetPassword(userId: string, newPassword: string) {

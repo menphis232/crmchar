@@ -69,9 +69,10 @@ router.get('/users', authRequired, requireRole('admin'), async (_req, res) => {
 // Clientes y propietarios de gestorías/concesionarias con detalle para administración
 router.get('/users/managed', authRequired, requireRole('admin'), async (req, res) => {
   try {
-    const { role } = req.query;
+    const { role, registrationSource } = req.query;
     let sql = `
       SELECT u.id, u.email, u.name, u.role, u.created_at as createdAt,
+             u.registration_source as registrationSource,
              g.id as gestorId, g.slug, g.location, g.state, g.rating,
              (SELECT COUNT(*) FROM autos a WHERE a.user_id = u.id) as autosCount
       FROM users u
@@ -84,9 +85,24 @@ router.get('/users/managed', authRequired, requireRole('admin'), async (req, res
       sql += ' AND u.role = ?';
       params.push(role);
     }
-    sql += ' ORDER BY u.name ASC';
+    if (registrationSource === 'self') {
+      sql += " AND u.registration_source = 'self'";
+    } else if (registrationSource === 'gestor') {
+      sql += " AND (u.registration_source = 'gestor' OR u.registration_source = 'lead')";
+    }
+    sql += ' ORDER BY u.created_at DESC, u.name ASC';
     const rows = await query(sql, params);
-    res.json(rows);
+    const now = Date.now();
+    res.json(rows.map((u) => {
+      const createdMs = u.createdAt ? new Date(u.createdAt).getTime() : 0;
+      const isNew = u.registrationSource === 'self' && createdMs && (now - createdMs) < 14 * 24 * 60 * 60 * 1000;
+      let registrationLabel = null;
+      if (u.registrationSource === 'self') registrationLabel = isNew ? 'Usuario nuevo' : 'Registro propio';
+      else if (u.registrationSource === 'gestor' || u.registrationSource === 'lead') {
+        registrationLabel = 'Creado por gestoría';
+      }
+      return { ...u, registrationLabel, isNewSelfRegistration: !!isNew };
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al listar usuarios' });

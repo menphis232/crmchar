@@ -281,6 +281,13 @@
           {{ managedUsersTitle() }}
         </h2>
         <p class="card-desc">Consulta y administra las cuentas de esta categoría.</p>
+        @if (userFilter() === 'cliente') {
+          <div class="reg-source-filters" style="display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px;">
+            <button type="button" class="btn-ghost small" [class.active]="registrationFilter() === 'all'" (click)="setRegistrationFilter('all')">Todos</button>
+            <button type="button" class="btn-ghost small" [class.active]="registrationFilter() === 'self'" (click)="setRegistrationFilter('self')">Registro propio</button>
+            <button type="button" class="btn-ghost small" [class.active]="registrationFilter() === 'gestor'" (click)="setRegistrationFilter('gestor')">Creados por gestoría</button>
+          </div>
+        }
         <div class="users-layout">
           <div class="users-list">
             @if (!managedUsers().length) {
@@ -292,6 +299,11 @@
                 <div class="user-row-body">
                   <strong>{{ u.name }}</strong>
                   <span class="user-meta">{{ u.email }}</span>
+                  @if (u.registrationLabel) {
+                    <span class="reg-source-badge" [class.reg-source-badge--new]="u.isNewSelfRegistration" [class.reg-source-badge--self]="u.registrationSource === 'self'">
+                      {{ u.registrationLabel }}
+                    </span>
+                  }
                 </div>
                 <span class="user-role-badge" [class.gestor]="u.role === 'gestor'" [class.concesionaria]="u.role === 'concesionaria'" [class.cliente]="u.role === 'cliente'">
                   {{ u.role === 'gestor' ? 'Gestoría' : u.role === 'concesionaria' ? 'Concesionario' : 'Cliente' }}

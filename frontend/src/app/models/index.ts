@@ -245,6 +245,9 @@ export interface ManagedUser {
   state?: string;
   rating?: number;
   autosCount?: number;
+  registrationSource?: string | null;
+  registrationLabel?: string | null;
+  isNewSelfRegistration?: boolean;
 }
 
 export interface SupportThread {
@@ -462,6 +465,11 @@ export interface CrmContact {
   tramites?: string;
   dealCount?: number;
   createdAt?: string;
+  /** Origen de la cuenta de panel: self | gestor | lead */
+  registrationSource?: string | null;
+  /** Etiqueta lista para UI: Usuario nuevo / Registro propio */
+  registrationLabel?: string | null;
+  clientUserCreatedAt?: string | null;
 }
 
 export interface CrmContactVehicle {

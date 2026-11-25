@@ -19,7 +19,14 @@
       <div class="deal-panel-header">
         <div style="flex:1;min-width:0;">
           <p class="deal-panel-eyebrow">Ficha de cliente</p>
-          <h3>{{ c360.contact.name }}</h3>
+          <h3 style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            {{ c360.contact.name }}
+            @if (c360.contact.registrationLabel) {
+              <span class="reg-source-chip" [class.reg-source-chip--new]="c360.contact.registrationLabel === 'Usuario nuevo'">
+                {{ c360.contact.registrationLabel }}
+              </span>
+            }
+          </h3>
           <p class="card-desc" style="margin:6px 0 0;">
             {{ vehicleCount() }} auto{{ vehicleCount() === 1 ? '' : 's' }} registrado{{ vehicleCount() === 1 ? '' : 's' }}
           </p>
