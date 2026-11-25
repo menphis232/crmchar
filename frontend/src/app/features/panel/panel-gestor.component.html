@@ -1136,15 +1136,16 @@
                       <option value="no">No (sin pagar)</option>
                     </select>
                     <p class="card-desc" style="margin:6px 0 0;font-size:12px;">
-                      Si eliges servicios abajo, el filtro de pago aplica a esos servicios.
+                      Sin servicios abajo: «No (sin pagar)» = clientes que no han pagado ningún trámite.
+                      Con servicios: el filtro de pago aplica solo a esos servicios.
                     </p>
                   </div>
 
                   <div class="form-group" style="margin-bottom:10px;">
                     <label>Servicios</label>
                     <p class="card-desc" style="margin:0 0 8px;font-size:12px;">
-                      Opcional. Seleccionados: {{ banner.audienceServiceNames.length || 0 }}.
-                      Puedes combinar con pago/no pago y estados.
+                      Opcional. Seleccionados: {{ banner.audienceServiceNames.length || 0 }}{{ banner.audienceServiceNames.length ? ' — ' + banner.audienceServiceNames.join(', ') : '' }}.
+                      Déjalos en 0 si solo quieres filtrar por estado / pago.
                     </p>
                     @if (clientPromoServiceOptions().length) {
                       <div class="audience-state-chips">
