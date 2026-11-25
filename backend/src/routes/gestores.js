@@ -1211,9 +1211,27 @@ async function notifyGestorNewLeadByEmail(gestorUserId, { clientName, serviceNam
   }
 }
 
-async function processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData = null) {
+async function assertServicePublicForLead(gestorId, serviceName) {
+  if (!serviceName) return;
+  const row = await get(
+    'SELECT id, COALESCE(is_public, 1) AS is_public FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
+    [gestorId, serviceName],
+  );
+  if (row && !Number(row.is_public)) {
+    const err = new Error('SERVICE_NOT_PUBLIC');
+    err.code = 'SERVICE_NOT_PUBLIC';
+    throw err;
+  }
+}
+
+async function processLeadCreation(gestor, clientName, clientEmail, clientPhone, location, serviceName, customData = null, options = {}) {
   if (!gestor?.id || !gestor?.user_id) {
     throw new Error('Gestor inválido: falta id o user_id');
+  }
+
+  // Canales públicos (ficha / chat): solo servicios marcados como públicos
+  if (options.requirePublicService !== false) {
+    await assertServicePublicForLead(gestor.id, serviceName);
   }
 
   // Antes de crear nada: teléfono ya registrado con otro correo → no permitir nuevo registro
@@ -1510,6 +1528,12 @@ router.post('/:id/solicitudes', async (req, res) => {
         error: err.message,
         code: PHONE_ALREADY_REGISTERED,
         loginUrl: `${getFrontendBase()}/login/cliente`,
+      });
+    }
+    if (err.code === 'SERVICE_NOT_PUBLIC') {
+      return res.status(400).json({
+        error: 'Ese servicio no está disponible en la ficha pública. Elige otro o contacta al gestor.',
+        code: 'SERVICE_NOT_PUBLIC',
       });
     }
     res.status(500).json({ error: 'Error al crear solicitud' });
@@ -1829,6 +1853,9 @@ CLIENTE NUEVO (sin sesión):
             `Entra a tu panel con ese teléfono o el correo con el que te registraste: ${loginUrl}`,
             'Desde ahí puedes seguir o iniciar tu trámite.',
           ].join('\n\n');
+        } else if (e.code === 'SERVICE_NOT_PUBLIC') {
+          generatedText = cleaned
+            || 'Ese trámite no está disponible por este canal. Elige uno de la lista o pide que el gestor te lo asigne desde su panel.';
         } else {
           generatedText = cleaned
             || 'Recibí tus datos pero hubo un problema al registrar la solicitud. Por favor intenta de nuevo o contáctanos directamente.';

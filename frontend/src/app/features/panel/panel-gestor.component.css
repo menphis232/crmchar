@@ -1179,6 +1179,22 @@ app-crm-team {
   cursor: pointer;
 }
 
+.svc-private-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .service-sort-item .inbox-info {
   flex: 1;
   min-width: 0;

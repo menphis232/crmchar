@@ -365,7 +365,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     contactId?: string | null;
   } | null>(null);
   regeneratingClientAccess = signal(false);
-  manualLeadServices = signal<{ name: string; price: number | null }[]>([]);
+  manualLeadServices = signal<{ name: string; price: number | null; isPublic?: boolean }[]>([]);
   manualLead = {
     clientName: '',
     clientEmail: '',
@@ -1069,13 +1069,18 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   }
 
   private prepareManualLeadServices() {
-    const services = this.profile()?.services?.map(s => ({ name: s.name, price: s.price })) ?? [];
+    const mapSvc = (s: { name: string; price?: number | null; isPublic?: boolean }) => ({
+      name: s.name,
+      price: s.price,
+      isPublic: s.isPublic !== false,
+    });
+    const services = this.profile()?.services?.map(mapSvc) ?? [];
     if (services.length) {
       this.manualLeadServices.set(services);
     } else {
       this.gestoresService.getMyProfile().subscribe(p => {
         this.profile.set(p);
-        this.manualLeadServices.set(p.services?.map(s => ({ name: s.name, price: s.price })) ?? []);
+        this.manualLeadServices.set(p.services?.map(mapSvc) ?? []);
       });
     }
   }
@@ -2091,7 +2096,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
             ),
           });
         }
-        this.toast.success(res.isPublic ? 'Visible en tu ficha pública' : 'Oculto en la ficha pública');
+        this.toast.success(res.isPublic ? 'Servicio público: visible en tu ficha' : 'Servicio privado: solo lo asignas desde el panel');
       },
       error: (err) => this.toast.error(err.error?.error || 'No se pudo cambiar la visibilidad'),
     });

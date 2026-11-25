@@ -643,7 +643,7 @@
               <thead>
                 <tr>
                   <th class="col-sort"></th>
-                  <th class="col-vis" title="Visible en ficha pública">Vista</th>
+                  <th class="col-vis" title="Público = visible en tu ficha. Privado = solo tú lo asignas">Público</th>
                   <th>Servicio</th>
                   <th>Tiempo</th>
                   <th class="col-num">Precio</th>
@@ -684,8 +684,8 @@
                         class="service-vis-btn"
                         [class.is-public]="isServicePublic(s)"
                         [class.is-hidden]="!isServicePublic(s)"
-                        [attr.title]="isServicePublic(s) ? 'Visible en la ficha — clic para ocultar' : 'Oculto en la ficha — clic para mostrar'"
-                        [attr.aria-label]="isServicePublic(s) ? 'Ocultar servicio en la ficha pública' : 'Mostrar servicio en la ficha pública'"
+                        [attr.title]="isServicePublic(s) ? 'Público — clic para hacerlo privado' : 'Privado (solo panel) — clic para hacerlo público'"
+                        [attr.aria-label]="isServicePublic(s) ? 'Marcar como privado' : 'Marcar como público'"
                         (click)="toggleServiceVisibility(s, $event)"
                       >
                         @if (isServicePublic(s)) {
@@ -701,6 +701,9 @@
                           <img class="service-catalog-thumb" [src]="s.imageUrl" alt="" draggable="false">
                         }
                         <button type="button" class="mon-deal-name" (click)="startEditService(s)">{{ s.name }}</button>
+                        @if (!isServicePublic(s)) {
+                          <span class="svc-private-badge" title="No aparece en tu ficha pública; solo lo asignas desde el panel">Solo panel</span>
+                        }
                       </div>
                     </td>
                     <td class="mon-muted">
@@ -734,7 +737,7 @@
         } @else {
           <div class="mon-empty">
             <p class="mon-empty-title">Aún no tienes servicios</p>
-            <p class="mon-empty-text">Agrega el primero para mostrarlos en tu ficha pública y cotizaciones.</p>
+            <p class="mon-empty-text">Agrega servicios. Marca «Público» para la ficha; sin marcar, solo los asignas tú desde el panel.</p>
           </div>
         }
 
@@ -758,9 +761,11 @@
             <label>Visibilidad</label>
             <label class="service-public-check">
               <input type="checkbox" [(ngModel)]="serviceForm.isPublic">
-              Mostrar en la ficha pública
+              Público
             </label>
-            <p class="card-desc" style="font-size:11px; margin-top:4px;">Desmárcalo para trámites exclusivos o temporalmente no disponibles.</p>
+            <p class="card-desc" style="font-size:11px; margin-top:4px;">
+              Si no está marcado, no aparece en tu ficha pública ni en el chat; solo tú puedes asignarlo a clientes desde este panel.
+            </p>
           </div>
         </div>
 
@@ -2033,7 +2038,7 @@
           <select id="gl-service" [(ngModel)]="manualLead.serviceName" (ngModelChange)="onManualLeadServiceChange()">
             <option value="">— Sin servicio específico —</option>
             @for (s of manualLeadServices(); track s.name) {
-              <option [value]="s.name">{{ s.name }}</option>
+              <option [value]="s.name">{{ s.name }}{{ s.isPublic === false ? ' (solo panel)' : '' }}</option>
             }
           </select>
         </div>
