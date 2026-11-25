@@ -223,7 +223,7 @@
         [stageLabels]="crmDashboard()?.stageLabels ?? {}"
         [canImpersonate]="canManageClientPromoBanner()"
         (closed)="selectedContactId.set(null)"
-        (openDeal)="openDeal($event); setTab('pipeline')"
+        (openDeal)="openDeal($event)"
         (updated)="loadVerificationAlerts()"
         (createDeal)="openManualLeadFromContact($event)"
       />
