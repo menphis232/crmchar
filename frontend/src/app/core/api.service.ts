@@ -214,6 +214,20 @@ export class CrmService {
   registerManualPayment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string; paidAt?: string }) {
     return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-payment`, data);
   }
+  changeDealService(dealId: string, data: { serviceName: string; updatePrice?: boolean }) {
+    return this.http.post<{
+      deal: CrmDeal;
+      previousTitle: string;
+      newTitle: string;
+      newPrice: number;
+      paidAmount: number;
+      adjustmentDue: number;
+      paymentStatus: string;
+    }>(`${this.base}/deals/${dealId}/change-service`, data);
+  }
+  registerDealAdjustment(dealId: string, data: { amount: number; paymentMethod: string; notes?: string; paidAt?: string }) {
+    return this.http.post<CrmDeal>(`${this.base}/deals/${dealId}/register-adjustment`, data);
+  }
   addActivity(dealId: string, content: string, activityType = 'note') {
     return this.http.post(`${this.base}/deals/${dealId}/activities`, { content, activityType });
   }

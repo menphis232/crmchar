@@ -21,8 +21,8 @@ import {
   LucideTrash2,
   LucideBanknote,
 } from '@lucide/angular';
-import { CrmService, FinancesService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
-import { CrmDeal, CrmContactVehicleDocument, LOST_REASONS, MessageTemplate, CrmTeamMember, PeritoAssignOption } from '../../models';
+import { CrmService, FinancesService, GestoresService, MpService, UploadService, CHAT_ATTACHMENT_ACCEPT } from '../../core/api.service';
+import { CrmDeal, CrmContactVehicleDocument, LOST_REASONS, MessageTemplate, CrmTeamMember, PeritoAssignOption, GestorService } from '../../models';
 import { SocketService } from '../../core/socket.service';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
@@ -37,7 +37,7 @@ import {
   resetChecklistSeq,
 } from '../../shared/quote-checklist.utils';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked, isCompletedStage, isShippedStage, isLostStage, CrmStageConfig } from '../../shared/payment-stage.utils';
-import { parseFinPaymentMethods, FinPaymentMethodOption } from '../../shared/fin-payment-methods.utils';
+import { parseFinPaymentMethods, FinPaymentMethodOption, CORTESIA_METHOD } from '../../shared/fin-payment-methods.utils';
 import { PERITO_STAGE_LABELS, PeritoStageId } from '../../shared/perito-stages';
 
 @Component({
@@ -1332,16 +1332,29 @@ export class CrmDealPanelComponent implements OnDestroy {
   paymentMethodModalOpen = signal(false);
   paymentProviders = signal<{ stripe: boolean; mercadopago: boolean } | null>(null);
   registerPaymentModalOpen = signal(false);
+  changeServiceModalOpen = signal(false);
+  adjustmentModalOpen = signal(false);
   deliveryUploadModalOpen = signal(false);
   shippingUploadModalOpen = signal(false);
   isUploadingDelivery = signal(false);
   isUploadingShipping = signal(false);
   isRegisteringPayment = signal(false);
+  isChangingService = signal(false);
+  isRegisteringAdjustment = signal(false);
   manualPaymentAmount = 0;
   manualPaymentMethod = 'efectivo';
   manualPaymentDate = '';
   manualPaymentNotes = '';
   manualPaymentMethods = signal<FinPaymentMethodOption[]>([]);
+  changeServiceOptions = signal<GestorService[]>([]);
+  changeServiceName = '';
+  changeServiceUpdatePrice = true;
+  pendingAdjustment = signal<number>(0);
+  adjustmentAmount = 0;
+  adjustmentMethod = 'efectivo';
+  adjustmentDate = '';
+  adjustmentNotes = '';
+  adjustmentMethods = signal<FinPaymentMethodOption[]>([]);
 
   private paymentMethodResolver: ((v: 'stripe' | 'mercadopago' | null) => void) | null = null;
   private paymentWatchInterval: ReturnType<typeof setInterval> | null = null;
@@ -1398,6 +1411,7 @@ export class CrmDealPanelComponent implements OnDestroy {
   auth = inject(AuthService);
   toast = inject(ToastService);
   private fin = inject(FinancesService);
+  private gestoresService = inject(GestoresService);
   private socketService = inject(SocketService);
 
   constructor(private crmService: CrmService, private mpService: MpService, private http: HttpClient, private zone: NgZone) {
@@ -2069,17 +2083,21 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.manualPaymentNotes = '';
     this.fin.getPaymentMethods().subscribe({
       next: (res) => {
-        const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
+        let methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true });
+        if (!methods.some((m) => m.id === 'cortesia')) {
+          methods = [...methods, CORTESIA_METHOD];
+        }
         if (!methods.length) {
-          this.toast.warning('Ve a Finanzas → Métodos de Pago, activa tus métodos y pulsa Guardar configuración.', 'Sin métodos configurados');
-          return;
+          methods = [CORTESIA_METHOD];
         }
         this.manualPaymentMethods.set(methods);
-        this.manualPaymentMethod = methods[0].id;
+        this.manualPaymentMethod = methods.find((m) => m.id === 'efectivo')?.id || methods[0].id;
         this.registerPaymentModalOpen.set(true);
       },
       error: () => {
-        this.toast.error('No se pudieron cargar los métodos de cobro.', 'Error');
+        this.manualPaymentMethods.set([CORTESIA_METHOD]);
+        this.manualPaymentMethod = 'cortesia';
+        this.registerPaymentModalOpen.set(true);
       },
     });
   }
@@ -2088,11 +2106,27 @@ export class CrmDealPanelComponent implements OnDestroy {
     this.registerPaymentModalOpen.set(false);
   }
 
+  isCourtesyPaymentSelected(): boolean {
+    return this.manualPaymentMethod === 'cortesia';
+  }
+
+  onManualPaymentMethodChange() {
+    if (this.isCourtesyPaymentSelected()) {
+      this.manualPaymentAmount = 0;
+    } else {
+      const d = this.deal();
+      if (d && (!this.manualPaymentAmount || this.manualPaymentAmount <= 0)) {
+        this.manualPaymentAmount = Number(d.estimatedValue) || 0;
+      }
+    }
+  }
+
   submitManualPayment() {
     const d = this.deal();
     if (!d) return;
-    const amount = Number(this.manualPaymentAmount);
-    if (!amount || amount <= 0) {
+    const isCourtesy = this.isCourtesyPaymentSelected();
+    const amount = isCourtesy ? 0 : Number(this.manualPaymentAmount);
+    if (!isCourtesy && (!amount || amount <= 0)) {
       this.toast.warning('Indica un monto válido.', 'Pago');
       return;
     }
@@ -2114,13 +2148,148 @@ export class CrmDealPanelComponent implements OnDestroy {
       next: () => {
         this.isRegisteringPayment.set(false);
         this.registerPaymentModalOpen.set(false);
-        this.toast.success('Pago registrado. Ya puedes mover el trámite y aparecerá en Finanzas.', '¡Pagado!');
+        this.toast.success(
+          isCourtesy
+            ? 'Marcado como cortesía. No se registró ingreso en Finanzas.'
+            : 'Pago registrado. Ya puedes mover el trámite y aparecerá en Finanzas.',
+          isCourtesy ? 'Cortesía' : '¡Pagado!',
+        );
         this.loadDeal(d.id);
         this.updated.emit();
       },
       error: (e) => {
         this.isRegisteringPayment.set(false);
         this.toast.error(e.error?.error || 'No se pudo registrar el pago', 'Error');
+      },
+    });
+  }
+
+  openChangeServiceModal() {
+    const d = this.deal();
+    if (!d || this.isConcesionaria()) return;
+    this.changeServiceName = d.title || '';
+    this.changeServiceUpdatePrice = true;
+    this.gestoresService.getMyProfile().subscribe({
+      next: (p) => {
+        const services = (p.services || []).slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        this.changeServiceOptions.set(services);
+        if (services.length && !services.some((s) => s.name === this.changeServiceName)) {
+          this.changeServiceName = services[0].name;
+        }
+        this.changeServiceModalOpen.set(true);
+      },
+      error: () => this.toast.error('No se pudieron cargar tus servicios', 'Error'),
+    });
+  }
+
+  closeChangeServiceModal() {
+    this.changeServiceModalOpen.set(false);
+  }
+
+  submitChangeService() {
+    const d = this.deal();
+    const serviceName = this.changeServiceName.trim();
+    if (!d || !serviceName) {
+      this.toast.warning('Elige el nuevo trámite / servicio');
+      return;
+    }
+    if (serviceName === d.title) {
+      this.toast.warning('Elige un servicio distinto al actual');
+      return;
+    }
+    this.isChangingService.set(true);
+    this.crmService.changeDealService(d.id, {
+      serviceName,
+      updatePrice: this.changeServiceUpdatePrice,
+    }).subscribe({
+      next: (res) => {
+        this.isChangingService.set(false);
+        this.changeServiceModalOpen.set(false);
+        this.deal.set(res.deal);
+        this.estimatedValue = Number(res.deal.estimatedValue) || 0;
+        const due = Number(res.adjustmentDue) || 0;
+        this.pendingAdjustment.set(due);
+        if (due > 0) {
+          this.toast.success(
+            `Trámite actualizado a «${res.newTitle}». Falta un ajuste de $${due.toLocaleString('es-MX')} MXN.`,
+            'Cambiado',
+          );
+          this.openAdjustmentModal(due);
+        } else {
+          this.toast.success(
+            res.paymentStatus === 'paid'
+              ? `Trámite actualizado a «${res.newTitle}». El pago previo se conserva.`
+              : `Trámite actualizado a «${res.newTitle}».`,
+            'Cambiado',
+          );
+        }
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.isChangingService.set(false);
+        this.toast.error(e.error?.error || 'No se pudo cambiar el trámite', 'Error');
+      },
+    });
+  }
+
+  openAdjustmentModal(amount?: number) {
+    const d = this.deal();
+    if (!d) return;
+    const due = amount ?? this.pendingAdjustment();
+    if (!due || due <= 0) {
+      this.toast.info('No hay ajuste pendiente');
+      return;
+    }
+    this.adjustmentAmount = due;
+    this.adjustmentMethod = 'efectivo';
+    this.adjustmentDate = this.todayIso();
+    this.adjustmentNotes = '';
+    this.fin.getPaymentMethods().subscribe({
+      next: (res) => {
+        const methods = parseFinPaymentMethods(res.methods, { excludeStripe: true, onlyEnabled: true })
+          .filter((m) => m.id !== 'cortesia');
+        if (!methods.length) {
+          this.toast.warning('Activa un método de cobro en Finanzas (efectivo/transferencia) para registrar el ajuste.');
+          return;
+        }
+        this.adjustmentMethods.set(methods);
+        this.adjustmentMethod = methods[0].id;
+        this.adjustmentModalOpen.set(true);
+      },
+      error: () => this.toast.error('No se pudieron cargar los métodos de cobro'),
+    });
+  }
+
+  closeAdjustmentModal() {
+    this.adjustmentModalOpen.set(false);
+  }
+
+  submitAdjustment() {
+    const d = this.deal();
+    if (!d) return;
+    const amount = Number(this.adjustmentAmount);
+    if (!amount || amount <= 0) {
+      this.toast.warning('Indica el monto del ajuste');
+      return;
+    }
+    this.isRegisteringAdjustment.set(true);
+    this.crmService.registerDealAdjustment(d.id, {
+      amount,
+      paymentMethod: this.adjustmentMethod,
+      notes: this.adjustmentNotes.trim() || undefined,
+      paidAt: this.adjustmentDate || undefined,
+    }).subscribe({
+      next: () => {
+        this.isRegisteringAdjustment.set(false);
+        this.adjustmentModalOpen.set(false);
+        this.pendingAdjustment.set(0);
+        this.toast.success('Ajuste registrado en Finanzas. El pago original se mantiene.', 'Ajuste cobrado');
+        this.loadDeal(d.id);
+        this.updated.emit();
+      },
+      error: (e) => {
+        this.isRegisteringAdjustment.set(false);
+        this.toast.error(e.error?.error || 'No se pudo registrar el ajuste', 'Error');
       },
     });
   }

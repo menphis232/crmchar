@@ -727,6 +727,7 @@ import { formatMoney } from '../../shared/format-amount.util';
     .mt-efectivo { background: rgba(34,197,94,.12); color: #4ade80; }
     .mt-transferencia { background: rgba(59,130,246,.12); color: #93c5fd; }
     .mt-mercadopago { background: rgba(168,85,247,.12); color: #d8b4fe; }
+    .mt-cortesia { background: rgba(245,158,11,.15); color: #fbbf24; }
     .mt-general { background: rgba(255,255,255,.08); color: rgba(255,255,255,0.50); }
 
     .btn-del { background: transparent; border: 1px solid transparent; color: #9ca0ad; width: 28px; height: 28px; border-radius: 6px; cursor: pointer; font-size: 12px; transition: all .2s; }

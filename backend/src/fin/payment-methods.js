@@ -4,11 +4,16 @@ const PREDEFINED_LABELS = {
   transferencia: 'Transferencia',
   mercadopago: 'Mercado Pago',
   tarjeta: 'Tarjeta',
+  cortesia: 'Cortesía',
   otro: 'Otro',
   general: 'General',
 };
 
-const DEFAULT_ACTIVE_PREDEFINED = ['efectivo', 'transferencia', 'mercadopago'];
+const DEFAULT_ACTIVE_PREDEFINED = ['efectivo', 'transferencia', 'mercadopago', 'cortesia'];
+
+export function isCourtesyPaymentMethod(method) {
+  return String(method || '').toLowerCase() === 'cortesia';
+}
 
 function isPredefinedMethodId(id) {
   return Boolean(id && PREDEFINED_LABELS[id]);

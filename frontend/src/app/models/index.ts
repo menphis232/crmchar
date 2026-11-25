@@ -844,6 +844,7 @@ export const FIN_ALL_METHODS = [
   { id: 'efectivo', label: 'Efectivo', icon: '💵', color: '#22c55e' },
   { id: 'transferencia', label: 'Transferencia', icon: '🏦', color: '#3b82f6' },
   { id: 'mercadopago', label: 'MercadoPago', icon: '💳', color: '#a855f7' },
+  { id: 'cortesia', label: 'Cortesía', icon: '🎁', color: '#f59e0b' },
   { id: 'stripe', label: 'Stripe', icon: '⚡', color: '#6366f1' },
 ] as const;
 

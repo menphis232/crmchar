@@ -52,8 +52,16 @@
             </div>
           }
           <div class="deal-quick-row">
+            @if (!isConcesionaria() && d.dealType === 'tramite') {
+              <button type="button" class="deal-outline-btn" (click)="openChangeServiceModal()">Cambiar de trámite</button>
+            }
             @if (!isConcesionaria() && d.paymentStatus !== 'paid') {
               <button type="button" class="btn-copy small" (click)="setDealView('cotizacion')">Ir a cotización</button>
+            }
+            @if (!isConcesionaria() && pendingAdjustment() > 0) {
+              <button type="button" class="btn-copy small" (click)="openAdjustmentModal()">
+                Cobrar ajuste (${{ pendingAdjustment() | number }})
+              </button>
             }
             <button type="button" class="deal-outline-btn" (click)="setDealView('docs')">Documentos / póliza</button>
             <button type="button" class="deal-outline-btn" (click)="setDealView('chat')">Abrir chat</button>
@@ -857,15 +865,21 @@
       <p class="pay-method-desc">Usa esto para efectivo, transferencia u otro método fuera de Stripe/Mercado Pago. Se registrará en Finanzas y desbloqueará el trámite.</p>
 
       <div class="register-payment-form">
-        <label>Monto (MXN)</label>
-        <input type="number" [(ngModel)]="manualPaymentAmount" min="1" step="1">
-
         <label>Método de cobro</label>
-        <select [(ngModel)]="manualPaymentMethod">
+        <select [(ngModel)]="manualPaymentMethod" (ngModelChange)="onManualPaymentMethodChange()">
           @for (m of manualPaymentMethods(); track m.id) {
             <option [value]="m.id">{{ m.icon }} {{ m.label }}</option>
           }
         </select>
+
+        @if (isCourtesyPaymentSelected()) {
+          <p class="register-payment-hint">
+            Cortesía: marca el trámite como pagado <strong>sin registrar monto</strong> en Finanzas.
+          </p>
+        } @else {
+          <label>Monto (MXN)</label>
+          <input type="number" [(ngModel)]="manualPaymentAmount" min="1" step="1">
+        }
 
         <label>Fecha del pago</label>
         <app-mx-date-input
@@ -882,7 +896,89 @@
       <div class="register-payment-actions">
         <button type="button" class="pay-method-cancel" (click)="closeRegisterPaymentModal()">Cancelar</button>
         <button type="button" class="btn-copy small" (click)="submitManualPayment()" [disabled]="isRegisteringPayment()">
-          {{ isRegisteringPayment() ? 'Registrando...' : 'Confirmar' }}
+          {{ isRegisteringPayment() ? 'Registrando...' : (isCourtesyPaymentSelected() ? 'Marcar cortesía' : 'Confirmar') }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (changeServiceModalOpen()) {
+  <div class="pay-method-overlay" (click)="closeChangeServiceModal()">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="closeChangeServiceModal()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Sustituir servicio</p>
+      <h3 class="pay-method-title">Cambiar de trámite</h3>
+      <p class="pay-method-desc">
+        Cambia el servicio de este registro sin crear un cobro nuevo. Si ya estaba pagado y el nuevo cuesta más, te pediremos solo el ajuste.
+      </p>
+
+      <div class="register-payment-form">
+        <label>Nuevo trámite / servicio</label>
+        <select [(ngModel)]="changeServiceName">
+          @for (s of changeServiceOptions(); track s.id) {
+            <option [value]="s.name">
+              {{ s.name }}{{ s.price ? (' — $' + s.price) : '' }}{{ s.isPublic === false ? ' (solo panel)' : '' }}
+            </option>
+          }
+        </select>
+
+        <label class="service-public-check" style="display:flex;align-items:center;gap:8px;margin-top:8px;">
+          <input type="checkbox" [(ngModel)]="changeServiceUpdatePrice">
+          Actualizar valor estimado al precio del servicio
+        </label>
+      </div>
+
+      <div class="register-payment-actions">
+        <button type="button" class="pay-method-cancel" (click)="closeChangeServiceModal()">Cancelar</button>
+        <button type="button" class="btn-copy small" (click)="submitChangeService()" [disabled]="isChangingService()">
+          {{ isChangingService() ? 'Guardando…' : 'Cambiar trámite' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (adjustmentModalOpen()) {
+  <div class="pay-method-overlay" (click)="closeAdjustmentModal()">
+    <div class="pay-method-modal" (click)="$event.stopPropagation()">
+      <button type="button" class="pay-method-close" (click)="closeAdjustmentModal()" aria-label="Cerrar">
+        <svg lucideX [size]="18" aria-hidden="true"></svg>
+      </button>
+      <p class="pay-method-eyebrow">Diferencia de precio</p>
+      <h3 class="pay-method-title">Cobrar ajuste</h3>
+      <p class="pay-method-desc">
+        El pago original se conserva. Registra solo la diferencia a favor.
+      </p>
+
+      <div class="register-payment-form">
+        <label>Monto del ajuste (MXN)</label>
+        <input type="number" [(ngModel)]="adjustmentAmount" min="1" step="1">
+
+        <label>Método de cobro</label>
+        <select [(ngModel)]="adjustmentMethod">
+          @for (m of adjustmentMethods(); track m.id) {
+            <option [value]="m.id">{{ m.icon }} {{ m.label }}</option>
+          }
+        </select>
+
+        <label>Fecha del pago</label>
+        <app-mx-date-input
+          [value]="adjustmentDate"
+          [max]="todayIso()"
+          (valueChange)="adjustmentDate = $event"
+        />
+
+        <label>Notas (opcional)</label>
+        <textarea [(ngModel)]="adjustmentNotes" rows="2" placeholder="Referencia del ajuste..."></textarea>
+      </div>
+
+      <div class="register-payment-actions">
+        <button type="button" class="pay-method-cancel" (click)="closeAdjustmentModal()">Cancelar</button>
+        <button type="button" class="btn-copy small" (click)="submitAdjustment()" [disabled]="isRegisteringAdjustment()">
+          {{ isRegisteringAdjustment() ? 'Registrando…' : 'Registrar ajuste' }}
         </button>
       </div>
     </div>

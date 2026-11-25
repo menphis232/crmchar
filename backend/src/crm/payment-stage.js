@@ -72,6 +72,7 @@ export function paymentMethodLabel(method) {
     mercadopago: 'Mercado Pago',
     stripe: 'Tarjeta (Stripe)',
     tarjeta: 'Tarjeta',
+    cortesia: 'Cortesía',
     otro: 'Otro',
   };
   return map[method] || method || 'Otro';

@@ -16,13 +16,22 @@ const PREDEFINED_MAP = Object.fromEntries(
   FIN_ALL_METHODS.map((m) => [m.id, { ...m }]),
 ) as Record<string, FinPaymentMethodOption>;
 
-export const DEFAULT_ACTIVE_PREDEFINED_IDS = ['efectivo', 'transferencia', 'mercadopago'] as const;
+export const DEFAULT_ACTIVE_PREDEFINED_IDS = ['efectivo', 'transferencia', 'mercadopago', 'cortesia'] as const;
+
+export const CORTESIA_METHOD: FinPaymentMethodOption = {
+  id: 'cortesia',
+  label: 'Cortesía',
+  icon: '🎁',
+  color: '#f59e0b',
+  enabled: true,
+};
 
 const FALLBACK_LABELS: Record<string, string> = {
   stripe: 'Stripe',
   efectivo: 'Efectivo',
   transferencia: 'Transferencia',
   mercadopago: 'MercadoPago',
+  cortesia: 'Cortesía',
   tarjeta: 'Tarjeta',
   otro: 'Otro',
   general: 'General',

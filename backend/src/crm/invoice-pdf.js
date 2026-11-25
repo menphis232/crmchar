@@ -33,6 +33,7 @@ function paymentMethodLabel(method) {
     stripe: 'Tarjeta (Stripe)',
     manual: 'Manual',
     efectivo: 'Efectivo',
+    cortesia: 'Cortesía',
     transferencia: 'Transferencia bancaria',
     tarjeta: 'Tarjeta',
     otro: 'Otro',

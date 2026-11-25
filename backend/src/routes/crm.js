@@ -38,9 +38,9 @@ import {
 import { emitChatMessage, emitUserNotification } from '../utils/socket-events.js';
 import { isDealPaymentLocked, isPaidDealBackwardMoveBlocked } from '../crm/payment-stage.js';
 import { isLostStageId } from '../crm/deal-status.js';
-import { enabledManualPaymentMethodIds } from '../fin/payment-methods.js';
+import { enabledManualPaymentMethodIds, resolvePaymentMethodLabel } from '../fin/payment-methods.js';
 import { isUserOnline } from '../utils/presence.js';
-import { finalizeDealPayment } from '../services/deal-payment.js';
+import { finalizeDealPayment, resolvePaymentDate } from '../services/deal-payment.js';
 import Stripe from 'stripe';
 import {
   dealAccessFilter, contactAccessFilter, canAccessDeal, isConcesionariaStaff,
@@ -3284,18 +3284,20 @@ router.post('/deals/:id/register-payment', async (req, res) => {
     const { amount, paymentMethod, notes, paidAt } = req.body;
     const orgUser = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
     const allowed = enabledManualPaymentMethodIds(orgUser?.fin_payment_methods);
-    if (!paymentMethod || !allowed.includes(paymentMethod)) {
+    const isCourtesy = String(paymentMethod || '').toLowerCase() === 'cortesia';
+    // Cortesía siempre disponible; no requiere estar en Finanzas
+    if (!paymentMethod || (!isCourtesy && !allowed.includes(paymentMethod))) {
       return res.status(400).json({ error: 'Método de pago inválido o no configurado en Finanzas' });
     }
 
     const deal = await loadDealForRequest(req, dealId);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
     if (deal.payment_status === 'paid') {
-      return res.status(400).json({ error: 'Este trámite ya está marcado como pagado' });
+      return res.status(400).json({ error: 'Este trámite ya está marcado como pagado. Usa «Cobrar ajuste» si el nuevo trámite cuesta más.' });
     }
 
-    const paidAmount = Number(amount ?? deal.estimated_value ?? 0);
-    if (!paidAmount || paidAmount <= 0) {
+    const paidAmount = isCourtesy ? 0 : Number(amount ?? deal.estimated_value ?? 0);
+    if (!isCourtesy && (!paidAmount || paidAmount <= 0)) {
       return res.status(400).json({ error: 'Indica un monto válido para registrar el pago' });
     }
 
@@ -3309,9 +3311,12 @@ router.post('/deals/:id/register-payment', async (req, res) => {
 
     const paidOn = paidAt ? String(paidAt).slice(0, 10) : '';
     const dateNote = /^\d{4}-\d{2}-\d{2}$/.test(paidOn) ? ` con fecha ${paidOn.slice(8, 10)}/${paidOn.slice(5, 7)}/${paidOn.slice(0, 4)}` : '';
+    const activityMsg = isCourtesy
+      ? `Marcado como cortesía (sin cobro ni ingreso en Finanzas)${notes?.trim() ? `: ${notes.trim()}` : ''}`
+      : `Pago registrado manualmente (${paymentMethod}) por $${paidAmount} MXN${dateNote}`;
     await run(
       `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'note', ?)`,
-      [uuid(), dealId, req.orgId, `Pago registrado manualmente (${paymentMethod}) por $${paidAmount} MXN${dateNote}`],
+      [uuid(), dealId, req.orgId, activityMsg],
     );
 
     const updated = await get(`
@@ -3323,6 +3328,168 @@ router.post('/deals/:id/register-payment', async (req, res) => {
   } catch (err) {
     console.error('register-payment error:', err);
     res.status(500).json({ error: err.message || 'Error al registrar el pago' });
+  }
+});
+
+/** Sustituye el servicio/título del trámite sin crear cobro nuevo. */
+router.post('/deals/:id/change-service', async (req, res) => {
+  try {
+    if (req.user.role !== 'gestor') {
+      return res.status(403).json({ error: 'Solo gestores pueden cambiar el trámite' });
+    }
+    const dealId = req.params.id;
+    const serviceName = String(req.body?.serviceName || '').trim();
+    const updatePrice = req.body?.updatePrice !== false;
+    if (!serviceName) return res.status(400).json({ error: 'Indica el nuevo servicio' });
+
+    const deal = await loadDealForRequest(req, dealId);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    if (deal.deal_type !== 'tramite') {
+      return res.status(400).json({ error: 'Solo aplica a trámites' });
+    }
+
+    const gestor = await get('SELECT id FROM gestores WHERE user_id = ?', [req.orgId]);
+    if (!gestor) return res.status(404).json({ error: 'Perfil de gestor no encontrado' });
+
+    const service = await get(
+      'SELECT id, name, price FROM gestor_services WHERE gestor_id = ? AND name = ? LIMIT 1',
+      [gestor.id, serviceName],
+    );
+    if (!service) return res.status(400).json({ error: 'Servicio no encontrado en tu catálogo' });
+
+    const newPrice = Number(service.price) || 0;
+    const invoice = await get(
+      'SELECT amount FROM deal_invoices WHERE deal_id = ? ORDER BY created_at DESC LIMIT 1',
+      [dealId],
+    );
+    const paidFin = await get(
+      `SELECT COALESCE(SUM(amount), 0) AS total
+       FROM fin_transactions
+       WHERE deal_id = ? AND type = 'income' AND category IN ('pago_tramite', 'ajuste_tramite')`,
+      [dealId],
+    );
+    // Solo dinero real (factura / finanzas). Cortesía queda en 0.
+    const paidAmount = Math.max(Number(invoice?.amount) || 0, Number(paidFin?.total) || 0);
+
+    const oldTitle = deal.title || '';
+    const sets = ['title = ?', 'updated_at = NOW()'];
+    const params = [service.name];
+    if (updatePrice && newPrice > 0) {
+      sets.push('estimated_value = ?');
+      params.push(newPrice);
+    }
+    params.push(dealId, req.orgId);
+    await run(
+      `UPDATE crm_deals SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`,
+      params,
+    );
+
+    if (deal.ref_type === 'solicitud' && deal.ref_id) {
+      try {
+        await run(
+          'UPDATE solicitudes SET service_name = ? WHERE id = ? AND gestor_id = ?',
+          [service.name, deal.ref_id, gestor.id],
+        );
+      } catch { /* optional */ }
+    }
+
+    const nextEstimated = (updatePrice && newPrice > 0) ? newPrice : Number(deal.estimated_value) || 0;
+    const adjustmentDue = deal.payment_status === 'paid' && nextEstimated > paidAmount
+      ? Math.round((nextEstimated - paidAmount) * 100) / 100
+      : 0;
+
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'note', ?)`,
+      [
+        uuid(),
+        dealId,
+        req.orgId,
+        `Trámite sustituido: «${oldTitle || 'Sin título'}» → «${service.name}»`
+          + (updatePrice && newPrice > 0 ? ` (valor $${newPrice} MXN)` : '')
+          + (adjustmentDue > 0 ? `. Ajuste pendiente: $${adjustmentDue} MXN` : '')
+          + (deal.payment_status === 'paid' && adjustmentDue <= 0 ? '. El pago previo se conserva.' : ''),
+      ],
+    );
+
+    const updated = await get(`
+      SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
+      FROM crm_deals d WHERE d.id = ? AND d.user_id = ?
+    `, [dealId, req.orgId]);
+
+    res.json({
+      deal: dealRow(updated),
+      previousTitle: oldTitle,
+      newTitle: service.name,
+      newPrice,
+      paidAmount,
+      adjustmentDue,
+      paymentStatus: updated.payment_status,
+    });
+  } catch (err) {
+    console.error('change-service error:', err);
+    res.status(500).json({ error: err.message || 'Error al cambiar el trámite' });
+  }
+});
+
+/** Cobro del ajuste cuando el trámite ya estaba pagado y el nuevo servicio cuesta más. */
+router.post('/deals/:id/register-adjustment', async (req, res) => {
+  try {
+    const dealId = req.params.id;
+    const { amount, paymentMethod, notes, paidAt } = req.body;
+    const orgUser = await get('SELECT fin_payment_methods FROM users WHERE id = ?', [req.orgId]);
+    const allowed = enabledManualPaymentMethodIds(orgUser?.fin_payment_methods);
+    if (!paymentMethod || !allowed.includes(paymentMethod) || String(paymentMethod).toLowerCase() === 'cortesia') {
+      return res.status(400).json({ error: 'Método de pago inválido para el ajuste' });
+    }
+
+    const deal = await loadDealForRequest(req, dealId);
+    if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
+    if (deal.payment_status !== 'paid') {
+      return res.status(400).json({ error: 'El ajuste solo aplica si el trámite ya está pagado' });
+    }
+
+    const adjAmount = Number(amount);
+    if (!adjAmount || adjAmount <= 0) {
+      return res.status(400).json({ error: 'Indica el monto del ajuste' });
+    }
+
+    const paymentDate = paidAt == null || String(paidAt).trim() === ''
+      ? null
+      : resolvePaymentDate(paidAt);
+    const methodLabel = resolvePaymentMethodLabel(paymentMethod, orgUser?.fin_payment_methods);
+    const description = notes?.trim()
+      ? `Ajuste — ${methodLabel} — ${deal.title || 'Trámite'} (${notes.trim()})`
+      : `Ajuste — ${methodLabel} — ${deal.title || 'Trámite'}`;
+
+    await run(
+      `INSERT INTO fin_transactions (id, user_id, deal_id, type, amount, description, date, category, payment_method, referencia)
+       VALUES (?, ?, ?, 'income', ?, ?, ${paymentDate ? '?' : 'CURDATE()'}, 'ajuste_tramite', ?, ?)`,
+      [
+        uuid(),
+        req.orgId,
+        dealId,
+        adjAmount,
+        description,
+        ...(paymentDate ? [paymentDate] : []),
+        paymentMethod,
+        `AJUSTE-${Date.now().toString().slice(-6)}`,
+      ],
+    );
+
+    await run(
+      `INSERT INTO crm_activities (id, deal_id, user_id, activity_type, content) VALUES (?, ?, ?, 'note', ?)`,
+      [uuid(), dealId, req.orgId, `Ajuste de precio registrado (${paymentMethod}) por $${adjAmount} MXN`],
+    );
+
+    const updated = await get(`
+      SELECT d.*, DATEDIFF(NOW(), d.stage_changed_at) as days_in_stage
+      FROM crm_deals d WHERE d.id = ? AND d.user_id = ?
+    `, [dealId, req.orgId]);
+
+    res.json(dealRow(updated));
+  } catch (err) {
+    console.error('register-adjustment error:', err);
+    res.status(500).json({ error: err.message || 'Error al registrar el ajuste' });
   }
 });
 

@@ -4,7 +4,7 @@ import { generateInvoicePdfFile } from '../crm/invoice-pdf.js';
 import { sendEmail } from '../utils/mailer.js';
 import { emitDealPaymentPaid } from '../utils/socket-events.js';
 import { isPaymentStageId } from '../crm/payment-stage.js';
-import { resolvePaymentMethodLabel } from '../fin/payment-methods.js';
+import { isCourtesyPaymentMethod, resolvePaymentMethodLabel } from '../fin/payment-methods.js';
 function todayInMexico() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' }).format(new Date());
 }
@@ -92,8 +92,9 @@ export async function finalizeDealPayment(dealId, {
     return existingInvoice;
   }
 
-  const paidAmount = Number(amount ?? deal.estimated_value ?? 0);
-  if (!paidAmount || paidAmount <= 0) {
+  const isCourtesy = isCourtesyPaymentMethod(paymentMethod);
+  const paidAmount = isCourtesy ? 0 : Number(amount ?? deal.estimated_value ?? 0);
+  if (!isCourtesy && (!paidAmount || paidAmount <= 0)) {
     throw new Error('Monto de pago inválido');
   }
 
@@ -104,13 +105,32 @@ export async function finalizeDealPayment(dealId, {
   // Primero marcar pagado (no depender del PDF/correo)
   // Conservamos mp_payment_token para que un link viejo del correo diga "ya pagado"
   // en lugar de "no encontrado"; el cobro se bloquea con payment_status.
+  // Cortesía: marca pagado sin tocar el valor estimado ni registrar ingreso.
   if (shouldKeepStage) {
+    if (isCourtesy) {
+      await run(
+        `UPDATE crm_deals
+         SET payment_status = 'paid',
+             mp_order_id = COALESCE(?, mp_order_id)
+         WHERE id = ?`,
+        [mpOrderId, dealId],
+      );
+    } else {
+      await run(
+        `UPDATE crm_deals
+         SET payment_status = 'paid', estimated_value = ?,
+             mp_order_id = COALESCE(?, mp_order_id)
+         WHERE id = ?`,
+        [paidAmount, mpOrderId, dealId],
+      );
+    }
+  } else if (isCourtesy) {
     await run(
       `UPDATE crm_deals
-       SET payment_status = 'paid', estimated_value = ?,
+       SET payment_status = 'paid', stage = 'completado', stage_changed_at = NOW(),
            mp_order_id = COALESCE(?, mp_order_id)
        WHERE id = ?`,
-      [paidAmount, mpOrderId, dealId],
+      [mpOrderId, dealId],
     );
   } else {
     await run(
@@ -139,7 +159,8 @@ export async function finalizeDealPayment(dealId, {
     [dealId],
   );
 
-  if (!finExists) {
+  // Cortesía no genera movimiento en Finanzas
+  if (!isCourtesy && !finExists) {
     const ref = mpOrderId ? mpOrderId.slice(-8) : `PAGO-${Date.now().toString().slice(-6)}`;
     const description = notes?.trim()
       ? `${methodLabel} - ${deal.title || 'Trámite'} (${notes.trim()})`
@@ -158,6 +179,10 @@ export async function finalizeDealPayment(dealId, {
         ref,
       ],
     );
+  }
+
+  if (isCourtesy) {
+    return null;
   }
 
   try {
