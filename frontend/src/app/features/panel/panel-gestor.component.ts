@@ -2366,9 +2366,23 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   readonly serviceIncludes = serviceIncludes;
   readonly serviceBonus = serviceBonus;
 
-  deleteService(id: string) {
-    if (!confirm('¿Eliminar este servicio?')) return;
-    this.gestoresService.deleteService(id).subscribe(() => this.loadProfile());
+  async deleteService(id: string) {
+    const svc = this.profile()?.services?.find(s => s.id === id);
+    const label = svc?.name || 'este servicio';
+    const ok = await this.toast.confirmDelete(label, {
+      title: '¿Eliminar este servicio?',
+      subtitle: 'Se quitará de tu catálogo y de la ficha pública. No se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+    });
+    if (!ok) return;
+    this.gestoresService.deleteService(id).subscribe({
+      next: () => {
+        this.loadProfile();
+        if (this.editingServiceId === id) this.resetServiceForm();
+        this.toast.success('Servicio eliminado del catálogo.');
+      },
+      error: (err) => this.toast.error(err?.error?.error || 'No se pudo eliminar el servicio'),
+    });
   }
 
   saveTemplate() {
