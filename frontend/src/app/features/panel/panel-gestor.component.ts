@@ -1071,7 +1071,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
   private prepareManualLeadServices() {
     const mapSvc = (s: { name: string; price?: number | null; isPublic?: boolean }) => ({
       name: s.name,
-      price: s.price,
+      price: s.price ?? null,
       isPublic: s.isPublic !== false,
     });
     const services = this.profile()?.services?.map(mapSvc) ?? [];
