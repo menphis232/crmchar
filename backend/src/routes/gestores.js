@@ -1630,13 +1630,37 @@ router.post('/:slugOrId/chat', authOptional, async (req, res) => {
     }
 
     const services = await query(
-      'SELECT name, time_estimate, price FROM gestor_services WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?) AND COALESCE(is_public, 1) = 1 ORDER BY sort_order ASC, name ASC',
+      `SELECT name, time_estimate, price, includes, bonus, required_documents
+       FROM gestor_services
+       WHERE gestor_id = (SELECT id FROM gestores WHERE user_id = ?)
+         AND COALESCE(is_public, 1) = 1
+       ORDER BY sort_order ASC, name ASC`,
       [gestor.user_id],
     );
-    let servicesText = services.map(s => {
+    const formatList = (val) => {
+      const items = parseServiceJsonField(val)
+        .map((item) => {
+          if (typeof item === 'string') return item.trim();
+          if (item && typeof item === 'object' && item.text) return String(item.text).trim();
+          return '';
+        })
+        .filter(Boolean);
+      return items.length ? items.map((t) => `    · ${t}`).join('\n') : '    · (no especificado)';
+    };
+    let servicesText = services.map((s) => {
       const priceLabel = s.price != null && Number(s.price) > 0 ? `$${s.price} MXN` : 'Precio por definir';
-      return `- ${s.name}: ${priceLabel}, demora aprox ${s.time_estimate}`;
-    }).join('\n');
+      return [
+        `- ${s.name}`,
+        `  Precio: ${priceLabel}`,
+        `  Tiempo estimado: ${s.time_estimate || 'Por confirmar'}`,
+        `  Incluye:`,
+        formatList(s.includes),
+        `  Bonus / extras:`,
+        formatList(s.bonus),
+        `  Documentos que pediremos:`,
+        formatList(s.required_documents),
+      ].join('\n');
+    }).join('\n\n');
 
     let knownClient = null;
     if (req.user?.id) {
@@ -1654,40 +1678,48 @@ router.post('/:slugOrId/chat', authOptional, async (req, res) => {
       }
     }
 
-    let prompt = `Eres el asistente virtual público de un gestor vehicular llamado "${gestor.name}".
-Aquí está su biografía: "${gestor.bio || 'Gestor profesional.'}"
-Y aquí están sus servicios y precios actuales:
+    let prompt = `Eres el asistente virtual público de la consultoría "${gestor.name}".
+Biografía: "${gestor.bio || 'Gestor profesional.'}"
+Catálogo de servicios (usa SOLO estos datos; no inventes):
 ${servicesText || 'No hay servicios listados.'}
 ${trainingText ? `\n${trainingText}\n` : ''}
-Instrucciones IMPORTANTES: Eres amable, profesional y actúas como un agente de ventas.
-4. NUNCA inventes precios o servicios.
-5. El flujo es automatizado: primero se registra el trámite; si el cliente no tiene cuenta se le crea; si el servicio tiene precio se le manda link de pago. Si el servicio NO tiene precio, di que nos pondremos en contacto y invita a iniciar sesión en el panel. NO inventes montos.
+REGLAS IMPORTANTES:
+1. Eres amable, claro y profesional. NUNCA inventes precios, servicios, includes ni bonus.
+2. Flujo OBLIGATORIO (en este orden):
+   a) El cliente elige un servicio.
+   b) TÚ explicas con claridad: precio, tiempo estimado, TODO lo que INCLUYE, TODO el BONUS/extras y los documentos que se pedirán. Habla en lenguaje simple, sin JSON.
+   c) Preguntas explícitamente: "¿Quieres proceder con este trámite?" (o similar). Espera un SÍ claro.
+   d) SOLO después del SÍ: pides datos faltantes (si hacen falta) y recién entonces emites create_lead.
+3. PROHIBIDO generar create_lead o link de pago antes de: (1) haber explicado includes/bonus y (2) que el cliente confirme que quiere proceder.
+4. Si el servicio no tiene precio, tras el SÍ registra el trámite y di que la consultoría se pondrá en contacto con el costo. NO inventes montos.
+5. Después del pago el cliente entra a su panel y la consultoría se pondrá en contacto; menciónalo cuando des el link de pago.
 `;
 
     if (knownClient) {
       prompt += `
-CLIENTE YA REGISTRADO EN LA PLATAFORMA (sesión iniciada):
+CLIENTE YA REGISTRADO (sesión iniciada):
 - Nombre: ${knownClient.name || '(sin nombre)'}
 - Email: ${knownClient.email}
 - Teléfono: ${knownClient.phone || '(no guardado)'}
-1. NO le pidas registrarse ni volver a dar nombre/email/teléfono. Ya es usuario de la plataforma.
-2. Salúdalo por su nombre si lo conoces. Si quiere iniciar un trámite, confirma solo el servicio (y ubicación si hace falta) y, cuando confirme, añade EXACTAMENTE al FINAL de tu respuesta este bloque JSON con SUS datos conocidos:
+1. NO le pidas registrarse ni volver a dar nombre/email/teléfono.
+2. Cuando elija servicio: EXPLICA includes + bonus + precio + tiempo + documentos, y pregunta si quiere proceder.
+3. SOLO cuando diga que sí (y tengas ubicación o uses "Por confirmar"), añade EXACTAMENTE al FINAL:
 \`\`\`json
 {"action": "create_lead", "clientName": "${(knownClient.name || 'Cliente').replace(/"/g, '')}", "clientEmail": "${knownClient.email.replace(/"/g, '')}", "clientPhone": "${(knownClient.phone || '').replace(/"/g, '')}", "location": "...", "serviceName": "..."}
 \`\`\`
-3. El serviceName debe coincidir exactamente con uno de la lista. location puede ser "Por confirmar" si no la dijo.
+4. serviceName debe coincidir exactamente con uno del catálogo.
 `;
     } else {
       prompt += `
-1. Si el cliente quiere iniciar un trámite o contratar un servicio, DEBES pedirle que te proporcione sus datos para registrar su solicitud.
-2. Los datos que necesitas obligatoriamente son: Su Nombre completo, su Correo electrónico, su Teléfono o WhatsApp, su Ubicación (Ciudad/Estado), y el Servicio que desea contratar.
-3. Pregunta estos datos de forma natural y conversacional, uno a uno o todos juntos si fluye bien en la plática.
-4. TELÉFONO YA REGISTRADO: un número de teléfono solo puede usarse en UNA cuenta. Si el cliente dice que ya tiene cuenta, o que ese teléfono ya lo usó antes, NO intentes registrar otra cuenta con ese número ni emitas create_lead con un correo distinto. Dile claramente: "Ese teléfono ya está registrado. Entra a tu panel con ese número o el correo con el que te registraste para continuar tu trámite." Invítale a iniciar sesión en /login/cliente. No inventes contraseñas.
-5. UNA VEZ QUE TENGAS TODOS ESTOS DATOS Y EL CLIENTE CONFIRME QUE DESEA CONTINUAR, debes añadir EXACTAMENTE al FINAL de tu respuesta el siguiente bloque JSON. NUNCA añadas este bloque si faltan datos.
+CLIENTE NUEVO (sin sesión):
+1. Cuando elija servicio: EXPLICA includes + bonus + precio + tiempo + documentos, y pregunta si quiere proceder. Aún NO pidas todos los datos ni emitas create_lead.
+2. Si confirma que quiere proceder, entonces pídele: Nombre completo, Correo, Teléfono/WhatsApp, Ubicación (Ciudad/Estado).
+3. TELÉFONO YA REGISTRADO: un número solo puede usarse en UNA cuenta. Si ya está registrado, NO emitas create_lead con otro correo; dile que entre a /login/cliente.
+4. SOLO cuando tengas todos los datos Y el cliente haya confirmado proceder, añade EXACTAMENTE al FINAL:
 \`\`\`json
 {"action": "create_lead", "clientName": "...", "clientEmail": "...", "clientPhone": "...", "location": "...", "serviceName": "..."}
 \`\`\`
-Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exactamente con uno de la lista de servicios.
+5. NUNCA emitas create_lead si faltan datos o si aún no confirmó proceder.
 `;
     }
 
@@ -1722,19 +1754,21 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
         if (result.requiresPayment && result.paymentUrl) {
           const amountTxt = Number(result.amount || 0).toFixed(2);
           const lines = [
-            `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
+            `Perfecto. Ya quedó registrado tu trámite de ${leadData.serviceName}.`,
+            `Aquí tienes tu link de pago por $${amountTxt} MXN (válido por tiempo limitado):`,
+            result.paymentUrl,
+            'Cuando pagues serás redirigido a tu panel. Desde ahí la consultoría se pondrá en contacto contigo para continuar.',
           ];
           if (magicUrl) {
-            lines.push('Entra a tu panel con un clic (inicio de sesión automático):', magicUrl);
+            lines.push('También puedes entrar a tu panel con un clic:', magicUrl);
           } else if (result.accountCreated) {
-            lines.push('También te creamos una cuenta; revisa tu correo con el acceso al panel.');
+            lines.push('Te creamos una cuenta; revisa tu correo con el acceso al panel.');
           }
-          lines.push(`Para continuar, realiza el pago de $${amountTxt} MXN aquí:`, result.paymentUrl);
           generatedText = lines.join('\n\n');
         } else if (result.needsManualPaymentLink) {
           const lines = [
             `Listo: ya registré tu trámite de ${leadData.serviceName}.`,
-            'Como este servicio requiere cotización, nos pondremos en contacto contigo con el costo y el link de pago.',
+            'Como este servicio requiere cotización, la consultoría se pondrá en contacto contigo con el costo y el link de pago.',
           ];
           if (magicUrl) {
             lines.push('Mientras tanto, entra a tu panel con un clic:', magicUrl);
@@ -1748,13 +1782,14 @@ Reemplaza los "..." con los datos recolectados. El servicio debe coincidir exact
               `¡Listo! Registré tu trámite de ${leadData.serviceName}.`,
               'Entra a tu panel con un clic:',
               magicUrl,
+              'La consultoría se pondrá en contacto contigo para continuar.',
             ].join('\n\n');
           } else {
             generatedText = knownClient || result.existingAccount
-              ? '¡Listo! Registré tu solicitud con tu cuenta. Puedes seguirla desde Mi Panel.'
+              ? '¡Listo! Registré tu solicitud. Puedes seguirla en tu panel; la consultoría se pondrá en contacto contigo.'
               : result.accountCreated
-                ? '¡Excelente! Registré tu trámite y te creamos una cuenta. Revisa tu correo con el acceso.'
-                : '¡Excelente! He registrado tu solicitud.';
+                ? '¡Excelente! Registré tu trámite y te creamos una cuenta. Revisa tu correo. La consultoría se pondrá en contacto contigo.'
+                : '¡Excelente! He registrado tu solicitud. La consultoría se pondrá en contacto contigo.';
           }
         }
 

@@ -40,10 +40,10 @@
           <div class="mp-icon success">✓</div>
           <h2>¡Pago realizado!</h2>
           @if (autoLoginPending()) {
-            <p>Pago confirmado. Iniciando sesión y entrando a tu panel…</p>
-            <a href="/panel/cliente" class="mp-btn">Ir ahora</a>
+            <p>Pago confirmado. Te llevamos a tu panel; la consultoría se pondrá en contacto contigo.</p>
+            <a href="/panel/cliente" class="mp-btn">Ir a mi panel</a>
           } @else {
-            <p>Pago confirmado. Por seguridad, inicia sesión con el correo de tu cuenta para entrar al panel.</p>
+            <p>Pago confirmado. Por seguridad, inicia sesión con el correo de tu cuenta. La consultoría se pondrá en contacto contigo.</p>
             <a href="/login/cliente?next=/panel/cliente" class="mp-btn">Entrar a mi panel</a>
           }
         </div>
