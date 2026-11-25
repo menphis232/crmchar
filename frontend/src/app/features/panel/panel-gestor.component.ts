@@ -1358,6 +1358,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       audienceMode: 'all',
       audienceUserIds: [],
       audienceStates: [],
+      audienceServiceNames: [],
       audiencePurchased: 'any',
       ...partial,
     };
@@ -1374,6 +1375,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
       audiencePurchased: base.audiencePurchased || 'any',
       audienceUserIds: Array.isArray(base.audienceUserIds) ? base.audienceUserIds : [],
       audienceStates: Array.isArray(base.audienceStates) ? base.audienceStates : [],
+      audienceServiceNames: Array.isArray(base.audienceServiceNames) ? base.audienceServiceNames : [],
     };
   }
 
@@ -1395,6 +1397,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
             ...row,
             sortOrder: row.sortOrder ?? i,
             audienceStates: Array.isArray(row.audienceStates) ? row.audienceStates : [],
+            audienceServiceNames: Array.isArray(row.audienceServiceNames) ? row.audienceServiceNames : [],
             audienceUserIds: Array.isArray(row.audienceUserIds) ? row.audienceUserIds : [],
           }))
           .sort((a, c) => (a.sortOrder - c.sortOrder) || a.title.localeCompare(c.title));
@@ -1405,6 +1408,34 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         this.hydrateClientPromoAudienceLabels(banners);
       },
       error: () => this.canManageClientPromoBanner.set(false),
+    });
+  }
+
+  clientPromoServiceOptions(): string[] {
+    const fromProfile = (this.profile()?.services || [])
+      .map((s) => String(s.name || '').trim())
+      .filter(Boolean);
+    const fromBanners = this.clientPromoBanners()
+      .flatMap((b) => b.audienceServiceNames || []);
+    return [...new Set([...fromProfile, ...fromBanners])].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  isClientPromoAudienceServiceSelected(name: string): boolean {
+    const banner = this.selectedClientPromoBanner();
+    return !!banner?.audienceServiceNames?.includes(name);
+  }
+
+  toggleClientPromoAudienceService(name: string) {
+    const banner = this.selectedClientPromoBanner();
+    if (!banner) return;
+    const current = Array.isArray(banner.audienceServiceNames) ? banner.audienceServiceNames : [];
+    const has = current.includes(name);
+    const audienceServiceNames = has
+      ? current.filter((s) => s !== name)
+      : [...current, name];
+    this.patchSelectedClientPromoBanner({
+      audienceMode: 'filtered',
+      audienceServiceNames,
     });
   }
 
@@ -1568,8 +1599,15 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
     const parts: string[] = [];
     if (banner.audienceUserIds.length) parts.push(`${banner.audienceUserIds.length} usuario(s)`);
     if (banner.audienceStates.length) parts.push(banner.audienceStates.join(', '));
-    if (banner.audiencePurchased === 'yes') parts.push('con servicio comprado');
-    if (banner.audiencePurchased === 'no') parts.push('sin servicio comprado');
+    if (banner.audienceServiceNames?.length) {
+      parts.push(
+        banner.audienceServiceNames.length <= 2
+          ? banner.audienceServiceNames.join(', ')
+          : `${banner.audienceServiceNames.length} servicios`,
+      );
+    }
+    if (banner.audiencePurchased === 'yes') parts.push('con pago');
+    if (banner.audiencePurchased === 'no') parts.push('sin pago');
     return parts.length ? parts.join(' · ') : 'Filtro vacío (= todos)';
   }
 

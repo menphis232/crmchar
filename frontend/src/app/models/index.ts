@@ -212,6 +212,7 @@ export interface ClientPromoBanner {
   audienceMode: ClientPromoAudienceMode;
   audienceUserIds: string[];
   audienceStates: string[];
+  audienceServiceNames: string[];
   audiencePurchased: ClientPromoAudiencePurchased;
 }
 

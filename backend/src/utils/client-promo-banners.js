@@ -50,6 +50,35 @@ function asStringArray(value) {
   return [...new Set(value.map((v) => String(v || '').trim()).filter(Boolean))];
 }
 
+const MX_STATE_NAMES = [
+  'Aguascalientes', 'Baja California', 'Baja California Sur', 'Campeche', 'Chiapas', 'Chihuahua',
+  'Ciudad de México', 'CDMX', 'Coahuila', 'Colima', 'Durango', 'Estado de México', 'Guanajuato',
+  'Guerrero', 'Hidalgo', 'Jalisco', 'México', 'Michoacán', 'Morelos', 'Nayarit', 'Nuevo León',
+  'Oaxaca', 'Puebla', 'Querétaro', 'Quintana Roo', 'San Luis Potosí', 'Sinaloa', 'Sonora',
+  'Tabasco', 'Tamaulipas', 'Tlaxcala', 'Veracruz', 'Yucatán', 'Zacatecas',
+];
+
+function extractStatesFromText(text) {
+  const raw = String(text || '').trim();
+  if (!raw) return [];
+  const lower = raw.toLowerCase();
+  return MX_STATE_NAMES.filter((st) => lower.includes(st.toLowerCase()));
+}
+
+function serviceNameMatches(dealTitle, wantedLowerSet) {
+  const title = String(dealTitle || '').trim().toLowerCase();
+  if (!title) return false;
+  if (wantedLowerSet.has(title)) return true;
+  for (const wanted of wantedLowerSet) {
+    if (!wanted) continue;
+    if (title === wanted || title.startsWith(`${wanted} `) || title.startsWith(`${wanted}|`) || title.startsWith(`${wanted} |`)) {
+      return true;
+    }
+    if (wanted.startsWith(title) && title.length >= 8) return true;
+  }
+  return false;
+}
+
 export function emptyPromoBanner(partial = {}) {
   return normalizePromoBanner({
     id: uuid(),
@@ -69,6 +98,7 @@ export function emptyPromoBanner(partial = {}) {
     audienceMode: 'all',
     audienceUserIds: [],
     audienceStates: [],
+    audienceServiceNames: [],
     audiencePurchased: 'any',
     ...partial,
   });
@@ -95,6 +125,7 @@ export function normalizePromoBanner(raw = {}, index = 0) {
     audienceMode: normalizeAudienceMode(raw.audienceMode),
     audienceUserIds: asStringArray(raw.audienceUserIds),
     audienceStates: asStringArray(raw.audienceStates),
+    audienceServiceNames: asStringArray(raw.audienceServiceNames),
     audiencePurchased: normalizeAudiencePurchased(raw.audiencePurchased),
   };
 }
@@ -136,6 +167,7 @@ export function promoBannersFromSettings(settings = {}) {
       audienceMode: 'all',
       audienceUserIds: [],
       audienceStates: [],
+      audienceServiceNames: [],
       audiencePurchased: 'any',
     }, 0),
   ];
@@ -190,7 +222,8 @@ export async function loadPanelClienteSettings() {
 
 /**
  * Contexto de audiencia del cliente autenticado.
- * - states: estados de sus vehículos
+ * - states: vehículos + ubicación de solicitudes/trámites (ej. Morelos)
+ * - serviceNames / paidServiceNames: títulos de trámites
  * - hasPurchased: tiene al menos un trámite pagado
  */
 export async function resolveClientPromoAudience(user) {
@@ -204,25 +237,45 @@ export async function resolveClientPromoAudience(user) {
     [...match.params, user.id],
   ).catch(() => []);
 
-  const states = [...new Set(
-    (vehicleRows || [])
-      .map((r) => String(r.state || '').trim())
-      .filter(Boolean),
-  )];
-
-  const paid = await get(
-    `SELECT d.id
+  const locationRows = await query(
+    `SELECT DISTINCT s.location AS location
      FROM crm_deals d
      JOIN contacts c ON c.id = d.contact_id
-     WHERE d.payment_status = 'paid' AND (${match.sql})
-     LIMIT 1`,
+     LEFT JOIN solicitudes s ON s.id = d.ref_id AND d.ref_type = 'solicitud'
+     WHERE (${match.sql})
+       AND s.location IS NOT NULL AND TRIM(s.location) <> ''`,
     match.params,
-  ).catch(() => null);
+  ).catch(() => []);
+
+  const states = [...new Set([
+    ...(vehicleRows || []).map((r) => String(r.state || '').trim()).filter(Boolean),
+    ...(locationRows || []).flatMap((r) => extractStatesFromText(r.location)),
+  ])];
+
+  const dealRows = await query(
+    `SELECT d.title, d.payment_status
+     FROM crm_deals d
+     JOIN contacts c ON c.id = d.contact_id
+     WHERE (${match.sql}) AND d.deal_type = 'tramite'`,
+    match.params,
+  ).catch(() => []);
+
+  const serviceNames = [...new Set(
+    (dealRows || []).map((r) => String(r.title || '').trim()).filter(Boolean),
+  )];
+  const paidServiceNames = [...new Set(
+    (dealRows || [])
+      .filter((r) => String(r.payment_status || '').toLowerCase() === 'paid')
+      .map((r) => String(r.title || '').trim())
+      .filter(Boolean),
+  )];
 
   return {
     userId: user.id,
     states,
-    hasPurchased: !!paid,
+    serviceNames,
+    paidServiceNames,
+    hasPurchased: paidServiceNames.length > 0,
   };
 }
 
@@ -235,21 +288,44 @@ export function bannerMatchesAudience(banner, audience) {
 
   const userIds = banner.audienceUserIds || [];
   const states = banner.audienceStates || [];
+  const serviceNames = banner.audienceServiceNames || [];
   const purchased = banner.audiencePurchased || 'any';
 
   // Sin ningún filtro concreto ⇒ se comporta como "todos"
-  if (!userIds.length && !states.length && purchased === 'any') return true;
+  if (!userIds.length && !states.length && !serviceNames.length && purchased === 'any') return true;
 
   if (userIds.length && !userIds.includes(audience.userId)) return false;
 
   if (states.length) {
     const clientStates = new Set((audience.states || []).map((s) => s.toLowerCase()));
-    const hit = states.some((s) => clientStates.has(String(s).toLowerCase()));
+    const hit = states.some((s) => {
+      const key = String(s || '').toLowerCase();
+      if (clientStates.has(key)) return true;
+      // CDMX aliases
+      if (key === 'ciudad de méxico' || key === 'cdmx') {
+        return clientStates.has('cdmx') || clientStates.has('ciudad de méxico');
+      }
+      return [...clientStates].some((cs) => cs.includes(key) || key.includes(cs));
+    });
     if (!hit) return false;
   }
 
-  if (purchased === 'yes' && !audience.hasPurchased) return false;
-  if (purchased === 'no' && audience.hasPurchased) return false;
+  if (serviceNames.length) {
+    const wanted = new Set(serviceNames.map((s) => String(s).trim().toLowerCase()).filter(Boolean));
+    if (purchased === 'yes') {
+      const hit = (audience.paidServiceNames || []).some((t) => serviceNameMatches(t, wanted));
+      if (!hit) return false;
+    } else if (purchased === 'no') {
+      const hit = (audience.paidServiceNames || []).some((t) => serviceNameMatches(t, wanted));
+      if (hit) return false;
+    } else {
+      const hit = (audience.serviceNames || []).some((t) => serviceNameMatches(t, wanted));
+      if (!hit) return false;
+    }
+  } else {
+    if (purchased === 'yes' && !audience.hasPurchased) return false;
+    if (purchased === 'no' && audience.hasPurchased) return false;
+  }
 
   return true;
 }

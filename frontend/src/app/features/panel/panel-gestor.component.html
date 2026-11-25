@@ -1090,21 +1090,46 @@
 
                 @if (banner.audienceMode === 'filtered') {
                   <div class="form-group" style="margin-bottom:10px;">
-                    <label>¿Compró algún servicio?</label>
+                    <label>¿Pagó servicio?</label>
                     <select
                       [ngModel]="banner.audiencePurchased"
                       (ngModelChange)="patchSelectedClientPromoBanner({ audiencePurchased: $event })"
                     >
                       <option value="any">Da igual</option>
-                      <option value="yes">Sí (ya pagó al menos un trámite)</option>
-                      <option value="no">No (aún no ha pagado)</option>
+                      <option value="yes">Sí (pagó)</option>
+                      <option value="no">No (sin pagar)</option>
                     </select>
+                    <p class="card-desc" style="margin:6px 0 0;font-size:12px;">
+                      Si eliges servicios abajo, el filtro de pago aplica a esos servicios.
+                    </p>
                   </div>
 
                   <div class="form-group" style="margin-bottom:10px;">
-                    <label>Estados (vehículo del cliente)</label>
+                    <label>Servicios</label>
                     <p class="card-desc" style="margin:0 0 8px;font-size:12px;">
-                      Toca para marcar/desmarcar. Seleccionados: {{ banner.audienceStates.length || 0 }}
+                      Opcional. Seleccionados: {{ banner.audienceServiceNames.length || 0 }}.
+                      Puedes combinar con pago/no pago y estados.
+                    </p>
+                    @if (clientPromoServiceOptions().length) {
+                      <div class="audience-state-chips">
+                        @for (svc of clientPromoServiceOptions(); track svc) {
+                          <button
+                            type="button"
+                            class="audience-state-chip"
+                            [class.is-selected]="isClientPromoAudienceServiceSelected(svc)"
+                            (click)="toggleClientPromoAudienceService(svc)"
+                          >{{ svc }}</button>
+                        }
+                      </div>
+                    } @else {
+                      <p class="card-desc" style="margin:0;font-size:12px;">Aún no hay servicios en tu perfil.</p>
+                    }
+                  </div>
+
+                  <div class="form-group" style="margin-bottom:10px;">
+                    <label>Estados (vehículo o ubicación del trámite)</label>
+                    <p class="card-desc" style="margin:0 0 8px;font-size:12px;">
+                      Ej. Morelos: clientes con vehículo o solicitud en ese estado. Seleccionados: {{ banner.audienceStates.length || 0 }}
                     </p>
                     <div class="audience-state-chips">
                       @for (st of mexicoStates; track st) {
