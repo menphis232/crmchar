@@ -2436,7 +2436,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
           (deals || []).slice(0, 8).map((d) => ({
             id: d.id,
             title: d.title || 'Trámite',
-            contactName: d.contactName || (d as any).contact_name || undefined,
+            contactName: d.contact?.name || undefined,
             stage: d.stage,
           })),
         );
@@ -2514,7 +2514,7 @@ export class PanelGestorComponent implements OnInit, OnDestroy {
         deals = (rows || []).slice(0, 8).map((d) => ({
           id: d.id,
           title: d.title || 'Trámite',
-          contactName: d.contactName || undefined,
+          contactName: d.contact?.name || undefined,
           stage: d.stage,
         }));
         dealsDone = true;
