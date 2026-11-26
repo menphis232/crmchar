@@ -27,17 +27,29 @@
       </div>
 
       @if (canCreateMoral() && !editingId()) {
-        <div class="client-field client-field--full" style="margin-bottom:12px;">
-          <label>Tipo de persona</label>
-          <div style="display:flex; gap:10px; flex-wrap:wrap;">
-            <label style="display:inline-flex; align-items:center; gap:6px; font-weight:600; color:#323338;">
-              <input type="radio" name="personType" [checked]="form.personType === 'fisica'" (change)="onPersonTypeChange('fisica')">
+        <div class="client-field client-field--full person-type-field">
+          <span class="person-type-label" id="person-type-label">Tipo de persona</span>
+          <div class="person-type-toggle" role="radiogroup" aria-labelledby="person-type-label">
+            <button
+              type="button"
+              class="person-type-opt"
+              role="radio"
+              [attr.aria-checked]="form.personType === 'fisica'"
+              [class.person-type-opt--active]="form.personType === 'fisica'"
+              (click)="onPersonTypeChange('fisica')"
+            >
               Persona física
-            </label>
-            <label style="display:inline-flex; align-items:center; gap:6px; font-weight:600; color:#323338;">
-              <input type="radio" name="personType" [checked]="form.personType === 'moral'" (change)="onPersonTypeChange('moral')">
+            </button>
+            <button
+              type="button"
+              class="person-type-opt"
+              role="radio"
+              [attr.aria-checked]="form.personType === 'moral'"
+              [class.person-type-opt--active]="form.personType === 'moral'"
+              (click)="onPersonTypeChange('moral')"
+            >
               Persona moral
-            </label>
+            </button>
           </div>
         </div>
       }

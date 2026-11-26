@@ -436,7 +436,9 @@ function emptyForm(): ClientForm {
       font-weight: 600;
       color: #676879;
     }
-    .client-field input, .client-field select, .client-field textarea {
+    .client-field input:not([type="radio"]):not([type="checkbox"]),
+    .client-field select,
+    .client-field textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 10px 12px;
@@ -450,10 +452,70 @@ function emptyForm(): ClientForm {
       outline: none;
       color-scheme: light !important;
     }
-    .client-field input:focus, .client-field select:focus, .client-field textarea:focus { border-color: #0073ea !important; }
+    .client-field input:not([type="radio"]):not([type="checkbox"]):focus,
+    .client-field select:focus,
+    .client-field textarea:focus { border-color: #0073ea !important; }
     .client-field textarea { resize: vertical; line-height: 1.5; }
     .client-form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
     @container (max-width: 620px) { .client-form-grid { grid-template-columns: 1fr; } }
+
+    .person-type-field { margin-bottom: 4px; }
+    .person-type-label {
+      display: block;
+      margin-bottom: 8px;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #676879;
+    }
+    .person-type-toggle {
+      display: inline-flex;
+      align-items: stretch;
+      gap: 0;
+      max-width: 100%;
+      padding: 3px;
+      border: 1px solid #e6e9ef;
+      border-radius: 10px;
+      background: #f5f6f8;
+      box-sizing: border-box;
+    }
+    .person-type-opt {
+      appearance: none;
+      margin: 0;
+      min-height: 36px;
+      padding: 0 16px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: #676879;
+      -webkit-text-fill-color: #676879;
+      font-family: Figtree, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .person-type-opt:hover:not(.person-type-opt--active) {
+      color: #323338;
+      -webkit-text-fill-color: #323338;
+      background: rgba(255, 255, 255, 0.55);
+    }
+    .person-type-opt--active {
+      background: #fff !important;
+      color: #0073ea !important;
+      -webkit-text-fill-color: #0073ea !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+    .person-type-opt:focus-visible {
+      outline: 2px solid #0073ea;
+      outline-offset: 2px;
+    }
+    @container (max-width: 420px) {
+      .person-type-toggle { display: flex; width: 100%; }
+      .person-type-opt { flex: 1; padding: 0 10px; font-size: 12px; }
+    }
 
     .status-pill {
       display: inline-block;
