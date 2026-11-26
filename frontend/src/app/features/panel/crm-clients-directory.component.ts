@@ -761,14 +761,20 @@ export class CrmClientsDirectoryComponent implements OnInit {
     this.crmService.lookupMxCp(cp).subscribe({
       next: (res) => {
         this.cpLoading.set(false);
-        this.cpColonies.set(res.colonies || []);
+        const colonies = res.colonies || [];
+        this.cpColonies.set(colonies);
+        this.form.fiscalColony = colonies.length === 1
+          ? colonies[0]
+          : (colonies.includes(this.form.fiscalColony) ? this.form.fiscalColony : '');
         if (res.city) this.form.fiscalCity = res.city;
+        else if (!colonies.length) this.form.fiscalCity = '';
         if (res.country) this.form.fiscalCountry = res.country;
-        if (res.colonies?.length === 1) this.form.fiscalColony = res.colonies[0];
         if (res.warning) this.toast.warning(res.warning);
+        else if (!colonies.length) this.toast.warning('No se encontraron colonias para ese CP. Escríbelas a mano.');
       },
       error: () => {
         this.cpLoading.set(false);
+        this.cpColonies.set([]);
         this.toast.warning('No se pudo consultar el código postal. Escribe colonia y ciudad a mano.');
       },
     });
