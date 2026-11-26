@@ -1,3 +1,4 @@
+import { get } from '../db.js';
 import { normalizeMxPhone } from '../utils/phone.js';
 
 /**
@@ -32,4 +33,31 @@ export function clientContactPredicate(user) {
     ))
   )`;
   return { sql, params: [phone, phone, phone, last10, last10] };
+}
+
+/** Predicado de flotilla: principal moral ve toda la empresa; subusuario solo lo asignado. */
+export async function clientVehiclePredicate(user) {
+  const principalId = user?.parent_id || user?.id || null;
+  if (!principalId) return clientContactPredicate(user);
+
+  const empresa = await get(
+    `SELECT id FROM contacts
+     WHERE empresa_user_id = ? AND IFNULL(person_type, 'fisica') = 'moral'
+     LIMIT 1`,
+    [principalId],
+  ).catch(() => null);
+
+  if (!empresa) return clientContactPredicate(user);
+
+  if (user.parent_id) {
+    return {
+      sql: `(c.empresa_user_id = ? AND cv.assigned_user_id = ?)`,
+      params: [principalId, user.id],
+    };
+  }
+
+  return {
+    sql: `(c.empresa_user_id = ?)`,
+    params: [principalId],
+  };
 }

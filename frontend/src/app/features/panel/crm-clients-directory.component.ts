@@ -8,10 +8,46 @@ import { CrmContact } from '../../models';
 import { ENGOMADO_COLORS, engomadoLabel } from '../../shared/engomado-colors';
 import { MEXICO_STATES } from '../../shared/mexico-states';
 
-type ClientForm = { name: string; email: string; phone: string; residenceState: string; notes: string };
+type ClientForm = {
+  personType: 'fisica' | 'moral';
+  name: string;
+  email: string;
+  phone: string;
+  residenceState: string;
+  notes: string;
+  razonSocial: string;
+  rfc: string;
+  accountHolder: string;
+  jobTitle: string;
+  fiscalStreet: string;
+  fiscalExtNumber: string;
+  fiscalIntNumber: string;
+  fiscalColony: string;
+  fiscalZip: string;
+  fiscalCity: string;
+  fiscalCountry: string;
+};
 
 function emptyForm(): ClientForm {
-  return { name: '', email: '', phone: '', residenceState: '', notes: '' };
+  return {
+    personType: 'fisica',
+    name: '',
+    email: '',
+    phone: '',
+    residenceState: '',
+    notes: '',
+    razonSocial: '',
+    rfc: '',
+    accountHolder: '',
+    jobTitle: '',
+    fiscalStreet: '',
+    fiscalExtNumber: '',
+    fiscalIntNumber: '',
+    fiscalColony: '',
+    fiscalZip: '',
+    fiscalCity: '',
+    fiscalCountry: 'México',
+  };
 }
 
 @Component({
@@ -463,10 +499,15 @@ export class CrmClientsDirectoryComponent implements OnInit {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   canImpersonate = input(false);
+  /** Solo TVM puede crear persona moral. */
+  canCreateMoral = input(false);
   /** Búsqueda venida del buscador global del panel. */
   seedQuery = input('');
   openContact = output<string>();
   impersonatingId = signal<string | null>(null);
+  cpColonies = signal<string[]>([]);
+  cpLoading = signal(false);
+  private cpTimer: ReturnType<typeof setTimeout> | null = null;
 
   clients = signal<CrmContact[]>([]);
   search = signal('');
@@ -605,12 +646,26 @@ export class CrmClientsDirectoryComponent implements OnInit {
   openEditForm(c: CrmContact) {
     this.editingId.set(c.id);
     this.form = {
+      ...emptyForm(),
+      personType: c.personType === 'moral' ? 'moral' : 'fisica',
       name: c.name || '',
       email: c.email || '',
       phone: c.phone || '',
       residenceState: c.residenceState || '',
       notes: c.notes || '',
+      razonSocial: c.razonSocial || c.name || '',
+      rfc: c.rfc || '',
+      accountHolder: c.accountHolder || '',
+      jobTitle: c.jobTitle || '',
+      fiscalStreet: c.fiscalStreet || '',
+      fiscalExtNumber: c.fiscalExtNumber || '',
+      fiscalIntNumber: c.fiscalIntNumber || '',
+      fiscalColony: c.fiscalColony || '',
+      fiscalZip: c.fiscalZip || '',
+      fiscalCity: c.fiscalCity || '',
+      fiscalCountry: c.fiscalCountry || 'México',
     };
+    this.cpColonies.set(c.fiscalColony ? [c.fiscalColony] : []);
     this.showForm.set(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -619,26 +674,99 @@ export class CrmClientsDirectoryComponent implements OnInit {
     this.showForm.set(false);
     this.editingId.set(null);
     this.form = emptyForm();
+    this.cpColonies.set([]);
+  }
+
+  onPersonTypeChange(type: 'fisica' | 'moral') {
+    if (!this.canCreateMoral() && type === 'moral') return;
+    this.form.personType = type;
+  }
+
+  onFiscalZipChange(value: string) {
+    this.form.fiscalZip = value.replace(/\D/g, '').slice(0, 5);
+    if (this.cpTimer) clearTimeout(this.cpTimer);
+    if (this.form.fiscalZip.length !== 5) {
+      this.cpColonies.set([]);
+      return;
+    }
+    this.cpTimer = setTimeout(() => this.lookupCp(), 350);
+  }
+
+  lookupCp() {
+    const cp = this.form.fiscalZip;
+    if (!/^\d{5}$/.test(cp)) return;
+    this.cpLoading.set(true);
+    this.crmService.lookupMxCp(cp).subscribe({
+      next: (res) => {
+        this.cpLoading.set(false);
+        this.cpColonies.set(res.colonies || []);
+        if (res.city) this.form.fiscalCity = res.city;
+        if (res.country) this.form.fiscalCountry = res.country;
+        if (res.colonies?.length === 1) this.form.fiscalColony = res.colonies[0];
+        if (res.warning) this.toast.warning(res.warning);
+      },
+      error: () => {
+        this.cpLoading.set(false);
+        this.toast.warning('No se pudo consultar el código postal. Escribe colonia y ciudad a mano.');
+      },
+    });
   }
 
   saveClient() {
-    const name = this.form.name.trim();
-    if (!name) {
+    const isMoral = this.form.personType === 'moral' && this.canCreateMoral();
+    if (isMoral && !this.editingId()) {
+      if (!this.form.razonSocial.trim()) {
+        this.toast.warning('Escribe la razón social.');
+        return;
+      }
+      if (!this.form.rfc.trim()) {
+        this.toast.warning('Escribe el RFC.');
+        return;
+      }
+      if (!this.form.accountHolder.trim()) {
+        this.toast.warning('Escribe el titular de la cuenta.');
+        return;
+      }
+      if (!this.form.phone.trim() && !this.form.email.trim()) {
+        this.toast.warning('Indica teléfono o correo de la empresa.');
+        return;
+      }
+    } else if (!this.form.name.trim()) {
       this.toast.warning('Escribe el nombre del cliente.');
       return;
     }
-    const data = {
-      name,
-      email: this.form.email.trim(),
-      phone: this.form.phone.trim(),
-      residenceState: this.form.residenceState.trim(),
-      notes: this.form.notes.trim(),
-    };
 
     this.isSaving.set(true);
     const id = this.editingId();
     if (id) {
-      this.crmService.updateContact(id, { ...data, whatsapp: data.phone }).subscribe({
+      const data = isMoral || this.form.personType === 'moral'
+        ? {
+            name: this.form.razonSocial.trim() || this.form.name.trim(),
+            email: this.form.email.trim(),
+            phone: this.form.phone.trim(),
+            notes: this.form.notes.trim(),
+            rfc: this.form.rfc.trim(),
+            razonSocial: this.form.razonSocial.trim(),
+            accountHolder: this.form.accountHolder.trim(),
+            jobTitle: this.form.jobTitle.trim(),
+            fiscalStreet: this.form.fiscalStreet.trim(),
+            fiscalExtNumber: this.form.fiscalExtNumber.trim(),
+            fiscalIntNumber: this.form.fiscalIntNumber.trim(),
+            fiscalColony: this.form.fiscalColony.trim(),
+            fiscalZip: this.form.fiscalZip.trim(),
+            fiscalCity: this.form.fiscalCity.trim(),
+            fiscalCountry: this.form.fiscalCountry.trim() || 'México',
+            whatsapp: this.form.phone.trim(),
+          }
+        : {
+            name: this.form.name.trim(),
+            email: this.form.email.trim(),
+            phone: this.form.phone.trim(),
+            residenceState: this.form.residenceState.trim(),
+            notes: this.form.notes.trim(),
+            whatsapp: this.form.phone.trim(),
+          };
+      this.crmService.updateContact(id, data).subscribe({
         next: () => {
           this.isSaving.set(false);
           this.closeForm();
@@ -653,12 +781,50 @@ export class CrmClientsDirectoryComponent implements OnInit {
       return;
     }
 
+    if (isMoral) {
+      this.crmService.createContact({
+        personType: 'moral',
+        razonSocial: this.form.razonSocial.trim(),
+        rfc: this.form.rfc.trim(),
+        accountHolder: this.form.accountHolder.trim(),
+        jobTitle: this.form.jobTitle.trim() || undefined,
+        phone: this.form.phone.trim() || undefined,
+        email: this.form.email.trim() || undefined,
+        notes: this.form.notes.trim() || undefined,
+        fiscalStreet: this.form.fiscalStreet.trim() || undefined,
+        fiscalExtNumber: this.form.fiscalExtNumber.trim() || undefined,
+        fiscalIntNumber: this.form.fiscalIntNumber.trim() || undefined,
+        fiscalColony: this.form.fiscalColony.trim() || undefined,
+        fiscalZip: this.form.fiscalZip.trim() || undefined,
+        fiscalCity: this.form.fiscalCity.trim() || undefined,
+        fiscalCountry: this.form.fiscalCountry.trim() || 'México',
+      }).subscribe({
+        next: (contact) => {
+          this.isSaving.set(false);
+          this.closeForm();
+          this.load(1);
+          const access = (contact as any).clientAccess;
+          if (access?.password) {
+            this.toast.success(`Empresa creada. Acceso: ${access.login} / ${access.password}`);
+          } else {
+            this.toast.success('Persona moral agregada al directorio');
+          }
+          this.openContact.emit(contact.id);
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toast.error(err?.error?.error || 'No se pudo guardar la empresa');
+        },
+      });
+      return;
+    }
+
     this.crmService.createContact({
-      name,
-      email: data.email || undefined,
-      phone: data.phone || undefined,
-      residenceState: data.residenceState || undefined,
-      notes: data.notes || undefined,
+      name: this.form.name.trim(),
+      email: this.form.email.trim() || undefined,
+      phone: this.form.phone.trim() || undefined,
+      residenceState: this.form.residenceState.trim() || undefined,
+      notes: this.form.notes.trim() || undefined,
     }).subscribe({
       next: (contact) => {
         this.isSaving.set(false);

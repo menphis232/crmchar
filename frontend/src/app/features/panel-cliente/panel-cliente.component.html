@@ -81,6 +81,15 @@
         <span class="kanban-count">{{ vehicles().length }}</span>
       }
     </button>
+    @if (canManageTeam()) {
+      <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'equipo'" (click)="setTab('equipo'); closeDeal()">
+        <svg lucideBriefcase [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
+        Equipo
+        @if (teamMembers().length > 0) {
+          <span class="kanban-count">{{ teamMembers().length }}</span>
+        }
+      </button>
+    }
     <button class="dash-link dash-link-with-icon" [class.active]="activeTab() === 'billetera'" (click)="setTab('billetera'); closeDeal()">
       <svg lucideWallet [size]="16" [strokeWidth]="2" class="dash-link-icon" aria-hidden="true"></svg>
       Billetera
@@ -728,6 +737,74 @@
       </div>
     }
 
+    @if (activeTab() === 'equipo' && canManageTeam()) {
+      <div class="dash-card">
+        <h2 class="card-title card-title-with-icon">
+          <svg lucideBriefcase [size]="20" [strokeWidth]="2" class="card-title-icon" aria-hidden="true"></svg>
+          Equipo
+        </h2>
+        <p class="card-desc">Usuarios de la empresa. Cada uno solo ve los vehículos y documentos que le asignes.</p>
+
+        <div class="client-vehicle-form" style="margin-bottom:16px;">
+          <div>
+            <label>Nombre</label>
+            <input type="text" class="client-wallet-input" [(ngModel)]="teamForm.name" placeholder="Nombre completo">
+          </div>
+          <div>
+            <label>Teléfono</label>
+            <input type="tel" class="client-wallet-input" [(ngModel)]="teamForm.phone" placeholder="55 1234 5678">
+          </div>
+          <div>
+            <label>Correo</label>
+            <input type="email" class="client-wallet-input" [(ngModel)]="teamForm.email" placeholder="usuario@empresa.com">
+          </div>
+        </div>
+        <button type="button" class="btn-copy client-vehicle-add-btn" (click)="addTeamMember()" [disabled]="teamSaving()">
+          <svg lucidePlus [size]="14" aria-hidden="true"></svg>
+          {{ teamSaving() ? 'Creando...' : 'Agregar usuario' }}
+        </button>
+
+        @if (lastTeamAccess(); as access) {
+          <div class="client-empty" style="margin-top:12px; text-align:left;">
+            <p><strong>Acceso generado</strong></p>
+            <p>Usuario: {{ access.login }}</p>
+            <p>Contraseña: {{ access.password }}</p>
+          </div>
+        }
+
+        @if (teamLoading()) {
+          <div class="client-empty">Cargando equipo...</div>
+        } @else if (!teamMembers().length) {
+          <div class="client-empty" style="margin-top:16px;">
+            <p>Aún no hay usuarios en el equipo.</p>
+          </div>
+        } @else {
+          <div style="margin-top:16px; display:flex; flex-direction:column; gap:10px;">
+            @for (m of teamMembers(); track m.id) {
+              <div class="client-vehicle-card" style="padding:12px 14px;">
+                <div class="client-vehicle-head">
+                  <div>
+                    <strong>{{ m.name }}</strong>
+                    <div class="card-desc" style="margin:4px 0 0;">
+                      {{ m.isPrincipal ? 'Titular' : 'Usuario' }}
+                      @if (m.phone) { · {{ m.phone }} }
+                      @if (m.email) { · {{ m.email }} }
+                    </div>
+                  </div>
+                  @if (!m.isPrincipal) {
+                    <button type="button" class="btn-ghost small client-vehicle-delete" (click)="removeTeamMember(m)">
+                      <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                      Quitar
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
     @if (activeTab() === 'vehiculos') {
       <div class="dash-card">
         <h2 class="card-title card-title-with-icon">
@@ -735,6 +812,25 @@
           Mis Vehículos
         </h2>
         <p class="card-desc">Registra los autos de tu familia con marca, submarca y año. Tu consultoría verá la misma información.</p>
+
+        <div class="client-vehicle-form" style="margin-bottom:14px;">
+          <div>
+            <label>Buscar por placa</label>
+            <input type="search" class="client-wallet-input" [ngModel]="vehiclePlateFilter" (ngModelChange)="onVehiclePlateFilterChange($event)" placeholder="Ej. ABC123" style="text-transform:uppercase;">
+          </div>
+          <div>
+            <label>Estado (placas)</label>
+            <select class="client-wallet-input" [ngModel]="vehicleStateFilter" (ngModelChange)="onVehicleStateFilterChange($event)">
+              <option value="">Todos los estados</option>
+              @for (st of mexicoStates; track st) {
+                <option [value]="st">{{ st }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        @if (vehiclePlateFilter || vehicleStateFilter) {
+          <button type="button" class="btn-ghost small" style="margin-bottom:12px;" (click)="clearVehicleFilters()">Limpiar filtros</button>
+        }
 
         @if (vehiclesLoading()) {
           <div class="client-empty">Cargando vehículos...</div>

@@ -20,8 +20,8 @@ import {
   normalizeVerificationHologram,
   vehicleRowWithVerification,
 } from '../crm/verification-utils.js';
-import { ensureClientVehicleContacts } from '../crm/helpers.js';
-import { clientContactPredicate } from '../crm/client-match.js';
+import { ensureClientUser, ensureClientVehicleContacts, empresaPrincipalUserId, isEmpresaSubuser } from '../crm/helpers.js';
+import { clientContactPredicate, clientVehiclePredicate } from '../crm/client-match.js';
 import { normalizeMxPhone } from '../utils/phone.js';
 import {
   bannerToClientDto,
@@ -31,12 +31,48 @@ import {
   resolveClientPromoAudience,
 } from '../utils/client-promo-banners.js';
 
+async function hydrateClientUser(user) {
+  if (!user?.id) return user;
+  const needsPhone = !normalizeMxPhone(user.phone);
+  const needsProfile = user.profile_type === undefined || user.parent_id === undefined;
+  if (!needsPhone && !needsProfile) return user;
+  const row = await get(
+    'SELECT email, phone, profile_type, parent_id, name FROM users WHERE id = ?',
+    [user.id],
+  );
+  if (!row) return user;
+  return {
+    ...user,
+    email: row.email || user.email,
+    phone: row.phone || user.phone,
+    profile_type: row.profile_type ?? user.profile_type,
+    parent_id: row.parent_id ?? user.parent_id,
+    name: row.name || user.name,
+  };
+}
+
 async function predicateFor(user) {
-  if (user?.id && !normalizeMxPhone(user.phone)) {
-    const row = await get('SELECT email, phone FROM users WHERE id = ?', [user.id]);
-    if (row) user = { ...user, email: row.email || user.email, phone: row.phone };
-  }
+  user = await hydrateClientUser(user);
   return clientContactPredicate(user);
+}
+
+async function vehiclePredicateFor(user) {
+  user = await hydrateClientUser(user);
+  return clientVehiclePredicate(user);
+}
+
+async function isEmpresaPrincipal(user) {
+  user = await hydrateClientUser(user);
+  if (user?.parent_id) return false;
+  const principalId = empresaPrincipalUserId(user);
+  if (!principalId) return false;
+  const empresa = await get(
+    `SELECT id FROM contacts
+     WHERE empresa_user_id = ? AND IFNULL(person_type, 'fisica') = 'moral'
+     LIMIT 1`,
+    [principalId],
+  ).catch(() => null);
+  return !!empresa;
 }
 
 const DEFAULT_REQUIRED_DOCS = ['INE', 'Tarjeta de Circulación', 'Factura de Origen'];
@@ -460,7 +496,7 @@ function unifiedVehicleWalletRow(row) {
 }
 
 async function unifiedWalletDocuments(user) {
-  const match = await predicateFor(user);
+  const match = await vehiclePredicateFor(user);
   const personal = await query(
     'SELECT * FROM client_wallet_documents WHERE user_id = ? ORDER BY created_at DESC',
     [user.id],
@@ -549,9 +585,9 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
 
     const docId = uuid();
     await run(
-      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, label, file_name, file_url)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [docId, vehicleId, vehicle.user_id, walletDoc.label, fileName, walletDoc.file_url],
+      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [docId, vehicleId, vehicle.user_id, req.user.id, walletDoc.label, fileName, walletDoc.file_url],
     );
     await run('DELETE FROM client_wallet_documents WHERE id = ?', [req.params.id]);
 
@@ -570,7 +606,7 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
 });
 
 async function clientOwnsVehicle(user, vehicleId) {
-  const match = await predicateFor(user);
+  const match = await vehiclePredicateFor(user);
   const row = await get(
     `SELECT cv.id FROM contact_vehicles cv
      JOIN contacts c ON c.id = cv.contact_id
@@ -603,26 +639,44 @@ function vehicleDocumentRow(row) {
   };
 }
 
-async function vehiclesWithDocuments(user) {
-  const match = await predicateFor(user);
+async function vehiclesWithDocuments(user, filters = {}) {
+  const match = await vehiclePredicateFor(user);
+  const where = [match.sql];
+  const params = [...match.params];
+
+  const plateQ = String(filters.plate || '').trim().toUpperCase();
+  if (plateQ) {
+    where.push(`UPPER(IFNULL(cv.plate,'')) LIKE ?`);
+    params.push(`%${plateQ}%`);
+  }
+  const stateQ = String(filters.state || '').trim();
+  if (stateQ) {
+    where.push(`cv.state = ?`);
+    params.push(stateQ);
+  }
+
   const rows = await query(
     `SELECT cv.* FROM contact_vehicles cv
      JOIN contacts c ON c.id = cv.contact_id
-     WHERE ${match.sql}
+     WHERE ${where.join(' AND ')}
      ORDER BY cv.updated_at DESC, cv.created_at DESC`,
-    match.params,
+    params,
   );
   const vehicles = dedupeVehiclesByPlate(rows);
   const ids = vehicles.map((v) => v.id);
   if (!ids.length) return vehicles;
 
   const placeholders = ids.map(() => '?').join(',');
-  const docs = await query(
-    `SELECT * FROM contact_vehicle_documents
-     WHERE vehicle_id IN (${placeholders})
-     ORDER BY created_at DESC`,
-    ids,
-  );
+  const hydrated = await hydrateClientUser(user);
+  const docsParams = [...ids];
+  let docsSql = `SELECT * FROM contact_vehicle_documents WHERE vehicle_id IN (${placeholders})`;
+  // Subusuario: solo documentos propios o de sus vehículos asignados (ya filtrados arriba)
+  if (isEmpresaSubuser(hydrated)) {
+    docsSql += ` AND (uploaded_by_user_id = ? OR uploaded_by_user_id IS NULL)`;
+    docsParams.push(hydrated.id);
+  }
+  docsSql += ` ORDER BY created_at DESC`;
+  const docs = await query(docsSql, docsParams);
   const byVehicle = {};
   for (const doc of docs) {
     if (!byVehicle[doc.vehicle_id]) byVehicle[doc.vehicle_id] = [];
@@ -633,7 +687,10 @@ async function vehiclesWithDocuments(user) {
 
 router.get('/vehicles', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    res.json(await vehiclesWithDocuments(req.user));
+    res.json(await vehiclesWithDocuments(req.user, {
+      plate: req.query.plate,
+      state: req.query.state,
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al cargar vehículos' });
@@ -664,17 +721,24 @@ router.post('/vehicles', authRequired, requireRole('cliente'), async (req, res) 
       });
     }
 
+    const actor = await hydrateClientUser(req.user);
+    const assignedUserId = isEmpresaSubuser(actor) ? actor.id : (req.body.assignedUserId || null);
+    const createdBy = actor.id;
+
     let firstRow = null;
     for (const contact of contacts) {
       const id = uuid();
       await run(`
         INSERT INTO contact_vehicles (
-          id, contact_id, user_id, plate, circulation_card_name, make, model, year, state, engomado_color, vehicle_notes,
+          id, contact_id, user_id, assigned_user_id, created_by_user_id,
+          plate, circulation_card_name, make, model, year, state, engomado_color, vehicle_notes,
           insurance_expiry, tenencia_2026, tenencia_year, verification_hologram, next_verification_date
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         id, contact.id, contact.user_id,
+        assignedUserId,
+        createdBy,
         String(plate || '').trim().toUpperCase(),
         circName,
         make.trim(),
@@ -731,7 +795,7 @@ router.patch('/vehicles/:id', authRequired, requireRole('cliente'), async (req, 
     const circName = circulationCardName !== undefined
       ? (circulationCardName && String(circulationCardName).trim() ? String(circulationCardName).trim() : null)
       : undefined;
-    const match = await predicateFor(req.user);
+    const match = await vehiclePredicateFor(req.user);
 
     await run(
       `UPDATE contact_vehicles cv
@@ -785,7 +849,7 @@ router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req,
     }
 
     const row = await get('SELECT plate FROM contact_vehicles WHERE id = ?', [req.params.id]);
-    const match = await predicateFor(req.user);
+    const match = await vehiclePredicateFor(req.user);
     await run(
       `DELETE cv FROM contact_vehicles cv
        JOIN contacts c ON c.id = cv.contact_id
@@ -813,12 +877,13 @@ router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), asy
     const vehicle = await get('SELECT user_id FROM contact_vehicles WHERE id = ?', [req.params.id]);
     const docId = uuid();
     await run(
-      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, label, file_name, file_url)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         docId,
         req.params.id,
         vehicle.user_id,
+        req.user.id,
         label?.trim() || null,
         fileName,
         fileUrl,
@@ -835,7 +900,7 @@ router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), asy
 
 router.delete('/vehicle-documents/:id', authRequired, requireRole('cliente'), async (req, res) => {
   try {
-    const match = await predicateFor(req.user);
+    const match = await vehiclePredicateFor(req.user);
     const doc = await get(
       `SELECT cvd.id FROM contact_vehicle_documents cvd
        JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
@@ -850,6 +915,154 @@ router.delete('/vehicle-documents/:id', authRequired, requireRole('cliente'), as
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al eliminar documento' });
+  }
+});
+
+router.patch('/vehicles/:id/assign', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    if (!(await isEmpresaPrincipal(req.user))) {
+      return res.status(403).json({ error: 'Solo el titular de la empresa puede asignar vehículos' });
+    }
+    if (!await clientOwnsVehicle(req.user, req.params.id)) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
+    const assignedUserId = req.body.userId || req.body.assignedUserId || null;
+    const principalId = empresaPrincipalUserId(req.user);
+    if (assignedUserId) {
+      const member = await get(
+        "SELECT id FROM users WHERE id = ? AND role = 'cliente' AND (id = ? OR parent_id = ?)",
+        [assignedUserId, principalId, principalId],
+      );
+      if (!member) return res.status(400).json({ error: 'Usuario no pertenece a la empresa' });
+    }
+    await run(
+      'UPDATE contact_vehicles SET assigned_user_id = ?, updated_at = NOW() WHERE id = ?',
+      [assignedUserId, req.params.id],
+    );
+    const updated = await get('SELECT * FROM contact_vehicles WHERE id = ?', [req.params.id]);
+    res.json(vehicleRowWithVerification(updated));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al asignar vehículo' });
+  }
+});
+
+router.get('/team', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const user = await hydrateClientUser(req.user);
+    const principalId = empresaPrincipalUserId(user);
+    if (!(await isEmpresaPrincipal(user))) {
+      return res.status(403).json({ error: 'Solo el titular puede ver el equipo' });
+    }
+    const members = await query(
+      `SELECT id, name, email, phone, profile_type, parent_id, status, created_at
+       FROM users
+       WHERE role = 'cliente' AND (id = ? OR parent_id = ?)
+       ORDER BY (id = ?) DESC, name ASC`,
+      [principalId, principalId, principalId],
+    );
+    res.json({
+      members: members.map((m) => ({
+        id: m.id,
+        name: m.name,
+        email: m.email?.endsWith('@clientes.tramitesmx.local') ? null : m.email,
+        phone: m.phone,
+        profileType: m.profile_type,
+        isPrincipal: m.id === principalId,
+        status: m.status,
+        createdAt: m.created_at,
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al cargar equipo' });
+  }
+});
+
+router.post('/team', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const user = await hydrateClientUser(req.user);
+    if (!(await isEmpresaPrincipal(user))) {
+      return res.status(403).json({ error: 'Solo el titular puede crear usuarios del equipo' });
+    }
+    const { name, email, phone } = req.body;
+    if (!String(name || '').trim()) {
+      return res.status(400).json({ error: 'El nombre es obligatorio' });
+    }
+    const cleanPhone = phone?.trim()
+      ? (normalizeMxPhone(phone) || phone.replace(/\D/g, '') || phone.trim())
+      : null;
+    const cleanEmail = email?.trim()?.toLowerCase() || null;
+    if (!cleanPhone && !cleanEmail) {
+      return res.status(400).json({ error: 'Indica teléfono o correo del usuario' });
+    }
+
+    const access = await ensureClientUser({
+      clientName: String(name).trim(),
+      clientEmail: cleanEmail,
+      clientPhone: cleanPhone,
+      gestorUserId: null,
+      gestorName: user.name,
+      serviceName: 'Acceso empresa',
+      resetPassword: true,
+      profileType: 'moral_sub',
+      parentId: user.id,
+    });
+    if (!access?.userId) {
+      return res.status(400).json({ error: 'No se pudo crear el usuario' });
+    }
+    // Asegurar parent_id por si el usuario ya existía
+    await run(
+      "UPDATE users SET parent_id = ?, profile_type = 'moral_sub' WHERE id = ? AND role = 'cliente'",
+      [user.id, access.userId],
+    );
+
+    res.status(201).json({
+      member: {
+        id: access.userId,
+        name: String(name).trim(),
+        email: access.email,
+        phone: access.phone,
+        profileType: 'moral_sub',
+        isPrincipal: false,
+      },
+      access: {
+        login: access.login,
+        password: access.password,
+        whatsappUrl: access.whatsappUrl,
+        emailed: access.emailed,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || 'Error al crear usuario del equipo' });
+  }
+});
+
+router.delete('/team/:id', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const user = await hydrateClientUser(req.user);
+    if (!(await isEmpresaPrincipal(user))) {
+      return res.status(403).json({ error: 'Solo el titular puede eliminar usuarios' });
+    }
+    if (req.params.id === user.id) {
+      return res.status(400).json({ error: 'No puedes eliminar la cuenta principal' });
+    }
+    const member = await get(
+      "SELECT id FROM users WHERE id = ? AND role = 'cliente' AND parent_id = ?",
+      [req.params.id, user.id],
+    );
+    if (!member) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    await run(
+      'UPDATE contact_vehicles SET assigned_user_id = NULL WHERE assigned_user_id = ?',
+      [req.params.id],
+    );
+    await run("UPDATE users SET status = 'deactivated', parent_id = NULL WHERE id = ?", [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al eliminar usuario' });
   }
 });
 

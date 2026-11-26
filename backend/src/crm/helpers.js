@@ -63,38 +63,63 @@ async function copyVehiclesFromSameEmail(contact) {
   }
 }
 
-export async function ensureClientVehicleContacts(user) {
-  const email = String(user?.email || '').trim().toLowerCase();
-  if (!email) return [];
+/** Usuario cliente principal de una empresa (o el mismo si no es subusuario). */
+export function empresaPrincipalUserId(user) {
+  return user?.parent_id || user?.id || null;
+}
 
-  const contacts = await query(
-    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
-    [email],
-  );
+export function isEmpresaSubuser(user) {
+  return !!(user?.parent_id && user?.role === 'cliente');
+}
+
+export async function ensureClientVehicleContacts(user) {
+  const principalId = empresaPrincipalUserId(user);
+  const email = String(user?.email || '').trim().toLowerCase();
+  const phone = normalizeMxPhone(user?.phone);
+
+  // Empresa moral: contactos ligados al usuario principal
+  if (principalId) {
+    const byEmpresa = await query(
+      `SELECT id, user_id FROM contacts
+       WHERE empresa_user_id = ? OR (person_type = 'moral' AND empresa_user_id = ?)`,
+      [principalId, principalId],
+    ).catch(() => []);
+    if (byEmpresa?.length) return byEmpresa;
+  }
+
+  let contacts = [];
+  if (email && !isInternalClientEmail(email)) {
+    contacts = await query(
+      'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
+      [email],
+    );
+  }
+  if (!contacts.length && phone) {
+    contacts = await query(
+      `SELECT id, user_id FROM contacts
+       WHERE REPLACE(REPLACE(REPLACE(IFNULL(phone,''),' ',''),'-',''),'+','') = ?
+          OR RIGHT(REPLACE(REPLACE(REPLACE(IFNULL(phone,''),' ',''),'-',''),'+',''), 10) = ?`,
+      [phone, phone.slice(-10)],
+    );
+  }
   if (contacts.length) return contacts;
 
   const userRow = user?.id
-    ? await get('SELECT id, name, phone FROM users WHERE id = ?', [user.id])
-    : await get(
-      'SELECT id, name, phone FROM users WHERE LOWER(email) = LOWER(?) AND role = ? LIMIT 1',
-      [email, 'cliente'],
-    );
+    ? await get('SELECT id, name, phone, email FROM users WHERE id = ?', [user.id])
+    : null;
   const ownerId = userRow?.id || user?.id;
   if (!ownerId) return [];
 
   const id = uuid();
   const name = String(userRow?.name || user?.name || 'Cliente').trim() || 'Cliente';
+  const contactEmail = email && !isInternalClientEmail(email) ? email : (userRow?.email && !isInternalClientEmail(userRow.email) ? userRow.email : null);
   await run(
-    `INSERT INTO contacts (id, user_id, pipeline, name, email, phone, source)
-     VALUES (?, ?, 'tramite', ?, ?, ?, 'perfil_cliente')`,
-    [id, ownerId, name, email, userRow?.phone || null],
+    `INSERT INTO contacts (id, user_id, pipeline, name, email, phone, source, person_type, empresa_user_id)
+     VALUES (?, ?, 'tramite', ?, ?, ?, 'perfil_cliente', 'fisica', NULL)`,
+    [id, ownerId, name, contactEmail, userRow?.phone || phone || null],
   );
 
-  const again = await query(
-    'SELECT id, user_id FROM contacts WHERE LOWER(email) = LOWER(?)',
-    [email],
-  );
-  return again.length ? again : [{ id, user_id: ownerId }];
+  return [{ id, user_id: ownerId }];
 }
 
 export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio', pipeline = 'tramite' }) {
@@ -364,20 +389,26 @@ function accessPayload({ userId, created, login, password, phone, email, gestorU
   };
 }
 
-export async function ensureClientUser({ clientName, clientEmail, clientPhone, gestorUserId, gestorName, serviceName, resetPassword = false }) {
+export async function ensureClientUser({
+  clientName, clientEmail, clientPhone, gestorUserId, gestorName, serviceName,
+  resetPassword = false, profileType = null, parentId = null,
+}) {
   const email = clientEmail?.trim().toLowerCase() || '';
   const phone = normalizeMxPhone(clientPhone);
   if (!email && !phone) return null;
   if (email && isInternalClientEmail(email)) return null;
 
   const name = clientName?.trim() || 'Cliente';
+  const pt = ['fisica', 'moral', 'moral_sub'].includes(String(profileType || '').toLowerCase())
+    ? String(profileType).toLowerCase()
+    : null;
   let existing = null;
-  if (email) existing = await get('SELECT id, email, phone, name, role FROM users WHERE email = ?', [email]);
+  if (email) existing = await get('SELECT id, email, phone, name, role, profile_type, parent_id FROM users WHERE email = ?', [email]);
   if (existing && existing.role !== 'cliente') {
     throw new Error('Ese correo ya pertenece a otra cuenta del sistema');
   }
   if (!existing && phone) {
-    existing = await get("SELECT id, email, phone, name FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
+    existing = await get("SELECT id, email, phone, name, profile_type, parent_id FROM users WHERE role = 'cliente' AND phone = ?", [phone]);
   }
 
   if (existing) {
@@ -387,6 +418,9 @@ export async function ensureClientUser({ clientName, clientEmail, clientPhone, g
         [phone, existing.id],
       );
       if (!taken) await run('UPDATE users SET phone = ? WHERE id = ?', [phone, existing.id]);
+    }
+    if (pt && existing.profile_type !== pt) {
+      await run('UPDATE users SET profile_type = ? WHERE id = ?', [pt, existing.id]);
     }
     let password = null;
     if (resetPassword) {
@@ -420,9 +454,9 @@ export async function ensureClientUser({ clientName, clientEmail, clientPhone, g
   const loginEmail = email || clienteInternalEmail(phone);
   const login = email || phone;
   await run(
-    `INSERT INTO users (id, email, phone, password_hash, role, name, status, registration_source)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'gestor')`,
-    [userId, loginEmail, phone, bcrypt.hashSync(password, 10), 'cliente', name, 'active'],
+    `INSERT INTO users (id, parent_id, email, phone, password_hash, role, name, status, registration_source, profile_type)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'gestor', ?)`,
+    [userId, parentId || null, loginEmail, phone, bcrypt.hashSync(password, 10), 'cliente', name, 'active', pt],
   );
 
   let emailed = false;
@@ -621,6 +655,19 @@ export function contactRow(row) {
     source: row.source,
     notes: row.notes,
     residenceState: row.residence_state,
+    personType: row.person_type || 'fisica',
+    rfc: row.rfc || null,
+    razonSocial: row.razon_social || null,
+    fiscalStreet: row.fiscal_street || null,
+    fiscalExtNumber: row.fiscal_ext_number || null,
+    fiscalIntNumber: row.fiscal_int_number || null,
+    fiscalColony: row.fiscal_colony || null,
+    fiscalZip: row.fiscal_zip || null,
+    fiscalCity: row.fiscal_city || null,
+    fiscalCountry: row.fiscal_country || null,
+    accountHolder: row.account_holder || null,
+    jobTitle: row.job_title || null,
+    empresaUserId: row.empresa_user_id || null,
     peritoId: row.perito_id || null,
     peritoName: row.perito_name || null,
     peritoAssignedAt: row.perito_assigned_at || null,

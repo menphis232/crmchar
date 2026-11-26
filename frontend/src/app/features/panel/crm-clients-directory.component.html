@@ -25,32 +25,123 @@
           {{ editingId() ? 'Los cambios se ven al momento en su ficha y en sus trámites.' : 'Después podrás agregar vehículos y placas desde su ficha.' }}
         </p>
       </div>
+
+      @if (canCreateMoral() && !editingId()) {
+        <div class="client-field client-field--full" style="margin-bottom:12px;">
+          <label>Tipo de persona</label>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <label style="display:inline-flex; align-items:center; gap:6px; font-weight:600; color:#323338;">
+              <input type="radio" name="personType" [checked]="form.personType === 'fisica'" (change)="onPersonTypeChange('fisica')">
+              Persona física
+            </label>
+            <label style="display:inline-flex; align-items:center; gap:6px; font-weight:600; color:#323338;">
+              <input type="radio" name="personType" [checked]="form.personType === 'moral'" (change)="onPersonTypeChange('moral')">
+              Persona moral
+            </label>
+          </div>
+        </div>
+      }
+
       <div class="client-form-grid">
-        <div class="client-field client-field--full">
-          <label for="client-form-name">Nombre</label>
-          <input id="client-form-name" name="client-name" type="text" [(ngModel)]="form.name" placeholder="Ej. Juan Pérez" required>
-        </div>
-        <div class="client-field">
-          <label for="client-form-phone">Teléfono / WhatsApp</label>
-          <input id="client-form-phone" name="client-phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" placeholder="55 1234 5678">
-        </div>
-        <div class="client-field">
-          <label for="client-form-email">Email</label>
-          <input id="client-form-email" name="client-email" type="email" [(ngModel)]="form.email" placeholder="correo@ejemplo.com">
-        </div>
-        <div class="client-field">
-          <label for="client-form-state">Estado de residencia</label>
-          <select id="client-form-state" name="client-state" [(ngModel)]="form.residenceState">
-            <option value="">Sin estado</option>
-            @for (st of mexicoStates; track st) {
-              <option [value]="st">{{ st }}</option>
+        @if (form.personType === 'moral' && (canCreateMoral() || editingId())) {
+          <div class="client-field client-field--full">
+            <label for="client-form-razon">Razón social</label>
+            <input id="client-form-razon" name="client-razon" type="text" [(ngModel)]="form.razonSocial" placeholder="Ej. Transportes del Valle SA de CV" required>
+          </div>
+          <div class="client-field">
+            <label for="client-form-rfc">RFC</label>
+            <input id="client-form-rfc" name="client-rfc" type="text" [(ngModel)]="form.rfc" placeholder="ABC123456XXX" style="text-transform:uppercase;" required>
+          </div>
+          <div class="client-field">
+            <label for="client-form-titular">Titular de la cuenta</label>
+            <input id="client-form-titular" name="client-titular" type="text" [(ngModel)]="form.accountHolder" placeholder="Nombre de quien opera la cuenta" required>
+          </div>
+          <div class="client-field">
+            <label for="client-form-puesto">Puesto</label>
+            <input id="client-form-puesto" name="client-puesto" type="text" [(ngModel)]="form.jobTitle" placeholder="Ej. Gerente de flotilla">
+          </div>
+          <div class="client-field">
+            <label for="client-form-phone">Teléfono</label>
+            <input id="client-form-phone" name="client-phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" placeholder="55 1234 5678">
+          </div>
+          <div class="client-field">
+            <label for="client-form-email">Correo</label>
+            <input id="client-form-email" name="client-email" type="email" [(ngModel)]="form.email" placeholder="empresa@ejemplo.com">
+          </div>
+          <div class="client-field client-field--full">
+            <label>Domicilio fiscal</label>
+          </div>
+          <div class="client-field">
+            <label for="client-form-zip">Código postal</label>
+            <input id="client-form-zip" name="client-zip" type="text" inputmode="numeric" [ngModel]="form.fiscalZip" (ngModelChange)="onFiscalZipChange($event)" placeholder="01000" maxlength="5">
+            @if (cpLoading()) {
+              <span class="mon-muted" style="font-size:12px;">Consultando colonias…</span>
             }
-          </select>
-        </div>
-        <div class="client-field client-field--full">
-          <label for="client-form-notes">Notas</label>
-          <textarea id="client-form-notes" name="client-notes" rows="2" [(ngModel)]="form.notes" placeholder="Referido, observaciones..."></textarea>
-        </div>
+          </div>
+          <div class="client-field">
+            <label for="client-form-colony">Colonia</label>
+            @if (cpColonies().length) {
+              <select id="client-form-colony" name="client-colony" [(ngModel)]="form.fiscalColony">
+                <option value="">Selecciona colonia</option>
+                @for (col of cpColonies(); track col) {
+                  <option [value]="col">{{ col }}</option>
+                }
+              </select>
+            } @else {
+              <input id="client-form-colony" name="client-colony" type="text" [(ngModel)]="form.fiscalColony" placeholder="Colonia">
+            }
+          </div>
+          <div class="client-field">
+            <label for="client-form-street">Calle</label>
+            <input id="client-form-street" name="client-street" type="text" [(ngModel)]="form.fiscalStreet" placeholder="Calle">
+          </div>
+          <div class="client-field">
+            <label for="client-form-ext">Núm. exterior</label>
+            <input id="client-form-ext" name="client-ext" type="text" [(ngModel)]="form.fiscalExtNumber" placeholder="Ext.">
+          </div>
+          <div class="client-field">
+            <label for="client-form-int">Núm. interior</label>
+            <input id="client-form-int" name="client-int" type="text" [(ngModel)]="form.fiscalIntNumber" placeholder="Int. (opcional)">
+          </div>
+          <div class="client-field">
+            <label for="client-form-city">Ciudad / Municipio</label>
+            <input id="client-form-city" name="client-city" type="text" [(ngModel)]="form.fiscalCity" placeholder="Ciudad">
+          </div>
+          <div class="client-field">
+            <label for="client-form-country">País</label>
+            <input id="client-form-country" name="client-country" type="text" [(ngModel)]="form.fiscalCountry" placeholder="México">
+          </div>
+          <div class="client-field client-field--full">
+            <label for="client-form-notes">Notas</label>
+            <textarea id="client-form-notes" name="client-notes" rows="2" [(ngModel)]="form.notes" placeholder="Observaciones..."></textarea>
+          </div>
+        } @else {
+          <div class="client-field client-field--full">
+            <label for="client-form-name">Nombre</label>
+            <input id="client-form-name" name="client-name" type="text" [(ngModel)]="form.name" placeholder="Ej. Juan Pérez" required>
+          </div>
+          <div class="client-field">
+            <label for="client-form-phone">Teléfono / WhatsApp</label>
+            <input id="client-form-phone" name="client-phone" type="tel" inputmode="tel" [(ngModel)]="form.phone" placeholder="55 1234 5678">
+          </div>
+          <div class="client-field">
+            <label for="client-form-email">Email</label>
+            <input id="client-form-email" name="client-email" type="email" [(ngModel)]="form.email" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="client-field">
+            <label for="client-form-state">Estado de residencia</label>
+            <select id="client-form-state" name="client-state" [(ngModel)]="form.residenceState">
+              <option value="">Sin estado</option>
+              @for (st of mexicoStates; track st) {
+                <option [value]="st">{{ st }}</option>
+              }
+            </select>
+          </div>
+          <div class="client-field client-field--full">
+            <label for="client-form-notes">Notas</label>
+            <textarea id="client-form-notes" name="client-notes" rows="2" [(ngModel)]="form.notes" placeholder="Referido, observaciones..."></textarea>
+          </div>
+        }
       </div>
       <div class="client-form-actions">
         <button type="button" class="clients-btn" (click)="closeForm()">Cancelar</button>
@@ -165,7 +256,10 @@
                   <td>
                     <button type="button" class="mon-deal-name" (click)="$event.stopPropagation(); openContact.emit(c.id)">{{ c.name }}</button>
                     <div class="mon-muted client-state">
-                      {{ c.residenceState || 'Sin estado' }}
+                      @if (c.personType === 'moral') {
+                        <span class="reg-source-chip">Persona moral</span>
+                      }
+                      {{ c.personType === 'moral' ? (c.fiscalCity || c.residenceState || 'Empresa') : (c.residenceState || 'Sin estado') }}
                       @if (c.registrationLabel) {
                         <span class="reg-source-chip" [class.reg-source-chip--new]="c.registrationLabel === 'Usuario nuevo'">{{ c.registrationLabel }}</span>
                       }

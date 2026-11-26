@@ -487,6 +487,7 @@
     @if (tab() === 'clientes' && hasPerm('pipeline')) {
       <app-crm-clients-directory
         [canImpersonate]="canManageClientPromoBanner()"
+        [canCreateMoral]="canManageClientPromoBanner()"
         [seedQuery]="clientsSeedQuery()"
         (openContact)="openClientContact($event)"
       />

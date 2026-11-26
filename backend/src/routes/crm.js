@@ -49,6 +49,7 @@ import { PERITO_STAGE_LABELS, PERITO_SUCCESS_STAGE } from '../crm/perito-stages.
 import { normalizeMxPhone, peritoInternalEmail, whatsappMeUrl, isInternalClientEmail } from '../utils/phone.js';
 import { getFrontendBase } from '../utils/frontend-url.js';
 import { sendEmail } from '../utils/mailer.js';
+import { isTvmGestorSlug } from '../utils/tvm.js';
 
 const crmDir = path.dirname(fileURLToPath(import.meta.url));
 const quotesUploadDir = path.join(crmDir, '..', '..', 'uploads', 'quotes');
@@ -1371,6 +1372,100 @@ router.post('/contacts', async (req, res) => {
   try {
     const uid = req.orgId;
     const pipeline = pipelineForRole(req.user.role);
+    const personType = String(req.body.personType || req.body.person_type || 'fisica').toLowerCase() === 'moral'
+      ? 'moral'
+      : 'fisica';
+
+    if (personType === 'moral') {
+      const gestor = await get('SELECT slug, name FROM gestores WHERE user_id = ?', [uid]);
+      if (!isTvmGestorSlug(gestor?.slug)) {
+        return res.status(403).json({ error: 'Solo Trámites Vehiculares de México puede crear personas morales' });
+      }
+
+      const {
+        razonSocial, rfc, phone, email, accountHolder, jobTitle, notes,
+        fiscalStreet, fiscalExtNumber, fiscalIntNumber, fiscalColony,
+        fiscalZip, fiscalCity, fiscalCountry,
+      } = req.body;
+
+      if (!String(razonSocial || '').trim()) {
+        return res.status(400).json({ error: 'La razón social es obligatoria' });
+      }
+      if (!String(rfc || '').trim()) {
+        return res.status(400).json({ error: 'El RFC es obligatorio' });
+      }
+      if (!String(accountHolder || '').trim()) {
+        return res.status(400).json({ error: 'El titular de la cuenta es obligatorio' });
+      }
+      const cleanPhone = phone?.trim()
+        ? (normalizeMxPhone(phone) || phone.replace(/\D/g, '') || phone.trim())
+        : null;
+      const cleanEmail = email?.trim()?.toLowerCase() || null;
+      if (!cleanPhone && !cleanEmail) {
+        return res.status(400).json({ error: 'Indica teléfono o correo de la empresa' });
+      }
+
+      const displayName = String(razonSocial).trim();
+      const contact = await findOrCreateContact(uid, {
+        name: displayName,
+        email: cleanEmail,
+        phone: cleanPhone,
+        whatsapp: cleanPhone,
+        source: 'manual_moral',
+        pipeline,
+      });
+
+      const access = await ensureClientUser({
+        clientName: String(accountHolder).trim() || displayName,
+        clientEmail: cleanEmail,
+        clientPhone: cleanPhone,
+        gestorUserId: uid,
+        gestorName: gestor?.name,
+        serviceName: 'Cuenta empresa',
+        resetPassword: true,
+        profileType: 'moral',
+      });
+
+      await run(`
+        UPDATE contacts SET
+          name = ?, person_type = 'moral', rfc = ?, razon_social = ?,
+          fiscal_street = ?, fiscal_ext_number = ?, fiscal_int_number = ?,
+          fiscal_colony = ?, fiscal_zip = ?, fiscal_city = ?, fiscal_country = ?,
+          account_holder = ?, job_title = ?,
+          email = COALESCE(?, email), phone = COALESCE(?, phone), whatsapp = COALESCE(?, whatsapp),
+          notes = COALESCE(?, notes),
+          empresa_user_id = ?,
+          updated_at = NOW()
+        WHERE id = ? AND user_id = ?
+      `, [
+        displayName,
+        String(rfc).trim().toUpperCase(),
+        displayName,
+        fiscalStreet?.trim() || null,
+        fiscalExtNumber?.trim() || null,
+        fiscalIntNumber?.trim() || null,
+        fiscalColony?.trim() || null,
+        fiscalZip?.trim() || null,
+        fiscalCity?.trim() || null,
+        fiscalCountry?.trim() || 'México',
+        String(accountHolder).trim(),
+        jobTitle?.trim() || null,
+        cleanEmail,
+        cleanPhone,
+        cleanPhone,
+        notes?.trim() || null,
+        access?.userId || null,
+        contact.id,
+        uid,
+      ]);
+
+      const row = await get('SELECT * FROM contacts WHERE id = ?', [contact.id]);
+      return res.status(201).json({
+        ...contactRow(row),
+        clientAccess: access || null,
+      });
+    }
+
     const { name, email, phone, whatsapp, notes, residenceState } = req.body;
 
     if (!name?.trim()) {
@@ -1396,6 +1491,7 @@ router.post('/contacts', async (req, res) => {
     await run(`
       UPDATE contacts SET
         name = ?,
+        person_type = 'fisica',
         email = COALESCE(?, email),
         phone = COALESCE(?, phone),
         whatsapp = COALESCE(?, whatsapp),
@@ -1418,7 +1514,7 @@ router.post('/contacts', async (req, res) => {
     res.status(201).json(contactRow(row));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Error al crear contacto' });
+    res.status(500).json({ error: err.message || 'Error al crear contacto' });
   }
 });
 
@@ -1560,10 +1656,15 @@ router.get('/engomado-colors', (_req, res) => {
 
 router.patch('/contacts/:id', async (req, res) => {
   try {
-    const { name, email, phone, whatsapp, notes, residenceState, peritoId } = req.body;
+    const {
+      name, email, phone, whatsapp, notes, residenceState, peritoId,
+      rfc, razonSocial, accountHolder, jobTitle,
+      fiscalStreet, fiscalExtNumber, fiscalIntNumber, fiscalColony,
+      fiscalZip, fiscalCity, fiscalCountry,
+    } = req.body;
     const pipeline = pipelineForRole(req.user.role);
     const contact = await get(
-      'SELECT id, perito_id FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
+      'SELECT id, perito_id, person_type FROM contacts WHERE id = ? AND user_id = ? AND pipeline = ?',
       [req.params.id, req.orgId, pipeline],
     );
     if (!contact) return res.status(404).json({ error: 'Contacto no encontrado' });
@@ -1578,6 +1679,28 @@ router.patch('/contacts/:id', async (req, res) => {
       'updated_at = NOW()',
     ];
     const params = [name, email?.toLowerCase(), phone, whatsapp, notes, residenceState];
+
+    if (contact.person_type === 'moral') {
+      const moralMap = [
+        ['rfc', rfc != null ? String(rfc).trim().toUpperCase() : undefined],
+        ['razon_social', razonSocial],
+        ['account_holder', accountHolder],
+        ['job_title', jobTitle],
+        ['fiscal_street', fiscalStreet],
+        ['fiscal_ext_number', fiscalExtNumber],
+        ['fiscal_int_number', fiscalIntNumber],
+        ['fiscal_colony', fiscalColony],
+        ['fiscal_zip', fiscalZip],
+        ['fiscal_city', fiscalCity],
+        ['fiscal_country', fiscalCountry],
+      ];
+      for (const [col, val] of moralMap) {
+        if (val !== undefined) {
+          sets.push(`${col} = ?`);
+          params.push(val?.trim?.() ? String(val).trim() : (val || null));
+        }
+      }
+    }
 
     let nextPeritoId = contact.perito_id || null;
     if (peritoId !== undefined && req.user.role === 'gestor') {

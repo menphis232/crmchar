@@ -12,6 +12,8 @@ export function signToken(user, extras = {}) {
       parent_id: user.parent_id,
       permissions: user.permissions,
       status: user.status,
+      profile_type: user.profile_type || null,
+      phone: user.phone || null,
       ...(extras && typeof extras === 'object' ? extras : {}),
     },
     JWT_SECRET,

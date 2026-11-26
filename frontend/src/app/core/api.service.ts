@@ -254,14 +254,38 @@ export class CrmService {
     return this.http.get<CrmContactsPage>(`${this.base}/contacts`, { params: httpParams });
   }
   createContact(data: {
-    name: string;
+    name?: string;
     email?: string;
     phone?: string;
     whatsapp?: string;
     notes?: string;
     residenceState?: string;
+    personType?: 'fisica' | 'moral';
+    razonSocial?: string;
+    rfc?: string;
+    accountHolder?: string;
+    jobTitle?: string;
+    fiscalStreet?: string;
+    fiscalExtNumber?: string;
+    fiscalIntNumber?: string;
+    fiscalColony?: string;
+    fiscalZip?: string;
+    fiscalCity?: string;
+    fiscalCountry?: string;
   }) {
-    return this.http.post<CrmContact>(`${this.base}/contacts`, data);
+    return this.http.post<CrmContact & { clientAccess?: any }>(`${this.base}/contacts`, data);
+  }
+
+  lookupMxCp(cp: string) {
+    return this.http.get<{
+      cp: string;
+      colonies: string[];
+      city: string | null;
+      state: string | null;
+      country: string;
+      warning?: string;
+      error?: string;
+    }>(`${environment.apiUrl}/geo/mx-cp/${encodeURIComponent(cp)}`);
   }
   getContact(id: string) { return this.http.get<CrmContact360>(`${this.base}/contacts/${id}`); }
   updateContact(id: string, data: Partial<CrmContact> & { residenceState?: string; peritoId?: string | null }) {

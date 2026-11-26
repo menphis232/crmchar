@@ -74,11 +74,20 @@ interface PaginatedDeals {
   totalPages: number;
 }
 
-type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'ajustes' | 'conocimiento';
+type ClientTab = 'dashboard' | 'tramites' | 'historial' | 'billetera' | 'facturas' | 'vehiculos' | 'equipo' | 'ajustes' | 'conocimiento';
 
 const CLIENT_TABS: ClientTab[] = [
-  'dashboard', 'tramites', 'historial', 'billetera', 'facturas', 'vehiculos', 'ajustes', 'conocimiento',
+  'dashboard', 'tramites', 'historial', 'billetera', 'facturas', 'vehiculos', 'equipo', 'ajustes', 'conocimiento',
 ];
+
+type TeamMember = {
+  id: string;
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  profileType?: string | null;
+  isPrincipal?: boolean;
+};
 
 @Component({
   selector: 'app-panel-cliente',
@@ -277,6 +286,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   vehiclesLoading = signal(false);
   showAddVehicleForm = signal(false);
   isAddingVehicle = signal(false);
+  vehiclePlateFilter = '';
+  vehicleStateFilter = '';
+  private vehicleFilterTimer: ReturnType<typeof setTimeout> | null = null;
+
+  teamMembers = signal<TeamMember[]>([]);
+  teamLoading = signal(false);
+  teamSaving = signal(false);
+  teamForm = { name: '', email: '', phone: '' };
+  lastTeamAccess = signal<{ login: string; password: string } | null>(null);
+  canManageTeam = computed(() => {
+    const u = this.auth.user();
+    return !!u && u.role === 'cliente' && !u.parent_id && String(u.profile_type || '').toLowerCase() === 'moral';
+  });
   /** Vehículo en modo edición; null = solo lectura. */
   editingVehicleId = signal<string | null>(null);
   newPlate = '';
@@ -563,6 +585,7 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       if (!this.vehicles().length) this.loadVehicles();
     }
     if (tab === 'vehiculos') this.loadVehicles();
+    if (tab === 'equipo' && this.canManageTeam()) this.loadTeam();
     if (!this.showKnowledge) return;
     if (tab === 'conocimiento') {
       this.loadKnowledgePage(1);
@@ -766,7 +789,14 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   loadVehicles(opts: { quiet?: boolean } = {}) {
     const quiet = !!opts.quiet && this.vehicles().length > 0;
     if (!quiet) this.vehiclesLoading.set(true);
-    this.http.get<CrmContactVehicle[]>(`${environment.apiUrl}/client/vehicles`).subscribe({
+    let params = new URLSearchParams();
+    const plate = this.vehiclePlateFilter.trim();
+    const state = this.vehicleStateFilter.trim();
+    if (plate) params.set('plate', plate);
+    if (state) params.set('state', state);
+    const qs = params.toString();
+    const url = `${environment.apiUrl}/client/vehicles${qs ? `?${qs}` : ''}`;
+    this.http.get<CrmContactVehicle[]>(url).subscribe({
       next: list => {
         this.vehicles.set(list);
         this.vehiclesLoading.set(false);
@@ -775,6 +805,90 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
         this.vehiclesLoading.set(false);
         this.toast.error('No se pudieron cargar tus vehículos', 'Error');
       },
+    });
+  }
+
+  onVehiclePlateFilterChange(value: string) {
+    this.vehiclePlateFilter = value;
+    if (this.vehicleFilterTimer) clearTimeout(this.vehicleFilterTimer);
+    this.vehicleFilterTimer = setTimeout(() => this.loadVehicles({ quiet: true }), 350);
+  }
+
+  onVehicleStateFilterChange(value: string) {
+    this.vehicleStateFilter = value;
+    this.loadVehicles({ quiet: true });
+  }
+
+  clearVehicleFilters() {
+    this.vehiclePlateFilter = '';
+    this.vehicleStateFilter = '';
+    this.loadVehicles();
+  }
+
+  loadTeam() {
+    if (!this.canManageTeam()) return;
+    this.teamLoading.set(true);
+    this.http.get<{ members: TeamMember[] }>(`${environment.apiUrl}/client/team`).subscribe({
+      next: (res) => {
+        this.teamMembers.set(res.members || []);
+        this.teamLoading.set(false);
+      },
+      error: (e) => {
+        this.teamLoading.set(false);
+        this.toast.error(e.error?.error || 'No se pudo cargar el equipo', 'Error');
+      },
+    });
+  }
+
+  addTeamMember() {
+    if (!this.canManageTeam()) return;
+    if (!this.teamForm.name.trim()) {
+      this.toast.warning('Escribe el nombre del usuario', 'Datos incompletos');
+      return;
+    }
+    if (!this.teamForm.email.trim() && !this.teamForm.phone.trim()) {
+      this.toast.warning('Indica teléfono o correo', 'Datos incompletos');
+      return;
+    }
+    this.teamSaving.set(true);
+    this.lastTeamAccess.set(null);
+    this.http.post<{ member: TeamMember; access?: { login: string; password: string } }>(
+      `${environment.apiUrl}/client/team`,
+      {
+        name: this.teamForm.name.trim(),
+        email: this.teamForm.email.trim() || undefined,
+        phone: this.teamForm.phone.trim() || undefined,
+      },
+    ).subscribe({
+      next: (res) => {
+        this.teamSaving.set(false);
+        this.teamForm = { name: '', email: '', phone: '' };
+        if (res.access?.login && res.access?.password) {
+          this.lastTeamAccess.set({ login: res.access.login, password: res.access.password });
+        }
+        this.loadTeam();
+        this.toast.success('Usuario agregado al equipo', 'Listo');
+      },
+      error: (e) => {
+        this.teamSaving.set(false);
+        this.toast.error(e.error?.error || 'No se pudo crear el usuario', 'Error');
+      },
+    });
+  }
+
+  async removeTeamMember(m: TeamMember) {
+    if (!this.canManageTeam() || m.isPrincipal) return;
+    const ok = await this.toast.confirmDelete(m.name, {
+      title: '¿Quitar usuario del equipo?',
+      subtitle: 'Dejará de ver la flotilla asignada. No se puede deshacer.',
+    });
+    if (!ok) return;
+    this.http.delete(`${environment.apiUrl}/client/team/${m.id}`).subscribe({
+      next: () => {
+        this.loadTeam();
+        this.toast.success('Usuario eliminado', 'Listo');
+      },
+      error: (e) => this.toast.error(e.error?.error || 'No se pudo eliminar', 'Error'),
     });
   }
 
