@@ -99,6 +99,11 @@ export async function ensureClientVehicleContacts(user) {
 
 export async function findOrCreateContact(userId, { name, email, phone, whatsapp, source = 'directorio', pipeline = 'tramite' }) {
   const pipe = pipeline === 'venta' ? 'venta' : 'tramite';
+  const cleanPhone = phone ? (normalizeMxPhone(phone) || String(phone).replace(/\D/g, '') || null) : null;
+  const cleanWhatsapp = whatsapp
+    ? (normalizeMxPhone(whatsapp) || String(whatsapp).replace(/\D/g, '') || whatsapp.trim() || null)
+    : cleanPhone;
+  const digitsExpr = `REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(IFNULL(%s,''),' ',''),'-',''),'+',''),'(',''),')','')`;
   let existing = null;
   if (email) {
     existing = await get(
@@ -106,10 +111,22 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
       [userId, email.toLowerCase(), pipe],
     );
   }
-  if (!existing && phone) {
+  if (!existing && cleanPhone) {
+    const last10 = cleanPhone.length >= 10 ? cleanPhone.slice(-10) : cleanPhone;
     existing = await get(
-      'SELECT * FROM contacts WHERE user_id = ? AND phone = ? AND pipeline = ? LIMIT 1',
-      [userId, phone, pipe],
+      `SELECT * FROM contacts
+       WHERE user_id = ? AND pipeline = ?
+         AND (
+           phone = ?
+           OR whatsapp = ?
+           OR ${digitsExpr.replace('%s', 'phone')} = ?
+           OR ${digitsExpr.replace('%s', 'whatsapp')} = ?
+           OR RIGHT(${digitsExpr.replace('%s', 'phone')}, 10) = ?
+           OR RIGHT(${digitsExpr.replace('%s', 'whatsapp')}, 10) = ?
+         )
+       ORDER BY created_at ASC
+       LIMIT 1`,
+      [userId, pipe, cleanPhone, cleanPhone, cleanPhone, cleanPhone, last10, last10],
     );
     // Mismo teléfono pero otro correo = otro cliente (no reutilizar el contacto viejo).
     // Si no, el trámite queda en el email anterior y el panel del nuevo usuario no lo ve.
@@ -138,13 +155,13 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
       sets.push('email = ?');
       params.push(email.toLowerCase());
     }
-    if (phone && !existing.phone) {
+    if (cleanPhone && (!existing.phone || String(existing.phone).replace(/\D/g, '') !== cleanPhone)) {
       sets.push('phone = ?');
-      params.push(phone);
+      params.push(cleanPhone);
     }
-    if ((whatsapp || phone) && !existing.whatsapp) {
+    if (cleanWhatsapp && (!existing.whatsapp || String(existing.whatsapp).replace(/\D/g, '') !== String(cleanWhatsapp).replace(/\D/g, ''))) {
       sets.push('whatsapp = ?');
-      params.push(whatsapp || phone);
+      params.push(cleanWhatsapp);
     }
     if (sets.length) {
       params.push(existing.id);
@@ -158,7 +175,7 @@ export async function findOrCreateContact(userId, { name, email, phone, whatsapp
   await run(
     `INSERT INTO contacts (id, user_id, pipeline, name, email, phone, whatsapp, source)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, userId, pipe, name, email?.toLowerCase() || null, phone || null, whatsapp || phone || null, source],
+    [id, userId, pipe, name, email?.toLowerCase() || null, cleanPhone, cleanWhatsapp, source],
   );
   const created = await get('SELECT * FROM contacts WHERE id = ?', [id]);
   await copyVehiclesFromSameEmail(created);

@@ -1377,11 +1377,18 @@ router.post('/contacts', async (req, res) => {
       return res.status(400).json({ error: 'El nombre es obligatorio' });
     }
 
+    const cleanPhone = phone?.trim()
+      ? (normalizeMxPhone(phone) || phone.replace(/\D/g, '') || phone.trim())
+      : null;
+    const cleanWhatsapp = whatsapp?.trim()
+      ? (normalizeMxPhone(whatsapp) || whatsapp.replace(/\D/g, '') || whatsapp.trim())
+      : cleanPhone;
+
     const contact = await findOrCreateContact(uid, {
       name: name.trim(),
       email: email?.trim() || null,
-      phone: phone?.trim() || null,
-      whatsapp: whatsapp?.trim() || phone?.trim() || null,
+      phone: cleanPhone,
+      whatsapp: cleanWhatsapp,
       source: 'manual',
       pipeline,
     });
@@ -1399,8 +1406,8 @@ router.post('/contacts', async (req, res) => {
     `, [
       name.trim(),
       email?.trim()?.toLowerCase() || null,
-      phone?.trim() || null,
-      whatsapp?.trim() || phone?.trim() || null,
+      cleanPhone,
+      cleanWhatsapp,
       notes?.trim() || null,
       residenceState?.trim() || null,
       contact.id,
