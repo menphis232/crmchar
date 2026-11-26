@@ -295,9 +295,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   teamSaving = signal(false);
   teamForm = { name: '', email: '', phone: '' };
   lastTeamAccess = signal<{ login: string; password: string } | null>(null);
-  canManageTeam = computed(() => {
+  /** Solo titular de empresa moral creada por TVM (confirmado por API). */
+  isEmpresaMoral = signal(false);
+  canManageTeam = computed(() => this.isEmpresaMoral());
+  isEmpresaSubuser = computed(() => {
     const u = this.auth.user();
-    return !!u && u.role === 'cliente' && !u.parent_id && String(u.profile_type || '').toLowerCase() === 'moral';
+    return !!u?.parent_id || String(u?.profile_type || '').toLowerCase() === 'moral_sub';
+  });
+  profileTypeLabel = computed(() => {
+    if (this.isEmpresaMoral()) return 'Persona moral (empresa)';
+    if (this.isEmpresaSubuser()) return 'Usuario de empresa';
+    const pt = String(this.auth.user()?.profile_type || this.profileType || '').toLowerCase();
+    if (pt === 'fisica') return 'Persona física';
+    return '';
   });
   /** Vehículo en modo edición; null = solo lectura. */
   editingVehicleId = signal<string | null>(null);
@@ -440,10 +450,17 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     }
     this.route.queryParamMap.subscribe(params => this.applyRouteState(params));
     this.auth.getMe().subscribe({
-      next: () => this.syncProfileForm(),
-      error: () => this.syncProfileForm(),
+      next: () => {
+        this.syncProfileForm();
+        this.loadEmpresaStatus();
+      },
+      error: () => {
+        this.syncProfileForm();
+        this.loadEmpresaStatus();
+      },
     });
     this.syncProfileForm();
+    this.loadEmpresaStatus();
     this.loadDashboard();
     this.loadInvoices();
     this.loadWallet();
@@ -521,11 +538,12 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
 
   /** Aplica la pestaña y deja rastro en el historial del navegador. */
   setTab(tab: ClientTab) {
-    this.applyTab(tab);
+    const next = tab === 'equipo' && !this.canManageTeam() ? 'dashboard' : tab;
+    this.applyTab(next);
     if (!this.selectedDeal()) {
-      this.syncUrl({ tab, deal: null });
+      this.syncUrl({ tab: next, deal: null });
     } else {
-      this.syncUrl({ tab });
+      this.syncUrl({ tab: next });
     }
   }
 
@@ -576,29 +594,46 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       this.tabHistory.push(prev);
       if (this.tabHistory.length > 30) this.tabHistory.shift();
     }
-    this.activeTab.set(tab);
+    const safeTab = tab === 'equipo' && !this.canManageTeam() ? 'dashboard' : tab;
+    this.activeTab.set(safeTab);
     this.isMobileMenuOpen.set(false);
-    if (tab === 'tramites' && !this.selectedDeal()) this.loadTramites(1);
-    if (tab === 'historial') this.loadHistorial(1);
-    if (tab === 'billetera') {
+    if (safeTab === 'tramites' && !this.selectedDeal()) this.loadTramites(1);
+    if (safeTab === 'historial') this.loadHistorial(1);
+    if (safeTab === 'billetera') {
       this.loadWallet();
       if (!this.vehicles().length) this.loadVehicles();
     }
-    if (tab === 'vehiculos') this.loadVehicles();
-    if (tab === 'equipo' && this.canManageTeam()) this.loadTeam();
+    if (safeTab === 'vehiculos') this.loadVehicles();
+    if (safeTab === 'equipo' && this.canManageTeam()) this.loadTeam();
     if (!this.showKnowledge) return;
-    if (tab === 'conocimiento') {
+    if (safeTab === 'conocimiento') {
       this.loadKnowledgePage(1);
     }
-    if (tab === 'dashboard' && !this.knowledgeFeedPosts().length) {
+    if (safeTab === 'dashboard' && !this.knowledgeFeedPosts().length) {
       this.loadKnowledgeFeed(true);
     }
   }
 
   private parseTab(value: string | null): ClientTab {
     if (value === 'conocimiento' && !this.showKnowledge) return 'dashboard';
+    if (value === 'equipo' && !this.canManageTeam()) return 'dashboard';
     if (value && CLIENT_TABS.includes(value as ClientTab)) return value as ClientTab;
     return 'dashboard';
+  }
+
+  loadEmpresaStatus() {
+    this.http.get<{ isEmpresa: boolean; isSubuser: boolean; profileType: string | null }>(
+      `${environment.apiUrl}/client/empresa-status`,
+    ).subscribe({
+      next: (res) => {
+        this.isEmpresaMoral.set(!!res.isEmpresa);
+        if (this.activeTab() === 'equipo' && !res.isEmpresa) {
+          this.applyTab('dashboard', { recordHistory: false });
+          this.syncUrl({ tab: 'dashboard', deal: null });
+        }
+      },
+      error: () => this.isEmpresaMoral.set(false),
+    });
   }
 
   private applyRouteState(params: ParamMap) {
@@ -1136,14 +1171,19 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
       return;
     }
     this.profileSaving.set(true);
-    this.auth.updateMe({
+    // No enviar profile_type moral: solo lo asigna la consultoría al crear la empresa.
+    const payload: { name: string; phone: string | null; profile_type?: 'fisica' | null } = {
       name,
       phone: this.profilePhone.trim() || null,
-      profile_type: this.profileType || null,
-    }).subscribe({
+    };
+    if (!this.isEmpresaMoral() && !this.isEmpresaSubuser()) {
+      payload.profile_type = this.profileType === 'fisica' ? 'fisica' : null;
+    }
+    this.auth.updateMe(payload).subscribe({
       next: () => {
         this.profileSaving.set(false);
         this.syncProfileForm();
+        this.loadEmpresaStatus();
         this.toast.success('Perfil actualizado', 'Listo');
       },
       error: (e) => {

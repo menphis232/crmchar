@@ -587,8 +587,26 @@ router.patch('/me', authRequired, async (req, res) => {
       if (pt && pt !== 'fisica' && pt !== 'moral') {
         return res.status(400).json({ error: 'Tipo de perfil inválido' });
       }
-      sets.push('profile_type = ?');
-      params.push(pt || null);
+      // El cliente no puede autoproclamarse persona moral (solo TVM al crear la empresa).
+      if (req.user.role === 'cliente') {
+        const current = await get(
+          'SELECT profile_type, parent_id FROM users WHERE id = ?',
+          [req.user.id],
+        );
+        if (current?.parent_id || current?.profile_type === 'moral_sub') {
+          // Subusuario: no cambia tipo de perfil
+        } else if (pt === 'moral' && current?.profile_type !== 'moral') {
+          return res.status(403).json({ error: 'La persona moral solo la crea tu consultoría' });
+        } else if (current?.profile_type === 'moral') {
+          // Titular moral: no se degrada desde el panel
+        } else {
+          sets.push('profile_type = ?');
+          params.push(pt === 'fisica' ? 'fisica' : null);
+        }
+      } else {
+        sets.push('profile_type = ?');
+        params.push(pt || null);
+      }
     }
     if (address !== undefined) { sets.push('address = ?'); params.push(address || null); }
     if (map_embed_url !== undefined) { sets.push('map_embed_url = ?'); params.push(map_embed_url || null); }

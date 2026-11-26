@@ -1252,11 +1252,15 @@
           </div>
           <div class="form-group">
             <label for="client-profile-type">Tipo de perfil</label>
-            <select id="client-profile-type" [(ngModel)]="profileType">
-              <option value="">— Seleccionar —</option>
-              <option value="fisica">Persona Física</option>
-              <option value="moral">Persona Moral</option>
-            </select>
+            @if (isEmpresaMoral() || isEmpresaSubuser()) {
+              <input id="client-profile-type" type="text" [value]="profileTypeLabel()" readonly disabled>
+              <p class="card-desc" style="margin:6px 0 0;">Lo define tu consultoría. No se cambia desde aquí.</p>
+            } @else {
+              <select id="client-profile-type" [(ngModel)]="profileType">
+                <option value="">— Seleccionar —</option>
+                <option value="fisica">Persona Física</option>
+              </select>
+            }
           </div>
           <div class="client-info-row"><span>Email / usuario</span><strong>{{ auth.user()?.email || '—' }}</strong></div>
           <button type="button" class="btn-copy" (click)="saveProfile()" [disabled]="profileSaving()">

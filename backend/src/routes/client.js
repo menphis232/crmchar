@@ -947,6 +947,21 @@ router.patch('/vehicles/:id/assign', authRequired, requireRole('cliente'), async
   }
 });
 
+router.get('/empresa-status', authRequired, requireRole('cliente'), async (req, res) => {
+  try {
+    const user = await hydrateClientUser(req.user);
+    const isEmpresa = await isEmpresaPrincipal(user);
+    res.json({
+      isEmpresa,
+      isSubuser: isEmpresaSubuser(user),
+      profileType: user.profile_type || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al consultar empresa' });
+  }
+});
+
 router.get('/team', authRequired, requireRole('cliente'), async (req, res) => {
   try {
     const user = await hydrateClientUser(req.user);
