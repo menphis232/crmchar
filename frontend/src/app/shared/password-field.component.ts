@@ -89,6 +89,40 @@ import { LucideEye, LucideEyeOff } from '@lucide/angular';
       opacity: 0.3;
       pointer-events: none;
     }
+
+    /* Login oscuro: igual que los otros inputs del portal (el CSS encapsulado del login no llega aquí) */
+    .login-page app-password-field .pw-field-input {
+      width: 100% !important;
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      padding: 14px 2.75rem 14px 16px !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border-radius: 0 !important;
+      font-family: var(--f-ui, inherit) !important;
+      font-size: 14px !important;
+      outline: none !important;
+      box-shadow: none !important;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .login-page app-password-field .pw-field-input::placeholder {
+      color: rgba(255, 255, 255, 0.2) !important;
+      opacity: 1 !important;
+    }
+    .login-page app-password-field .pw-field-input:focus {
+      border-color: var(--brand-blue, #bac9cf) !important;
+      background: rgba(186, 201, 207, 0.06) !important;
+    }
+    .login-page app-password-field .pw-field-toggle {
+      color: rgba(255, 255, 255, 0.55) !important;
+      opacity: 1;
+    }
+    .login-page app-password-field .pw-field-toggle:hover {
+      color: rgba(255, 255, 255, 0.95) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
   `],
 })
 export class PasswordFieldComponent implements ControlValueAccessor {
