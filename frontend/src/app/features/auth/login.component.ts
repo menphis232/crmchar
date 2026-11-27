@@ -44,7 +44,8 @@ export class LoginComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
+    // Token vencido no cuenta como sesión: deja entrar al formulario
+    if (this.auth.hasValidSession()) {
       this.auth.redirectByRole();
       return;
     }

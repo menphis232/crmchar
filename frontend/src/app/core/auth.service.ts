@@ -14,17 +14,58 @@ const IMPERSONATOR_USER_KEY = 'tramites_impersonator_user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly user = signal<User | null>(this.loadUser());
-  readonly isLoggedIn = signal(!!this.getToken());
+  readonly isLoggedIn = signal(false);
   readonly isImpersonating = signal(!!this.loadImpersonatorBackup());
 
   constructor(
     private http: HttpClient,
     private router: Router,
     private oneSignal: OneSignalService,
-  ) {}
+  ) {
+    // Si el JWT ya expiró, limpiar localStorage para que el login no rebote al panel
+    this.isLoggedIn.set(this.hasValidSession());
+  }
+
+  /** true solo si hay token y aún no venció (evita "logueado" fantasma). */
+  hasValidSession(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+    if (this.isJwtExpired(token)) {
+      this.clearSessionLocal();
+      return false;
+    }
+    return true;
+  }
+
+  private isJwtExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+      if (!payload?.exp) return false;
+      // margen 30s por reloj del cliente
+      return payload.exp * 1000 <= Date.now() + 30_000;
+    } catch {
+      return true;
+    }
+  }
+
+  private clearSessionLocal() {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this.clearImpersonatorBackup();
+    this.user.set(null);
+    this.isLoggedIn.set(false);
+    this.isImpersonating.set(false);
+  }
 
   login(email: string, password: string) {
-    return this.http.post<{ token: string; user: User }>(`${environment.apiUrl}/auth/login`, { email, password }).pipe(
+    // Quitar token muerto antes de intentar login (authInterceptor no debe mandar Bearer viejo)
+    if (!this.hasValidSession()) {
+      this.clearSessionLocal();
+    }
+    return this.http.post<{ token: string; user: User }>(`${environment.apiUrl}/auth/login`, {
+      email: String(email || '').trim(),
+      password,
+    }).pipe(
       tap(res => this.setSession(res.token, res.user))
     );
   }
@@ -72,12 +113,7 @@ export class AuthService {
 
   logout() {
     const target = this.loginPathAfterLogout();
-    this.clearImpersonatorBackup();
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
-    this.user.set(null);
-    this.isLoggedIn.set(false);
-    this.isImpersonating.set(false);
+    this.clearSessionLocal();
     this.oneSignal.syncUser(null);
     this.router.navigate([target]);
   }

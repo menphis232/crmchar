@@ -270,10 +270,13 @@ router.post('/login', async (req, res) => {
     if (identifier.includes('@')) {
       user = await get('SELECT * FROM users WHERE email = ?', [identifier.toLowerCase()]);
     } else {
+      // UI de gestor/cliente permite "correo o teléfono"; el match por teléfono
+      // debe incluir gestor (antes solo cliente/perito → "credenciales incorrectas"
+      // con la clave bien puesta).
       const phone = normalizeMxPhone(identifier);
       if (phone) {
         const rows = await query(
-          "SELECT * FROM users WHERE phone = ? AND role IN ('cliente', 'perito')",
+          "SELECT * FROM users WHERE phone = ? AND role IN ('cliente', 'perito', 'gestor')",
           [phone],
         );
         user = rows.find((row) => bcrypt.compareSync(password, row.password_hash)) || null;
