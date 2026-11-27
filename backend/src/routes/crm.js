@@ -699,10 +699,11 @@ router.get('/deals/:id', async (req, res) => {
 
     const contact = await get('SELECT * FROM contacts WHERE id = ?', [row.contact_id]);
     const contactVehiclesRaw = await query(
-      `SELECT id, plate, make, model, year, state, engomado_color AS engomadoColor
+      `SELECT id, contact_id, plate, make, model, year, state, engomado_color AS engomadoColor
        FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY plate ASC`,
       [row.contact_id, uid],
     );
+    await syncVehicleDocumentsFromClientSiblings(uid, contactVehiclesRaw);
     const vehicleIds = contactVehiclesRaw.map((v) => v.id);
     const docsByVehicle = {};
     if (vehicleIds.length) {
@@ -1170,6 +1171,7 @@ router.get('/contacts/:id', async (req, res) => {
       'SELECT * FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY created_at ASC',
       [req.params.id, uid],
     );
+    await syncVehicleDocumentsFromClientSiblings(uid, vehicles);
 
     const vehicleIds = vehicles.map((v) => v.id);
     const docsByVehicle = {};
@@ -2006,6 +2008,92 @@ function vehicleDocumentRow(row) {
     fileUrl: row.file_url,
     createdAt: row.created_at,
   };
+}
+
+/**
+ * Copia papeles faltantes desde otras gestorías del mismo cliente/auto
+ * (mismo email/teléfono + misma placa o MMY sin placa) hacia los vehículos de esta org.
+ */
+async function syncVehicleDocumentsFromClientSiblings(orgUserId, vehicles) {
+  if (!vehicles?.length) return;
+  for (const vehicle of vehicles) {
+    try {
+      const contact = await get('SELECT email, phone, whatsapp FROM contacts WHERE id = ?', [vehicle.contact_id]);
+      if (!contact) continue;
+
+      const email = String(contact.email || '').trim().toLowerCase();
+      const phoneDigits = String(contact.phone || contact.whatsapp || '').replace(/\D/g, '');
+      if (!email && phoneDigits.length < 7) continue;
+
+      const plate = String(vehicle.plate || '').trim().toUpperCase();
+      const identityClauses = [];
+      const identityParams = [];
+      if (email) {
+        identityClauses.push('LOWER(IFNULL(c.email,\'\')) = ?');
+        identityParams.push(email);
+      }
+      if (phoneDigits.length >= 7) {
+        identityClauses.push(
+          `REPLACE(REPLACE(REPLACE(IFNULL(c.phone, c.whatsapp), ' ', ''), '-', ''), '+', '') LIKE ?`,
+        );
+        identityParams.push(`%${phoneDigits.slice(-10)}`);
+      }
+
+      let vehicleMatchSql;
+      const vehicleMatchParams = [];
+      if (plate) {
+        vehicleMatchSql = `UPPER(IFNULL(cv.plate,'')) = ?`;
+        vehicleMatchParams.push(plate);
+      } else {
+        vehicleMatchSql = `IFNULL(cv.plate,'') = '' AND IFNULL(cv.make,'') = ? AND IFNULL(cv.model,'') = ? AND IFNULL(cv.year,0) = ?`;
+        vehicleMatchParams.push(vehicle.make || '', vehicle.model || '', Number(vehicle.year) || 0);
+      }
+
+      const siblings = await query(
+        `SELECT cv.id, cv.user_id
+         FROM contact_vehicles cv
+         JOIN contacts c ON c.id = cv.contact_id
+         WHERE (${identityClauses.join(' OR ')})
+           AND ${vehicleMatchSql}`,
+        [...identityParams, ...vehicleMatchParams],
+      );
+      if (siblings.length < 2) continue;
+
+      const ids = siblings.map((s) => s.id);
+      const placeholders = ids.map(() => '?').join(',');
+      const docs = await query(
+        `SELECT * FROM contact_vehicle_documents WHERE vehicle_id IN (${placeholders})`,
+        ids,
+      );
+      if (!docs.length) continue;
+
+      const localUrls = new Set(
+        docs.filter((d) => d.vehicle_id === vehicle.id).map((d) => String(d.file_url || '')),
+      );
+
+      for (const doc of docs) {
+        const url = String(doc.file_url || '');
+        if (!url || doc.vehicle_id === vehicle.id || localUrls.has(url)) continue;
+        const docId = uuid();
+        await run(
+          `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            docId,
+            vehicle.id,
+            orgUserId,
+            doc.uploaded_by_user_id || null,
+            doc.label,
+            doc.file_name,
+            doc.file_url,
+          ],
+        );
+        localUrls.add(url);
+      }
+    } catch (err) {
+      console.error('syncVehicleDocumentsFromClientSiblings', vehicle.id, err);
+    }
+  }
 }
 
 router.post('/contact-vehicles/:id/documents', async (req, res) => {

@@ -2470,6 +2470,37 @@ select.client-wallet-input option {
   color: var(--mon-muted);
 }
 
+.client-vehicle-head-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.client-vehicle-head-toggle svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--mon-muted);
+}
+
+.client-vehicle-collapsed-meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--mon-muted);
+}
+
+.client-vehicle-card:not(.is-open) {
+  padding-bottom: 12px;
+}
+
 .client-vehicle-actions {
   display: flex;
   flex-wrap: wrap;

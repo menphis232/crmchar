@@ -127,168 +127,223 @@
           <p class="card-desc">Placas, estado y color de engomado para saber cuándo les toca verificar.</p>
 
           @for (v of c360.vehicles; track v.id) {
-            <div class="vehicle-card">
+            <div class="vehicle-card" [class.is-open]="isVehicleExpanded(v.id)">
               <div class="vehicle-card-top">
-                <div>
-                  <span class="vehicle-plate">{{ v.plate || 'Sin placa' }}</span>
-                  @if (v.make || v.model || v.year) {
-                    <p class="vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
+                <button type="button" class="vehicle-card-head" (click)="toggleVehicleExpanded(v.id)">
+                  @if (isVehicleExpanded(v.id)) {
+                    <svg lucideChevronDown class="vehicle-card-chevron" [size]="16" aria-hidden="true"></svg>
+                  } @else {
+                    <svg lucideChevronRight class="vehicle-card-chevron" [size]="16" aria-hidden="true"></svg>
                   }
-                </div>
-                @if (v.verificationStatus && v.verificationStatus !== 'ok' && v.verificationStatus !== 'unknown') {
-                  <span class="verification-badge" [class]="v.verificationStatus">{{ v.verificationLabel }}</span>
-                } @else if (v.verificationLabel) {
-                  <span class="card-desc">{{ v.verificationLabel }}</span>
-                }
-              </div>
-              <div class="vehicle-form-grid">
-                <div class="full">
-                  <app-vehicle-mmy-select
-                    [make]="v.make || ''"
-                    (makeChange)="updateVehicle(v, 'make', $event)"
-                    [submodel]="v.model || ''"
-                    (submodelChange)="updateVehicle(v, 'model', $event)"
-                    [year]="v.year ?? null"
-                    (yearChange)="updateVehicle(v, 'year', $event)"
-                  />
-                </div>
-                <div class="full">
-                  <label>Tarjeta de circulación a nombre de</label>
-                  <input
-                    type="text"
-                    [ngModel]="v.circulationCardName || ''"
-                    (change)="updateVehicle(v, 'circulationCardName', $any($event.target).value)"
-                    placeholder="Nombre como aparece en la tarjeta"
-                  >
-                </div>
-                <div>
-                  <label>Estado (placas)</label>
-                  <select [ngModel]="v.state || ''" (ngModelChange)="updateVehicle(v, 'state', $event)">
-                    <option value="">—</option>
-                    @for (st of mexicoStates; track st) {
-                      <option [value]="st">{{ st }}</option>
+                  <div>
+                    <span class="vehicle-plate">{{ v.plate || 'Sin placa' }}</span>
+                    @if (v.make || v.model || v.year) {
+                      <p class="vehicle-mmy">{{ formatVehicleLabel(v) }}</p>
                     }
-                  </select>
-                </div>
-                <div>
-                  <label>Engomado</label>
-                  <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateVehicle(v, 'engomadoColor', $event)">
-                    <option value="">—</option>
-                    @for (c of engomadoColors; track c.id) {
-                      <option [value]="c.id">
-                        {{ c.label }}
-                      </option>
+                    @if (!isVehicleExpanded(v.id)) {
+                      <p class="vehicle-doc-count">
+                        {{ v.documents?.length || 0 }} documento{{ (v.documents?.length || 0) === 1 ? '' : 's' }}
+                        @if (v.state) { · {{ v.state }} }
+                        @if (v.engomadoColor) { · {{ engomadoLabel(v.engomadoColor) }} }
+                      </p>
                     }
-                  </select>
-                  @if (v.engomadoColor) {
-                    <p class="card-desc" style="margin-top:4px;">
-                      <span class="engomado-dot" [class]="v.engomadoColor"></span>{{ engomadoLabel(v.engomadoColor) }}
-                    </p>
+                  </div>
+                </button>
+                <div class="vehicle-card-actions">
+                  @if (v.verificationStatus && v.verificationStatus !== 'ok' && v.verificationStatus !== 'unknown') {
+                    <span class="verification-badge" [class]="v.verificationStatus">{{ v.verificationLabel }}</span>
+                  } @else if (v.verificationLabel && isVehicleExpanded(v.id)) {
+                    <span class="card-desc">{{ v.verificationLabel }}</span>
                   }
-                </div>
-                <div [class.field-expired]="isInsuranceExpired(v.insuranceExpiry)">
-                  <label>Vencimiento póliza de seguro</label>
-                  <app-mx-date-input
-                    [value]="v.insuranceExpiry || ''"
-                    (valueChange)="updateVehicle(v, 'insuranceExpiry', $event)"
-                  />
-                  @if (isInsuranceExpired(v.insuranceExpiry)) {
-                    <p class="expiry-alert">Póliza vencida — alerta para renovación</p>
+                  @if (isEditingVehicle(v.id)) {
+                    <button type="button" class="deal-outline-btn small" (click)="doneEditVehicle()">
+                      <svg lucideCheck [size]="12" aria-hidden="true"></svg>
+                      Listo
+                    </button>
+                  } @else {
+                    <button type="button" class="deal-outline-btn small" (click)="startEditVehicle(v.id)">
+                      <svg lucidePencil [size]="12" aria-hidden="true"></svg>
+                      Editar
+                    </button>
                   }
-                </div>
-                <div>
-                  <label>Refrendo / tenencia {{ currentYear }}</label>
-                  <select [ngModel]="v.tenenciaStatus || ''" (ngModelChange)="updateVehicle(v, 'tenenciaStatus', $event)">
-                    <option value="">—</option>
-                    @for (t of tenenciaOptions; track t.value) {
-                      <option [value]="t.value">{{ t.label }}</option>
-                    }
-                  </select>
-                  @if (v.tenenciaStatus && v.tenenciaYear && v.tenenciaYear !== currentYear) {
-                    <p class="card-desc" style="margin-top:4px;">Registrado para {{ v.tenenciaYear }}</p>
-                  }
-                </div>
-                <div>
-                  <label>Holograma de verificación</label>
-                  <select [ngModel]="v.verificationHologram || ''" (ngModelChange)="updateVehicle(v, 'verificationHologram', $event)">
-                    <option value="">—</option>
-                    @for (h of hologramOptions; track h.value) {
-                      <option [value]="h.value">{{ h.label }}</option>
-                    }
-                  </select>
-                  <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
-                </div>
-                <div>
-                  <label>Fecha de próxima verificación</label>
-                  <app-mx-date-input
-                    [value]="v.nextVerificationDate || ''"
-                    (valueChange)="updateVehicle(v, 'nextVerificationDate', $event)"
-                  />
-                </div>
-                <div class="full">
-                  <label>Notas adicionales</label>
-                  <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Color, versión, observaciones...">
                 </div>
               </div>
 
-              <div class="vehicle-docs">
-                <h5>Documentos del vehículo</h5>
-                @if (v.documents?.length) {
-                  @for (doc of v.documents; track doc.id) {
-                    <div class="vehicle-doc-row">
-                      @if (labelingDocId() === doc.id) {
-                        <div class="vehicle-label-edit">
-                          <input type="text" [(ngModel)]="labelDraft" placeholder="Etiqueta del documento">
-                          <button type="button" class="deal-outline-btn small" (click)="saveLabel(doc)">Guardar</button>
-                          <button type="button" class="btn-ghost small" (click)="cancelLabelEdit()">Cancelar</button>
-                        </div>
-                      } @else {
-                        <div class="vehicle-doc-name">
-                          @if (doc.label) {
-                            <span class="vehicle-doc-label">{{ doc.label }}</span>
-                          }
-                          <span>{{ doc.fileName }}</span>
-                        </div>
-                        <div class="vehicle-doc-actions">
-                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="openPreview(doc)">
-                            <svg lucideEye [size]="12" aria-hidden="true"></svg>
-                            Previsualizar
-                          </button>
-                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="startLabelEdit(doc)">
-                            <svg lucideTag [size]="12" aria-hidden="true"></svg>
-                            Etiquetar
-                          </button>
-                          <button type="button" class="deal-outline-btn btn-with-icon small" (click)="downloadDocument(doc)">
-                            <svg lucideDownload [size]="12" aria-hidden="true"></svg>
-                            Descargar
-                          </button>
-                          <button type="button" class="btn-ghost small" style="color:#ff9b9b;" (click)="deleteVehicleDocument(doc)">
-                            <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
-                          </button>
-                        </div>
+              @if (isVehicleExpanded(v.id)) {
+                @if (isEditingVehicle(v.id)) {
+                  <div class="vehicle-form-grid">
+                    <div class="full">
+                      <app-vehicle-mmy-select
+                        [make]="v.make || ''"
+                        (makeChange)="updateVehicle(v, 'make', $event)"
+                        [submodel]="v.model || ''"
+                        (submodelChange)="updateVehicle(v, 'model', $event)"
+                        [year]="v.year ?? null"
+                        (yearChange)="updateVehicle(v, 'year', $event)"
+                      />
+                    </div>
+                    <div>
+                      <label>Placa</label>
+                      <input
+                        type="text"
+                        [ngModel]="v.plate || ''"
+                        (change)="updateVehicle(v, 'plate', $any($event.target).value)"
+                        placeholder="Si aún no tiene, déjala vacía"
+                        style="text-transform:uppercase;"
+                      >
+                    </div>
+                    <div class="full">
+                      <label>Tarjeta de circulación a nombre de</label>
+                      <input
+                        type="text"
+                        [ngModel]="v.circulationCardName || ''"
+                        (change)="updateVehicle(v, 'circulationCardName', $any($event.target).value)"
+                        placeholder="Nombre como aparece en la tarjeta"
+                      >
+                    </div>
+                    <div>
+                      <label>Estado (placas)</label>
+                      <select [ngModel]="v.state || ''" (ngModelChange)="updateVehicle(v, 'state', $event)">
+                        <option value="">—</option>
+                        @for (st of mexicoStates; track st) {
+                          <option [value]="st">{{ st }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div>
+                      <label>Engomado</label>
+                      <select [ngModel]="v.engomadoColor || ''" (ngModelChange)="updateVehicle(v, 'engomadoColor', $event)">
+                        <option value="">—</option>
+                        @for (c of engomadoColors; track c.id) {
+                          <option [value]="c.id">{{ c.label }}</option>
+                        }
+                      </select>
+                      @if (v.engomadoColor) {
+                        <p class="card-desc" style="margin-top:4px;">
+                          <span class="engomado-dot" [class]="v.engomadoColor"></span>{{ engomadoLabel(v.engomadoColor) }}
+                        </p>
                       }
                     </div>
-                  }
-                } @else {
-                  <p class="card-desc" style="margin:0 0 8px;">Sin documentos. Sube tarjeta de circulación, factura, póliza, etc.</p>
-                }
-                <div class="vehicle-upload-row">
-                  <div style="flex:1;min-width:140px;">
-                    <label style="font-size:11px;color:rgba(255,255,255,0.45);">Etiqueta (opcional)</label>
-                    <input type="text" [(ngModel)]="uploadLabelByVehicle[v.id]" placeholder="Ej. Tarjeta de circulación">
+                    <div [class.field-expired]="isInsuranceExpired(v.insuranceExpiry)">
+                      <label>Vencimiento póliza de seguro</label>
+                      <app-mx-date-input
+                        [value]="v.insuranceExpiry || ''"
+                        (valueChange)="updateVehicle(v, 'insuranceExpiry', $event)"
+                      />
+                      @if (isInsuranceExpired(v.insuranceExpiry)) {
+                        <p class="expiry-alert">Póliza vencida — alerta para renovación</p>
+                      }
+                    </div>
+                    <div>
+                      <label>Refrendo / tenencia {{ currentYear }}</label>
+                      <select [ngModel]="v.tenenciaStatus || ''" (ngModelChange)="updateVehicle(v, 'tenenciaStatus', $event)">
+                        <option value="">—</option>
+                        @for (t of tenenciaOptions; track t.value) {
+                          <option [value]="t.value">{{ t.label }}</option>
+                        }
+                      </select>
+                      @if (v.tenenciaStatus && v.tenenciaYear && v.tenenciaYear !== currentYear) {
+                        <p class="card-desc" style="margin-top:4px;">Registrado para {{ v.tenenciaYear }}</p>
+                      }
+                    </div>
+                    <div>
+                      <label>Holograma de verificación</label>
+                      <select [ngModel]="v.verificationHologram || ''" (ngModelChange)="updateVehicle(v, 'verificationHologram', $event)">
+                        <option value="">—</option>
+                        @for (h of hologramOptions; track h.value) {
+                          <option [value]="h.value">{{ h.label }}</option>
+                        }
+                      </select>
+                      <p class="card-desc field-important-hint">Importante: llenar este campo (se usa para el no circular).</p>
+                    </div>
+                    <div>
+                      <label>Fecha de próxima verificación</label>
+                      <app-mx-date-input
+                        [value]="v.nextVerificationDate || ''"
+                        (valueChange)="updateVehicle(v, 'nextVerificationDate', $event)"
+                      />
+                    </div>
+                    <div class="full">
+                      <label>Notas adicionales</label>
+                      <input type="text" [ngModel]="v.vehicleNotes || ''" (change)="updateVehicle(v, 'vehicleNotes', $any($event.target).value)" placeholder="Color, versión, observaciones...">
+                    </div>
                   </div>
-                  <label class="deal-outline-btn btn-with-icon" [class.loading]="uploadingVehicleId() === v.id" style="cursor:pointer;margin:0;">
-                    <svg lucideUpload [size]="14" aria-hidden="true"></svg>
-                    {{ uploadingVehicleId() === v.id ? 'Subiendo...' : 'Subir documento' }}
-                    <input type="file" accept="image/*,.pdf,application/pdf" style="display:none" (change)="uploadVehicleDocument(v, $event)" [disabled]="uploadingVehicleId() === v.id">
-                  </label>
-                </div>
-              </div>
+                } @else {
+                  <div class="vehicle-form-grid" style="margin-bottom:10px;">
+                    <div><label>Estado</label><p class="card-desc" style="margin:0;">{{ v.state || '—' }}</p></div>
+                    <div><label>Engomado</label><p class="card-desc" style="margin:0;">{{ engomadoLabel(v.engomadoColor) || '—' }}</p></div>
+                    <div><label>Póliza</label><p class="card-desc" style="margin:0;">{{ v.insuranceExpiry || '—' }}</p></div>
+                    <div><label>Tenencia {{ currentYear }}</label><p class="card-desc" style="margin:0;">{{ v.tenenciaStatus || '—' }}</p></div>
+                    <div><label>Holograma</label><p class="card-desc" style="margin:0;">{{ v.verificationHologram || '—' }}</p></div>
+                    <div><label>Próx. verificación</label><p class="card-desc" style="margin:0;">{{ v.nextVerificationDate || '—' }}</p></div>
+                    @if (v.circulationCardName) {
+                      <div class="full"><label>Tarjeta a nombre de</label><p class="card-desc" style="margin:0;">{{ v.circulationCardName }}</p></div>
+                    }
+                    @if (v.vehicleNotes) {
+                      <div class="full"><label>Notas</label><p class="card-desc" style="margin:0;">{{ v.vehicleNotes }}</p></div>
+                    }
+                  </div>
+                }
 
-              <button type="button" class="btn-ghost small" style="margin-top:8px;color:#ff9b9b;" (click)="removeVehicle(v.id)">
-                <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
-                Quitar vehículo
-              </button>
+                <div class="vehicle-docs">
+                  <h5>Documentos del vehículo</h5>
+                  @if (v.documents?.length) {
+                    @for (doc of v.documents; track doc.id) {
+                      <div class="vehicle-doc-row">
+                        @if (labelingDocId() === doc.id) {
+                          <div class="vehicle-label-edit">
+                            <input type="text" [(ngModel)]="labelDraft" placeholder="Etiqueta del documento">
+                            <button type="button" class="deal-outline-btn small" (click)="saveLabel(doc)">Guardar</button>
+                            <button type="button" class="btn-ghost small" (click)="cancelLabelEdit()">Cancelar</button>
+                          </div>
+                        } @else {
+                          <div class="vehicle-doc-name">
+                            @if (doc.label) {
+                              <span class="vehicle-doc-label">{{ doc.label }}</span>
+                            }
+                            <span>{{ doc.fileName }}</span>
+                          </div>
+                          <div class="vehicle-doc-actions">
+                            <button type="button" class="deal-outline-btn btn-with-icon small" (click)="openPreview(doc)">
+                              <svg lucideEye [size]="12" aria-hidden="true"></svg>
+                              Previsualizar
+                            </button>
+                            <button type="button" class="deal-outline-btn btn-with-icon small" (click)="startLabelEdit(doc)">
+                              <svg lucideTag [size]="12" aria-hidden="true"></svg>
+                              Etiquetar
+                            </button>
+                            <button type="button" class="deal-outline-btn btn-with-icon small" (click)="downloadDocument(doc)">
+                              <svg lucideDownload [size]="12" aria-hidden="true"></svg>
+                              Descargar
+                            </button>
+                            <button type="button" class="btn-ghost small" style="color:#ff9b9b;" (click)="deleteVehicleDocument(doc)">
+                              <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <p class="card-desc" style="margin:0 0 8px;">Sin documentos. Sube tarjeta de circulación, factura, póliza, etc.</p>
+                  }
+                  <div class="vehicle-upload-row">
+                    <div style="flex:1;min-width:140px;">
+                      <label style="font-size:11px;color:rgba(255,255,255,0.45);">Etiqueta (opcional)</label>
+                      <input type="text" [(ngModel)]="uploadLabelByVehicle[v.id]" placeholder="Ej. Tarjeta de circulación">
+                    </div>
+                    <label class="deal-outline-btn btn-with-icon" [class.loading]="uploadingVehicleId() === v.id" style="cursor:pointer;margin:0;">
+                      <svg lucideUpload [size]="14" aria-hidden="true"></svg>
+                      {{ uploadingVehicleId() === v.id ? 'Subiendo...' : 'Subir documento' }}
+                      <input type="file" accept="image/*,.pdf,application/pdf" style="display:none" (change)="uploadVehicleDocument(v, $event)" [disabled]="uploadingVehicleId() === v.id">
+                    </label>
+                  </div>
+                </div>
+
+                <button type="button" class="btn-ghost small" style="margin-top:8px;color:#ff9b9b;" (click)="removeVehicle(v.id)">
+                  <svg lucideTrash2 [size]="12" aria-hidden="true"></svg>
+                  Quitar vehículo
+                </button>
+              }
             </div>
           }
 

@@ -34,6 +34,7 @@ import {
   LucideBot,
   LucideCar,
   LucideCheck,
+  LucideChevronDown,
   LucideChevronLeft,
   LucideChevronRight,
   LucideClipboardList,
@@ -102,7 +103,7 @@ type TeamMember = {
     LucideLayoutDashboard, LucideClipboardList, LucideHistory, LucideWallet,
     LucideCar, LucideInbox, LucideMapPin, LucideArrowLeft, LucideArrowRight, LucideCheck,
     LucideMessageCircle, LucideFileText, LucidePaperclip, LucideKeyRound, LucideUser, LucideReceipt, LucideDownload, LucideEye,
-    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideUpload, LucideTrash2, LucidePencil, LucidePlus,
+    LucideSearch, LucideChevronLeft, LucideChevronRight, LucideChevronDown, LucideUpload, LucideTrash2, LucidePencil, LucidePlus,
     LucideFolderOpen, LucideLoader, LucideBriefcase, LucideStore,
     LucideBookOpen, LucideHeart, LucideShare2, LucidePlay, LucideBell,
   ],
@@ -311,6 +312,8 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
   });
   /** Vehículo en modo edición; null = solo lectura. */
   editingVehicleId = signal<string | null>(null);
+  /** Vehículos desplegados (colapsados por defecto). */
+  expandedVehicleIds = signal<Record<string, true>>({});
   newPlate = '';
   newCirculationCardName = '';
   newMake = '';
@@ -362,8 +365,25 @@ export class PanelClienteComponent implements OnInit, OnDestroy {
     return this.editingVehicleId() === v.id;
   }
 
+  isVehicleExpanded(v: CrmContactVehicle): boolean {
+    return !!this.expandedVehicleIds()[v.id] || this.editingVehicleId() === v.id;
+  }
+
+  toggleVehicleExpanded(v: CrmContactVehicle) {
+    if (this.editingVehicleId() === v.id) {
+      this.editingVehicleId.set(null);
+    }
+    this.expandedVehicleIds.update((map) => {
+      const next = { ...map };
+      if (next[v.id]) delete next[v.id];
+      else next[v.id] = true;
+      return next;
+    });
+  }
+
   startEditVehicle(v: CrmContactVehicle) {
     this.editingVehicleId.set(v.id);
+    this.expandedVehicleIds.update((map) => ({ ...map, [v.id]: true }));
   }
 
   doneEditVehicle() {

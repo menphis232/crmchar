@@ -454,6 +454,29 @@ No incluyas markdown como \`\`\`json.`;
       VALUES (?, ?, ?, ?, 'pending', ?)
     `, [docId, req.params.id, documentType, fileUrl, extractedData ? JSON.stringify(extractedData) : null]);
 
+    // También a la cartera del vehículo del trámite (todas las copias del mismo auto).
+    try {
+      const dealVehicle = await get(
+        'SELECT vehicle_id FROM crm_deals WHERE id = ?',
+        [req.params.id],
+      );
+      if (dealVehicle?.vehicle_id && await clientOwnsVehicle(req.user, dealVehicle.vehicle_id)) {
+        const siblings = await siblingVehiclesForClient(req.user, dealVehicle.vehicle_id);
+        if (siblings.length) {
+          const ext = (fileUrl || '').match(/\.[a-z0-9]{2,5}($|\?)/i)?.[0]?.replace('?', '') || '';
+          await insertVehicleDocumentCopies({
+            siblings,
+            uploadedByUserId: req.user.id,
+            label: String(documentType || 'Documento').trim() || 'Documento',
+            fileName: `${String(documentType || 'documento').trim()}${ext}`,
+            fileUrl,
+          });
+        }
+      }
+    } catch (syncErr) {
+      console.error('No se pudo copiar documento del trámite a la cartera del vehículo:', syncErr);
+    }
+
     const newDoc = await get('SELECT * FROM deal_documents WHERE id = ?', [docId]);
     res.status(201).json(newDoc);
   } catch (err) {
@@ -579,16 +602,20 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
     );
     if (!walletDoc) return res.status(404).json({ error: 'Documento no encontrado' });
 
-    const vehicle = await get('SELECT user_id FROM contact_vehicles WHERE id = ?', [vehicleId]);
+    const siblings = await siblingVehiclesForClient(req.user, vehicleId);
+    if (!siblings.length) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
     const ext = (walletDoc.file_url || '').match(/\.[a-z0-9]{2,5}($|\?)/i)?.[0]?.replace('?', '') || '';
     const fileName = `${walletDoc.label}${ext}`;
 
-    const docId = uuid();
-    await run(
-      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [docId, vehicleId, vehicle.user_id, req.user.id, walletDoc.label, fileName, walletDoc.file_url],
-    );
+    const inserted = await insertVehicleDocumentCopies({
+      siblings,
+      uploadedByUserId: req.user.id,
+      label: walletDoc.label,
+      fileName,
+      fileUrl: walletDoc.file_url,
+    });
     await run('DELETE FROM client_wallet_documents WHERE id = ?', [req.params.id]);
 
     const row = await get(
@@ -596,7 +623,7 @@ router.post('/wallet/:id/associate', authRequired, requireRole('cliente'), async
        FROM contact_vehicle_documents cvd
        JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
        WHERE cvd.id = ?`,
-      [docId],
+      [inserted.id],
     );
     res.status(201).json(unifiedVehicleWalletRow(row));
   } catch (err) {
@@ -665,6 +692,15 @@ async function vehiclesWithDocuments(user, filters = {}) {
   const vehicles = dedupeVehiclesByPlate(rows);
   const ids = vehicles.map((v) => v.id);
   if (!ids.length) return vehicles;
+
+  // Reparte papeles entre copias del mismo auto (p. ej. varias gestorías).
+  for (const id of ids) {
+    try {
+      await syncSiblingVehicleDocuments(user, id);
+    } catch (syncErr) {
+      console.error('syncSiblingVehicleDocuments', id, syncErr);
+    }
+  }
 
   const placeholders = ids.map(() => '?').join(',');
   const hydrated = await hydrateClientUser(user);
@@ -863,6 +899,99 @@ router.delete('/vehicles/:id', authRequired, requireRole('cliente'), async (req,
   }
 });
 
+/** Todas las filas contact_vehicles del cliente que representan el mismo auto (mismo plate o MMY sin placa). */
+async function siblingVehiclesForClient(user, vehicleId) {
+  const match = await vehiclePredicateFor(user);
+  const vehicle = await get(
+    `SELECT cv.* FROM contact_vehicles cv
+     JOIN contacts c ON c.id = cv.contact_id
+     WHERE cv.id = ? AND ${match.sql}`,
+    [vehicleId, ...match.params],
+  );
+  if (!vehicle) return [];
+
+  const plate = String(vehicle.plate || '').trim().toUpperCase();
+  if (plate) {
+    return query(
+      `SELECT cv.id, cv.user_id FROM contact_vehicles cv
+       JOIN contacts c ON c.id = cv.contact_id
+       WHERE ${match.sql} AND UPPER(IFNULL(cv.plate,'')) = ?`,
+      [...match.params, plate],
+    );
+  }
+
+  return query(
+    `SELECT cv.id, cv.user_id FROM contact_vehicles cv
+     JOIN contacts c ON c.id = cv.contact_id
+     WHERE ${match.sql}
+       AND IFNULL(cv.plate,'') = ''
+       AND IFNULL(cv.make,'') = ?
+       AND IFNULL(cv.model,'') = ?
+       AND IFNULL(cv.year,0) = ?`,
+    [...match.params, vehicle.make || '', vehicle.model || '', Number(vehicle.year) || 0],
+  );
+}
+
+async function insertVehicleDocumentCopies({ siblings, uploadedByUserId, label, fileName, fileUrl }) {
+  let firstRow = null;
+  for (const sibling of siblings) {
+    const docId = uuid();
+    await run(
+      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [docId, sibling.id, sibling.user_id, uploadedByUserId, label, fileName, fileUrl],
+    );
+    if (!firstRow) {
+      firstRow = await get('SELECT * FROM contact_vehicle_documents WHERE id = ?', [docId]);
+    }
+  }
+  return firstRow;
+}
+
+/** Copia docs faltantes entre filas del mismo auto (arregla papeles que solo estaban en una gestoría). */
+async function syncSiblingVehicleDocuments(user, vehicleId) {
+  const siblings = await siblingVehiclesForClient(user, vehicleId);
+  if (siblings.length < 2) return;
+  const ids = siblings.map((s) => s.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const docs = await query(
+    `SELECT * FROM contact_vehicle_documents WHERE vehicle_id IN (${placeholders})`,
+    ids,
+  );
+  if (!docs.length) return;
+
+  const byVehicle = new Map(ids.map((id) => [id, new Set()]));
+  for (const doc of docs) {
+    byVehicle.get(doc.vehicle_id)?.add(String(doc.file_url || ''));
+  }
+
+  const siblingById = new Map(siblings.map((s) => [s.id, s]));
+  for (const doc of docs) {
+    const url = String(doc.file_url || '');
+    if (!url) continue;
+    for (const sibling of siblings) {
+      if (sibling.id === doc.vehicle_id) continue;
+      if (byVehicle.get(sibling.id)?.has(url)) continue;
+      const docId = uuid();
+      await run(
+        `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          docId,
+          sibling.id,
+          sibling.user_id,
+          doc.uploaded_by_user_id || user.id,
+          doc.label,
+          doc.file_name,
+          doc.file_url,
+        ],
+      );
+      byVehicle.get(sibling.id)?.add(url);
+    }
+  }
+  return siblingById;
+}
+
 router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), async (req, res) => {
   try {
     if (!await clientOwnsVehicle(req.user, req.params.id)) {
@@ -874,23 +1003,18 @@ router.post('/vehicles/:id/documents', authRequired, requireRole('cliente'), asy
       return res.status(400).json({ error: 'Faltan datos del documento' });
     }
 
-    const vehicle = await get('SELECT user_id FROM contact_vehicles WHERE id = ?', [req.params.id]);
-    const docId = uuid();
-    await run(
-      `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        docId,
-        req.params.id,
-        vehicle.user_id,
-        req.user.id,
-        label?.trim() || null,
-        fileName,
-        fileUrl,
-      ],
-    );
+    const siblings = await siblingVehiclesForClient(req.user, req.params.id);
+    if (!siblings.length) {
+      return res.status(404).json({ error: 'Vehículo no encontrado' });
+    }
 
-    const row = await get('SELECT * FROM contact_vehicle_documents WHERE id = ?', [docId]);
+    const row = await insertVehicleDocumentCopies({
+      siblings,
+      uploadedByUserId: req.user.id,
+      label: label?.trim() || null,
+      fileName,
+      fileUrl,
+    });
     res.status(201).json(vehicleDocumentRow(row));
   } catch (err) {
     console.error(err);

@@ -4,7 +4,7 @@ import { DatePipe } from '@angular/common';
 import { DateOnlyMxPipe } from '../../shared/date-only-mx.pipe';
 import { MxDateInputComponent } from '../../shared/mx-date-input.component';
 import { DomSanitizer } from '@angular/platform-browser';
-import { LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail, LucidePhone, LucidePlus, LucideSave, LucideTag, LucideTrash2, LucideUpload, LucideX } from '@lucide/angular';
+import { LucideCheck, LucideChevronDown, LucideChevronRight, LucideCircle, LucideCircleCheck, LucideDownload, LucideEye, LucideMail, LucidePencil, LucidePhone, LucidePlus, LucideSave, LucideTag, LucideTrash2, LucideUpload, LucideX } from '@lucide/angular';
 import { CrmService, UploadService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
@@ -18,7 +18,7 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
 @Component({
   selector: 'app-crm-contact-panel',
   standalone: true,
-  imports: [FormsModule, DatePipe, DateOnlyMxPipe, MxDateInputComponent, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload],
+  imports: [FormsModule, DatePipe, DateOnlyMxPipe, MxDateInputComponent, VehicleMmySelectComponent, LucideX, LucideMail, LucidePhone, LucideCircleCheck, LucideCircle, LucidePlus, LucideSave, LucideTrash2, LucideUpload, LucideEye, LucideTag, LucideDownload, LucidePencil, LucideCheck, LucideChevronDown, LucideChevronRight],
   templateUrl: './crm-contact-panel.component.html',
   styleUrls: ['./panel-dashboard.css'],
   styles: [`
@@ -150,7 +150,35 @@ import { formatVehicleLabel } from '../../shared/mexico-vehicle-catalog';
       justify-content: space-between;
       align-items: flex-start;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 0;
+    }
+    .vehicle-card.is-open .vehicle-card-top { margin-bottom: 10px; }
+    .vehicle-card-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+      cursor: pointer;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      text-align: left;
+      color: inherit;
+      font: inherit;
+    }
+    .vehicle-card-chevron { flex-shrink: 0; color: #676879; margin-top: 2px; }
+    .vehicle-card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+    .vehicle-doc-count {
+      font-size: 11px;
+      color: #676879;
+      margin: 4px 0 0;
     }
     .vehicle-plate {
       font-weight: 700;
@@ -515,6 +543,10 @@ export class CrmContactPanelComponent {
   } | null>(null);
   isAddingVehicle = signal(false);
   showAddVehicleForm = signal(false);
+  /** Vehículos desplegados (colapsados por defecto). */
+  expandedVehicleIds = signal<Record<string, true>>({});
+  /** Vehículo en modo edición. */
+  editingVehicleId = signal<string | null>(null);
   uploadingVehicleId = signal<string | null>(null);
   previewDoc = signal<CrmContactVehicleDocument | null>(null);
   labelingDocId = signal<string | null>(null);
@@ -578,10 +610,41 @@ export class CrmContactPanelComponent {
 
   vehicleCount = computed(() => this.data()?.vehicles?.length ?? 0);
 
+  isVehicleExpanded(vehicleId: string): boolean {
+    return !!this.expandedVehicleIds()[vehicleId] || this.editingVehicleId() === vehicleId;
+  }
+
+  isEditingVehicle(vehicleId: string): boolean {
+    return this.editingVehicleId() === vehicleId;
+  }
+
+  toggleVehicleExpanded(vehicleId: string) {
+    if (this.editingVehicleId() === vehicleId) {
+      this.editingVehicleId.set(null);
+    }
+    this.expandedVehicleIds.update((map) => {
+      const next = { ...map };
+      if (next[vehicleId]) delete next[vehicleId];
+      else next[vehicleId] = true;
+      return next;
+    });
+  }
+
+  startEditVehicle(vehicleId: string) {
+    this.editingVehicleId.set(vehicleId);
+    this.expandedVehicleIds.update((map) => ({ ...map, [vehicleId]: true }));
+  }
+
+  doneEditVehicle() {
+    this.editingVehicleId.set(null);
+  }
+
   constructor(private crmService: CrmService, private toast: ToastService) {
     effect(() => {
       const id = this.contactId();
       this.showAddVehicleForm.set(false);
+      this.expandedVehicleIds.set({});
+      this.editingVehicleId.set(null);
       this.resetNewVehicleForm();
       if (id) this.load(id);
       else {

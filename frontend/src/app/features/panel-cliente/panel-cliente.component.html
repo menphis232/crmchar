@@ -836,32 +836,46 @@
           <div class="client-empty">Cargando vehículos...</div>
         } @else {
           @for (v of vehicles(); track v.id) {
-            <div class="client-vehicle-card">
+            <div class="client-vehicle-card" [class.is-open]="isVehicleExpanded(v)">
               <div class="client-vehicle-head">
-                <div class="client-vehicle-head-main">
-                  @if (v.make || v.model || v.year) {
-                    <strong class="client-vehicle-name">{{ formatVehicleLabel(v) }}</strong>
+                <button type="button" class="client-vehicle-head-toggle" (click)="toggleVehicleExpanded(v)">
+                  @if (isVehicleExpanded(v)) {
+                    <svg lucideChevronDown [size]="16" aria-hidden="true"></svg>
                   } @else {
-                    <strong class="client-vehicle-name">Mi vehículo</strong>
+                    <svg lucideChevronRight [size]="16" aria-hidden="true"></svg>
                   }
-                  <p class="client-vehicle-plate">{{ v.plate || 'Sin placa' }}</p>
-                  @if (isEditingVehicle(v) && (v.engomadoColor || v.tenenciaStatus || v.insuranceExpiry)) {
-                    <div class="client-vehicle-tags">
-                      @if (v.engomadoColor) {
-                        <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">{{ engomadoLabel(v.engomadoColor) || v.engomadoColor }}</span>
-                      }
-                      @if (v.tenenciaStatus) {
-                        <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
-                      }
-                      @if (v.insuranceExpiry) {
-                        <span class="client-vehicle-tag" [class.insurance-expired]="isInsuranceExpired(v.insuranceExpiry)">
-                          Seguro {{ v.insuranceExpiry | dateOnlyMx }}
-                          @if (isInsuranceExpired(v.insuranceExpiry)) { · Vencida }
-                        </span>
-                      }
-                    </div>
-                  }
-                </div>
+                  <div class="client-vehicle-head-main">
+                    @if (v.make || v.model || v.year) {
+                      <strong class="client-vehicle-name">{{ formatVehicleLabel(v) }}</strong>
+                    } @else {
+                      <strong class="client-vehicle-name">Mi vehículo</strong>
+                    }
+                    <p class="client-vehicle-plate">{{ v.plate || 'Sin placa' }}</p>
+                    @if (!isVehicleExpanded(v)) {
+                      <p class="client-vehicle-collapsed-meta">
+                        {{ v.documents?.length || 0 }} documento{{ (v.documents?.length || 0) === 1 ? '' : 's' }}
+                        @if (v.state) { · {{ v.state }} }
+                        @if (v.engomadoColor) { · {{ engomadoLabel(v.engomadoColor) || v.engomadoColor }} }
+                      </p>
+                    }
+                    @if (isVehicleExpanded(v) && (v.engomadoColor || v.tenenciaStatus || v.insuranceExpiry)) {
+                      <div class="client-vehicle-tags">
+                        @if (v.engomadoColor) {
+                          <span class="client-vehicle-tag engomado-{{ v.engomadoColor }}">{{ engomadoLabel(v.engomadoColor) || v.engomadoColor }}</span>
+                        }
+                        @if (v.tenenciaStatus) {
+                          <span class="client-vehicle-tag tenencia-{{ v.tenenciaStatus }}">Tenencia: {{ tenenciaLabel(v.tenenciaStatus) }}</span>
+                        }
+                        @if (v.insuranceExpiry) {
+                          <span class="client-vehicle-tag" [class.insurance-expired]="isInsuranceExpired(v.insuranceExpiry)">
+                            Seguro {{ v.insuranceExpiry | dateOnlyMx }}
+                            @if (isInsuranceExpired(v.insuranceExpiry)) { · Vencida }
+                          </span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </button>
                 <div class="client-vehicle-actions">
                   @if (isEditingVehicle(v)) {
                     <button type="button" class="btn-copy small" (click)="doneEditVehicle()">
@@ -869,7 +883,7 @@
                       Listo
                     </button>
                   } @else {
-                    <button type="button" class="btn-ghost small" (click)="startEditVehicle(v)">
+                    <button type="button" class="btn-copy small" (click)="startEditVehicle(v)">
                       <svg lucidePencil [size]="12" aria-hidden="true"></svg>
                       Editar
                     </button>
@@ -881,7 +895,7 @@
                 </div>
               </div>
 
-              @if (isEditingVehicle(v)) {
+              @if (isVehicleExpanded(v) && isEditingVehicle(v)) {
                 <div class="client-vehicle-form">
                   <app-vehicle-mmy-select
                     class="client-vehicle-form-mmy"
@@ -892,6 +906,17 @@
                     [year]="v.year ?? null"
                     (yearChange)="updateClientVehicle(v, 'year', $event)"
                   />
+                  <div>
+                    <label>Placa</label>
+                    <input
+                      type="text"
+                      class="client-wallet-input"
+                      [ngModel]="v.plate || ''"
+                      (change)="updateClientVehicle(v, 'plate', $any($event.target).value)"
+                      placeholder="Si aún no tiene, déjala vacía"
+                      style="text-transform:uppercase;"
+                    >
+                  </div>
                   <div>
                     <label>Estado (placas)</label>
                     <select [ngModel]="v.state || ''" (ngModelChange)="updateClientVehicle(v, 'state', $event)">
@@ -957,7 +982,7 @@
                     />
                   </div>
                 </div>
-              } @else {
+              } @else if (isVehicleExpanded(v)) {
                 <dl class="client-vehicle-facts">
                   <div class="client-vehicle-fact">
                     <dt>Tarjeta de circulación a nombre de</dt>
@@ -1017,6 +1042,7 @@
                 </dl>
               }
 
+              @if (isVehicleExpanded(v)) {
               <div class="client-vehicle-docs">
                 <h4 class="client-vehicle-docs-title">Documentos del vehículo</h4>
                 <p class="client-vehicle-docs-desc">Tarjeta de circulación, factura, póliza de seguro u otros archivos de este auto.</p>
@@ -1106,6 +1132,7 @@
                   </div>
                 }
               </div>
+              }
             </div>
           }
 
