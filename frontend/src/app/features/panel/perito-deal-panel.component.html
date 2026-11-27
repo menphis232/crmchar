@@ -106,6 +106,9 @@
                   <a [href]="doc.fileUrl" target="_blank" rel="noopener">
                     <svg lucideExternalLink [size]="14" aria-hidden="true"></svg>
                     {{ doc.documentType }}
+                    @if (doc.vehiclePlate) {
+                      <span class="perito-doc-meta"> · {{ doc.vehiclePlate }}</span>
+                    }
                   </a>
                 </li>
               }

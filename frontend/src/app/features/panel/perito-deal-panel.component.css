@@ -208,6 +208,11 @@
   flex-shrink: 0;
 }
 
+.perito-doc-meta {
+  color: #676879;
+  font-weight: 500;
+}
+
 .perito-empty {
   margin: 0;
   color: #9ca0ad;

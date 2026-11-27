@@ -124,13 +124,143 @@ peritoRouter.get('/deals', async (req, res) => {
   }
 });
 
+/** Papeles precargados en la cartera del vehículo (o de todos los autos del contacto). */
+async function loadVehicleDocsForPeritoDeal(deal, orgId) {
+  let vehicles = [];
+  if (deal.vehicle_id) {
+    const v = await get(
+      `SELECT id, contact_id, plate, make, model, year
+       FROM contact_vehicles WHERE id = ? AND user_id = ?`,
+      [deal.vehicle_id, orgId],
+    );
+    if (v) vehicles = [v];
+  }
+  if (!vehicles.length && deal.contact_id) {
+    vehicles = await query(
+      `SELECT id, contact_id, plate, make, model, year
+       FROM contact_vehicles WHERE contact_id = ? AND user_id = ? ORDER BY plate ASC`,
+      [deal.contact_id, orgId],
+    );
+  }
+  if (!vehicles.length) return [];
+
+  // Trae papeles que estén en otra copia del mismo auto (misma placa / MMY) del cliente.
+  for (const vehicle of vehicles) {
+    try {
+      const contact = await get(
+        'SELECT email, phone, whatsapp FROM contacts WHERE id = ?',
+        [vehicle.contact_id],
+      );
+      if (!contact) continue;
+      const email = String(contact.email || '').trim().toLowerCase();
+      const phoneDigits = String(contact.phone || contact.whatsapp || '').replace(/\D/g, '');
+      if (!email && phoneDigits.length < 7) continue;
+
+      const plate = String(vehicle.plate || '').trim().toUpperCase();
+      const identityClauses = [];
+      const identityParams = [];
+      if (email) {
+        identityClauses.push('LOWER(IFNULL(c.email,\'\')) = ?');
+        identityParams.push(email);
+      }
+      if (phoneDigits.length >= 7) {
+        identityClauses.push(
+          `REPLACE(REPLACE(REPLACE(IFNULL(c.phone, c.whatsapp), ' ', ''), '-', ''), '+', '') LIKE ?`,
+        );
+        identityParams.push(`%${phoneDigits.slice(-10)}`);
+      }
+
+      let vehicleMatchSql;
+      const vehicleMatchParams = [];
+      if (plate) {
+        vehicleMatchSql = `UPPER(IFNULL(cv.plate,'')) = ?`;
+        vehicleMatchParams.push(plate);
+      } else {
+        vehicleMatchSql = `IFNULL(cv.plate,'') = '' AND IFNULL(cv.make,'') = ? AND IFNULL(cv.model,'') = ? AND IFNULL(cv.year,0) = ?`;
+        vehicleMatchParams.push(vehicle.make || '', vehicle.model || '', Number(vehicle.year) || 0);
+      }
+
+      const siblings = await query(
+        `SELECT cv.id, cv.user_id
+         FROM contact_vehicles cv
+         JOIN contacts c ON c.id = cv.contact_id
+         WHERE (${identityClauses.join(' OR ')})
+           AND ${vehicleMatchSql}`,
+        [...identityParams, ...vehicleMatchParams],
+      );
+      if (siblings.length < 2) continue;
+
+      const ids = siblings.map((s) => s.id);
+      const placeholders = ids.map(() => '?').join(',');
+      const docs = await query(
+        `SELECT * FROM contact_vehicle_documents WHERE vehicle_id IN (${placeholders})`,
+        ids,
+      );
+      const localUrls = new Set(
+        docs.filter((d) => d.vehicle_id === vehicle.id).map((d) => String(d.file_url || '')),
+      );
+      for (const doc of docs) {
+        const url = String(doc.file_url || '');
+        if (!url || doc.vehicle_id === vehicle.id || localUrls.has(url)) continue;
+        const docId = uuid();
+        await run(
+          `INSERT INTO contact_vehicle_documents (id, vehicle_id, user_id, uploaded_by_user_id, label, file_name, file_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            docId,
+            vehicle.id,
+            orgId,
+            doc.uploaded_by_user_id || null,
+            doc.label,
+            doc.file_name,
+            doc.file_url,
+          ],
+        );
+        localUrls.add(url);
+      }
+    } catch (err) {
+      console.error('perito vehicle doc sync', vehicle.id, err);
+    }
+  }
+
+  const vehicleIds = vehicles.map((v) => v.id);
+  const placeholders = vehicleIds.map(() => '?').join(',');
+  const rows = await query(
+    `SELECT cvd.id,
+            COALESCE(NULLIF(cvd.label, ''), cvd.file_name) AS documentType,
+            cvd.file_url AS fileUrl,
+            cvd.file_name AS fileName,
+            cvd.created_at AS createdAt,
+            cv.plate AS vehiclePlate,
+            cv.make AS vehicleMake,
+            cv.model AS vehicleModel,
+            cv.year AS vehicleYear
+     FROM contact_vehicle_documents cvd
+     JOIN contact_vehicles cv ON cv.id = cvd.vehicle_id
+     WHERE cvd.vehicle_id IN (${placeholders}) AND cvd.user_id = ?
+     ORDER BY cvd.created_at DESC`,
+    [...vehicleIds, orgId],
+  );
+
+  // Deduplicar por URL por si el sync dejó copias equivalentes.
+  const seen = new Set();
+  const out = [];
+  for (const row of rows) {
+    const key = String(row.fileUrl || '');
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    out.push(row);
+  }
+  return out;
+}
+
 peritoRouter.get('/deals/:id', async (req, res) => {
   try {
     const deal = await loadPeritoDeal(req.user.id, req.params.id);
     if (!deal) return res.status(404).json({ error: 'Trámite no encontrado' });
 
     const orgId = req.user.parent_id;
-    const [crmDocs, clientDocs, uploads, notes] = await Promise.all([
+    const [crmDocs, clientDocs, vehicleDocs, uploads, notes] = await Promise.all([
       query(
         `SELECT id, file_name AS fileName, file_url AS fileUrl, notes, doc_kind AS docKind, created_at AS createdAt
          FROM crm_documents WHERE deal_id = ? AND user_id = ? ORDER BY created_at DESC`,
@@ -141,6 +271,7 @@ peritoRouter.get('/deals/:id', async (req, res) => {
          FROM deal_documents WHERE deal_id = ? ORDER BY created_at DESC`,
         [req.params.id],
       ),
+      loadVehicleDocsForPeritoDeal(deal, orgId),
       query(
         `SELECT id, doc_type AS docType, file_url AS fileUrl, file_name AS fileName, created_at AS createdAt
          FROM perito_deal_uploads WHERE deal_id = ? ORDER BY created_at DESC`,
@@ -153,9 +284,31 @@ peritoRouter.get('/deals/:id', async (req, res) => {
       ),
     ]);
 
+    // Unifica docs del trámite + cartera del auto para que el perito vea lo precargado.
+    const clientUrlSeen = new Set(clientDocs.map((d) => String(d.fileUrl || '')));
+    const mergedClient = [
+      ...clientDocs,
+      ...vehicleDocs
+        .filter((d) => {
+          const url = String(d.fileUrl || '');
+          if (url && clientUrlSeen.has(url)) return false;
+          if (url) clientUrlSeen.add(url);
+          return true;
+        })
+        .map((d) => ({
+          id: d.id,
+          documentType: d.documentType || d.fileName || 'Documento',
+          fileUrl: d.fileUrl,
+          status: 'vehicle',
+          createdAt: d.createdAt,
+          source: 'vehicle',
+          vehiclePlate: d.vehiclePlate || null,
+        })),
+    ];
+
     res.json({
       deal: peritoDealRow(deal),
-      documents: { gestor: crmDocs, client: clientDocs },
+      documents: { gestor: crmDocs, client: mergedClient, vehicle: vehicleDocs },
       uploads,
       notes,
       stageLabels: PERITO_STAGE_LABELS,

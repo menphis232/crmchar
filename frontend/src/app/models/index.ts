@@ -664,7 +664,23 @@ export interface PeritoDealDetail {
   deal: PeritoDeal;
   documents: {
     gestor: { id: string; fileName: string; fileUrl: string; notes?: string; docKind?: string; createdAt?: string }[];
-    client: { id: string; documentType: string; fileUrl: string; status?: string; createdAt?: string }[];
+    client: {
+      id: string;
+      documentType: string;
+      fileUrl: string;
+      status?: string;
+      createdAt?: string;
+      source?: string;
+      vehiclePlate?: string | null;
+    }[];
+    vehicle?: {
+      id: string;
+      documentType: string;
+      fileUrl: string;
+      fileName?: string;
+      createdAt?: string;
+      vehiclePlate?: string | null;
+    }[];
   };
   uploads: { id: string; docType: string; fileUrl: string; fileName?: string; createdAt?: string }[];
   notes: { id: string; note: string; createdAt?: string }[];
