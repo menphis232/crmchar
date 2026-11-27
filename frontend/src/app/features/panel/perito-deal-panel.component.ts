@@ -1,14 +1,23 @@
 import { Component, input, output, signal, inject, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer } from '@angular/platform-browser';
 import {
   LucideX, LucideUpload, LucideTrash2, LucideFileText, LucideStickyNote, LucideExternalLink,
+  LucideEye, LucideDownload,
 } from '@lucide/angular';
 import { PeritoDealDetail } from '../../models';
 import { PeritoService, UploadService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PERITO_STAGES, PERITO_STAGE_LABELS } from '../../shared/perito-stages';
+import { environment } from '../../../environments/environment';
+
+type PeritoPreviewDoc = {
+  id: string;
+  title: string;
+  fileUrl: string;
+};
 
 const UPLOAD_LABELS: Record<string, string> = {
   poliza_pago: 'Póliza de pago',
@@ -21,6 +30,7 @@ const UPLOAD_LABELS: Record<string, string> = {
   imports: [
     CommonModule, FormsModule, DatePipe,
     LucideX, LucideUpload, LucideTrash2, LucideFileText, LucideStickyNote, LucideExternalLink,
+    LucideEye, LucideDownload,
   ],
   templateUrl: './perito-deal-panel.component.html',
   styleUrl: './perito-deal-panel.component.css',
@@ -34,8 +44,10 @@ export class PeritoDealPanelComponent implements OnInit {
   private uploadService = inject(UploadService);
   private toast = inject(ToastService);
   private auth = inject(AuthService);
+  private sanitizer = inject(DomSanitizer);
 
   detail = signal<PeritoDealDetail | null>(null);
+  previewDoc = signal<PeritoPreviewDoc | null>(null);
   loading = signal(true);
   newNote = '';
   newStaffMessage = '';
@@ -220,5 +232,46 @@ export class PeritoDealPanelComponent implements OnInit {
 
   isImage(url: string) {
     return /\.(jpe?g|png|gif|webp)(\?|$)/i.test(url);
+  }
+
+  isPdfUrl(url: string): boolean {
+    return /\.pdf($|\?)/i.test(url || '');
+  }
+
+  isImageUrl(url: string): boolean {
+    return /\.(jpe?g|png|webp|gif)($|\?)/i.test(url || '');
+  }
+
+  previewFileUrl(url: string): string {
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+  }
+
+  safePreviewUrl(url: string) {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(this.previewFileUrl(url));
+  }
+
+  openPreview(doc: { id: string; fileUrl: string; fileName?: string; documentType?: string }) {
+    this.previewDoc.set({
+      id: doc.id,
+      title: doc.documentType || doc.fileName || 'Documento',
+      fileUrl: doc.fileUrl,
+    });
+  }
+
+  closePreview() {
+    this.previewDoc.set(null);
+  }
+
+  downloadDocument(doc: { fileUrl: string; fileName?: string; documentType?: string; title?: string }) {
+    const name = doc.fileName || doc.documentType || doc.title || 'documento';
+    const a = document.createElement('a');
+    a.href = this.previewFileUrl(doc.fileUrl);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.download = name;
+    a.click();
   }
 }

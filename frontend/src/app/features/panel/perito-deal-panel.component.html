@@ -19,6 +19,9 @@
       <div class="deal-panel-header">
         <div style="flex:1;min-width:0;">
           <h3>{{ data.deal.title || 'Trámite' }}</h3>
+          @if (data.deal.contactName) {
+            <p class="perito-client-name">{{ data.deal.contactName }}</p>
+          }
         </div>
       </div>
 
@@ -84,11 +87,18 @@
           @if (data.documents.gestor.length) {
             <ul class="perito-doc-list">
               @for (doc of data.documents.gestor; track doc.id) {
-                <li>
-                  <a [href]="doc.fileUrl" target="_blank" rel="noopener">
-                    <svg lucideExternalLink [size]="14" aria-hidden="true"></svg>
-                    {{ doc.fileName }}
-                  </a>
+                <li class="perito-doc-row">
+                  <span class="perito-doc-title">{{ doc.fileName }}</span>
+                  <div class="perito-doc-actions">
+                    <button type="button" class="perito-doc-btn" (click)="openPreview(doc)">
+                      <svg lucideEye [size]="14" aria-hidden="true"></svg>
+                      Visualizar
+                    </button>
+                    <button type="button" class="perito-doc-btn" (click)="downloadDocument(doc)">
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      Descargar
+                    </button>
+                  </div>
                 </li>
               }
             </ul>
@@ -102,14 +112,23 @@
           @if (data.documents.client.length) {
             <ul class="perito-doc-list">
               @for (doc of data.documents.client; track doc.id) {
-                <li>
-                  <a [href]="doc.fileUrl" target="_blank" rel="noopener">
-                    <svg lucideExternalLink [size]="14" aria-hidden="true"></svg>
+                <li class="perito-doc-row">
+                  <span class="perito-doc-title">
                     {{ doc.documentType }}
                     @if (doc.vehiclePlate) {
                       <span class="perito-doc-meta"> · {{ doc.vehiclePlate }}</span>
                     }
-                  </a>
+                  </span>
+                  <div class="perito-doc-actions">
+                    <button type="button" class="perito-doc-btn" (click)="openPreview(doc)">
+                      <svg lucideEye [size]="14" aria-hidden="true"></svg>
+                      Visualizar
+                    </button>
+                    <button type="button" class="perito-doc-btn" (click)="downloadDocument(doc)">
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      Descargar
+                    </button>
+                  </div>
                 </li>
               }
             </ul>
@@ -199,5 +218,28 @@
       </div>
     </div>
   </div>
+
+  @if (previewDoc(); as doc) {
+    <div class="doc-preview-overlay" (click)="closePreview()">
+      <div class="doc-preview-box" (click)="$event.stopPropagation()">
+        <div class="doc-preview-header">
+          <strong>{{ doc.title }}</strong>
+          <button type="button" class="deal-panel-close" (click)="closePreview()" aria-label="Cerrar">
+            <svg lucideX [size]="18" aria-hidden="true"></svg>
+          </button>
+        </div>
+        <div class="doc-preview-body">
+          @if (isPdfUrl(doc.fileUrl)) {
+            <iframe class="doc-preview-frame" [src]="safePreviewUrl(doc.fileUrl)" [title]="doc.title"></iframe>
+          } @else if (isImageUrl(doc.fileUrl)) {
+            <img class="doc-preview-image" [src]="previewFileUrl(doc.fileUrl)" [alt]="doc.title">
+          } @else {
+            <p class="perito-empty">Vista previa no disponible para este tipo de archivo.</p>
+            <button type="button" class="perito-doc-btn" (click)="downloadDocument(doc)">Descargar</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
   }
 }
