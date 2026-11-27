@@ -272,9 +272,9 @@
                       : (d.peritoServicePaid === 'pagado' ? 'Marcar pendiente' : 'Marcar como pagado') }}
                   </button>
                 </div>
-                @if (d.peritoUploads?.length) {
-                  <div class="quote-doc-list" style="margin-top:12px;">
-                    <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                <div class="quote-doc-list" style="margin-top:12px;">
+                  <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                  @if (d.peritoUploads?.length) {
                     @for (u of d.peritoUploads; track u.id) {
                       <div class="quote-doc-item">
                         <div class="quote-doc-info">
@@ -282,12 +282,14 @@
                           <span class="card-desc">{{ u.fileName || 'Archivo' }}</span>
                         </div>
                         <div class="quote-doc-actions">
-                          <a [href]="u.fileUrl" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                          <a [href]="resolveUploadUrl(u.fileUrl)" target="_blank" rel="noopener" class="deal-outline-btn">Visualizar</a>
                         </div>
                       </div>
                     }
-                  </div>
-                }
+                  } @else {
+                    <p class="card-desc" style="margin:0;">Aún no hay archivos. También en la pestaña Documentos.</p>
+                  }
+                </div>
               }
             </div>
           } @else if (d.peritoName) {
@@ -303,9 +305,9 @@
                   · Pago:
                   <strong>{{ d.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}</strong>
                 </p>
-                @if (d.peritoUploads?.length) {
-                  <div class="quote-doc-list" style="margin-top:12px;">
-                    <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                <div class="quote-doc-list" style="margin-top:12px;">
+                  <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                  @if (d.peritoUploads?.length) {
                     @for (u of d.peritoUploads; track u.id) {
                       <div class="quote-doc-item">
                         <div class="quote-doc-info">
@@ -313,12 +315,14 @@
                           <span class="card-desc">{{ u.fileName || 'Archivo' }}</span>
                         </div>
                         <div class="quote-doc-actions">
-                          <a [href]="u.fileUrl" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                          <a [href]="resolveUploadUrl(u.fileUrl)" target="_blank" rel="noopener" class="deal-outline-btn">Visualizar</a>
                         </div>
                       </div>
                     }
-                  </div>
-                }
+                  } @else {
+                    <p class="card-desc" style="margin:0;">Aún no hay archivos. También en la pestaña Documentos.</p>
+                  }
+                </div>
               }
             </div>
           }
@@ -619,7 +623,32 @@
         }
 
         @if (dealView() === 'docs') {
-          <p class="deal-tab-hint">Cartera del vehículo asignado y adjuntos del trámite.</p>
+          <p class="deal-tab-hint">Archivos del perito, cartera del vehículo y adjuntos del trámite.</p>
+
+          @if (!isConcesionaria()) {
+            <div class="deal-section deal-subsection">
+              <h4>Archivos del perito</h4>
+              @if (d.peritoUploads?.length) {
+                <div class="quote-doc-list">
+                  @for (u of d.peritoUploads; track u.id) {
+                    <div class="quote-doc-item">
+                      <div class="quote-doc-info">
+                        <strong>{{ peritoUploadLabel(u.docType) }}</strong>
+                        <span class="card-desc">{{ u.fileName || 'Archivo' }}</span>
+                      </div>
+                      <div class="quote-doc-actions">
+                        <a [href]="resolveUploadUrl(u.fileUrl)" target="_blank" rel="noopener" class="deal-outline-btn">Visualizar</a>
+                        <a [href]="resolveUploadUrl(u.fileUrl)" target="_blank" rel="noopener" download class="deal-outline-btn">Descargar</a>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="card-desc">Aún no hay póliza ni archivos subidos por el perito.</p>
+              }
+            </div>
+          }
+
           <!-- DOCUMENTOS DEL CLIENTE -->
         @if (!isConcesionaria()) {
         <div class="deal-section deal-subsection deal-subsection--ocr">

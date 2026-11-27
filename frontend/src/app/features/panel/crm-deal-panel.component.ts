@@ -1379,6 +1379,13 @@ export class CrmDealPanelComponent implements OnDestroy {
     return docType || 'Archivo';
   }
 
+  resolveUploadUrl(url: string | null | undefined): string {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    const base = environment.apiUrl.replace(/\/api\/?$/, '');
+    return `${base}${url.startsWith('/') ? url : `/${url}`}`;
+  }
+
   private onPeritoUpdate = (payload: unknown) => {
     const data = payload as { type?: string; ref_id?: string };
     if (data.type !== 'perito_update') return;
