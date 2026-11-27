@@ -272,6 +272,22 @@
                       : (d.peritoServicePaid === 'pagado' ? 'Marcar pendiente' : 'Marcar como pagado') }}
                   </button>
                 </div>
+                @if (d.peritoUploads?.length) {
+                  <div class="quote-doc-list" style="margin-top:12px;">
+                    <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                    @for (u of d.peritoUploads; track u.id) {
+                      <div class="quote-doc-item">
+                        <div class="quote-doc-info">
+                          <strong>{{ peritoUploadLabel(u.docType) }}</strong>
+                          <span class="card-desc">{{ u.fileName || 'Archivo' }}</span>
+                        </div>
+                        <div class="quote-doc-actions">
+                          <a [href]="u.fileUrl" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
           } @else if (d.peritoName) {
@@ -287,6 +303,22 @@
                   · Pago:
                   <strong>{{ d.peritoServicePaid === 'pagado' ? 'Pagado' : 'Pendiente' }}</strong>
                 </p>
+                @if (d.peritoUploads?.length) {
+                  <div class="quote-doc-list" style="margin-top:12px;">
+                    <p class="card-desc" style="margin:0 0 8px;">Archivos del perito</p>
+                    @for (u of d.peritoUploads; track u.id) {
+                      <div class="quote-doc-item">
+                        <div class="quote-doc-info">
+                          <strong>{{ peritoUploadLabel(u.docType) }}</strong>
+                          <span class="card-desc">{{ u.fileName || 'Archivo' }}</span>
+                        </div>
+                        <div class="quote-doc-actions">
+                          <a [href]="u.fileUrl" target="_blank" rel="noopener" class="deal-outline-btn">Ver</a>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
               }
             </div>
           }

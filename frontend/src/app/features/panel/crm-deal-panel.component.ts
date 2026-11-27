@@ -1373,6 +1373,12 @@ export class CrmDealPanelComponent implements OnDestroy {
     return PERITO_STAGE_LABELS[(stage || 'tramite') as PeritoStageId] || 'Trámite';
   }
 
+  peritoUploadLabel(docType: string | null | undefined): string {
+    if (docType === 'poliza_pago') return 'Póliza de pago';
+    if (docType === 'tramite_listo') return 'Trámite listo';
+    return docType || 'Archivo';
+  }
+
   private onPeritoUpdate = (payload: unknown) => {
     const data = payload as { type?: string; ref_id?: string };
     if (data.type !== 'perito_update') return;

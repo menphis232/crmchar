@@ -82,9 +82,9 @@
           </section>
         }
 
-        <section class="deal-section">
-          <h4>Documentos del gestor</h4>
-          @if (data.documents.gestor.length) {
+        @if (data.documents.gestor.length) {
+          <section class="deal-section">
+            <h4>Archivos de la gestoría</h4>
             <ul class="perito-doc-list">
               @for (doc of data.documents.gestor; track doc.id) {
                 <li class="perito-doc-row">
@@ -102,10 +102,8 @@
                 </li>
               }
             </ul>
-          } @else {
-            <p class="perito-empty">Sin documentos del gestor</p>
-          }
-        </section>
+          </section>
+        }
 
         <section class="deal-section">
           <h4>Documentos del cliente</h4>
@@ -139,29 +137,39 @@
 
         <section class="deal-section">
           <h4>Mis archivos</h4>
+          <p class="perito-section-hint">PDF o imagen. La gestoría los ve en el trámite.</p>
           @for (type of uploadTypes; track type) {
             <div class="perito-upload-block">
               <div class="perito-upload-head">
                 <span>{{ uploadLabel(type) }}</span>
-                <label class="btn-upload btn-with-icon">
+                <label class="btn-upload btn-with-icon" [class.loading]="uploading() === type">
                   <svg lucideUpload [size]="14" aria-hidden="true"></svg>
                   {{ uploading() === type ? 'Subiendo…' : 'Subir' }}
-                  <input type="file" accept="image/*,.pdf" hidden (change)="onUpload(type, $any($event.target))" [disabled]="uploading() === type">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf,application/pdf"
+                    hidden
+                    (change)="onUpload(type, $any($event.target))"
+                    [disabled]="!!uploading()"
+                  >
                 </label>
               </div>
               @for (u of uploadsByType(type); track u.id) {
                 <div class="perito-upload-item">
-                  @if (isImage(u.fileUrl)) {
-                    <img [src]="u.fileUrl" [alt]="u.fileName || uploadLabel(type)" class="perito-thumb">
-                  } @else {
-                    <a [href]="u.fileUrl" target="_blank" rel="noopener" class="perito-file-link">
-                      <svg lucideFileText [size]="16" aria-hidden="true"></svg>
-                      {{ u.fileName || 'Ver PDF' }}
-                    </a>
-                  }
-                  <button type="button" class="perito-icon-btn" (click)="deleteUpload(u.id)" aria-label="Eliminar archivo">
-                    <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
-                  </button>
+                  <span class="perito-upload-name">{{ u.fileName || uploadLabel(type) }}</span>
+                  <div class="perito-doc-actions">
+                    <button type="button" class="perito-doc-btn" (click)="openPreview(u)">
+                      <svg lucideEye [size]="14" aria-hidden="true"></svg>
+                      Visualizar
+                    </button>
+                    <button type="button" class="perito-doc-btn" (click)="downloadDocument(u)">
+                      <svg lucideDownload [size]="14" aria-hidden="true"></svg>
+                      Descargar
+                    </button>
+                    <button type="button" class="perito-icon-btn" (click)="deleteUpload(u.id)" aria-label="Eliminar archivo">
+                      <svg lucideTrash2 [size]="14" aria-hidden="true"></svg>
+                    </button>
+                  </div>
                 </div>
               }
             </div>

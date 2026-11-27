@@ -188,9 +188,14 @@ export class PeritoDealPanelComponent implements OnInit {
     const d = this.detail()?.deal;
     if (!file || !d) return;
     this.uploading.set(docType);
-    this.uploadService.uploadFile(file).subscribe({
+    // PDF e imagen: /upload solo acepta imágenes; documentos van a /upload/document.
+    this.uploadService.uploadChatAttachment(file).subscribe({
       next: (res) => {
-        this.peritoService.addUpload(d.id, { docType, fileUrl: res.url, fileName: file.name }).subscribe({
+        this.peritoService.addUpload(d.id, {
+          docType,
+          fileUrl: res.url,
+          fileName: (res as { fileName?: string }).fileName || file.name,
+        }).subscribe({
           next: () => {
             this.uploading.set(null);
             input.value = '';
@@ -200,13 +205,15 @@ export class PeritoDealPanelComponent implements OnInit {
           },
           error: (e) => {
             this.uploading.set(null);
+            input.value = '';
             this.toast.error(e.error?.error || 'Error al registrar archivo');
           },
         });
       },
-      error: () => {
+      error: (e) => {
         this.uploading.set(null);
-        this.toast.error('Error al subir archivo');
+        input.value = '';
+        this.toast.error(e.error?.error || 'No se pudo subir el archivo');
       },
     });
   }
@@ -253,10 +260,10 @@ export class PeritoDealPanelComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(this.previewFileUrl(url));
   }
 
-  openPreview(doc: { id: string; fileUrl: string; fileName?: string; documentType?: string }) {
+  openPreview(doc: { id?: string; fileUrl: string; fileName?: string; documentType?: string; docType?: string }) {
     this.previewDoc.set({
-      id: doc.id,
-      title: doc.documentType || doc.fileName || 'Documento',
+      id: doc.id || doc.fileUrl,
+      title: doc.documentType || doc.fileName || this.uploadLabel(doc.docType || '') || 'Documento',
       fileUrl: doc.fileUrl,
     });
   }

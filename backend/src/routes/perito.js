@@ -444,6 +444,14 @@ peritoRouter.post('/deals/:id/uploads', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?)`,
       [id, req.params.id, req.user.id, docType, fileUrl, fileName || null],
     );
+
+    const label = docType === 'poliza_pago' ? 'póliza de pago' : 'trámite listo';
+    notifyGestorPeritoUpdate(req.user.parent_id, {
+      dealId: deal.id,
+      title: 'Archivo del perito',
+      body: `${req.user.name || 'El perito'} subió ${label} en "${deal.title}" (${deal.contact_name || 'cliente'})`,
+    }).catch(() => {});
+
     res.status(201).json({ id, docType, fileUrl, fileName: fileName || null });
   } catch (err) {
     console.error(err);

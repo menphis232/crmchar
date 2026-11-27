@@ -724,10 +724,17 @@ router.get('/deals/:id', async (req, res) => {
       documents: docsByVehicle[v.id] || [],
     }));
 
+    const peritoUploads = await query(
+      `SELECT id, doc_type AS docType, file_url AS fileUrl, file_name AS fileName, created_at AS createdAt
+       FROM perito_deal_uploads WHERE deal_id = ? ORDER BY created_at DESC`,
+      [req.params.id],
+    ).catch(() => []);
+
     res.json({
       ...dealRow(row),
       contact: contactRow(contact),
       contactVehicles,
+      peritoUploads,
       activities,
       tasks: tasks.map(t => ({
         id: t.id,

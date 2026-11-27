@@ -592,6 +592,14 @@ export interface CrmDeal {
   peritoServicePaid?: 'pendiente' | 'pagado';
   peritoServiceReceiptUrl?: string | null;
   peritoServiceReceiptName?: string | null;
+  /** Archivos que sube el perito (póliza / trámite listo). */
+  peritoUploads?: Array<{
+    id: string;
+    docType: string;
+    fileUrl: string;
+    fileName?: string | null;
+    createdAt?: string;
+  }>;
   peritoAssignedAt?: string | null;
   peritoCompletedAt?: string | null;
 }
