@@ -4,13 +4,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/auth.service';
 import { TVM_LOGO_URL, TVM_MAIN_SITE_URL, TVM_PRIVACY_URL, TVM_TERMS_URL } from '../../shared/brand.constants';
+import { PasswordFieldComponent } from '../../shared/password-field.component';
 
 export type LoginRole = 'gestor' | 'concesionaria' | 'admin' | 'cliente' | 'perito';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, PasswordFieldComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css',
 })

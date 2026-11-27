@@ -5,6 +5,7 @@ import { LucidePlus } from '@lucide/angular';
 import { CrmService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
 import { CrmTeamPerformance } from '../../models';
+import { PasswordFieldComponent } from '../../shared/password-field.component';
 
 interface Employee {
   id?: string;
@@ -39,7 +40,7 @@ const CONCESIONARIA_MODULES = [
 @Component({
   selector: 'app-crm-team',
   standalone: true,
-  imports: [CommonModule, FormsModule, LucidePlus],
+  imports: [CommonModule, FormsModule, LucidePlus, PasswordFieldComponent],
   host: { '[class.theme-dark]': 'isConcesionaria' },
   template: `
     <div class="mon-board team-panel perf-panel">
@@ -115,7 +116,7 @@ const CONCESIONARIA_MODULES = [
             </div>
             <div class="form-group">
               <label for="team-password">Contraseña {{ editingId() ? '(opcional)' : '' }}</label>
-              <input id="team-password" type="password" [(ngModel)]="form.password" placeholder="••••••••" />
+              <app-password-field inputId="team-password" [(ngModel)]="form.password" placeholder="••••••••" />
             </div>
           </div>
 

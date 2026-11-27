@@ -5,13 +5,14 @@ import { LucideKeyRound, LucideMail, LucideSettings, LucideX } from '@lucide/ang
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
+import { PasswordFieldComponent } from '../../shared/password-field.component';
 
 type Tab = 'password' | 'email';
 
 @Component({
   selector: 'app-change-credentials',
   standalone: true,
-  imports: [FormsModule, LucideSettings, LucideX, LucideMail, LucideKeyRound],
+  imports: [FormsModule, LucideSettings, LucideX, LucideMail, LucideKeyRound, PasswordFieldComponent],
   template: `
     <div class="cc-overlay" (click)="closed.emit()">
       <div class="cc-modal" (click)="$event.stopPropagation()">
@@ -42,16 +43,16 @@ type Tab = 'password' | 'email';
         @if (tab() === 'password') {
           <form class="cc-form" (ngSubmit)="changePassword()">
             <label class="cc-label">Contraseña actual</label>
-            <input class="cc-input" type="password" [(ngModel)]="pwCurrent" name="pwCurrent"
-                   placeholder="Tu contraseña actual" autocomplete="current-password" required />
+            <app-password-field class="cc-input-wrap" name="pwCurrent" [(ngModel)]="pwCurrent"
+                   placeholder="Tu contraseña actual" autocomplete="current-password" [required]="true" />
 
             <label class="cc-label">Nueva contraseña</label>
-            <input class="cc-input" type="password" [(ngModel)]="pwNew" name="pwNew"
-                   placeholder="Mínimo 6 caracteres" autocomplete="new-password" required minlength="6" />
+            <app-password-field class="cc-input-wrap" name="pwNew" [(ngModel)]="pwNew"
+                   placeholder="Mínimo 6 caracteres" autocomplete="new-password" [required]="true" [minlength]="6" />
 
             <label class="cc-label">Confirmar nueva contraseña</label>
-            <input class="cc-input" type="password" [(ngModel)]="pwConfirm" name="pwConfirm"
-                   placeholder="Repite la nueva contraseña" autocomplete="new-password" required />
+            <app-password-field class="cc-input-wrap" name="pwConfirm" [(ngModel)]="pwConfirm"
+                   placeholder="Repite la nueva contraseña" autocomplete="new-password" [required]="true" />
 
             @if (error()) {
               <p class="cc-error">{{ error() }}</p>
@@ -73,8 +74,8 @@ type Tab = 'password' | 'email';
                    placeholder="nuevo@correo.com" autocomplete="email" required />
 
             <label class="cc-label">Contraseña actual</label>
-            <input class="cc-input" type="password" [(ngModel)]="emailPw" name="emailPw"
-                   placeholder="Confirma tu contraseña" autocomplete="current-password" required />
+            <app-password-field class="cc-input-wrap" name="emailPw" [(ngModel)]="emailPw"
+                   placeholder="Confirma tu contraseña" autocomplete="current-password" [required]="true" />
 
             @if (error()) {
               <p class="cc-error">{{ error() }}</p>
@@ -143,6 +144,15 @@ type Tab = 'password' | 'email';
     }
     .cc-input::placeholder { color: #9ca0ad; }
     .cc-input:focus { outline: none; border-color: #0073ea; box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.12); }
+    .cc-input-wrap .pw-field-input {
+      width: 100%; padding: 10px 2.75rem 10px 12px; background: #fff;
+      border: 1px solid #e6e9ef; border-radius: 8px;
+      color: #323338; font-size: 14px; font-family: inherit; box-sizing: border-box;
+      transition: border-color .15s;
+    }
+    .cc-input-wrap .pw-field-input::placeholder { color: #9ca0ad; }
+    .cc-input-wrap .pw-field-input:focus { outline: none; border-color: #0073ea; box-shadow: 0 0 0 3px rgba(0, 115, 234, 0.12); }
+    .cc-input-wrap .pw-field-toggle { color: #676879; }
     .cc-error { color: #e2445c; font-size: 12px; margin: 0; }
     .cc-submit {
       margin-top: 6px; padding: 11px; border: 1px solid #0073ea; border-radius: 8px;

@@ -334,7 +334,7 @@
               <button type="button" class="btn-copy" (click)="saveUser()">GUARDAR DATOS</button>
               <hr class="divider">
               <h4>Cambiar contraseña</h4>
-              <div class="form-group"><label>Nueva contraseña</label><input type="password" [(ngModel)]="newPassword"></div>
+              <div class="form-group"><label>Nueva contraseña</label><app-password-field [(ngModel)]="newPassword" /></div>
               <button type="button" class="btn-ghost warn" (click)="resetPassword()">ACTUALIZAR CONTRASEÑA</button>
               <hr class="divider">
               @if (u.role !== 'cliente') {

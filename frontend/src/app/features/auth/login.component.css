@@ -188,6 +188,16 @@
   border-color: var(--brand-blue);
   background: rgba(186,201,207,0.06);
 }
+.form-group app-password-field .pw-field-input {
+  padding-right: 2.75rem;
+}
+.form-group app-password-field .pw-field-toggle {
+  color: rgba(255, 255, 255, 0.55);
+}
+.form-group app-password-field .pw-field-toggle:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.08);
+}
 
 .legal-accept {
   text-align: left;

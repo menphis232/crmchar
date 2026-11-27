@@ -231,8 +231,13 @@
         </div>
         <div class="form-group">
           <label for="perito-password">Contraseña {{ editingId() ? '(déjala vacía para no cambiarla)' : '' }}</label>
-          <input id="perito-password" name="perito-password" type="password" [(ngModel)]="form.password"
-            placeholder="Mínimo 6 caracteres" autocomplete="new-password" />
+          <app-password-field
+            inputId="perito-password"
+            name="perito-password"
+            [(ngModel)]="form.password"
+            placeholder="Mínimo 6 caracteres"
+            autocomplete="new-password"
+          />
         </div>
       </form>
       <div class="team-form-actions">

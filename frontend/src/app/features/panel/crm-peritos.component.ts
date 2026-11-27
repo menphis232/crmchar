@@ -7,11 +7,12 @@ import { AuthService } from '../../core/auth.service';
 import { ToastService } from '../../core/toast.service';
 import { PeritoAccount, PeritoOverviewItem, PeritoPerformance } from '../../models';
 import { PERITO_STAGE_LABELS } from '../../shared/perito-stages';
+import { PasswordFieldComponent } from '../../shared/password-field.component';
 
 @Component({
   selector: 'app-crm-peritos',
   standalone: true,
-  imports: [CommonModule, FormsModule, CurrencyPipe, LucidePlus],
+  imports: [CommonModule, FormsModule, CurrencyPipe, LucidePlus, PasswordFieldComponent],
   templateUrl: './crm-peritos.component.html',
   styleUrl: './crm-peritos.component.css',
 })

@@ -87,8 +87,12 @@
         }
         <div class="form-group">
           <label for="login-password">Contraseña</label>
-          <input id="login-password" type="password" [(ngModel)]="password" placeholder="Mínimo 6 caracteres"
-            [attr.autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'">
+          <app-password-field
+            inputId="login-password"
+            [(ngModel)]="password"
+            placeholder="Mínimo 6 caracteres"
+            [autocomplete]="mode() === 'login' ? 'current-password' : 'new-password'"
+          />
           @if (mode() === 'login' && role() === 'cliente') {
             <div class="forgot-row">
               <button type="button" class="link-btn link-btn--sm" (click)="mode.set('forgot')">¿Olvidaste tu contraseña de correo?</button>

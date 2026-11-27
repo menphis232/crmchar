@@ -16,6 +16,7 @@ import { TVM_LOGO_URL, TVM_MAIN_SITE_URL } from '../../shared/brand.constants';
 import { PanelUserMenuComponent } from './panel-user-menu.component';
 import { SupportChatComponent } from '../../shared/support-chat.component';
 import { OneSignalService } from '../../core/onesignal.service';
+import { PasswordFieldComponent } from '../../shared/password-field.component';
 import {
   LucideBarChart3,
   LucideBot,
@@ -53,7 +54,7 @@ type AdminTab = 'stats' | 'users' | 'gestores' | 'concesionarias' | 'support' | 
   selector: 'app-panel-admin',
   host: { class: 'panel-datta' },
   standalone: true,
-  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell, LucideChevronLeft, LucideChevronRight],
+  imports: [RouterLink, FormsModule, PanelThemeEditorComponent, NotificationBellComponent, DatePipe, CurrencyPipe, DecimalPipe, PanelColorPaletteComponent, AiAssistantComponent, PanelUserMenuComponent, SupportChatComponent, RichTextEditorComponent, PasswordFieldComponent, LucideBarChart3, LucideUsers, LucideUser, LucideCar, LucidePalette, LucideWrench, LucideBuilding2, LucideSettings, LucideGlobe, LucideCircleCheck, LucideTriangleAlert, LucideSearch, LucideBot, LucideSave, LucideCreditCard, LucideX, LucidePaperclip, LucideMessageCircle, LucideLock, LucideEye, LucideBookOpen, LucidePlus, LucideTrash2, LucideImage, LucideVideo, LucideBell, LucideChevronLeft, LucideChevronRight],
   templateUrl: './panel-admin.component.html',
   styleUrls: ['./panel-dashboard.css', './panel-admin.component.css', './panel-datta.css'],
 })
